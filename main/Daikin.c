@@ -1,7 +1,8 @@
 /* Daikin app */
 /* Copyright ©2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
 
-static __attribute__((unused)) const char TAG[] = "Daikin";
+static __attribute__((unused))
+const char TAG[] = "Daikin";
 
 #include "revk.h"
 #include "esp_sleep.h"
@@ -15,6 +16,7 @@ static __attribute__((unused)) const char TAG[] = "Daikin";
 // Settings
 #define	settings		\
 	b(debug)	\
+	u8(uart,1)	\
 	io(tx,)	\
 	io(rx,)	\
 
@@ -32,7 +34,7 @@ settings
 #undef b
 #undef s
 // Functions to actually talk to the Daikin
-    struct {                    // The current status based on messages received
+struct {                        // The current status based on messages received
    char model[20];              // Model number of attached unit
    char mode;                   // Current mode
    char fan;                    // Current fan speed
@@ -84,6 +86,36 @@ void app_main()
 #undef b
 #undef s
        revk_start();
+   {                            // Init uart
+      esp_err_t err = 0;
+      // Init UART for Mobile
+      uart_config_t uart_config = {
+         .baud_rate = 9600,
+         .data_bits = UART_DATA_8_BITS,
+         .parity = UART_PARITY_DISABLE,
+         .stop_bits = UART_STOP_BITS_1,
+         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+      };
+      if (!err)
+         err = uart_param_config(uart, &uart_config);
+      if (!err)
+         err = uart_set_pin(uart, port_mask(tx), port_mask(rx), -1, -1);
+      if (!err && ((tx & PORT_INV) || (rx & PORT_INV)))
+         err = uart_set_line_inverse(uart, ((rx & PORT_INV) ? UART_SIGNAL_RXD_INV : 0) | ((tx & PORT_INV) ? UART_SIGNAL_TXD_INV : 0));
+      if (!err)
+         err = uart_driver_install(uart, 1024, 0, 0, NULL, 0);
+      if (err)
+      {
+         jo_t j = jo_object_alloc();
+         jo_string(j, "error", "Failed to uart");
+         jo_int(j, "uart", uart);
+         jo_int(j, "gpio", port_mask(rx));
+         jo_string(j, "description", esp_err_to_name(err));
+         revk_error("uart", &j);
+         return;
+      }
+   }
+
    while (1)
    {
       // TODO
