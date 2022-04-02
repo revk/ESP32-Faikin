@@ -10,25 +10,12 @@ static const char TAG[] = "Daikin";
 #include <driver/gpio.h>
 #include <driver/uart.h>
 
-#define	MAXGPIO	36
-#define BITFIELDS "-"
 #define PORT_INV 0x40
 #define port_mask(p) ((p)&63)
-static uint8_t input[MAXGPIO];  //Input GPIOs
-static uint8_t output[MAXGPIO]; //Output GPIOs
-static uint32_t outputmark[MAXGPIO];    //Output mark time(ms)
-static uint32_t outputspace[MAXGPIO];   //Output mark time(ms)
-static uint8_t power[MAXGPIO];  //Fixed output GPIOs
-int holding = 0;
 
-// Dynamic
-static uint64_t volatile outputbits = 0;        // Requested output
-static uint64_t volatile outputraw = 0; // Current output
-static uint64_t volatile outputoverride = 0;    // Override output (e.g. PWM)
-static uint32_t outputremaining[MAXGPIO] = { }; //Output remaining time(ms)
-static uint32_t outputcount[MAXGPIO] = { };     //Output count
-
+// Settings
 #define	settings		\
+	b(debug)	\
 	io(tx,)	\
 	io(rx,)	\
 
@@ -46,8 +33,23 @@ settings
 #undef b
 #undef s
 
+// Functions to actually talk to the Daikin
+
+struct 
+{ // The current status based on messages received
+  char model[ 20];	// Model number of attached unit
+} status;
+
+struct 
+{ // The command status we wish to send
+
+} command;
+
+
+
+// --------------------------------------------------------------------------------
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
-{
+{ // MQTT app callback
    if (client || !prefix || target || strcmp(prefix, prefixcommand) || !suffix)
       return NULL;              //Not for us or not a command from main MQTT
    char value[1000];
