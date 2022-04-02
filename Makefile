@@ -18,15 +18,15 @@ tools: envlog envgraph taspowerlog taspowersvg
 set:    wroom solo pico
 
 pico:
-	components/ESP32-RevK/setbuildsuffix -S1-PICO-SSD1681
+	components/ESP32-RevK/setbuildsuffix -S1-PICO
 	@make
 
 wroom:
-	components/ESP32-RevK/setbuildsuffix -S1-SSD1681
+	components/ESP32-RevK/setbuildsuffix -S1
 	@make
 
 solo:
-	components/ESP32-RevK/setbuildsuffix -S1-SOLO-SSD1681
+	components/ESP32-RevK/setbuildsuffix -S1-SOLO
 	@make
 
 flash:
