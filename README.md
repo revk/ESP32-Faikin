@@ -9,4 +9,4 @@ This is code to run on an ESP32 module and connect to a Daikin aircon unit in pl
 
 Basically, Daikin have gone all cloudy with the latest WiFi controllers. This module is designed to provide an alternative.
 
-This plan is MQTT linked, one day maybe even Matter linked, and maybe support the old style Daikin WiFi comments as well, we'll see.
+This plan is MQTT linked, one day maybe even Matter linked, and maybe support the old style Daikin WiFi commands/URLs as well, we'll see.
