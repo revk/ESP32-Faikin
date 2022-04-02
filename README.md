@@ -2,7 +2,7 @@
 
 ## work in progress
 
-This is code to run on an ESP32 module and connect to a Daiking aircon unit in place of a BRP069C41 module.
+This is code to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069C41 module.
 
 * KiCad PCB designs included.
 * Documentation of reverse engineered protocol include
