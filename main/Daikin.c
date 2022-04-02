@@ -1,12 +1,11 @@
 /* Daikin app */
 /* Copyright ©2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
 
-static const char TAG[] = "Daikin";
+static __attribute__((unused)) const char TAG[] = "Daikin";
 
 #include "revk.h"
 #include "esp_sleep.h"
 #include "esp_task_wdt.h"
-#include "iec18004.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
 
@@ -70,7 +69,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
 
 void app_main()
 {
-   time_t now = time(0);
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
