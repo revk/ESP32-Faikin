@@ -159,6 +159,9 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       status.talking = 0;       // Disconnect and reconnect
       return "";
    }
+   // JSON for full settings in one got
+   // TODO
+   // Crude commands
    if (!strcmp(suffix, "on"))
    {
       command.on = 1;
@@ -292,15 +295,26 @@ void app_main()
          if (command.changed)
          {
             command.changed = 0;
+            if (!command.mode)
+               command.mode = 'A';
+            if (!command.fan)
+               command.fan = '1';
+            if (!command.temp)
+               command.temp = 22;
             ca[0] = 2 + command.on;
-            ca[1] = 0x40 + strchr(modes, command.mode) - modes;
+            ca[1] = 0x10 + ((strchr(modes, command.mode) - modes) & 7);
+            if (strchr("HCA", command.mode))
+            {                   // Temp
+               ca[3] = command.temp;
+               ca[4] = 0x80 + ((int) (command.temp * 10)) % 10;
+            }
             if (command.mode == 'H')
                cb[0] = 1;
             else if (command.mode == 'C')
                cb[0] = 2;
             else
                cb[0] = 6;
-            cb[2] = 0x80 + ((command.fan & 7) << 4);
+            cb[1] = 0x80 + ((command.fan & 7) << 4);
          }
          daikin_command(0xCA, sizeof(ca), ca);
          daikin_command(0xCB, sizeof(cb), cb);
