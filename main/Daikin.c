@@ -33,6 +33,7 @@ settings
 #undef u8
 #undef b
 #undef s
+const char modes[] = "FHCA456D";
 // Status of unit
 struct {                        // The current status based on messages received
    char model[20];              // Model number of attached unit
@@ -40,6 +41,7 @@ struct {                        // The current status based on messages received
    char fan;                    // Current fan speed
    uint8_t on:1;                // Currently on
    uint8_t talking:1;           // Currently communicating
+   uint8_t changed:1;           // Has changed, report
 } status;
 
 struct {                        // The command status we wish to send
@@ -47,7 +49,7 @@ struct {                        // The command status we wish to send
    char mode;                   // Mode to set ('A'=auto, 'H'=heat, 'C'=cool, 'D'=Dry, 'F'=Fan)
    char fan;                    // Fan speed '1' to '5'
    uint8_t on:1;                // Switched on
-   uint8_t send:1;              // Need to send changes
+   uint8_t changed:1;           // Send changes
 } command;
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
@@ -156,6 +158,66 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       status.talking = 0;       // Disconnect and reconnect
       return "";
    }
+   if (!strcmp(suffix, "on"))
+   {
+      command.on = 1;
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "off"))
+   {
+      command.on = 0;
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "auto"))
+   {
+      command.mode = 'A';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "heat"))
+   {
+      command.mode = 'H';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "cool"))
+   {
+      command.mode = 'C';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "dry"))
+   {
+      command.mode = 'D';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "fan"))
+   {
+      command.mode = 'F';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "low"))
+   {
+      command.fan = '1';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "medium"))
+   {
+      command.fan = '3';
+      command.changed = 1;
+      return "";
+   }
+   if (!strcmp(suffix, "high"))
+   {
+      command.fan = '5';
+      command.changed = 1;
+      return "";
+   }
 
    return NULL;
 }
@@ -226,13 +288,26 @@ void app_main()
          daikin_command(0xBE, 0, NULL);
          uint8_t ca[17] = { };
          uint8_t cb[2] = { };
-         if (command.send)
+         if (command.changed)
          {
-            command.send = 0;
-            // TODO
-	 }
+            command.changed = 0;
+            ca[0] = 2 + command.on;
+            ca[1] = 0x40 + strchr(modes, command.mode) - modes;
+            if (command.mode == 'H')
+               cb[0] = 1;
+            else if (command.mode == 'C')
+               cb[0] = 2;
+            else
+               cb[0] = 6;
+            cb[2] = 0x80 + ((command.fan & 7) << 4);
+         }
          daikin_command(0xCA, sizeof(ca), ca);
          daikin_command(0xCB, sizeof(cb), cb);
+      }
+      if (status.changed)
+      {
+         status.changed = 0;
+         // TODO report
       }
    }
 }
