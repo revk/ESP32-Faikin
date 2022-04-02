@@ -32,24 +32,26 @@ settings
 #undef u8
 #undef b
 #undef s
-
 // Functions to actually talk to the Daikin
-
-struct 
-{ // The current status based on messages received
-  char model[ 20];	// Model number of attached unit
+    struct {                    // The current status based on messages received
+   char model[20];              // Model number of attached unit
+   char mode;                   // Current mode
+   char fan;                    // Current fan speed
+   uint8_t on:1;                // Currently on
 } status;
 
-struct 
-{ // The command status we wish to send
-
+struct {                        // The command status we wish to send
+   float temp;                  // Target temperature
+   char mode;                   // Mode to set ('A'=auto, 'H'=heat, 'C'=cool, 'D'=Dry, 'F'=Fan)
+   char fan;                    // Fan speed '1' to '5'
+   uint8_t on:1;                // Switched on
 } command;
 
 
 
 // --------------------------------------------------------------------------------
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
-{ // MQTT app callback
+{                               // MQTT app callback
    if (client || !prefix || target || strcmp(prefix, prefixcommand) || !suffix)
       return NULL;              //Not for us or not a command from main MQTT
    char value[1000];
@@ -84,9 +86,9 @@ void app_main()
 #undef b
 #undef s
        revk_start();
-   while(1)
+   while (1)
    {
-	   // TODO
-	   sleep(1);
+      // TODO
+      sleep(1);
    }
 }
