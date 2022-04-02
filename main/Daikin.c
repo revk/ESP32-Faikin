@@ -50,6 +50,7 @@ struct {                        // The command status we wish to send
    char fan;                    // Fan speed '1' to '5'
    uint8_t on:1;                // Switched on
    uint8_t changed:1;           // Send changes
+   // TODO something for "centralised control" bit somewhere?
 } command;
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
