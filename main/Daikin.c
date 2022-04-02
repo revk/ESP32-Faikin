@@ -33,12 +33,13 @@ settings
 #undef u8
 #undef b
 #undef s
-// Functions to actually talk to the Daikin
+// Status of unit
 struct {                        // The current status based on messages received
    char model[20];              // Model number of attached unit
    char mode;                   // Current mode
    char fan;                    // Current fan speed
    uint8_t on:1;                // Currently on
+   uint8_t talking:1;           // Currently communicating
 } status;
 
 struct {                        // The command status we wish to send
@@ -46,9 +47,94 @@ struct {                        // The command status we wish to send
    char mode;                   // Mode to set ('A'=auto, 'H'=heat, 'C'=cool, 'D'=Dry, 'F'=Fan)
    char fan;                    // Fan speed '1' to '5'
    uint8_t on:1;                // Switched on
+   uint8_t send:1;              // Need to send changes
 } command;
 
+void daikin_response(uint8_t cmd, int len, uint8_t * payload)
+{
+   // TODO
+}
 
+void daikin_command(uint8_t cmd, int len, uint8_t * payload)
+{
+   if (!status.talking)
+      return;                   // Failed
+   uint8_t buf[256];
+   buf[0] = 0x06;
+   buf[1] = cmd;
+   buf[2] = len + 6;
+   buf[3] = 1;
+   buf[4] = 0;
+   if (len)
+      memcpy(buf + 5, payload, len);
+   uint8_t c = 0;
+   for (int i = 0; i < 5 + len; i++)
+      c += buf[i];
+   buf[5 + len] = 0xFF - c;
+   if (debug)
+   {
+      jo_t j = jo_object_alloc();
+      jo_base16(j, "tx", buf, len + 6);
+      revk_info("debug", &j);
+   }
+   uart_write_bytes(uart, buf, 6 + len);
+   // Wait for reply
+   len = uart_read_bytes(uart, buf, sizeof(buf), 100 / portTICK_PERIOD_MS);
+   if (len <= 0)
+   {
+      status.talking = 0;
+      jo_t j = jo_object_alloc();
+      jo_bool(j, "timeout", 1);
+      revk_error("comms", &j);
+      return;
+   }
+   if (debug)
+   {
+      jo_t j = jo_object_alloc();
+      jo_base16(j, "rx", buf, len);
+      revk_info("debug", &j);
+   }
+   // Check checksum
+   c = 0;
+   for (int i = 0; i < len; i++)
+      c += buf[i];
+   if (c != 0xFF)
+   {
+      status.talking = 0;
+      jo_t j = jo_object_alloc();
+      jo_bool(j, "badsum", 1);
+      jo_base16(j, "data", buf, len);
+      revk_error("comms", &j);
+      return;
+   }
+   // Process response
+   if (buf[1] == 0xFF)
+   {                            // Error report
+      status.talking = 0;
+      jo_t j = jo_object_alloc();
+      jo_bool(j, "fault", 1);
+      jo_base16(j, "data", buf, len);
+      revk_error("comms", &j);
+      return;
+   }
+   if (buf[0] != 0x06 || buf[1] != cmd || buf[2] != len || buf[3] != 1)
+   {                            // Basic checks
+      status.talking = 0;
+      jo_t j = jo_object_alloc();
+      if (buf[0] != 0x06)
+         jo_bool(j, "badhead", 1);
+      if (buf[1] != cmd)
+         jo_bool(j, "mismatch", 1);
+      if (buf[2] != len)
+         jo_bool(j, "badlen", 1);
+      if (buf[3] != 1)
+         jo_bool(j, "badform", 1);
+      jo_base16(j, "data", buf, len);
+      revk_error("comms", &j);
+      return;
+   }
+   daikin_response(cmd, len - 6, buf + 5);
+}
 
 // --------------------------------------------------------------------------------
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
@@ -64,6 +150,11 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          return "Expecting JSON string";
       if (len > sizeof(value))
          return "Too long";
+   }
+   if (!strcmp(suffix, "reconnect"))
+   {
+      status.talking = 0;       // Disconnect and reconnect
+      return "";
    }
 
    return NULL;
@@ -92,7 +183,7 @@ void app_main()
       uart_config_t uart_config = {
          .baud_rate = 9600,
          .data_bits = UART_DATA_8_BITS,
-         .parity = UART_PARITY_DISABLE,
+         .parity = UART_PARITY_EVEN,
          .stop_bits = UART_STOP_BITS_1,
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
       };
@@ -117,8 +208,31 @@ void app_main()
    }
 
    while (1)
-   {
-      // TODO
+   {                            // Main loop
       sleep(1);
+      status.talking = 1;
+      // Startup
+      daikin_command(0xAA, 1, (uint8_t[])
+                     {
+                     0x01}
+      );
+      daikin_command(0xBA, 0, NULL);
+      daikin_command(0xBB, 0, NULL);
+
+      while (status.talking)
+      {                         // Polling loop
+         daikin_command(0xB7, 0, NULL);
+         daikin_command(0xBD, 0, NULL);
+         daikin_command(0xBE, 0, NULL);
+         uint8_t ca[17] = { };
+         uint8_t cb[2] = { };
+         if (command.send)
+         {
+            command.send = 0;
+            // TODO
+	 }
+         daikin_command(0xCA, sizeof(ca), ca);
+         daikin_command(0xCB, sizeof(cb), cb);
+      }
    }
 }
