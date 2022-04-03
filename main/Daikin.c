@@ -29,14 +29,18 @@ const char TAG[] = "Daikin";
 	b(online)		\
 	s(model,20)		\
 
+// Macros for setting values
+#define	daikin_set_b(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
+#define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
+#define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
 // Settings (RevK library used by MQTT setting command)
 #define	settings		\
 	b(debug)	\
 	b(dump)	\
 	u8(uart,1)	\
-	io(tx,)	\
-	io(rx,)	\
+	io(tx,CONFIG_DAIKIN_TX)	\
+	io(rx,CONFIG_DAIKIN_RX)	\
 
 #define u32(n,d)        uint32_t n;
 #define s8(n,d) int8_t n;
@@ -64,7 +68,7 @@ enum {                          // Number the control fields
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
-#define	e(name,values)	b(name)
+#define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
 accontrol
 #undef	b
 #undef	t
@@ -88,6 +92,40 @@ struct {
 
 } daikin;
 
+const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
+{                               // Setting a value (uint8_t)
+   if (*ptr == value)
+      return NULL;              // No change
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   *ptr = value;
+   daikin.control_changed |= flag;
+   xSemaphoreGive(daikin.mutex);
+   return NULL;
+}
+
+const char *daikin_set_enum(const char *name, uint8_t * ptr, uint64_t flag, char *value, const char *values)
+{                               // Setting a value (uint8_t) based on string which is expected to be single character from values set
+   if (!value || !*value)
+      return "No value";
+   if (value[1])
+      return "Value is meant to be one character";
+   char *found = strchr(values, *value);
+   if (!found)
+      return "Value is not a valid value";
+   daikin_set_value(name, ptr, flag, (int) (found - values));
+   return NULL;
+}
+
+const char *daikin_set_temp(const char *name, float *ptr, uint64_t flag, float value)
+{                               // Setting a value (float)
+   if (*ptr == value)
+      return NULL;              // No change
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   *ptr = value;
+   daikin.control_changed |= flag;
+   xSemaphoreGive(daikin.mutex);
+   return NULL;
+}
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
@@ -193,16 +231,22 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
 
 const char *daikin_control(jo_t j)
 {                               // Control settings as JSON
-   // TODO mutex
-   // TODO scan JSON
-   // TODO settings
-#define	b(name)
-#define	t(name)
-#define	e(name,values)
+   jo_type_t t = jo_next(j);    // Start object
+   while (t == JO_TAG)
+   {
+	   const char *err=NULL;
+#define	b(name)		if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_b(name,t==JO_TRUE?1:0);}
+#define	t(name)		if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_NUMBER)err= "Expecting number";else err=daikin_set_t(name,jo_read_float(j));}
+#define	e(name,values)	if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_STRING)err= "Expecting string";else err=daikin_set_t(name,jo_read_float(j));}
    accontrol
 #undef	b
 #undef	t
 #undef	e
+	   if(err)
+	   {	// Error report
+		   return err;
+	   }
+   }
        return NULL;
 }
 

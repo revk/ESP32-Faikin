@@ -1,0 +1,15 @@
+menu "RevK"
+
+	config DAIKIN_TX
+	string "Tx GPIO"
+	default "15"
+	help
+		Tx GPIO, prefix with minus for inverted
+
+	config DAIKIN_RX
+	string "Rx GPIO"
+	default "4"
+	help
+		Rx GPIO, prefix with minus for inverted
+
+endmenu
