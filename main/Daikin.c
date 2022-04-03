@@ -260,14 +260,16 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures
-      jo_t j = jo_object_alloc(); // Debug dump
-      jo_int(j,"a",(payload[1]<<8)+payload[2]-700);
-      jo_int(j,"b",(payload[3]<<8)+payload[4]-700);
-      jo_int(j,"c",(payload[5]<<8)+payload[6]-700);
-      jo_int(j,"d",(payload[7]<<8)+payload[8]-700);
-      jo_int(j,"e",(payload[9]<<8)+payload[10]-700);
-      jo_base16(j, "data", payload, len);
-      revk_info("BD", &j);
+      if (debug)
+      {
+         jo_t j = jo_object_alloc();    // Debug dump
+         jo_int(j, "a", (payload[1] << 8) + payload[2] - 700);
+         jo_int(j, "b", (payload[3] << 8) + payload[4] - 700);
+         jo_int(j, "c", (payload[5] << 8) + payload[6] - 700);
+         jo_int(j, "d", (payload[7] << 8) + payload[8] - 700);
+         jo_int(j, "e", (payload[9] << 8) + payload[10] - 700);
+         revk_info("temps", &j);
+      }
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Unknown
