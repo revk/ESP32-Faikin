@@ -460,7 +460,7 @@ const char *daikin_control(jo_t j)
       }
       t = jo_skip(j);
    }
-   return NULL;
+   return "";
 }
 
 // --------------------------------------------------------------------------------
@@ -511,8 +511,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    {
       jo_rewind(s);
       ret = daikin_control(s);
-      if (!ret)
-         ret = "";              // OK
    }
    jo_free(&s);
    return ret;
