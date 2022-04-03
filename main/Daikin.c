@@ -139,6 +139,56 @@ const char *daikin_set_temp(const char *name, float *ptr, uint64_t flag, float v
    return NULL;
 }
 
+void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
+{
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   if (!(daikin.status_known & flag))
+   {
+      daikin.status_known |= flag;
+      daikin.status_changed = 1;
+   }
+   if (*ptr == val)
+   {                            // No change
+      if (daikin.control_changed & flag)
+      {
+         daikin.control_changed &= ~flag;
+         daikin.status_changed = 1;
+      }
+   } else if (!(daikin.control_changed & flag))
+   {                            // Changed (and not something we are tryin to set)
+      *ptr = val;
+      daikin.status_changed = 1;
+   }
+   xSemaphoreGive(daikin.mutex);
+}
+
+void set_float(const char *name, float *ptr, uint64_t flag, float val)
+{
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   if (!(daikin.status_known & flag))
+   {
+      daikin.status_known |= flag;
+      daikin.status_changed = 1;
+   }
+   if (*ptr == val)
+   {                            // No change
+      if (daikin.control_changed & flag)
+      {
+         daikin.control_changed &= ~flag;
+         daikin.status_changed = 1;
+      }
+   } else if (!(daikin.control_changed & flag))
+   {                            // Changed (and not something we are tryin to set)
+      *ptr = val;
+      daikin.status_changed = 1;
+   }
+   xSemaphoreGive(daikin.mutex);
+}
+
+#define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
+#define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
+
+
 void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
    if (debug)
@@ -150,7 +200,29 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
    }
-   // TODO
+   if (cmd == 'G')
+   {                            // Matching the Dx commands
+      if (cmd2 == '1')
+      {
+         // TODO
+      }
+      if (cmd2 == '5')
+      {
+         // TODO
+      }
+      if (cmd2 == '6')
+      {
+         // TODO
+      }
+      if (cmd2 == '7')
+      {
+         // TODO
+      }
+   }
+   if (cmd == 'S')
+   {                            // Temperatures
+      // TODO
+   }
 }
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
@@ -163,50 +235,6 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
          jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
    }
-   void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val) {
-      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-      if (!(daikin.status_known & flag))
-      {
-         daikin.status_known |= flag;
-         daikin.status_changed = 1;
-      }
-      if (*ptr == val)
-      {                         // No change
-         if (daikin.control_changed & flag)
-         {
-            daikin.control_changed &= ~flag;
-            daikin.status_changed = 1;
-         }
-      } else if (!(daikin.control_changed & flag))
-      {                         // Changed (and not something we are tryin to set)
-         *ptr = val;
-         daikin.status_changed = 1;
-      }
-      xSemaphoreGive(daikin.mutex);
-   }
-   void set_float(const char *name, float *ptr, uint64_t flag, float val) {
-      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-      if (!(daikin.status_known & flag))
-      {
-         daikin.status_known |= flag;
-         daikin.status_changed = 1;
-      }
-      if (*ptr == val)
-      {                         // No change
-         if (daikin.control_changed & flag)
-         {
-            daikin.control_changed &= ~flag;
-            daikin.status_changed = 1;
-         }
-      } else if (!(daikin.control_changed & flag))
-      {                         // Changed (and not something we are tryin to set)
-         *ptr = val;
-         daikin.status_changed = 1;
-      }
-      xSemaphoreGive(daikin.mutex);
-   }
-#define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
-#define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
    if (cmd == 0xBA && len >= 20)
    {
       strncpy(daikin.model, (char *) payload, sizeof(daikin.model));
@@ -233,8 +261,10 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    {
 
    }
-#undef set_val
 }
+
+#undef set_val
+#undef set_temp
 
 void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 {
