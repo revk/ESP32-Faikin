@@ -10,12 +10,30 @@ const char TAG[] = "Daikin";
 #include <driver/gpio.h>
 #include <driver/uart.h>
 
-#define PORT_INV 0x40
-#define port_mask(p) ((p)&63)
+// The following define the controls and status for the Daikin, using macros
+// e(name,tags) Enumerated value, uses single character from tags, e.g. FHCA456D means "F" is 0, "H" is 1, etc
+// b(name)      Boolean
+// t(name)      Temperature
+// s(name,len)  String (for status only, e.g. model)
 
-// Settings
+// Daikin controls
+#define	accontrol		\
+	b(power)		\
+	e(mode,FHCA456D)	\
+	e(fan,A12345)		\
+	t(temp)			\
+
+
+// Daikin status
+#define acstatus		\
+	b(online)		\
+	s(model,20)		\
+
+
+// Settings (RevK library used by MQTT setting command)
 #define	settings		\
 	b(debug)	\
+	b(dump)	\
 	u8(uart,1)	\
 	io(tx,)	\
 	io(rx,)	\
@@ -33,35 +51,69 @@ settings
 #undef u8
 #undef b
 #undef s
-const char modes[] = "FHCA456D";
-// Status of unit
-struct {                        // The current status based on messages received
-   char model[20];              // Model number of attached unit
-   char mode;                   // Current mode
-   char fan;                    // Current fan speed
-   uint8_t on:1;                // Currently on
-   uint8_t talking:1;           // Currently communicating
-   uint8_t changed:1;           // Has changed, report
-} status;
+#define PORT_INV 0x40
+#define port_mask(p) ((p)&63)
+enum {                          // Number the control fields
+#define	b(name)		CONTROL_##name##_pos,
+#define	t(name)		b(name)
+#define	e(name,values)	b(name)
+   accontrol
+#undef	b
+#undef	t
+#undef	e
+};
+#define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
+#define	t(name)		b(name)
+#define	e(name,values)	b(name)
+accontrol
+#undef	b
+#undef	t
+#undef	e
+// The current state
+struct {
+   SemaphoreHandle_t mutex;     // Control changes
+   uint64_t control_changed;    // Which control fields are being set
+   uint8_t control_count;       // How many times we have tried to change control and not worked yet
+#define	b(name)		uint8_t	name;
+#define	t(name)		float name;
+#define	e(name,values)	uint8_t name;
+#define	s(name,len)	char name[len];
+   accontrol acstatus
+#undef	b
+#undef	t
+#undef	e
+#undef	s
+    uint8_t talking:1;          // We are getting answers
+   uint8_t status_changed:1;    // Status has changed
 
-struct {                        // The command status we wish to send
-   float temp;                  // Target temperature
-   char mode;                   // Mode to set ('A'=auto, 'H'=heat, 'C'=cool, 'D'=Dry, 'F'=Fan)
-   char fan;                    // Fan speed '1' to '5'
-   uint8_t on:1;                // Switched on
-   uint8_t changed:1;           // Send changes
-   // TODO something for "centralised control" bit somewhere?
-} command;
+} daikin;
+
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
-{
+{                               // Process response
    // TODO
+   if (dump)
+   {
+      jo_t j = jo_object_alloc();
+      jo_stringf(j, "cmd", "%02X", cmd);
+      if (len)
+         jo_base16(j, "rx", payload, len);
+      revk_info("payload", &j);
+   }
 }
 
 void daikin_command(uint8_t cmd, int len, uint8_t * payload)
-{
-   if (!status.talking)
+{                               // Send a command and get response
+   if (!daikin.talking)
       return;                   // Failed
+   if (dump)
+   {
+      jo_t j = jo_object_alloc();
+      jo_stringf(j, "cmd", "%02X", cmd);
+      if (len)
+         jo_base16(j, "tx", payload, len);
+      revk_info("payload", &j);
+   }
    uint8_t buf[256];
    buf[0] = 0x06;
    buf[1] = cmd;
@@ -74,28 +126,28 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    for (int i = 0; i < 5 + len; i++)
       c += buf[i];
    buf[5 + len] = 0xFF - c;
-   if (debug)
+   if (dump)
    {
       jo_t j = jo_object_alloc();
       jo_base16(j, "tx", buf, len + 6);
-      revk_info("debug", &j);
+      revk_info("data", &j);
    }
    uart_write_bytes(uart, buf, 6 + len);
    // Wait for reply
    len = uart_read_bytes(uart, buf, sizeof(buf), 100 / portTICK_PERIOD_MS);
    if (len <= 0)
    {
-      status.talking = 0;
+      daikin.talking = 0;
       jo_t j = jo_object_alloc();
       jo_bool(j, "timeout", 1);
       revk_error("comms", &j);
       return;
    }
-   if (debug)
+   if (dump)
    {
       jo_t j = jo_object_alloc();
       jo_base16(j, "rx", buf, len);
-      revk_info("debug", &j);
+      revk_info("data", &j);
    }
    // Check checksum
    c = 0;
@@ -103,7 +155,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
       c += buf[i];
    if (c != 0xFF)
    {
-      status.talking = 0;
+      daikin.talking = 0;
       jo_t j = jo_object_alloc();
       jo_bool(j, "badsum", 1);
       jo_base16(j, "data", buf, len);
@@ -113,7 +165,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    // Process response
    if (buf[1] == 0xFF)
    {                            // Error report
-      status.talking = 0;
+      daikin.talking = 0;
       jo_t j = jo_object_alloc();
       jo_bool(j, "fault", 1);
       jo_base16(j, "data", buf, len);
@@ -122,7 +174,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    }
    if (buf[0] != 0x06 || buf[1] != cmd || buf[2] != len || buf[3] != 1)
    {                            // Basic checks
-      status.talking = 0;
+      daikin.talking = 0;
       jo_t j = jo_object_alloc();
       if (buf[0] != 0x06)
          jo_bool(j, "badhead", 1);
@@ -139,95 +191,65 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    daikin_response(cmd, len - 6, buf + 5);
 }
 
+const char *daikin_control(jo_t j)
+{                               // Control settings as JSON
+   // TODO mutex
+   // TODO scan JSON
+   // TODO settings
+#define	b(name)
+#define	t(name)
+#define	e(name,values)
+   accontrol
+#undef	b
+#undef	t
+#undef	e
+       return NULL;
+}
+
 // --------------------------------------------------------------------------------
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
-   if (client || !prefix || target || strcmp(prefix, prefixcommand) || !suffix)
-      return NULL;              //Not for us or not a command from main MQTT
-   char value[1000];
-   int len = 0;
-   if (j)
-   {
-      len = jo_strncpy(j, value, sizeof(value));
-      if (len < 0)
-         return "Expecting JSON string";
-      if (len > sizeof(value))
-         return "Too long";
-   }
+   if (client || !prefix || target || strcmp(prefix, prefixcommand))
+      return NULL;              // Not for us or not a command from main MQTT
+
    if (!strcmp(suffix, "reconnect"))
    {
-      status.talking = 0;       // Disconnect and reconnect
+      daikin.talking = 0;       // Disconnect and reconnect
       return "";
    }
-   // JSON for full settings in one got
-   // TODO
+   if (!suffix)
+      return daikin_control(j);
+   jo_t s = jo_object_alloc();
    // Crude commands
    if (!strcmp(suffix, "on"))
-   {
-      command.on = 1;
-      command.changed = 1;
-      return "";
-   }
+      jo_bool(s, "power", 1);
    if (!strcmp(suffix, "off"))
-   {
-      command.on = 0;
-      command.changed = 1;
-      return "";
-   }
+      jo_bool(s, "power", 0);
    if (!strcmp(suffix, "auto"))
-   {
-      command.mode = 'A';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "mode", "A");
    if (!strcmp(suffix, "heat"))
-   {
-      command.mode = 'H';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "mode", "H");
    if (!strcmp(suffix, "cool"))
-   {
-      command.mode = 'C';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "mode", "C");
    if (!strcmp(suffix, "dry"))
-   {
-      command.mode = 'D';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "mode", "D");
    if (!strcmp(suffix, "fan"))
-   {
-      command.mode = 'F';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "mode", "F");
    if (!strcmp(suffix, "low"))
-   {
-      command.fan = '1';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "fan", "1");
    if (!strcmp(suffix, "medium"))
-   {
-      command.fan = '3';
-      command.changed = 1;
-      return "";
-   }
+      jo_string(s, "fan", "3");
    if (!strcmp(suffix, "high"))
-   {
-      command.fan = '5';
-      command.changed = 1;
-      return "";
-   }
-
-   return NULL;
+      jo_string(s, "fan", "5");
+   jo_close(s);
+   const char *ret = daikin_control(s);
+   jo_free(&s);
+   return ret;
 }
 
 void app_main()
 {
+   daikin.mutex = xSemaphoreCreateMutex();
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
@@ -276,7 +298,7 @@ void app_main()
    while (1)
    {                            // Main loop
       sleep(1);
-      status.talking = 1;
+      daikin.talking = 1;
       // Startup
       daikin_command(0xAA, 1, (uint8_t[])
                      {
@@ -285,43 +307,37 @@ void app_main()
       daikin_command(0xBA, 0, NULL);
       daikin_command(0xBB, 0, NULL);
 
-      while (status.talking)
+      while (daikin.talking)
       {                         // Polling loop
          daikin_command(0xB7, 0, NULL);
          daikin_command(0xBD, 0, NULL);
          daikin_command(0xBE, 0, NULL);
          uint8_t ca[17] = { };
          uint8_t cb[2] = { };
-         if (command.changed)
+         if (daikin.control_changed)
          {
-            command.changed = 0;
-            if (!command.mode)
-               command.mode = 'A';
-            if (!command.fan)
-               command.fan = '1';
-            if (!command.temp)
-               command.temp = 22;
-            ca[0] = 2 + command.on;
-            ca[1] = 0x10 + ((strchr(modes, command.mode) - modes) & 7);
-            if (strchr("HCA", command.mode))
+            daikin.control_changed = 0; // TODO remove
+            ca[0] = 2 + daikin.power;
+            ca[1] = 0x10 + daikin.mode;
+            if (strchr("HCA", daikin.mode))
             {                   // Temp
-               ca[3] = command.temp;
-               ca[4] = 0x80 + ((int) (command.temp * 10)) % 10;
+               ca[3] = daikin.temp;
+               ca[4] = 0x80 + ((int) (daikin.temp * 10)) % 10;
             }
-            if (command.mode == 'H')
+            if (daikin.mode == 'H')
                cb[0] = 1;
-            else if (command.mode == 'C')
+            else if (daikin.mode == 'C')
                cb[0] = 2;
             else
                cb[0] = 6;
-            cb[1] = 0x80 + ((command.fan & 7) << 4);
+            cb[1] = 0x80 + ((daikin.fan & 7) << 4);
          }
          daikin_command(0xCA, sizeof(ca), ca);
          daikin_command(0xCB, sizeof(cb), cb);
       }
-      if (status.changed)
+      if (daikin.status_changed)
       {
-         status.changed = 0;
+         daikin.status_changed = 0;
          // TODO report
       }
    }
