@@ -40,8 +40,8 @@ const char TAG[] = "Daikin";
 
 // Settings (RevK library used by MQTT setting command)
 #define	settings		\
-	b(debug)		\
-	b(dump)			\
+	bl(debug)		\
+	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
 	io(tx,CONFIG_DAIKIN_TX)	\
@@ -51,6 +51,7 @@ const char TAG[] = "Daikin";
 #define s8(n,d) int8_t n;
 #define u8(n,d) uint8_t n;
 #define b(n) uint8_t n;
+#define bl(n) uint8_t n;
 #define s(n) char * n;
 #define io(n,d)           uint8_t n;
 settings
@@ -59,6 +60,7 @@ settings
 #undef s8
 #undef u8
 #undef b
+#undef bl
 #undef s
 #define PORT_INV 0x40
 #define port_mask(p) ((p)&63)
@@ -554,6 +556,7 @@ void app_main()
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
+#define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
@@ -564,6 +567,7 @@ void app_main()
 #undef s8
 #undef u8
 #undef b
+#undef bl
 #undef s
        revk_start();
    {                            // Init uart
