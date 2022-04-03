@@ -247,7 +247,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(mode, payload[1]);
       set_val(compressor, payload[2]);
       set_temp(temp, payload[3] + 0.1 * payload[4]);
-      set_val(fan, payload[6] >> 4);
+      set_val(fan, (payload[6] >> 4) & 7);
    }
    if (cmd == 0xCB && len >= 2)
    {
@@ -551,6 +551,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
 void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
+   daikin.status_known = CONTROL_online;
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
@@ -609,8 +610,11 @@ void app_main()
          daikin_command(0xBA, 0, NULL);
          daikin_command(0xBB, 0, NULL);
       }
-      daikin.online = daikin.talking;
-      daikin.status_changed = 1;
+      if (daikin.online != daikin.talking)
+      {
+         daikin.online = daikin.talking;
+         daikin.status_changed = 1;
+      }
       do
       {                         // Polling loop
          if (s21)
@@ -725,7 +729,7 @@ void app_main()
                 revk_error("failed-set", &j);
             daikin.control_changed = 0; // Give up on changes
          }
-         revk_blink(0, 0, !daikin.online ? "P" : daikin.compressor == 1 ? "R" : "B");
+         revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
       }
       while (daikin.talking);
    }
