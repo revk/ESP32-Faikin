@@ -2,7 +2,7 @@
 <export version="E">
   <design>
     <source>/Users/adrian/git/ESP32-Daikin/KiCad/Daikin.kicad_sch</source>
-    <date>Saturday, 02 April 2022 at 10:19:15</date>
+    <date>Sunday, 03 April 2022 at 14:45:45</date>
     <tool>Eeschema (6.0.2-0)</tool>
     <textvar name="DATE">2022-04-02</textvar>
     <sheet number="1" name="/" tstamps="/">
@@ -143,27 +143,14 @@
       <sheetpath names="/" tstamps="/"/>
       <tstamps>00000000-0000-0000-0000-0000610fe01a</tstamps>
     </comp>
-    <comp ref="Q1">
-      <value>PMF170XP,115</value>
-      <footprint>Package_TO_SOT_SMD:SOT-323_SC-70</footprint>
-      <fields>
-        <field name="Note">Any P-Channel SOT323 that does 3.3V/0.5A</field>
-      </fields>
-      <libsource lib="Device" part="Q_PMOS_GSD" description="P-MOSFET transistor, gate/source/drain"/>
-      <property name="Note" value="Any P-Channel SOT323 that does 3.3V/0.5A"/>
-      <property name="Sheetname" value=""/>
-      <property name="Sheetfile" value="Daikin.kicad_sch"/>
-      <sheetpath names="/" tstamps="/"/>
-      <tstamps>60333601-99f6-42aa-8c36-287814730d80</tstamps>
-    </comp>
-    <comp ref="Q2">
+    <comp ref="Q3">
       <value>PMF250XNEX</value>
       <footprint>Package_TO_SOT_SMD:SOT-323_SC-70</footprint>
       <libsource lib="RevK" part="NX7002AK" description="N-MOSFET transistor, gate/source/drain"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
-      <tstamps>71c7be27-c495-456d-8161-4660f57b8dd8</tstamps>
+      <tstamps>ebcfdf36-110d-4f79-9de0-e4fcd76c1d6e</tstamps>
     </comp>
     <comp ref="R1">
       <value>680R</value>
@@ -330,20 +317,6 @@
         <pin num="4" name="BK" type="passive"/>
       </pins>
     </libpart>
-    <libpart lib="Device" part="Q_PMOS_GSD">
-      <description>P-MOSFET transistor, gate/source/drain</description>
-      <docs>~</docs>
-      <fields>
-        <field name="Reference">Q</field>
-        <field name="Value">Q_PMOS_GSD</field>
-        <field name="Datasheet">~</field>
-      </fields>
-      <pins>
-        <pin num="1" name="G" type="input"/>
-        <pin num="2" name="S" type="passive"/>
-        <pin num="3" name="D" type="passive"/>
-      </pins>
-    </libpart>
     <libpart lib="Device" part="R">
       <description>Resistor</description>
       <docs>~</docs>
@@ -504,13 +477,13 @@
     </net>
     <net code="5" name="G">
       <node ref="R2" pin="2" pintype="passive"/>
-      <node ref="U1" pin="33" pinfunction="IO19" pintype="bidirectional"/>
+      <node ref="U1" pin="28" pinfunction="IO8" pintype="bidirectional"/>
     </net>
     <net code="6" name="GND">
       <node ref="C1" pin="1" pintype="passive"/>
       <node ref="C5" pin="2" pintype="passive"/>
       <node ref="J1" pin="1" pinfunction="Pin_1" pintype="power_out"/>
-      <node ref="Q2" pin="2" pinfunction="S" pintype="passive"/>
+      <node ref="Q3" pin="2" pinfunction="S" pintype="passive"/>
       <node ref="R6" pin="1" pintype="passive"/>
       <node ref="U1" pin="1" pinfunction="GND" pintype="power_in"/>
       <node ref="U1" pin="11" pinfunction="GND" pintype="power_in"/>
@@ -556,8 +529,7 @@
     </net>
     <net code="12" name="Net-(J1-Pad4)">
       <node ref="J1" pin="4" pinfunction="Pin_4" pintype="passive"/>
-      <node ref="Q1" pin="3" pinfunction="D" pintype="passive"/>
-      <node ref="Q2" pin="3" pinfunction="D" pintype="passive"/>
+      <node ref="Q3" pin="1" pinfunction="G" pintype="input"/>
     </net>
     <net code="13" name="Net-(R5-Pad2)">
       <node ref="R5" pin="2" pintype="passive"/>
@@ -569,16 +541,14 @@
     </net>
     <net code="15" name="R">
       <node ref="R1" pin="2" pintype="passive"/>
-      <node ref="U1" pin="34" pinfunction="IO22" pintype="bidirectional"/>
+      <node ref="U1" pin="33" pinfunction="IO19" pintype="bidirectional"/>
     </net>
     <net code="16" name="RX">
-      <node ref="J1" pin="3" pinfunction="Pin_3" pintype="passive"/>
-      <node ref="Q1" pin="2" pinfunction="S" pintype="passive"/>
+      <node ref="Q3" pin="3" pinfunction="D" pintype="passive"/>
       <node ref="U1" pin="17" pinfunction="IO27" pintype="bidirectional"/>
     </net>
     <net code="17" name="TX">
-      <node ref="Q1" pin="1" pinfunction="G" pintype="input"/>
-      <node ref="Q2" pin="1" pinfunction="G" pintype="input"/>
+      <node ref="J1" pin="3" pinfunction="Pin_3" pintype="passive"/>
       <node ref="U1" pin="16" pinfunction="IO26" pintype="bidirectional"/>
     </net>
     <net code="18" name="unconnected-(C2-Pad~)">
@@ -647,14 +617,14 @@
     <net code="39" name="unconnected-(U1-Pad26)">
       <node ref="U1" pin="26" pinfunction="IO20" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="40" name="unconnected-(U1-Pad28)">
-      <node ref="U1" pin="28" pinfunction="IO8" pintype="bidirectional+no_connect"/>
-    </net>
-    <net code="41" name="unconnected-(U1-Pad29)">
+    <net code="40" name="unconnected-(U1-Pad29)">
       <node ref="U1" pin="29" pinfunction="IO5" pintype="bidirectional+no_connect"/>
     </net>
-    <net code="42" name="unconnected-(U1-Pad32)">
+    <net code="41" name="unconnected-(U1-Pad32)">
       <node ref="U1" pin="32" pinfunction="NC" pintype="no_connect"/>
+    </net>
+    <net code="42" name="unconnected-(U1-Pad34)">
+      <node ref="U1" pin="34" pinfunction="IO22" pintype="bidirectional+no_connect"/>
     </net>
     <net code="43" name="unconnected-(U1-Pad35)">
       <node ref="U1" pin="35" pinfunction="IO21" pintype="bidirectional+no_connect"/>
