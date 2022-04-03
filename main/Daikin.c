@@ -130,7 +130,7 @@ const char *daikin_set_temp(const char *name, float *ptr, uint64_t flag, float v
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
    // TODO
-   if (dump)
+   if (debug)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
@@ -144,7 +144,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
 {                               // Send a command and get response
    if (!daikin.talking)
       return;                   // Failed
-   if (dump)
+   if (debug)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
@@ -234,20 +234,30 @@ const char *daikin_control(jo_t j)
    jo_type_t t = jo_next(j);    // Start object
    while (t == JO_TAG)
    {
-	   const char *err=NULL;
-#define	b(name)		if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_b(name,t==JO_TRUE?1:0);}
-#define	t(name)		if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_NUMBER)err= "Expecting number";else err=daikin_set_t(name,jo_read_float(j));}
-#define	e(name,values)	if(!jo_strcmp(j,#name)){if((t=jo_next(j))!=JO_STRING)err= "Expecting string";else err=daikin_set_t(name,jo_read_float(j));}
-   accontrol
+      const char *err = NULL;
+      char tag[20],
+       val[20];
+      jo_strncpy(j, tag, sizeof(tag));
+      t = jo_next(j);
+      jo_strncpy(j, val, sizeof(val));
+#define	b(name)		if(!strcmp(tag,#name)){if(t!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_b(name,t==JO_TRUE?1:0);}
+#define	t(name)		if(!strcmp(tag,#name)){if(t!=JO_NUMBER)err= "Expecting number";else err=daikin_set_t(name,jo_read_float(j));}
+#define	e(name,values)	if(!strcmp(tag,#name)){if(t!=JO_STRING)err= "Expecting string";else err=daikin_set_e(name,val);}
+      accontrol
 #undef	b
 #undef	t
 #undef	e
-	   if(err)
-	   {	// Error report
-		   return err;
-	   }
+          if (err)
+      {                         // Error report
+         jo_t j = jo_object_alloc();
+         jo_string(j, "field", tag);
+         jo_string(j, "error", err);
+         revk_error("control", &j);
+         return err;
+      }
+      t = jo_skip(j);
    }
-       return NULL;
+   return NULL;
 }
 
 // --------------------------------------------------------------------------------
@@ -286,7 +296,15 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    if (!strcmp(suffix, "high"))
       jo_string(s, "fan", "5");
    jo_close(s);
-   const char *ret = daikin_control(s);
+   jo_rewind(s);
+   const char *ret = NULL;
+   if (jo_next(s) == JO_TAG)
+   {
+      jo_rewind(s);
+      ret = daikin_control(s);
+      if (!ret)
+         ret = "";              // OK
+   }
    jo_free(&s);
    return ret;
 }
@@ -378,11 +396,13 @@ void app_main()
          }
          daikin_command(0xCA, sizeof(ca), ca);
          daikin_command(0xCB, sizeof(cb), cb);
-      }
-      if (daikin.status_changed)
-      {
-         daikin.status_changed = 0;
-         // TODO report
+         if (!daikin.control_changed && daikin.status_changed)
+         {
+            daikin.status_changed = 0;
+            jo_t j = jo_object_alloc();
+            // TODO
+            revk_state("status", &j);
+         }
       }
    }
 }
