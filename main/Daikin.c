@@ -20,13 +20,14 @@ const char TAG[] = "Daikin";
 #define	accontrol		\
 	b(power)		\
 	e(mode,FHCA456D)	\
-	e(fan,A12345)		\
 	t(temp)			\
+	e(fan,A12345)		\
 
 
 // Daikin status
 #define acstatus		\
 	b(online)		\
+	e(compressor,XHC)	\
 	s(model,20)		\
 
 // Macros for setting values
@@ -61,18 +62,22 @@ enum {                          // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
 #define	t(name)		b(name)
 #define	e(name,values)	b(name)
-   accontrol
+#define	s(name,len)	b(name)
+   accontrol acstatus
 #undef	b
 #undef	t
 #undef	e
+#undef	s
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
 #define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
-accontrol
+#define	s(name,len)	b(name)
+accontrol acstatus
 #undef	b
 #undef	t
 #undef	e
+#undef	s
 // The current state
 struct {
    SemaphoreHandle_t mutex;     // Control changes
@@ -129,15 +134,75 @@ const char *daikin_set_temp(const char *name, float *ptr, uint64_t flag, float v
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
-   // TODO
    if (debug)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       if (len)
-         jo_base16(j, "rx", payload, len);
-      revk_info("payload", &j);
+         jo_base16(j, "payload", payload, len);
+      revk_info("rx", &j);
    }
+   void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val) {
+      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      if (*ptr == val)
+      {                         // No change
+         if (daikin.control_changed & flag)
+         {
+            daikin.control_changed &= ~flag;
+            daikin.status_changed = 1;
+         }
+      } else if (!(daikin.control_changed & flag))
+      {                         // Changed (and not something we are tryin to set)
+         *ptr = val;
+         daikin.status_changed = 1;
+      }
+      xSemaphoreGive(daikin.mutex);
+   }
+   void set_float(const char *name, float *ptr, uint64_t flag, float val) {
+      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      if (*ptr == val)
+      {                         // No change
+         if (daikin.control_changed & flag)
+         {
+            daikin.control_changed &= ~flag;
+            daikin.status_changed = 1;
+         }
+      } else if (!(daikin.control_changed & flag))
+      {                         // Changed (and not something we are tryin to set)
+         *ptr = val;
+         daikin.status_changed = 1;
+      }
+      xSemaphoreGive(daikin.mutex);
+   }
+#define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
+#define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
+   if (cmd == 0xBA && len >= 20)
+   {
+      strncpy(daikin.model, (char *) payload, sizeof(daikin.model));
+      daikin.status_changed = 1;
+   }
+   if (cmd == 0xCA && len >= 7)
+   {                            // Main status settings
+      set_val(online, 1);
+      set_val(power, payload[0]);
+      set_val(mode, payload[1]);
+      set_val(compressor, payload[2]);
+      set_temp(temp, payload[3] + 0.1 * payload[4]);
+      set_val(fan, payload[6] & 0xF);
+   }
+   if (cmd == 0xCB && len >= 2)
+   {
+
+   }
+   if (cmd == 0xBD && len >= 29)
+   {
+
+   }
+   if (cmd == 0xBE && len >= 9)
+   {
+
+   }
+#undef set_val
 }
 
 void daikin_command(uint8_t cmd, int len, uint8_t * payload)
@@ -149,8 +214,8 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       if (len)
-         jo_base16(j, "tx", payload, len);
-      revk_info("payload", &j);
+         jo_base16(j, "payload", payload, len);
+      revk_info("tx", &j);
    }
    uint8_t buf[256];
    buf[0] = 0x06;
@@ -167,8 +232,8 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (dump)
    {
       jo_t j = jo_object_alloc();
-      jo_base16(j, "tx", buf, len + 6);
-      revk_info("data", &j);
+      jo_base16(j, "dump", buf, len + 6);
+      revk_info("tx", &j);
    }
    uart_write_bytes(uart, buf, 6 + len);
    // Wait for reply
@@ -184,8 +249,8 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (dump)
    {
       jo_t j = jo_object_alloc();
-      jo_base16(j, "rx", buf, len);
-      revk_info("data", &j);
+      jo_base16(j, "dump", buf, len);
+      revk_info("rx", &j);
    }
    // Check checksum
    c = 0;
@@ -272,9 +337,13 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       return "";
    }
    if (!suffix)
-      return daikin_control(j);
+      return daikin_control(j); // General setting
+   if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
+      daikin.status_changed = 1;        // Report status on connect
    jo_t s = jo_object_alloc();
-   // Crude commands
+   char value[20] = "";
+   jo_strncpy(j, value, sizeof(value));
+   // Crude commands - setting one thing
    if (!strcmp(suffix, "on"))
       jo_bool(s, "power", 1);
    if (!strcmp(suffix, "off"))
@@ -295,6 +364,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       jo_string(s, "fan", "3");
    if (!strcmp(suffix, "high"))
       jo_string(s, "fan", "5");
+   if (!strcmp(suffix, "temp"))
+      jo_lit(s, "temp", value);
    jo_close(s);
    jo_rewind(s);
    const char *ret = NULL;
@@ -368,10 +439,11 @@ void app_main()
       );
       daikin_command(0xBA, 0, NULL);
       daikin_command(0xBB, 0, NULL);
-
-      while (daikin.talking)
+      daikin.online = daikin.talking;
+      daikin.status_changed = 1;
+      do
       {                         // Polling loop
-         daikin_command(0xB7, 0, NULL);
+         //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
          daikin_command(0xBD, 0, NULL);
          daikin_command(0xBE, 0, NULL);
          uint8_t ca[17] = { };
@@ -381,15 +453,13 @@ void app_main()
             daikin.control_changed = 0; // TODO remove
             ca[0] = 2 + daikin.power;
             ca[1] = 0x10 + daikin.mode;
-            if (strchr("HCA", daikin.mode))
+            if (daikin.mode >= 1 && daikin.mode <= 3)
             {                   // Temp
                ca[3] = daikin.temp;
                ca[4] = 0x80 + ((int) (daikin.temp * 10)) % 10;
             }
-            if (daikin.mode == 'H')
-               cb[0] = 1;
-            else if (daikin.mode == 'C')
-               cb[0] = 2;
+            if (daikin.mode == 1 || daikin.mode == 2)
+               cb[0] = daikin.mode;
             else
                cb[0] = 6;
             cb[1] = 0x80 + ((daikin.fan & 7) << 4);
@@ -400,9 +470,35 @@ void app_main()
          {
             daikin.status_changed = 0;
             jo_t j = jo_object_alloc();
-            // TODO
-            revk_state("status", &j);
+#define b(name)         jo_bool(j,#name,daikin.name);
+#define t(name)         jo_litf(j,#name,"%.1f",daikin.name);
+#define e(name,values)  if(daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
+#define s(name,len)     if(*daikin.name)jo_string(j,#name,daikin.name);
+            accontrol acstatus
+#undef  b
+#undef  t
+#undef  e
+#undef  s
+             revk_state("status", &j);
          }
+         if (!daikin.control_changed)
+            daikin.control_count = 0;
+         else if (daikin.control_count++ > 100)
+         {                      // Tried a lot
+            // Report failed settings
+            jo_t j = jo_object_alloc();
+#define b(name)         if(daikin.control_changed&CONTROL_##name)jo_bool(j,#name,daikin.name);
+#define t(name)         if(daikin.control_changed&CONTROL_##name)jo_litf(j,#name,"%.1f",daikin.name);
+#define e(name,values)  if((daikin.control_changed&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
+            accontrol
+#undef  b
+#undef  t
+#undef  e
+                revk_error("failed-set", &j);
+            daikin.control_changed = 0; // Give up on changes
+         }
+         revk_blink(0, 0, !daikin.online ? "P" : daikin.compressor == 1 ? "R" : "B");
       }
+      while (daikin.talking);
    }
 }
