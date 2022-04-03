@@ -188,7 +188,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(mode, payload[1]);
       set_val(compressor, payload[2]);
       set_temp(temp, payload[3] + 0.1 * payload[4]);
-      set_val(fan, payload[6] & 0xF);
+      set_val(fan, payload[6] >> 4);
    }
    if (cmd == 0xCB && len >= 2)
    {
