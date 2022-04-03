@@ -145,6 +145,7 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
+      jo_stringf(j, "cmd2", "%02X", cmd2);
       if (len)
          jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
@@ -243,6 +244,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
+      jo_stringf(j, "cmd2", "%02X", cmd2);
       if (len)
          jo_base16(j, "payload", payload, len);
       revk_info("tx", &j);
@@ -340,7 +342,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       revk_error("comms", &j);
       return;
    }
-   daikin_s21_response(cmd, cmd2, len - 5, buf + 3);
+   daikin_s21_response(buf[1], buf[2], len - 5, buf + 3);
 }
 
 void daikin_command(uint8_t cmd, int len, uint8_t * payload)
@@ -469,13 +471,13 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    if (client || !prefix || target || strcmp(prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
 
+   if (!suffix)
+      return daikin_control(j); // General setting
    if (!strcmp(suffix, "reconnect"))
    {
       daikin.talking = 0;       // Disconnect and reconnect
       return "";
    }
-   if (!suffix)
-      return daikin_control(j); // General setting
    if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
       daikin.status_changed = 1;        // Report status on connect
    jo_t s = jo_object_alloc();
