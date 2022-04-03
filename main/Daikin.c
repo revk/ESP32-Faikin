@@ -155,7 +155,7 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
          daikin.status_changed = 1;
       }
    } else if (!(daikin.control_changed & flag))
-   {                            // Changed (and not something we are tryin to set)
+   {                            // Changed (and not something we are trying to set)
       *ptr = val;
       daikin.status_changed = 1;
    }
@@ -178,7 +178,7 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
          daikin.status_changed = 1;
       }
    } else if (!(daikin.control_changed & flag))
-   {                            // Changed (and not something we are tryin to set)
+   {                            // Changed (and not something we are trying to set)
       *ptr = val;
       daikin.status_changed = 1;
    }
@@ -187,7 +187,6 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
 
 #define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
 #define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
-
 
 void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
@@ -246,7 +245,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(power, payload[0]);
       set_val(mode, payload[1]);
       set_val(compressor, payload[2]);
-      set_temp(temp, payload[3] + 0.1 * payload[4]);
+      set_temp(temp, payload[3] + 0.1 * (payload[4] & 0xF));
       set_val(fan, (payload[6] >> 4) & 7);
    }
    if (cmd == 0xCB && len >= 2)
@@ -681,7 +680,6 @@ void app_main()
             uint8_t cb[2] = { };
             if (daikin.control_changed)
             {
-               daikin.control_changed = 0;      // TODO remove
                ca[0] = 2 + daikin.power;
                ca[1] = 0x10 + daikin.mode;
                if (daikin.mode >= 1 && daikin.mode <= 3)
