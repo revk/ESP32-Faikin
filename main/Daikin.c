@@ -33,7 +33,7 @@ const char TAG[] = "Daikin";
 	b(online)		\
 	e(compressor,XHC)	\
 	s(model,20)		\
-	t(room)			\
+	t(home)			\
 	t(outside)		\
 	t(inlet)		\
 	t(liquid)		\
@@ -206,9 +206,9 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       revk_info("rx", &j);
    }
    if (cmd == 'G' && len == 4)
-   {                            // Matching the Dx commands
-      if (cmd2 == '1')
+      switch (cmd2)
       {
+      case '1':
          set_val(online, 1);
          set_val(power, (payload[0] == '1') ? 1 : 0);
          set_val(mode, "03721003"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
@@ -219,24 +219,41 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_val(fan, 6);    // Quiet
          else
             set_val(fan, "00012345"[payload[3] & 0x7] - '0');   // XXX12345 mapped to A12345Q
-      }
-      if (cmd2 == '5')
-      {
+         break;
+      case '5':
          set_val(swingv, (payload[0] & 1) ? 1 : 0);
          set_val(swingh, (payload[0] & 2) ? 1 : 0);
-      }
-      if (cmd2 == '6')
-      {
+         break;
+      case '6':
          set_val(powerful, payload[0] == '2' ? 1 : 0);
-      }
-      if (cmd2 == '7')
-      {
+         break;
+      case '7':
          set_val(econo, payload[1] == '2' ? 1 : 0);
+         break;
       }
-   }
    if (cmd == 'S' && len == 4)
-   {                            // Temperatures
-      // TODO
+   {
+      float t = (payload[0] - '0') * 0.1 + (payload[1] - '0') + (payload[2] - '0') * 10;
+      if (payload[3] == '-')
+         t = -t;
+      switch (cmd2)
+      {                         // Temperatures
+      case 'H':                // Guess
+         set_temp(home, t);
+         break;
+      case 'a':                // Guess
+         set_temp(outside, t);
+         break;
+      case 'I':                // Guess
+         set_temp(liquid, t);
+         break;
+//2022-04-04 16:04:43.783216:info/GuestAC/rx {"cmd":"SH","payload":"3039312B","text":"091+"}
+//2022-04-04 16:04:43.783246:info/GuestAC/rx {"cmd":"SN","payload":"3130302B","text":"100+"}
+//2022-04-04 16:04:43.989247:info/GuestAC/rx {"cmd":"SI","payload":"3030322B","text":"002+"}
+//2022-04-04 16:04:43.989267:info/GuestAC/rx {"cmd":"Sa","payload":"3034312B","text":"041+"}
+//2022-04-04 16:04:44.186024:info/GuestAC/rx {"cmd":"SX","payload":"3031322B","text":"012+"}
+         // TODO
+      }
    }
 }
 
@@ -269,7 +286,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures
       set_temp(inlet, (int16_t) (payload[0] + (payload[1] << 8)) / 128.0);
-      set_temp(room, (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);
+      set_temp(home, (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);
       set_temp(liquid, (int16_t) (payload[4] + (payload[5] << 8)) / 128.0);
       set_temp(temp, (int16_t) (payload[8] + (payload[9] << 8)) / 128.0);
 #if 0
@@ -684,7 +701,7 @@ void app_main()
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                temp[0] = daikin.power ? '1' : '0';
                temp[1] = ("64310002"[daikin.mode]);
-               temp[2] = 0x40 + (int) ((daikin.temp - 18.0) * 2);
+               temp[2] = 0x40 + (int) round((daikin.temp - 18.0) * 2);
                temp[3] = ("A34567Q"[daikin.fan]);
                daikin_s21_command('D', '1', 4, temp);
                xSemaphoreGive(daikin.mutex);
@@ -734,7 +751,7 @@ void app_main()
                if (daikin.mode >= 1 && daikin.mode <= 3)
                {                // Temp
                   ca[3] = daikin.temp;
-                  ca[4] = 0x80 + ((int) (daikin.temp * 10)) % 10;
+                  ca[4] = 0x80 + ((int) round(daikin.temp * 10)) % 10;
                }
                if (daikin.mode == 1 || daikin.mode == 2)
                   cb[0] = daikin.mode;
