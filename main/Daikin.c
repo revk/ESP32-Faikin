@@ -210,7 +210,7 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       if (cmd2 == '1')
       {
          set_val(online, 1);
-         set_val(power, payload[0] == '1' ? 1 : 0);
+         set_val(power, (payload[0] == '1') ? 1 : 0);
          set_val(mode, "03721000"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
          set_temp(temp, 18.0 + 0.5 * (payload[2] - '@'));
          set_val(fan, "0001234500000600"[payload[3] & 0xF] - '0');      // XXX12345XXXXAB mapped to A12345Q
@@ -516,7 +516,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
 {                               // MQTT app callback
    if (client || !prefix || target || strcmp(prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
-
    if (!suffix)
       return daikin_control(j); // General setting
    if (!strcmp(suffix, "reconnect"))
@@ -661,6 +660,13 @@ void app_main()
             daikin_s21_command('F', 'T', 0, NULL);
             daikin_s21_command('F', 'U', 2, "02");
             daikin_s21_command('F', 'U', 2, "04");
+            daikin_s21_command('R', 'H', 0, NULL);
+            daikin_s21_command('R', 'N', 0, NULL);
+            daikin_s21_command('R', 'I', 0, NULL);
+            daikin_s21_command('R', 'a', 0, NULL);
+            daikin_s21_command('R', 'X', 0, NULL);
+            daikin_s21_command('R', 'D', 0, NULL);
+            daikin_s21_command('R', 'L', 0, NULL);
             if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
             {                   // D1
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
