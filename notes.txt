@@ -141,3 +141,18 @@ S21
 2022-04-04 10:06:20.633697:info/GuestAC/rx {"cmd":"GS","payload":"30303030","text":"0000"}
 2022-04-04 10:06:20.633711:info/GuestAC/rx {"cmd":"GT","payload":"35303030","text":"5000"}
 
+2022-04-04 10:28:01.660721:info/GuestAC/rx {"cmd":"G7","payload":"30304630","text":"00F0"} Quiet
+2022-04-04 10:28:01.831532:info/GuestAC/rx {"cmd":"GB","payload":"30343330","text":"0430"}
+2022-04-04 10:28:01.831544:info/GuestAC/rx {"cmd":"GG","payload":"31363030","text":"1600"}
+2022-04-04 10:28:02.026214:info/GuestAC/rx {"cmd":"GK","payload":"717B3531","text":"q{51"}
+2022-04-04 10:28:02.026225:info/GuestAC/rx {"cmd":"GM","payload":"35333130","text":"5310"}
+2022-04-04 10:28:02.231595:info/GuestAC/rx {"cmd":"GN","payload":"30303030","text":"0000"}
+2022-04-04 10:28:02.231605:info/GuestAC/rx {"cmd":"GP","payload":"35413030","text":"5A00"}
+2022-04-04 10:28:02.231611:info/GuestAC/rx {"cmd":"GQ","payload":"31443030","text":"1D00"}
+2022-04-04 10:28:02.438689:info/GuestAC/rx {"cmd":"GS","payload":"30303030","text":"0000"}
+2022-04-04 10:28:02.438699:info/GuestAC/rx {"cmd":"GT","payload":"35303030","text":"5000"}
+2022-04-04 10:28:03.880749:info/GuestAC/rx {"cmd":"G1","payload":"31374641","text":"17FA"}
+2022-04-04 10:28:04.240831:info/GuestAC/rx {"cmd":"G8","payload":"30323030","text":"0200"}
+
+
+
