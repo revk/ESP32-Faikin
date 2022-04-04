@@ -100,3 +100,44 @@ A8 0AB7 0AF0 0AA8 0A80 0BA8 0A00 000D 0000 000C 0000 000D 0025 0004 5700
    ^^^^ ^^^^ ^^^^ ^^^^ ^^^^ ???? ?
 These seem -7C+N/100, approx. Not clear what they are.
 
+
+S21
+
+2022-04-04 10:05:29.128911:info/GuestAC/rx {"cmd":"G2","payload":"3D3B8080","text":"=;??"} Off
+2022-04-04 10:05:29.128930:info/GuestAC/rx {"cmd":"G1","payload":"30334837","text":"03H7"}
+2022-04-04 10:05:29.306259:info/GuestAC/rx {"cmd":"G3","payload":"30FEFE30","text":"0??0"}
+2022-04-04 10:05:29.306279:info/GuestAC/rx {"cmd":"G4","payload":"30B08030","text":"0??0"}
+2022-04-04 10:05:29.533249:info/GuestAC/rx {"cmd":"G5","payload":"30303080","text":"000?"}
+2022-04-04 10:05:29.533272:info/GuestAC/rx {"cmd":"G8","payload":"30323030","text":"0200"}
+2022-04-04 10:05:29.722842:info/GuestAC/rx {"cmd":"G9","payload":"A896FF30","text":"???0"}
+2022-04-04 10:05:29.722862:info/GuestAC/rx {"cmd":"G6","payload":"30303034","text":"0004"}
+2022-04-04 10:05:29.919756:info/GuestAC/rx {"cmd":"G7","payload":"30304A47","text":"00JG"}
+2022-04-04 10:05:29.919774:info/GuestAC/rx {"cmd":"GB","payload":"30333330","text":"0330"}
+2022-04-04 10:05:29.919793:info/GuestAC/rx {"cmd":"GG","payload":"31393030","text":"1900"}
+2022-04-04 10:05:30.136185:info/GuestAC/rx {"cmd":"GK","payload":"717B3531","text":"q{51"}
+2022-04-04 10:05:30.136233:info/GuestAC/rx {"cmd":"GM","payload":"34333130","text":"4310"}
+2022-04-04 10:05:30.306467:info/GuestAC/rx {"cmd":"GN","payload":"30303030","text":"0000"}
+2022-04-04 10:05:30.306491:info/GuestAC/rx {"cmd":"GP","payload":"35413030","text":"5A00"}
+2022-04-04 10:05:30.547159:info/GuestAC/rx {"cmd":"GQ","payload":"31443030","text":"1D00"}
+2022-04-04 10:05:30.547178:info/GuestAC/rx {"cmd":"GS","payload":"30303030","text":"0000"}
+2022-04-04 10:05:30.717513:info/GuestAC/rx {"cmd":"GT","payload":"35303030","text":"5000"}
+
+2022-04-04 10:06:19.229878:info/GuestAC/rx {"cmd":"G2","payload":"3D3B8080","text":"=;??"} On
+2022-04-04 10:06:19.229909:info/GuestAC/rx {"cmd":"G1","payload":"31334837","text":"13H7"}
+2022-04-04 10:06:19.461310:info/GuestAC/rx {"cmd":"G3","payload":"30FEFE30","text":"0??0"}
+2022-04-04 10:06:19.461331:info/GuestAC/rx {"cmd":"G4","payload":"30B08030","text":"0??0"}
+2022-04-04 10:06:19.461343:info/GuestAC/rx {"cmd":"G5","payload":"30303080","text":"000?"}
+2022-04-04 10:06:19.630598:info/GuestAC/rx {"cmd":"G8","payload":"30323030","text":"0200"}
+2022-04-04 10:06:19.630623:info/GuestAC/rx {"cmd":"G9","payload":"A896FF30","text":"???0"}
+2022-04-04 10:06:19.834844:info/GuestAC/rx {"cmd":"G6","payload":"30303034","text":"0004"}
+2022-04-04 10:06:19.834869:info/GuestAC/rx {"cmd":"G7","payload":"30304A47","text":"00JG"}
+2022-04-04 10:06:20.034118:info/GuestAC/rx {"cmd":"GB","payload":"30333330","text":"0330"}
+2022-04-04 10:06:20.034155:info/GuestAC/rx {"cmd":"GG","payload":"31413030","text":"1A00"}
+2022-04-04 10:06:20.232782:info/GuestAC/rx {"cmd":"GK","payload":"717B3531","text":"q{51"}
+2022-04-04 10:06:20.232807:info/GuestAC/rx {"cmd":"GM","payload":"34333130","text":"4310"}
+2022-04-04 10:06:20.433342:info/GuestAC/rx {"cmd":"GN","payload":"30303030","text":"0000"}
+2022-04-04 10:06:20.433367:info/GuestAC/rx {"cmd":"GP","payload":"35413030","text":"5A00"}
+2022-04-04 10:06:20.633674:info/GuestAC/rx {"cmd":"GQ","payload":"31443030","text":"1D00"}
+2022-04-04 10:06:20.633697:info/GuestAC/rx {"cmd":"GS","payload":"30303030","text":"0000"}
+2022-04-04 10:06:20.633711:info/GuestAC/rx {"cmd":"GT","payload":"35303030","text":"5000"}
+
