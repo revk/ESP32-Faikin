@@ -197,13 +197,12 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
 
 void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
-   if (debug)
+   if (debug && len)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       jo_stringf(j, "cmd2", "%02X", cmd2);
-      if (len)
-         jo_base16(j, "payload", payload, len);
+      jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
    }
    if (cmd == 'G' && len == 4)
@@ -233,12 +232,11 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 
 void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
-   if (debug)
+   if (debug && len)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
-      if (len)
-         jo_base16(j, "payload", payload, len);
+      jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
    }
    if (cmd == 0xBA && len >= 20)
@@ -283,13 +281,12 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 {
    if (!daikin.talking)
       return;                   // Failed
-   if (debug)
+   if (debug && len)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       jo_stringf(j, "cmd2", "%02X", cmd2);
-      if (len)
-         jo_base16(j, "payload", payload, len);
+      jo_base16(j, "payload", payload, len);
       revk_info("tx", &j);
    }
    uint8_t buf[256],
@@ -318,6 +315,8 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       daikin.talking = 0;
       jo_t j = jo_object_alloc();
       jo_bool(j, "noack", 1);
+      if (len)
+         jo_stringf(j, "value", "%02X", temp);
       revk_error("comms", &j);
       return;
    }
@@ -392,12 +391,11 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
 {                               // Send a command and get response
    if (!daikin.talking)
       return;                   // Failed
-   if (debug)
+   if (debug && len)
    {
       jo_t j = jo_object_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
-      if (len)
-         jo_base16(j, "payload", payload, len);
+      jo_base16(j, "payload", payload, len);
       revk_info("tx", &j);
    }
    uint8_t buf[256];
@@ -586,10 +584,10 @@ void app_main()
       esp_err_t err = 0;
       // Init UART for Mobile
       uart_config_t uart_config = {
-         .baud_rate = 9600,
+         .baud_rate = s21 ? 2400 : 9600,
          .data_bits = UART_DATA_8_BITS,
          .parity = UART_PARITY_EVEN,
-         .stop_bits = UART_STOP_BITS_1,
+         .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
       };
       if (!err)
