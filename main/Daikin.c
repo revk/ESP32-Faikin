@@ -324,7 +324,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       return;                   // No response expected
    while (1)
    {
-      len = uart_read_bytes(uart, buf, 1, 1000 / portTICK_PERIOD_MS);
+      len = uart_read_bytes(uart, buf, 1, 100 / portTICK_PERIOD_MS);
       if (len != 1)
       {
          daikin.talking = 0;
@@ -363,11 +363,11 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    c = 0;
    for (int i = 1; i < len - 2; i++)
       c += buf[i];
-   if (c != buf[len - 1])
+   if (c != buf[len - 2])
    {
       daikin.talking = 0;
       jo_t j = jo_object_alloc();
-      jo_bool(j, "badsum", 1);
+      jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
       return;
@@ -441,7 +441,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    {
       daikin.talking = 0;
       jo_t j = jo_object_alloc();
-      jo_bool(j, "badsum", 1);
+      jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
       return;
@@ -598,6 +598,8 @@ void app_main()
          err = uart_set_line_inverse(uart, ((rx & PORT_INV) ? UART_SIGNAL_RXD_INV : 0) | ((tx & PORT_INV) ? UART_SIGNAL_TXD_INV : 0));
       if (!err)
          err = uart_driver_install(uart, 1024, 0, 0, NULL, 0);
+      if (!err)
+         err = uart_set_rx_full_threshold(uart, 1);
       if (err)
       {
          jo_t j = jo_object_alloc();
