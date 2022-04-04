@@ -9,6 +9,7 @@ const char TAG[] = "Daikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <math.h>
 
 // The following define the controls and status for the Daikin, using macros
 // e(name,tags) Enumerated value, uses single character from tags, e.g. FHCA456D means "F" is 0, "H" is 1, etc
@@ -36,7 +37,6 @@ const char TAG[] = "Daikin";
 	t(outside)		\
 	t(inlet)		\
 	t(liquid)		\
-	t(gas)			\
 
 // Macros for setting values
 #define	daikin_set_b(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
@@ -177,7 +177,7 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
       daikin.status_known |= flag;
       daikin.status_changed = 1;
    }
-   if (*ptr == val)
+   if (round(*ptr * 10) == round(val * 10))
    {                            // No change
       if (daikin.control_changed & flag)
       {
@@ -260,7 +260,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(power, payload[0]);
       set_val(mode, payload[1]);
       set_val(compressor, payload[2]);
-      set_temp(temp, payload[3] + 0.1 * (payload[4] & 0xF));
+      // set_temp(temp, payload[3] + 0.1 * (payload[4] & 0xF)); // From BD
       set_val(fan, (payload[6] >> 4) & 7);
    }
    if (cmd == 0xCB && len >= 2)
@@ -268,16 +268,23 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures
+      set_temp(inlet, (int16_t) (payload[0] + (payload[1] << 8)) / 128.0);
+      set_temp(room, (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);
+      set_temp(liquid, (int16_t) (payload[4] + (payload[5] << 8)) / 128.0);
+      set_temp(temp, (int16_t) (payload[8] + (payload[9] << 8)) / 128.0);
+#if 0
       if (debug)
       {
          jo_t j = jo_object_alloc();    // Debug dump
-         jo_int(j, "a", (payload[1] << 8) + payload[2] - 700);
-         jo_int(j, "b", (payload[3] << 8) + payload[4] - 700);
-         jo_int(j, "c", (payload[5] << 8) + payload[6] - 700);
-         jo_int(j, "d", (payload[7] << 8) + payload[8] - 700);
-         jo_int(j, "e", (payload[9] << 8) + payload[10] - 700);
+         jo_litf(j, "a", "%.2f", (int16_t) (payload[0] + (payload[1] << 8)) / 128.0);   // inlet
+         jo_litf(j, "b", "%.2f", (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);   // Room
+         jo_litf(j, "c", "%.2f", (int16_t) (payload[4] + (payload[5] << 8)) / 128.0);   // liquid
+         jo_litf(j, "d", "%.2f", (int16_t) (payload[6] + (payload[7] << 8)) / 128.0);   // same as inlet?
+         jo_litf(j, "e", "%.2f", (int16_t) (payload[8] + (payload[9] << 8)) / 128.0);   // Target
+         jo_litf(j, "f", "%.2f", (int16_t) (payload[10] + (payload[11] << 8)) / 128.0); // same as inlet
          revk_info("temps", &j);
       }
+#endif
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Unknown
