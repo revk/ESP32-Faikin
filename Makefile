@@ -13,7 +13,7 @@ all:
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: $(PROJECT_NAME)$(SUFFIX).bin
 
-tools: envlog envgraph taspowerlog taspowersvg
+tools:	faikin
 
 set:    wroom solo pico
 
@@ -56,6 +56,17 @@ ftdi: ftdizap/ftdizap
 PCBCase/case: PCBCase/case.c
 	make -C PCBCase
 
+ifeq ($(shell uname),Darwin)
+INCLUDES=-I/usr/local/include/
+LIBS=-L/usr/local/Cellar/popt/1.18/lib/
+else
+LIBS=
+INCLUDES=
+endif
+
+faikin: faikin.c
+	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
+
 scad:	$(patsubst %,KiCad/%.scad,$(MODELS))
 stl:	$(patsubst %,KiCad/%.stl,$(MODELS))
 
@@ -66,3 +77,4 @@ stl:	$(patsubst %,KiCad/%.stl,$(MODELS))
 
 KiCad/Daikin.scad: KiCad/Daikin.kicad_pcb PCBCase/case Makefile
 	PCBCase/case -o $@ $< --edge=2 --base=2.5
+
