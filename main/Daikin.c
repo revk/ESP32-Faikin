@@ -615,6 +615,7 @@ void app_main()
    while (1)
    {                            // Main loop
       sleep(1);
+      uart_flush(uart);         // Clean start
       daikin.talking = 1;
       if (!s21)
       {                         // Startup
