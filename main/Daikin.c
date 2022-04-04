@@ -200,28 +200,33 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
    if (debug && len)
    {
       jo_t j = jo_object_alloc();
-      jo_stringf(j, "cmd", "%02X", cmd);
-      jo_stringf(j, "cmd2", "%02X", cmd2);
+      jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
       jo_base16(j, "payload", payload, len);
+      jo_stringn(j, "text", (char *) payload, len);
       revk_info("rx", &j);
    }
    if (cmd == 'G' && len == 4)
    {                            // Matching the Dx commands
       if (cmd2 == '1')
       {
-         // TODO
+         set_val(online, 1);
+         set_val(power, payload[0] == '1' ? 1 : 0);
+         set_val(mode, "03721000"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
+         set_temp(temp, 18.0 + 0.5 * (payload[2] - '@'));
+         set_val(fan, "0001234500000600"[payload[3] & 0xF] - '0');      // XXX12345XXXXAB mapped to A12345Q
       }
       if (cmd2 == '5')
       {
-         // TODO
+         set_val(swingv, (payload[0] & 1) ? 1 : 0);
+         set_val(swingh, (payload[0] & 2) ? 1 : 0);
       }
       if (cmd2 == '6')
       {
-         // TODO
+         set_val(powerful, payload[0] == '2' ? 1 : 0);
       }
       if (cmd2 == '7')
       {
-         // TODO
+         set_val(econo, payload[1] == '2' ? 1 : 0);
       }
    }
    if (cmd == 'S' && len == 4)
@@ -284,9 +289,9 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    if (debug && len)
    {
       jo_t j = jo_object_alloc();
-      jo_stringf(j, "cmd", "%02X", cmd);
-      jo_stringf(j, "cmd2", "%02X", cmd2);
+      jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
       jo_base16(j, "payload", payload, len);
+      jo_stringn(j, "text", (char *) payload, len);
       revk_info("tx", &j);
    }
    uint8_t buf[256],
