@@ -419,8 +419,8 @@
       (net 2 "TX") (pinfunction "Pin_3") (pintype "passive") (tstamp 9203c29f-62fa-4f6b-8dac-02f9e79441b1))
     (pad "4" thru_hole oval (at 3.75 0) (size 1.7 1.85) (drill 0.85) (layers *.Cu *.Mask)
       (net 38 "Net-(J1-Pad4)") (pinfunction "Pin_4") (pintype "passive") (tstamp 4fb4e40a-2875-4a62-b1f3-20135701abe1))
-    (model "/Users/adrian/Documents/KiCad/3D/22057045.stp"
-      (offset (xyz 0 -3.6 2.5))
+    (model "/Users/adrian/Documents/KiCad/3D/22057055.stp"
+      (offset (xyz -1.25 -3.6 2.5))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 180))
     )
