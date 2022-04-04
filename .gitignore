@@ -5,6 +5,7 @@
 */*.bin
 *.bin
 *.old
+*.BAK
 */*.old
 */*/*.old
 secure_boot_signing_key.pem
