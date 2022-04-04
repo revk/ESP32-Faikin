@@ -213,7 +213,12 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val(power, (payload[0] == '1') ? 1 : 0);
          set_val(mode, "03721003"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
          set_temp(temp, 18.0 + 0.5 * (payload[2] - '@'));
-         set_val(fan, "0001234500000600"[payload[3] & 0xF] - '0');      // XXX12345XXXXAB mapped to A12345Q
+         if (payload[3] == 'A')
+            set_val(fan, 0);    // Auto
+         else if (payload[3] == 'B')
+            set_val(fan, 6);    // Quiet
+         else
+            set_val(fan, "00012345"[payload[3] & 0x7] - '0');   // XXX12345 mapped to A12345Q
       }
       if (cmd2 == '5')
       {
