@@ -65,4 +65,4 @@ stl:	$(patsubst %,KiCad/%.stl,$(MODELS))
 	echo "Made $@"
 
 KiCad/Daikin.scad: KiCad/Daikin.kicad_pcb PCBCase/case Makefile
-	PCBCase/case -o $@ $< --edge=2 --base=2
+	PCBCase/case -o $@ $< --edge=2 --base=2.5
