@@ -420,7 +420,7 @@
     (pad "4" thru_hole oval (at 3.75 0) (size 1.7 1.85) (drill 0.85) (layers *.Cu *.Mask)
       (net 38 "Net-(J1-Pad4)") (pinfunction "Pin_4") (pintype "passive") (tstamp 4fb4e40a-2875-4a62-b1f3-20135701abe1))
     (model "/Users/adrian/Documents/KiCad/3D/22057055.stp"
-      (offset (xyz -1.25 -3.6 2.5))
+      (offset (xyz 1.25 -3.6 2.5))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 180))
     )
@@ -625,11 +625,6 @@
       (net 36 "I") (pinfunction "Pin_4") (pintype "passive") (tstamp 99d3d8cc-5940-4eee-8bf6-980ad06dfb5f))
     (pad "5" thru_hole oval (at 0 -10.16 90) (size 1.7 1.7) (drill 1) (layers *.Cu *.Mask)
       (net 37 "O") (pinfunction "Pin_5") (pintype "passive") (tstamp 8fc4ddae-5e4b-4a67-badc-655cf6d7285b))
-    (model "${KICAD6_3DMODEL_DIR}/Connector_PinHeader_2.54mm.3dshapes/PinHeader_1x05_P2.54mm_Vertical.wrl" hide
-      (offset (xyz 0 0 0))
-      (scale (xyz 1 1 1))
-      (rotate (xyz 0 0 0))
-    )
   )
 
   (footprint "RevK:Hidden" (layer "B.Cu")
