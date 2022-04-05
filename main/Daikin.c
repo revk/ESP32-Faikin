@@ -49,8 +49,9 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	s8(delta10,10)		\
-	s8(offset10,5)		\
+	s8(range10,10)		\
+	s8(offset10,10)		\
+	s8(switching10,5)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -588,8 +589,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
             max = strtof(val, NULL);
          if (!strcmp(tag, "temp"))
          {
-            min = strtof(val, NULL) - (float) delta10 / 20.0;
-            max = min + (float) delta10 / 10.0;
+            min = strtof(val, NULL) - (float) range10 / 20.0;
+            max = min + (float) range10 / 10.0;
          }
          t = jo_skip(j);
       }
@@ -842,6 +843,10 @@ void app_main()
                remote = home;
             float min = daikin.acmin;
             float max = daikin.acmax;
+            if (daikin.compressor == 1)
+               max += switching10 / 10.0;       // Switching overshoot allowed
+            else
+               min -= switching10 / 10.0;
             if (!isnan(min) && min > remote)
             {                   // Heating
                daikin_set_e(mode, "H");
