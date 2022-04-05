@@ -49,7 +49,8 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	s8(delta10,5)		\
+	s8(delta10,10)		\
+	s8(offset10,5)		\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -587,8 +588,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
             max = strtof(val, NULL);
          if (!strcmp(tag, "temp"))
          {
-            min = strtof(val, NULL) - delta10 / 10.0;
-            max = min + delta10 / 5.0;
+            min = strtof(val, NULL) - (float) delta10 / 20.0;
+            max = min + (float) delta10 / 10.0;
          }
          t = jo_skip(j);
       }
@@ -844,11 +845,11 @@ void app_main()
             if (!isnan(min) && min > remote)
             {                   // Heating
                daikin_set_e(mode, "H");
-               daikin_set_t(temp, min + home - remote);
+               daikin_set_t(temp, min + home - remote - offset10 / 10.0);
             } else if (!isnan(max) && max < remote)
             {                   // Cooling
                daikin_set_e(mode, "C");
-               daikin_set_t(temp, max + home - remote);
+               daikin_set_t(temp, max + home - remote + offset10 / 10.0);
             }
          }
       }
