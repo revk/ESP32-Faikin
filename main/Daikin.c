@@ -592,7 +592,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          }
          t = jo_skip(j);
       }
-      if (min == NAN && max == NAN)
+      if (isnan(min) && isnan(max))
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       else
          jo_bool(s, "power", daikin.power);     // Dummy so not an error... Messy
@@ -833,19 +833,19 @@ void app_main()
             daikin.control_changed = 0; // Give up on changes
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
-         if (daikin.power && (daikin.acmin != NAN || daikin.acmax != NAN))
+         if (daikin.power && (!isnan(daikin.acmin) || !isnan(daikin.acmax)))
          {                      // Local controls
             float home = daikin.home;   // A/C view of current temp
             float remote = daikin.achome;       // Out view of current temp
-            if (remote == NAN)  // We don't have one, so treat as same as A/C view
+            if (isnan(remote))  // We don't have one, so treat as same as A/C view
                remote = home;
             float min = daikin.acmin;
             float max = daikin.acmax;
-            if (min != NAN && min > remote)
+            if (!isnan(min) && min > remote)
             {                   // Heating
                daikin_set_e(mode, "H");
                daikin_set_t(temp, min + home - remote);
-            } else if (max != NAN && max < remote)
+            } else if (!isnan(max) && max < remote)
             {                   // Cooling
                daikin_set_e(mode, "C");
                daikin_set_t(temp, max + home - remote);
