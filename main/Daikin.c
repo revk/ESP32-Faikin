@@ -840,7 +840,7 @@ void app_main()
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
          if (daikin.power && (!isnan(daikin.acmin) || !isnan(daikin.acmax)))
          {                      // Local controls
-            if (daikin.achome + actimeout < uptime())
+            if (daikin.aclast + actimeout < uptime())
                daikin.achome = NAN;    // Timed out
             float home = daikin.home;   // A/C view of current temp
             float remote = daikin.achome;       // Out view of current temp
