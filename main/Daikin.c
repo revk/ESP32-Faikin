@@ -570,32 +570,30 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       float home = NAN;
       float min = NAN;
       float max = NAN;
-      if (jo_here(j) == JO_OBJECT)
+      jo_type_t t = jo_next(j); // Start object
+      while (t == JO_TAG)
       {
-         jo_type_t t = jo_next(j);      // Start object
-         while (t == JO_TAG)
+         char tag[20] = "",
+             val[20] = "";
+         jo_strncpy(j, tag, sizeof(tag));
+         t = jo_next(j);
+         jo_strncpy(j, val, sizeof(val));
+         if (!strcmp(tag, "home"))
+            home = strtof(val, NULL);
+         if (!strcmp(tag, "min"))
+            min = strtof(val, NULL);
+         if (!strcmp(tag, "max"))
+            max = strtof(val, NULL);
+         if (!strcmp(tag, "temp"))
          {
-            char tag[20] = "",
-                val[20] = "";
-            jo_strncpy(j, tag, sizeof(tag));
-            t = jo_next(j);
-            jo_strncpy(j, val, sizeof(val));
-            if (!strcmp(tag, "home"))
-               home = strtof(val, NULL);
-            if (!strcmp(tag, "min"))
-               min = strtof(val, NULL);
-            if (!strcmp(tag, "max"))
-               max = strtof(val, NULL);
-            if (!strcmp(tag, "temp"))
-            {
-               min = strtof(val, NULL) - 0.5;
-               max = min + 1;
-            }
-
-            t = jo_skip(j);
+            min = strtof(val, NULL) - 0.5;
+            max = min + 1;
          }
-      } else
-         jo_string(s, "mode", "A");     // Simply setting auto
+
+         t = jo_skip(j);
+      }
+      if (min == NAN && max == NAN)
+         jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       daikin.achome = home;
       daikin.acmin = min;
       daikin.acmax = max;
@@ -833,6 +831,22 @@ void app_main()
             daikin.control_changed = 0; // Give up on changes
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
+         if (daikin.acmin != NAN || daikin.acmax != NAN)
+         {                      // Local controls
+            float home = daikin.home;   // A/C view of current temp
+            float remote = daikin.achome;       // Out view of current temp
+            if (remote == NAN)  // We don't have one, so treat as same as A/C view
+               remote = home;
+            if (daikin.acmin != NAN && daikin.acmin > remote)
+            {                   // Heating
+               daikin_set_e(mode, "H");
+               daikin_set_t(temp, daikin.acmin + home - remote);
+            } else if (daikin.acmax != NAN && daikin.acmax < remote)
+            {                   // Cooling
+               daikin_set_e(mode, "C");
+               daikin_set_t(temp, daikin.acmax + home - remote);
+            }
+         }
       }
       while (daikin.talking);
    }
