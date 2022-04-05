@@ -886,7 +886,7 @@ void app_main()
                jo_t j = jo_object_alloc();
                uint8_t hot = daikin.compressor == 1;
                float temp = daikin.achome;
-               if (temp == NAN)
+               if (isnan(temp))
                   temp = daikin.home;
                {                // Timestamp
                   struct tm tm;
