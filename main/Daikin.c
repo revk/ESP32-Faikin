@@ -893,15 +893,18 @@ void app_main()
                   gmtime_r(&now, &tm);
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
-               if (daikin.power && !isnan(daikin.acmin) && !isnan(daikin.acmax))
+               if (daikin.power)
                {
-                  float target = (daikin.acmin + daikin.acmax) / 2;
-                  jo_litf(j, "temp-target", "%.1f", target);
+                  jo_bool(j, "heat", hot);
+                  if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
+                  {
+                     float target = (daikin.acmin + daikin.acmax) / 2;
+                     jo_litf(j, "temp-target", "%.1f", target);
+                  } else if (!isnan(daikin.temp))
+                     jo_litf(j, "temp-target", "%.1f", daikin.temp);
                }
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
-               if (daikin.power)
-                  jo_bool(j, "heat", hot);
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
                revk_mqtt_send_clients(NULL, 1, topic, &j, 1);
