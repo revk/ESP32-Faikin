@@ -104,7 +104,10 @@ struct {
 #undef	t
 #undef	e
 #undef	s
-    uint8_t talking:1;          // We are getting answers
+   float acmin;                 // Min (heat to this) - NAN to leave to ac
+   float acmax;                 // Max (cool to this) - NAN to leave to ac
+   float achome;                // Consider this to be reference temperature - NAN to leave to ac
+   uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
 } daikin;
@@ -515,8 +518,8 @@ const char *daikin_control(jo_t j)
    while (t == JO_TAG)
    {
       const char *err = NULL;
-      char tag[20],
-       val[20];
+      char tag[20] = "",
+          val[20] = "";
       jo_strncpy(j, tag, sizeof(tag));
       t = jo_next(j);
       jo_strncpy(j, val, sizeof(val));
@@ -563,7 +566,40 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    if (!strcmp(suffix, "off"))
       jo_bool(s, "power", 0);
    if (!strcmp(suffix, "auto"))
-      jo_string(s, "mode", "A");
+   {
+      float home = NAN;
+      float min = NAN;
+      float max = NAN;
+      if (jo_here(j) == JO_OBJECT)
+      {
+         jo_type_t t = jo_next(j);      // Start object
+         while (t == JO_TAG)
+         {
+            char tag[20] = "",
+                val[20] = "";
+            jo_strncpy(j, tag, sizeof(tag));
+            t = jo_next(j);
+            jo_strncpy(j, val, sizeof(val));
+            if (!strcmp(tag, "home"))
+               home = strtof(val, NULL);
+            if (!strcmp(tag, "min"))
+               min = strtof(val, NULL);
+            if (!strcmp(tag, "max"))
+               max = strtof(val, NULL);
+            if (!strcmp(tag, "temp"))
+            {
+               min = strtof(val, NULL) - 0.5;
+               max = min + 1;
+            }
+
+            t = jo_skip(j);
+         }
+      } else
+         jo_string(s, "mode", "A");     // Simply setting auto
+      daikin.achome = home;
+      daikin.acmin = min;
+      daikin.acmax = max;
+   }
    if (!strcmp(suffix, "heat"))
       jo_string(s, "mode", "H");
    if (!strcmp(suffix, "cool"))
