@@ -49,6 +49,7 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
+	s8(delta10,5)		\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -586,14 +587,15 @@ const char *app_callback(int client, const char *prefix, const char *target, con
             max = strtof(val, NULL);
          if (!strcmp(tag, "temp"))
          {
-            min = strtof(val, NULL) - 0.5;
-            max = min + 1;
+            min = strtof(val, NULL) - delta10 / 10.0;
+            max = min + delta10 / 5.0;
          }
-
          t = jo_skip(j);
       }
       if (min == NAN && max == NAN)
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
+      else
+         jo_bool(s, "power", daikin.power);     // Dummy so not an error... Messy
       daikin.achome = home;
       daikin.acmin = min;
       daikin.acmax = max;
@@ -831,20 +833,22 @@ void app_main()
             daikin.control_changed = 0; // Give up on changes
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
-         if (daikin.acmin != NAN || daikin.acmax != NAN)
+         if (daikin.power && (daikin.acmin != NAN || daikin.acmax != NAN))
          {                      // Local controls
             float home = daikin.home;   // A/C view of current temp
             float remote = daikin.achome;       // Out view of current temp
             if (remote == NAN)  // We don't have one, so treat as same as A/C view
                remote = home;
-            if (daikin.acmin != NAN && daikin.acmin > remote)
+            float min = daikin.acmin;
+            float max = daikin.acmax;
+            if (min != NAN && min > remote)
             {                   // Heating
                daikin_set_e(mode, "H");
-               daikin_set_t(temp, daikin.acmin + home - remote);
-            } else if (daikin.acmax != NAN && daikin.acmax < remote)
+               daikin_set_t(temp, min + home - remote);
+            } else if (max != NAN && max < remote)
             {                   // Cooling
                daikin_set_e(mode, "C");
-               daikin_set_t(temp, daikin.acmax + home - remote);
+               daikin_set_t(temp, max + home - remote);
             }
          }
       }
