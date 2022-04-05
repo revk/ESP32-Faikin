@@ -856,18 +856,25 @@ void app_main()
                max += switching10 / 10.0;       // Switching overshoot allowed
             else
                min -= switching10 / 10.0;
+            float set = min + home - remote;
             if (!isnan(min) && min > remote)
             {                   // Heating
                daikin_set_e(mode, "H");
-               daikin_set_t(temp, min + home - remote);
             } else if (!isnan(max) && max < remote)
             {                   // Cooling
                daikin_set_e(mode, "C");
-               daikin_set_t(temp, min + home - remote);
             } else if (daikin.compressor == 1)
-               daikin_set_t(temp, min + home - remote - offset10 / 10.0);       // Heating and in range so back off
+               set = min + home - remote - offset10 / 10.0;     // Heating and in range so back off
             else if (daikin.compressor == 2)
-               daikin_set_t(temp, max + home - remote + offset10 / 10.0);       // Cooling and in range so back off
+               set = max + home - remote + offset10 / 10.0;     // Cooling and in range so back off
+            // Reusing min and max
+            min = 16.0;
+            max = 32.0;
+            if (set < min)
+               set = min;
+            if (set > max)
+               set = max;
+            daikin_set_t(temp, set);
          }
          if (reporting && !revk_link_down())
          {                      // Environment logging
