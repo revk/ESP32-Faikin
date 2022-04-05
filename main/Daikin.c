@@ -881,14 +881,16 @@ void app_main()
                float temp = daikin.achome;
                if (temp == NAN)
                   temp = daikin.home;
-               float target = hot ? daikin.acmin : daikin.acmax;
                {                // Timestamp
                   struct tm tm;
                   gmtime_r(&now, &tm);
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
-               if (daikin.power && !isnan(target))
+               if (daikin.power && !isnan(daikin.acmin) && !isnan(daikin.acmax))
+               {
+                  float target = (daikin.acmin + daikin.acmax) / 2;
                   jo_litf(j, "temp-target", "%.1f", target);
+               }
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
                if (daikin.power)
