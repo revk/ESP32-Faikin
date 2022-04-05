@@ -52,6 +52,7 @@ const char TAG[] = "Daikin";
 	s8(range10,10)		\
 	s8(offset10,10)		\
 	s8(switching10,5)	\
+	u32(actimeout,600)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -110,6 +111,7 @@ struct {
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Consider this to be reference temperature - NAN to leave to ac
+   uint32_t aclast;             // Last time we got an update to achome
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -601,6 +603,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.achome = home;
       daikin.acmin = min;
       daikin.acmax = max;
+      daikin.aclast = uptime();
    }
    if (!strcmp(suffix, "heat"))
       jo_string(s, "mode", "H");
@@ -837,6 +840,8 @@ void app_main()
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
          if (daikin.power && (!isnan(daikin.acmin) || !isnan(daikin.acmax)))
          {                      // Local controls
+            if (daikin.achome + actimeout < uptime())
+               daikin.achome = NAN;    // Timed out
             float home = daikin.home;   // A/C view of current temp
             float remote = daikin.achome;       // Out view of current temp
             if (isnan(remote))  // We don't have one, so treat as same as A/C view
