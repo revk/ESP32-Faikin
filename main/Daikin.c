@@ -53,6 +53,7 @@ const char TAG[] = "Daikin";
 	s8(offset10,10)		\
 	s8(switching10,5)	\
 	u32(actimeout,600)	\
+	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -637,6 +638,9 @@ void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
    daikin.status_known = CONTROL_online;
+   daikin.achome = NAN;
+   daikin.acmin = NAN;
+   daikin.acmax = NAN;
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
@@ -841,7 +845,7 @@ void app_main()
          if (daikin.power && (!isnan(daikin.acmin) || !isnan(daikin.acmax)))
          {                      // Local controls
             if (daikin.aclast + actimeout < uptime())
-               daikin.achome = NAN;    // Timed out
+               daikin.achome = NAN;     // Timed out
             float home = daikin.home;   // A/C view of current temp
             float remote = daikin.achome;       // Out view of current temp
             if (isnan(remote))  // We don't have one, so treat as same as A/C view
@@ -864,6 +868,35 @@ void app_main()
                daikin_set_t(temp, min + home - remote - offset10 / 10.0);       // Heating and in range so back off
             else if (daikin.compressor == 2)
                daikin_set_t(temp, max + home - remote + offset10 / 10.0);       // Cooling and in range so back off
+         }
+         if (reporting && !revk_link_down())
+         {                      // Environment logging
+            time_t now = time(0);
+            static time_t last = 0;
+            if (now / reporting != last / reporting)
+            {
+               last = now;
+               jo_t j = jo_object_alloc();
+               uint8_t hot = daikin.compressor == 1;
+               float temp = daikin.achome;
+               if (temp == NAN)
+                  temp = daikin.home;
+               float target = hot ? daikin.acmin : daikin.acmax;
+               {                // Timestamp
+                  struct tm tm;
+                  gmtime_r(&now, &tm);
+                  jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
+               }
+               if (daikin.power && !isnan(target))
+                  jo_litf(j, "temp-target", "%.1f", target);
+               if (!isnan(temp))
+                  jo_litf(j, "temp", "%.1f", temp);
+               if (daikin.power)
+                  jo_bool(j, "heat", hot);
+               char topic[100];
+               snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
+               revk_mqtt_send_clients(NULL, 1, topic, &j, 1);
+            }
          }
       }
       while (daikin.talking);
