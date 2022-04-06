@@ -49,15 +49,15 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(offset10,12)		\
-	u8l(switch10,5)	\
+	u8l(offset10,12)	\
+	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
-#define u32(n,d)        uint32_t n;
+#define u32(n,d) uint32_t n;
 #define s8(n,d) int8_t n;
 #define u8(n,d) uint8_t n;
 #define u8l(n,d) uint8_t n;
