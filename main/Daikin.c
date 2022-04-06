@@ -257,12 +257,6 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case 'I':                // Guess
          set_temp(liquid, t);
          break;
-//2022-04-04 16:04:43.783216:info/GuestAC/rx {"cmd":"SH","payload":"3039312B","text":"091+"}
-//2022-04-04 16:04:43.783246:info/GuestAC/rx {"cmd":"SN","payload":"3130302B","text":"100+"}
-//2022-04-04 16:04:43.989247:info/GuestAC/rx {"cmd":"SI","payload":"3030322B","text":"002+"}
-//2022-04-04 16:04:43.989267:info/GuestAC/rx {"cmd":"Sa","payload":"3034312B","text":"041+"}
-//2022-04-04 16:04:44.186024:info/GuestAC/rx {"cmd":"SX","payload":"3031322B","text":"012+"}
-         // TODO
       }
    }
 }
@@ -825,7 +819,8 @@ void app_main()
 #undef  t
 #undef  e
 #undef  s
-             xSemaphoreGive(daikin.mutex);
+             jo_bool(j, "auto-override", daikin.acvalid ? 1 : 0);
+            xSemaphoreGive(daikin.mutex);
             revk_state("status", &j);
          }
          if (!daikin.control_changed)
@@ -862,9 +857,7 @@ void app_main()
                float current = daikin.achome;   // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
-               float reference = daikin.inlet;  // We assume it is using inlet as reference
-               if (isnan(reference))
-                  reference = daikin.home;
+               float reference = daikin.home;   // We assume it is using home as reference
                if (daikin.compressor == 1)
                   max += switch10 / 10.0;       // Switching overshoot allowed
                else
@@ -875,11 +868,15 @@ void app_main()
                   if (!hot)
                      daikin.acswitch = now + switchtime;
                   daikin_set_e(mode, "H");
+                  set = max + reference - current - offset10 / 10.0;    // Ensure heating
                } else if (!isnan(max) && max < current && (!hot || daikin.acswitch < now))
                {                // Cooling
                   if (hot)
                      daikin.acswitch = now + switchtime;
                   daikin_set_e(mode, "C");
+                  set = max + reference - current - offset10 / 10.0;    // Ensure cooling
+		  // TODO can we use liquid temp - work out we are going to overrun soon?
+		  // TODO can we use trajectory of temp to work out we are going to overrun soon?
                } else if (daikin.compressor == 1)
                   set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
                else if (daikin.compressor == 2)
@@ -899,27 +896,25 @@ void app_main()
             {
                last = now;
                jo_t j = jo_object_alloc();
-               uint8_t hot = daikin.compressor == 1;
-               float temp = daikin.achome;
-               if (isnan(temp))
-                  temp = daikin.home;
                {                // Timestamp
                   struct tm tm;
                   gmtime_r(&now, &tm);
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
-               if (daikin.power)
-               {
-                  jo_bool(j, "heat", hot);
-                  if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
-                  {
-                     float target = (hot ? daikin.acmin : daikin.acmax);
-                     jo_litf(j, "temp-target", "%.3f", target);
-                  } else if (!isnan(daikin.temp))
-                     jo_litf(j, "temp-target", "%.3f", daikin.temp);
-               }
+               uint8_t hot = daikin.compressor == 1;
+               float temp = daikin.achome;
+               if (isnan(temp))
+                  temp = daikin.home;
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
+               if (daikin.power)
+                  jo_bool(j, "heat", hot);
+               if (daikin.acvalid)
+               {                // Our control...
+                  float target = (hot ? daikin.acmin : daikin.acmax);
+                  jo_litf(j, "temp-target", "%.3f", target);
+               } else if (!isnan(daikin.temp))
+                  jo_litf(j, "temp-target", "%.1f", daikin.temp);       // reference temp
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
                revk_mqtt_send_clients(NULL, 1, topic, &j, 1);
