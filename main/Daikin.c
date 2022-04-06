@@ -55,7 +55,6 @@ const char TAG[] = "Daikin";
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
-	u32(forecast,60)	\
 	u8(fanstep,2)		\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
@@ -117,10 +116,7 @@ struct {
 #undef	s
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
-   float achome1;               // Reported home temp from external source (last reading)
-   uint32_t actime1;            // Time of achome1
-   float achome2;               // Reported home temp from external source (reading before last)
-   uint32_t actime2;            // Time of achome2
+   float achome;                // Reported home temp from external source
    uint32_t acvalid;            // uptime to which auto mode is valid
    uint32_t acswitch;           // uptime to which next switch allowed
    uint32_t acfan;              // uptime when which fan change should apply
@@ -619,15 +615,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-      uint32_t now = uptime();
       daikin.acvalid = valid;
-      if (!isnan(daikin.achome1) || now - daikin.actime1 > forecast)
-      {                         // Change - and sensible time, else we can extrapolate on a short time far to easily
-         daikin.achome2 = daikin.achome1;
-         daikin.actime2 = daikin.actime1;
-         daikin.achome1 = home;
-         daikin.actime1 = now;
-      }
+      daikin.achome = home;
       daikin.acmin = min;
       daikin.acmax = max;
       xSemaphoreGive(daikin.mutex);
@@ -680,7 +669,7 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
    else
       httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
-   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome1) ? daikin.home : daikin.achome1);
+   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
    httpd_resp_sendstr_chunk(req, temp);
    if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
    {
@@ -704,8 +693,7 @@ void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
    daikin.status_known = CONTROL_online;
-   daikin.achome1 = NAN;
-   daikin.achome2 = NAN;
+   daikin.achome = NAN;
    daikin.acmin = NAN;
    daikin.acmax = NAN;
    revk_boot(&app_callback);
@@ -952,17 +940,11 @@ void app_main()
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                float min = daikin.acmin;
                float max = daikin.acmax;
-               float home1 = daikin.achome1;
-               float home2 = daikin.achome2;
-               uint32_t time1 = daikin.actime1;
-               uint32_t time2 = daikin.actime2;
+               float current = daikin.achome;
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.compressor == 1;
-               float current = home1;   // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
-               else if (forecast && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
-                  current = home1 + (home1 - home2) * (now + forecast - time1) / (time1 - time2);
                float reference = daikin.home;   // We assume it is using home as reference
                if (daikin.compressor == 1)
                   max += switch10 / 10.0;       // Switching overshoot allowed
@@ -1025,18 +1007,13 @@ void app_main()
                uint32_t valid = daikin.acvalid;
                float min = daikin.acmin;
                float max = daikin.acmax;
-               float home1 = daikin.achome1;
-               float home2 = daikin.achome2;
-               uint32_t time1 = daikin.actime1;
-               uint32_t time2 = daikin.actime2;
+               float home = daikin.achome;
                xSemaphoreGive(daikin.mutex);
-               float temp = home1;
+               float temp = home;
                if (!valid || isnan(temp))
                   temp = daikin.home;
-               else if (now > time1 && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
-                  temp = home1 + (home1 - home2) * (now - time1) / (time1 - time2);
                if (!isnan(temp))
-                  jo_litf(j, "temp", "%.3f", temp);
+                  jo_litf(j, "temp", "%.1f", temp);
                if (daikin.power)
                   jo_bool(j, "heat", hot);
                if (valid)
