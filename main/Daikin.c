@@ -49,10 +49,10 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	s8(range10,10)		\
-	s8(offset10,10)		\
-	s8(switching10,5)	\
-	u32(actimeout,600)	\
+	u8(offset10,10)		\
+	u8(switch10,5)	\
+	u32(switchtime,3600)	\
+	u32(autotime,600)	\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
@@ -112,7 +112,8 @@ struct {
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Consider this to be reference temperature - NAN to leave to ac
-   uint32_t aclast;             // Last time we got an update to achome
+   uint32_t acvalid;            // ac controls are valid up to this uptime
+   uint32_t acswitch;           //  switch is allowed after this uptime
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -576,35 +577,36 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       float home = NAN;
       float min = NAN;
       float max = NAN;
-      jo_type_t t = jo_next(j); // Start object
-      while (t == JO_TAG)
+      if (jo_here(j) == JO_OBJECT)
       {
-         char tag[20] = "",
-             val[20] = "";
-         jo_strncpy(j, tag, sizeof(tag));
-         t = jo_next(j);
-         jo_strncpy(j, val, sizeof(val));
-         if (!strcmp(tag, "home"))
-            home = strtof(val, NULL);
-         if (!strcmp(tag, "min"))
-            min = strtof(val, NULL);
-         if (!strcmp(tag, "max"))
-            max = strtof(val, NULL);
-         if (!strcmp(tag, "temp"))
+         jo_type_t t = jo_next(j);      // Start object
+         while (t == JO_TAG)
          {
-            min = strtof(val, NULL) - (float) range10 / 20.0;
-            max = min + (float) range10 / 10.0;
+            char tag[20] = "",
+                val[20] = "";
+            jo_strncpy(j, tag, sizeof(tag));
+            t = jo_next(j);
+            jo_strncpy(j, val, sizeof(val));
+            if (!strcmp(tag, "home"))
+               home = strtof(val, NULL);
+            if (!strcmp(tag, "min"))
+               min = strtof(val, NULL);
+            if (!strcmp(tag, "max"))
+               max = strtof(val, NULL);
+            if (!strcmp(tag, "temp"))
+               min = max = strtof(val, NULL);
+            t = jo_skip(j);
          }
-         t = jo_skip(j);
-      }
-      if (isnan(min) && isnan(max))
-         jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
-      else
+         daikin.acvalid = uptime() + autotime;
          jo_bool(s, "power", daikin.power);     // Dummy so not an error... Messy
+      } else
+      {
+         daikin.acvalid = 0;
+         jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
+      }
       daikin.achome = home;
       daikin.acmin = min;
       daikin.acmax = max;
-      daikin.aclast = uptime();
    }
    if (!strcmp(suffix, "heat"))
       jo_string(s, "mode", "H");
@@ -795,8 +797,9 @@ void app_main()
                ca[1] = 0x10 + daikin.mode;
                if (daikin.mode >= 1 && daikin.mode <= 3)
                {                // Temp
-                  ca[3] = daikin.temp;
-                  ca[4] = 0x80 + ((int) round(daikin.temp * 10)) % 10;
+                  int t = round(daikin.temp * 10);
+                  ca[3] = t / 10;
+                  ca[4] = 0x80 + (t % 10);
                }
                if (daikin.mode == 1 || daikin.mode == 2)
                   cb[0] = daikin.mode;
@@ -842,39 +845,51 @@ void app_main()
             daikin.control_changed = 0; // Give up on changes
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
-         if (daikin.power && (!isnan(daikin.acmin) || !isnan(daikin.acmax)))
-         {                      // Local controls
-            if (daikin.aclast + actimeout < uptime())
-               daikin.achome = NAN;     // Timed out
-            float home = daikin.home;   // A/C view of current temp
-            float remote = daikin.achome;       // Out view of current temp
-            if (isnan(remote))  // We don't have one, so treat as same as A/C view
-               remote = home;
+         if (daikin.power && daikin.acvalid)
+         {                      // Local auto controls
             float min = daikin.acmin;
             float max = daikin.acmax;
-            if (daikin.compressor == 1)
-               max += switching10 / 10.0;       // Switching overshoot allowed
-            else
-               min -= switching10 / 10.0;
-            float set = min + home - remote;
-            if (!isnan(min) && min > remote)
-            {                   // Heating
-               daikin_set_e(mode, "H");
-            } else if (!isnan(max) && max < remote)
-            {                   // Cooling
-               daikin_set_e(mode, "C");
-            } else if (daikin.compressor == 1)
-               set = min + home - remote - offset10 / 10.0;     // Heating and in range so back off
-            else if (daikin.compressor == 2)
-               set = max + home - remote + offset10 / 10.0;     // Cooling and in range so back off
-            // Reusing min and max
-            min = 16.0;
-            max = 32.0;
-            if (set < min)
-               set = min;
-            if (set > max)
-               set = max;
-            daikin_set_t(temp, set);
+            uint32_t now = uptime();
+            if (now > daikin.acvalid)
+            {                   // End of auto mode
+               daikin.acvalid = 0;
+               daikin_set_e(mode, "A");
+               if (!isnan(min) && !isnan(max))
+                  daikin_set_t(temp, (min + max) / 2);
+            } else
+            {                   // Auto mode
+               uint8_t hot = daikin.compressor == 1;
+               float current = daikin.achome;   // Out view of current temp
+               if (isnan(current))      // We don't have one, so treat as same as A/C view
+                  current = daikin.home;
+               float reference = daikin.inlet;  // We assume it is using inlet as reference
+               if (isnan(reference))
+                  reference = daikin.home;
+               if (daikin.compressor == 1)
+                  max += switch10 / 10.0;       // Switching overshoot allowed
+               else
+                  min -= switch10 / 10.0;
+               float set = min + reference - current;
+               if (!isnan(min) && min > current && (hot || daikin.acswitch < now))
+               {                // Heating
+                  if (!hot)
+                     daikin.acswitch = now + switchtime;
+                  daikin_set_e(mode, "H");
+               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch < now))
+               {                // Cooling
+                  if (hot)
+                     daikin.acswitch = now + switchtime;
+                  daikin_set_e(mode, "C");
+               } else if (daikin.compressor == 1)
+                  set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
+               else if (daikin.compressor == 2)
+                  set = max + reference - current + offset10 / 10.0;    // Cooling and in range so back off
+               if (set < 16)
+                  set = 16;
+               if (set > 32)
+                  set = 32;
+               daikin_set_t(temp, set);
+            }
          }
          if (reporting && !revk_link_down())
          {                      // Environment logging
@@ -898,10 +913,10 @@ void app_main()
                   jo_bool(j, "heat", hot);
                   if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
                   {
-                     float target = (daikin.acmin + daikin.acmax) / 2;
-                     jo_litf(j, "temp-target", "%.1f", target);
+                     float target = (hot ? daikin.acmin : daikin.acmax);
+                     jo_litf(j, "temp-target", "%.3f", target);
                   } else if (!isnan(daikin.temp))
-                     jo_litf(j, "temp-target", "%.1f", daikin.temp);
+                     jo_litf(j, "temp-target", "%.3f", daikin.temp);
                }
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
