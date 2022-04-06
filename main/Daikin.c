@@ -620,9 +620,12 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.acvalid = valid;
-      daikin.achome2 = daikin.achome1;
-      daikin.actime2 = daikin.actime1;
-      daikin.achome1 = home;
+      if (daikin.achome1 != home)
+      {                         // Change
+         daikin.achome2 = daikin.achome1;
+         daikin.actime2 = daikin.actime1;
+         daikin.achome1 = home;
+      }
       daikin.actime1 = uptime();
       daikin.acmin = min;
       daikin.acmax = max;
