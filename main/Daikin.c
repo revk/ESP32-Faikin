@@ -591,6 +591,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       float home = NAN;
       float min = NAN;
       float max = NAN;
+      uint32_t valid = 0;
       if (jo_here(j) == JO_OBJECT)
       {
          jo_type_t t = jo_next(j);      // Start object
@@ -611,14 +612,14 @@ const char *app_callback(int client, const char *prefix, const char *target, con
                min = max = strtof(val, NULL);
             t = jo_skip(j);
          }
-         daikin.acvalid = uptime() + autotime;
+         valid = uptime() + autotime;
          jo_bool(s, "power", daikin.power);     // Dummy so not an error... Messy
       } else
       {
-         daikin.acvalid = 0;
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      daikin.acvalid = valid;
       daikin.achome2 = daikin.achome1;
       daikin.actime2 = daikin.actime1;
       daikin.achome1 = home;
@@ -932,27 +933,32 @@ void app_main()
                 revk_error("failed-set", &j);
             daikin.control_changed = 0; // Give up on changes
          }
+         uint32_t now = uptime();
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
          if (daikin.power && daikin.acvalid)
          {                      // Local auto controls
-            xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-            float min = daikin.acmin;
-            float max = daikin.acmax;
-            uint32_t now = uptime();
             if (now > daikin.acvalid)
             {                   // End of auto mode
                daikin.acvalid = 0;
                daikin_set_e(mode, "A");
-               if (!isnan(min) && !isnan(max))
-                  daikin_set_t(temp, (min + max) / 2);
+               if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
+                  daikin_set_t(temp, (daikin.acmin + daikin.acmax) / 2);
             } else
             {                   // Auto mode
+               xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+               float min = daikin.acmin;
+               float max = daikin.acmax;
+               float home1 = daikin.achome1;
+               float home2 = daikin.achome2;
+               uint32_t time1 = daikin.actime1;
+               uint32_t time2 = daikin.actime2;
+               xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.compressor == 1;
-               float current = daikin.achome1;  // Out view of current temp
+               float current = home1;  // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
-               else if (forecast && !isnan(daikin.achome2) && daikin.achome1 > daikin.achome2 && (now - daikin.actime1) < (daikin.achome1 - daikin.achome2) * 2)
-                  current = daikin.achome1 + (daikin.achome1 - daikin.achome2) * (now + forecast - daikin.achome1) / (daikin.achome1 - daikin.achome2);
+               else if (forecast && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
+                  current = home1 + (home1 - home2) * (now + forecast - home1) / (time1 - time2);
                float reference = daikin.home;   // We assume it is using home as reference
                if (daikin.compressor == 1)
                   max += switch10 / 10.0;       // Switching overshoot allowed
@@ -996,42 +1002,48 @@ void app_main()
                   set = 32;
                daikin_set_t(temp, set);
             }
-            xSemaphoreGive(daikin.mutex);
          }
          if (reporting && !revk_link_down())
          {                      // Environment logging
-            time_t now = time(0);
+            time_t clock = time(0);
             static time_t last = 0;
-            if (now / reporting != last / reporting)
+            if (clock / reporting != last / reporting)
             {
-               xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-               last = now;
+               last = clock;
                jo_t j = jo_object_alloc();
                {                // Timestamp
                   struct tm tm;
-                  gmtime_r(&now, &tm);
+                  gmtime_r(&clock, &tm);
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
                uint8_t hot = daikin.compressor == 1;
-               float temp = daikin.achome1;
-               if (isnan(temp))
+               xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+	       uint32_t valid=daikin.acvalid;
+               float min = daikin.acmin;
+               float max = daikin.acmax;
+               float home1 = daikin.achome1;
+               float home2 = daikin.achome2;
+               uint32_t time1 = daikin.actime1;
+               uint32_t time2 = daikin.actime2;
+               xSemaphoreGive(daikin.mutex);
+               float temp = home1;
+               if (!valid || isnan(temp))
                   temp = daikin.home;
-               else if (now > daikin.achome1 && !isnan(daikin.achome2) && daikin.achome1 > daikin.achome2 && (now - daikin.actime1) < (daikin.achome1 - daikin.achome2) * 2)
-                  temp = daikin.achome1 + (daikin.achome1 - daikin.achome2) * (now - daikin.achome1) / (daikin.achome1 - daikin.achome2);
+               else if (now > home1 && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
+                  temp = home1 + (home1 - home2) * (now - home1) / (time1 - time2);
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.3f", temp);
                if (daikin.power)
                   jo_bool(j, "heat", hot);
-               if (daikin.acvalid)
+               if (valid)
                {                // Our control...
-                  float target = (hot ? daikin.acmin : daikin.acmax);
+                  float target = (hot ? min : max);
                   jo_litf(j, "temp-target", "%.3f", target);
                } else if (!isnan(daikin.temp))
                   jo_litf(j, "temp-target", "%.1f", daikin.temp);       // reference temp
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
                revk_mqtt_send_clients(NULL, 1, topic, &j, 1);
-               xSemaphoreGive(daikin.mutex);
             }
          }
       }
