@@ -54,6 +54,7 @@ const char TAG[] = "Daikin";
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
+	u8(fanstep,2)		\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
@@ -115,8 +116,9 @@ struct {
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Consider this to be reference temperature - NAN to leave to ac
-   uint32_t acvalid;            // ac controls are valid up to this uptime
-   uint32_t acswitch;           // uptime of last mode switch
+   uint32_t acvalid;            // uptime to which auto mode is valid
+   uint32_t acswitch;           // uptime to which next switch allowed
+   uint32_t acfan;              // uptime when which fan change should apply
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -869,32 +871,37 @@ void app_main()
                else
                   min -= switch10 / 10.0;
                float set = min + reference - current;
-               if (!isnan(min) && min > current && (hot || !daikin.acswitch || daikin.acswitch + switchtime < now))
+               if (!isnan(min) && min > current && (hot || daikin.acswitch < now))
                {                // Heating
                   if (!hot)
-                     daikin.acswitch = now;     // Switched
-                  if (daikin.acswitch + fantime < now && daikin.fan && daikin.fan < 5)
-                  {             // Increase fan
-                     daikin.acswitch = now;     // Restart time as fan increase
-                     daikin_set_v(fan, daikin.fan + (s21 ? 1 : 2));
-                  }
+                     daikin.acswitch = now + switchtime;        // Switched
                   daikin_set_e(mode, "H");
                   set = max + reference - current - offset10 / 10.0;    // Ensure heating
-               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch + switchtime < now))
+               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch < now))
                {                // Cooling
                   if (hot)
-                     daikin.acswitch = now;     // Switched
-                  if (daikin.acswitch + fantime < now && daikin.fan && daikin.fan < 5)
-                  {             // Increase fan
-                     daikin.acswitch = now;     // Restart time as fan increase
-                     daikin_set_v(fan, daikin.fan + (s21 ? 1 : 2));
-                  }
+                     daikin.acswitch = now + switchtime;        // Switched
                   daikin_set_e(mode, "C");
                   set = max + reference - current - offset10 / 10.0;    // Ensure cooling
                } else if (daikin.compressor == 1)
                   set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
                else if (daikin.compressor == 2)
                   set = max + reference - current + offset10 / 10.0;    // Cooling and in range so back off
+               // Fan logic
+               if ((!isnan(min) && min > current) || (!isnan(max) && max < current))
+               {                // Not at target
+                  if (daikin.fan && daikin.fan < 5)
+                  {             // can increase fan
+                     if (!daikin.acfan)
+                        daikin.acfan = now + fantime;   // Set time to increase
+                     else if (daikin.acfan < now)
+                     {          // Switch fan
+                        daikin.acfan = 0;
+                        daikin_set_v(fan, daikin.fan + fanstep);
+                     }
+                  }
+               } else
+                  daikin.acfan = 0;     // Don't switch fan as we hit temperature
                if (set < 16)
                   set = 16;
                if (set > 32)
