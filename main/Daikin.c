@@ -654,7 +654,7 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
    else
       httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
-   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", daikin.home);
+   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
    httpd_resp_sendstr_chunk(req, temp);
    if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
       snprintf(temp, sizeof(temp), "<p>Auto mode target %.1fC-%.1fC</p>", daikin.acmin, daikin.acmax);
