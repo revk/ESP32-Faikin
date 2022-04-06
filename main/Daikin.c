@@ -1034,13 +1034,6 @@ void app_main()
                   temp = daikin.home;
                else if (now > time1 && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
                   temp = home1 + (home1 - home2) * (now - time1) / (time1 - time2);
-               jo_int(j, "now", now);
-               jo_int(j, "time1", time1);
-               jo_int(j, "time2", time2);
-               if (!isnan(home1))
-                  jo_litf(j, "home1", "%.1f", home1);
-               if (!isnan(home2))
-                  jo_litf(j, "home2", "%.1f", home2);
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.3f", temp);
                if (daikin.power)
