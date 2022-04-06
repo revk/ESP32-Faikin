@@ -638,7 +638,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
 
 // --------------------------------------------------------------------------------
 // Web
-
 static esp_err_t web_root(httpd_req_t * req)
 {
    httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
@@ -652,11 +651,17 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, "<p>Powered off</p>");
    else if (daikin.compressor == 1)
       httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
-   httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
+   else
+      httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
    snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", daikin.home);
    httpd_resp_sendstr_chunk(req, temp);
-   snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
+   if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
+      snprintf(temp, sizeof(temp), "<p>Auto mode target %.1fC-%.1fC</p>", daikin.acmin, daikin.acmax);
+   else
+      snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
    httpd_resp_sendstr_chunk(req, temp);
+   // TODO login and cookie
+   // TODO web socket and js
    httpd_resp_sendstr_chunk(req, NULL);
    return ESP_OK;
 }
