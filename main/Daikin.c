@@ -55,6 +55,7 @@ const char TAG[] = "Daikin";
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
+	u32(forecast,60)	\
 	u8(fanstep,2)		\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
@@ -116,7 +117,10 @@ struct {
 #undef	s
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
-   float achome;                // Consider this to be reference temperature - NAN to leave to ac
+   float achome1;               // Reported home temp from external source (last reading)
+   uint32_t actime1;            // Time of achome1
+   float achome2;               // Reported home temp from external source (reading before last)
+   uint32_t actime2;            // Time of achome2
    uint32_t acvalid;            // uptime to which auto mode is valid
    uint32_t acswitch;           // uptime to which next switch allowed
    uint32_t acfan;              // uptime when which fan change should apply
@@ -614,9 +618,14 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          daikin.acvalid = 0;
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       }
-      daikin.achome = home;
+      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      daikin.achome2 = daikin.achome1;
+      daikin.actime2 = daikin.actime1;
+      daikin.achome1 = home;
+      daikin.actime1 = uptime();
       daikin.acmin = min;
       daikin.acmax = max;
+      xSemaphoreGive(daikin.mutex);
    }
    if (!strcmp(suffix, "heat"))
       jo_string(s, "mode", "H");
@@ -666,7 +675,7 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
    else
       httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
-   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
+   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome1) ? daikin.home : daikin.achome1);
    httpd_resp_sendstr_chunk(req, temp);
    if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
    {
@@ -690,7 +699,8 @@ void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
    daikin.status_known = CONTROL_online;
-   daikin.achome = NAN;
+   daikin.achome1 = NAN;
+   daikin.achome2 = NAN;
    daikin.acmin = NAN;
    daikin.acmax = NAN;
    revk_boot(&app_callback);
@@ -925,6 +935,7 @@ void app_main()
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
          if (daikin.power && daikin.acvalid)
          {                      // Local auto controls
+            xSemaphoreTake(daikin.mutex, portMAX_DELAY);
             float min = daikin.acmin;
             float max = daikin.acmax;
             uint32_t now = uptime();
@@ -937,10 +948,11 @@ void app_main()
             } else
             {                   // Auto mode
                uint8_t hot = daikin.compressor == 1;
-               float current = daikin.achome;   // Out view of current temp
+               float current = daikin.achome1;  // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
-               // TODO can we use trajectory of temp to work out we are going to overrun soon? predict current temp?
+               else if (forecast && !isnan(daikin.achome2) && daikin.achome1 > daikin.achome2 && (now - daikin.actime1) < (daikin.achome1 - daikin.achome2) * 2)
+                  current = daikin.achome1 + (daikin.achome1 - daikin.achome2) * (now + forecast - daikin.achome1) / (daikin.achome1 - daikin.achome2);
                float reference = daikin.home;   // We assume it is using home as reference
                if (daikin.compressor == 1)
                   max += switch10 / 10.0;       // Switching overshoot allowed
@@ -984,6 +996,7 @@ void app_main()
                   set = 32;
                daikin_set_t(temp, set);
             }
+            xSemaphoreGive(daikin.mutex);
          }
          if (reporting && !revk_link_down())
          {                      // Environment logging
@@ -991,6 +1004,7 @@ void app_main()
             static time_t last = 0;
             if (now / reporting != last / reporting)
             {
+               xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                last = now;
                jo_t j = jo_object_alloc();
                {                // Timestamp
@@ -999,11 +1013,13 @@ void app_main()
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
                uint8_t hot = daikin.compressor == 1;
-               float temp = daikin.achome;
+               float temp = daikin.achome1;
                if (isnan(temp))
                   temp = daikin.home;
+               else if (now > daikin.achome1 && !isnan(daikin.achome2) && daikin.achome1 > daikin.achome2 && (now - daikin.actime1) < (daikin.achome1 - daikin.achome2) * 2)
+                  temp = daikin.achome1 + (daikin.achome1 - daikin.achome2) * (now - daikin.achome1) / (daikin.achome1 - daikin.achome2);
                if (!isnan(temp))
-                  jo_litf(j, "temp", "%.1f", temp);
+                  jo_litf(j, "temp", "%.3f", temp);
                if (daikin.power)
                   jo_bool(j, "heat", hot);
                if (daikin.acvalid)
@@ -1015,6 +1031,7 @@ void app_main()
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
                revk_mqtt_send_clients(NULL, 1, topic, &j, 1);
+               xSemaphoreGive(daikin.mutex);
             }
          }
       }
