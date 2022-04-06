@@ -305,7 +305,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
          set_temp(inlet, t);
       if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0))
          set_temp(home, t);
-      if ((t = (int16_t) (payload[4] + (payload[4] << 8)) / 128.0))
+      if ((t = (int16_t) (payload[4] + (payload[5] << 8)) / 128.0))
          set_temp(liquid, t);
       if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0))
          set_temp(temp, t);
