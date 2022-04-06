@@ -39,7 +39,7 @@ const char TAG[] = "Daikin";
 	t(liquid)		\
 
 // Macros for setting values
-#define	daikin_set_b(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
+#define	daikin_set_v(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
@@ -49,10 +49,11 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(offset10,13)	\
+	u8l(offset10,15)	\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
+	u32(fantime,3600)	\
 	u32(reporting,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
@@ -115,7 +116,7 @@ struct {
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Consider this to be reference temperature - NAN to leave to ac
    uint32_t acvalid;            // ac controls are valid up to this uptime
-   uint32_t acswitch;           //  switch is allowed after this uptime
+   uint32_t acswitch;           // uptime of last mode switch
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -526,7 +527,7 @@ const char *daikin_control(jo_t j)
       jo_strncpy(j, tag, sizeof(tag));
       t = jo_next(j);
       jo_strncpy(j, val, sizeof(val));
-#define	b(name)		if(!strcmp(tag,#name)){if(t!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_b(name,t==JO_TRUE?1:0);}
+#define	b(name)		if(!strcmp(tag,#name)){if(t!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_v(name,t==JO_TRUE?1:0);}
 #define	t(name)		if(!strcmp(tag,#name)){if(t!=JO_NUMBER)err= "Expecting number";else err=daikin_set_t(name,jo_read_float(j));}
 #define	e(name,values)	if(!strcmp(tag,#name)){if(t!=JO_STRING)err= "Expecting string";else err=daikin_set_e(name,val);}
       accontrol
@@ -861,31 +862,39 @@ void app_main()
                float current = daikin.achome;   // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
+               // TODO can we use trajectory of temp to work out we are going to overrun soon? predict current temp?
                float reference = daikin.home;   // We assume it is using home as reference
                if (daikin.compressor == 1)
                   max += switch10 / 10.0;       // Switching overshoot allowed
                else
                   min -= switch10 / 10.0;
                float set = min + reference - current;
-               if (!isnan(min) && min > current && (hot || daikin.acswitch < now))
+               if (!isnan(min) && min > current && (hot || !daikin.acswitch || daikin.acswitch + switchtime < now))
                {                // Heating
                   if (!hot)
-                     daikin.acswitch = now + switchtime;
+                     daikin.acswitch = now;     // Switched
+                  if (daikin.acswitch + fantime < now && daikin.fan && daikin.fan < 5)
+                  {             // Increase fan
+                     daikin.acswitch = now;     // Restart time as fan increase
+                     daikin_set_v(fan, daikin.fan + (s21 ? 1 : 2));
+                  }
                   daikin_set_e(mode, "H");
                   set = max + reference - current - offset10 / 10.0;    // Ensure heating
-               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch < now))
+               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch + switchtime < now))
                {                // Cooling
                   if (hot)
-                     daikin.acswitch = now + switchtime;
+                     daikin.acswitch = now;     // Switched
+                  if (daikin.acswitch + fantime < now && daikin.fan && daikin.fan < 5)
+                  {             // Increase fan
+                     daikin.acswitch = now;     // Restart time as fan increase
+                     daikin_set_v(fan, daikin.fan + (s21 ? 1 : 2));
+                  }
                   daikin_set_e(mode, "C");
                   set = max + reference - current - offset10 / 10.0;    // Ensure cooling
-		  // TODO can we use liquid temp - work out we are going to overrun soon?
-		  // TODO can we use trajectory of temp to work out we are going to overrun soon?
                } else if (daikin.compressor == 1)
                   set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
                else if (daikin.compressor == 2)
                   set = max + reference - current + offset10 / 10.0;    // Cooling and in range so back off
-	       // TODO if not effective for a configurable time - turn up fan
                if (set < 16)
                   set = 16;
                if (set > 32)
