@@ -645,6 +645,7 @@ static esp_err_t web_root(httpd_req_t * req)
    if (*hostname)
       httpd_resp_sendstr_chunk(req, hostname);
    httpd_resp_sendstr_chunk(req, "</h1>");
+   // TODO offline mode to set SSID/password/MQTT
    // TODO dummy
    char temp[500];
    if (!daikin.power)
