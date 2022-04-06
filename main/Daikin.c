@@ -621,7 +621,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       uint32_t now = uptime();
       daikin.acvalid = valid;
-      if (daikin.achome1 != home && now - daikin.actime1 > forecast)
+      if (!isnan(daikin.achome1) || now - daikin.actime1 > forecast)
       {                         // Change - and sensible time, else we can extrapolate on a short time far to easily
          daikin.achome2 = daikin.achome1;
          daikin.actime2 = daikin.actime1;
