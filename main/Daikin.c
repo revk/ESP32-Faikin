@@ -193,7 +193,7 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
       daikin.status_known |= flag;
       daikin.status_changed = 1;
    }
-   if (round(*ptr * 10) == round(val * 10))
+   if (lroundf(*ptr * 10) == lroundf(val * 10))
    {                            // No change
       if (daikin.control_changed & flag)
       {
@@ -300,7 +300,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures - we assume 0000 is not set
-      int t;
+      float t;
       if ((t = (int16_t) (payload[0] + (payload[1] << 8)) / 128.0))
          set_temp(inlet, t);
       if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0))
@@ -825,7 +825,7 @@ void app_main()
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                temp[0] = daikin.power ? '1' : '0';
                temp[1] = ("64310002"[daikin.mode]);
-               temp[2] = 0x40 + (int) round((daikin.temp - 18.0) * 2);
+               temp[2] = 0x40 + lroundf((daikin.temp - 18.0) * 2);
                temp[3] = ("A34567Q"[daikin.fan]);
                daikin_s21_command('D', '1', 4, temp);
                xSemaphoreGive(daikin.mutex);
@@ -874,7 +874,7 @@ void app_main()
                ca[1] = 0x10 + daikin.mode;
                if (daikin.mode >= 1 && daikin.mode <= 3)
                {                // Temp
-                  int t = round(daikin.temp * 10);
+                  int t = lroundf(daikin.temp * 10);
                   ca[3] = t / 10;
                   ca[4] = 0x80 + (t % 10);
                }
