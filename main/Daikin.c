@@ -299,11 +299,16 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    {                            // We get all this from CA
    }
    if (cmd == 0xBD && len >= 29)
-   {                            // Looks like temperatures
-      set_temp(inlet, (int16_t) (payload[0] + (payload[1] << 8)) / 128.0);
-      set_temp(home, (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);
-      set_temp(liquid, (int16_t) (payload[4] + (payload[5] << 8)) / 128.0);
-      set_temp(temp, (int16_t) (payload[8] + (payload[9] << 8)) / 128.0);
+   {                            // Looks like temperatures - we assume 0000 is not set
+      int t;
+      if ((t = (int16_t) (payload[0] + (payload[1] << 8)) / 128.0))
+         set_temp(inlet, t);
+      if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0))
+         set_temp(home, t);
+      if ((t = (int16_t) (payload[4] + (payload[4] << 8)) / 128.0))
+         set_temp(liquid, t);
+      if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0))
+         set_temp(temp, t);
 #if 0
       if (debug)
       {
