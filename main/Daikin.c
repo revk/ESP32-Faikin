@@ -9,6 +9,7 @@ const char TAG[] = "Daikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include "esp_http_server.h"
 #include <math.h>
 
 // The following define the controls and status for the Daikin, using macros
@@ -635,6 +636,33 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    return ret;
 }
 
+// --------------------------------------------------------------------------------
+// Web
+
+static esp_err_t web_root(httpd_req_t * req)
+{
+   httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
+   httpd_resp_sendstr_chunk(req, "<html><body style='font-family:sans-serif;background:#8cf;'><h1>");
+   if (*hostname)
+      httpd_resp_sendstr_chunk(req, hostname);
+   httpd_resp_sendstr_chunk(req, "</h1>");
+   // TODO dummy
+   char temp[500];
+   if (!daikin.power)
+      httpd_resp_sendstr_chunk(req, "<p>Powered off</p>");
+   else if (daikin.compressor == 1)
+      httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
+   httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
+   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", daikin.home);
+   httpd_resp_sendstr_chunk(req, temp);
+   snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
+   httpd_resp_sendstr_chunk(req, temp);
+   httpd_resp_sendstr_chunk(req, NULL);
+   return ESP_OK;
+}
+
+// --------------------------------------------------------------------------------
+// Main
 void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
@@ -690,6 +718,22 @@ void app_main()
          jo_string(j, "description", esp_err_to_name(err));
          revk_error("uart", &j);
          return;
+      }
+   }
+
+   // Web interface
+   httpd_config_t config = HTTPD_DEFAULT_CONFIG();
+   httpd_handle_t server = NULL;
+   if (!httpd_start(&server, &config))
+   {
+      {
+         httpd_uri_t uri = {
+            .uri = "/",
+            .method = HTTP_GET,
+            .handler = web_root,
+            .user_ctx = NULL
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
       }
    }
 
