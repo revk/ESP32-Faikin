@@ -619,14 +619,15 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      uint32_t now = uptime();
       daikin.acvalid = valid;
-      if (daikin.achome1 != home)
+      if (daikin.achome1 != home && now - daikin.actime1 > forecast)
       {                         // Change
          daikin.achome2 = daikin.achome1;
          daikin.actime2 = daikin.actime1;
          daikin.achome1 = home;
       }
-      daikin.actime1 = uptime();
+      daikin.actime1 = now;
       daikin.acmin = min;
       daikin.acmax = max;
       xSemaphoreGive(daikin.mutex);
