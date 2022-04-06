@@ -49,7 +49,7 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(offset10,12)	\
+	u8l(offset10,13)	\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
