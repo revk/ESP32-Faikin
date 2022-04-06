@@ -954,7 +954,7 @@ void app_main()
                uint32_t time2 = daikin.actime2;
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.compressor == 1;
-               float current = home1;  // Out view of current temp
+               float current = home1;   // Out view of current temp
                if (isnan(current))      // We don't have one, so treat as same as A/C view
                   current = daikin.home;
                else if (forecast && !isnan(home2) && time1 > time2 && (now - time1) < (time1 - time2) * 2)
@@ -1018,7 +1018,7 @@ void app_main()
                }
                uint8_t hot = daikin.compressor == 1;
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-	       uint32_t valid=daikin.acvalid;
+               uint32_t valid = daikin.acvalid;
                float min = daikin.acmin;
                float max = daikin.acmax;
                float home1 = daikin.achome1;
