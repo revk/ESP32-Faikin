@@ -276,6 +276,11 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
    }
+   if (cmd == 0xAA && len >= 1)
+   {
+      if (!*payload)
+         daikin.talking = 0;    // Not ready
+   }
    if (cmd == 0xBA && len >= 20)
    {
       strncpy(daikin.model, (char *) payload, sizeof(daikin.model));
@@ -640,13 +645,15 @@ const char *app_callback(int client, const char *prefix, const char *target, con
 // Web
 static esp_err_t web_root(httpd_req_t * req)
 {
+   if (revk_link_down())
+      return revk_web_config(req);      // Direct to web set up
    httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
    httpd_resp_sendstr_chunk(req, "<html><body style='font-family:sans-serif;background:#8cf;'><h1>");
    if (*hostname)
       httpd_resp_sendstr_chunk(req, hostname);
    httpd_resp_sendstr_chunk(req, "</h1>");
-   // TODO offline mode to set SSID/password/MQTT
    // TODO dummy
+   httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    char temp[500];
    if (!daikin.power)
       httpd_resp_sendstr_chunk(req, "<p>Powered off</p>");
@@ -745,10 +752,12 @@ void app_main()
             .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
+      }
+      {
          httpd_uri_t uri = {
             .uri = "/wifi",
             .method = HTTP_GET,
-            .handler = web_root,
+            .handler = revk_web_config,
             .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
