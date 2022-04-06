@@ -657,8 +657,13 @@ static esp_err_t web_root(httpd_req_t * req)
    snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
    httpd_resp_sendstr_chunk(req, temp);
    if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
-      snprintf(temp, sizeof(temp), "<p>Auto mode target %.1fC-%.1fC</p>", daikin.acmin, daikin.acmax);
-   else
+   {
+      httpd_resp_sendstr_chunk(req, "<p>External control target ");
+      if (daikin.acmin == daikin.acmax)
+         snprintf(temp, sizeof(temp), "%.1fC</p>", daikin.acmin);
+      else
+         snprintf(temp, sizeof(temp), "<p>External control target %.1fC - %.1fC</p>", daikin.acmin, daikin.acmax);
+   } else
       snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
    httpd_resp_sendstr_chunk(req, temp);
    // TODO login and cookie
@@ -735,6 +740,13 @@ void app_main()
       {
          httpd_uri_t uri = {
             .uri = "/",
+            .method = HTTP_GET,
+            .handler = web_root,
+            .user_ctx = NULL
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
+         httpd_uri_t uri = {
+            .uri = "/wifi",
             .method = HTTP_GET,
             .handler = web_root,
             .user_ctx = NULL
