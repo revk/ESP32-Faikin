@@ -49,8 +49,8 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8(offset10,10)		\
-	u8(switch10,5)	\
+	u8l(offset10,12)		\
+	u8l(switch10,5)	\
 	u32(switchtime,3600)	\
 	u32(autotime,600)	\
 	u32(reporting,300)	\
@@ -60,6 +60,7 @@ const char TAG[] = "Daikin";
 #define u32(n,d)        uint32_t n;
 #define s8(n,d) int8_t n;
 #define u8(n,d) uint8_t n;
+#define u8l(n,d) uint8_t n;
 #define b(n) uint8_t n;
 #define bl(n) uint8_t n;
 #define s(n) char * n;
@@ -69,6 +70,7 @@ settings
 #undef u32
 #undef s8
 #undef u8
+#undef u8l
 #undef b
 #undef bl
 #undef s
@@ -644,12 +646,14 @@ void app_main()
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
 #define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
+#define u8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
 #define s(n) revk_register(#n,0,0,&n,NULL,0);
    settings
 #undef io
 #undef u32
 #undef s8
 #undef u8
+#undef u8l
 #undef b
 #undef bl
 #undef s
