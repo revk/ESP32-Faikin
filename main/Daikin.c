@@ -881,6 +881,7 @@ void app_main()
                   set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
                else if (daikin.compressor == 2)
                   set = max + reference - current + offset10 / 10.0;    // Cooling and in range so back off
+	       // TODO if not effective for a configurable time - turn up fan
                if (set < 16)
                   set = 16;
                if (set > 32)
