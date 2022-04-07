@@ -985,7 +985,7 @@ void app_main()
                else
                   set = max + reference - current + offset10 / 10.0;    // Cooling mode but apply positive offset to not actually cool any more than this
                // Check if we are approaching target or beyond it
-               if ((hot && current < min) || (!hot && current > max))
+               if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
                   if (fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
