@@ -53,7 +53,7 @@ const char TAG[] = "Daikin";
 	u8l(offset10,15)	\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
-	u32(switchdelay,1800)	\
+	u32(switchdelay,900)	\
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
