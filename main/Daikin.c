@@ -57,7 +57,7 @@ const char TAG[] = "Daikin";
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
-	u32(reporting,300)	\
+	u32(reporting,60)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
