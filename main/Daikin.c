@@ -966,7 +966,7 @@ void app_main()
                // Consider beyond limits - remember the limits have hysteresis applied
                if (min > current)
                {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to heating - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
@@ -974,7 +974,7 @@ void app_main()
                   set = max + reference - current + offset10 / 10.0;    // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to cooling - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
