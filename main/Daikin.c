@@ -1025,7 +1025,7 @@ void app_main()
                float home = daikin.achome;
                xSemaphoreGive(daikin.mutex);
                float temp = home;
-               if (!valid || (now > reporting && isnan(temp)))
+               if (now > reporting + 30 && (!valid || isnan(temp)))
                   temp = daikin.home;
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
@@ -1035,7 +1035,7 @@ void app_main()
                {                // Our control...
                   float target = (hot ? min : max);
                   jo_litf(j, "temp-target", "%.3f", target);
-               } else if (now > reporting && !isnan(daikin.temp))
+               } else if (now > reporting + 30 && !isnan(daikin.temp))
                   jo_litf(j, "temp-target", "%.1f", daikin.temp);       // reference temp
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
