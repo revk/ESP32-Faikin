@@ -53,6 +53,7 @@ const char TAG[] = "Daikin";
 	u8l(offset10,15)	\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
+	u32(switchdelay,900)	\
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
@@ -118,8 +119,9 @@ struct {
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Reported home temp from external source
    uint32_t acvalid;            // uptime to which auto mode is valid
-   uint32_t acswitch;           // uptime to which next switch allowed
-   uint32_t acfan;              // uptime when which fan change should apply
+   uint32_t acswitch;           // Last time we switched hot/cold
+   uint32_t acapproaching;      // Last time we were approaching target temp
+   uint32_t acbeyond;           // Last time we were at or beyond target temp
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -927,7 +929,7 @@ void app_main()
          }
          uint32_t now = uptime();
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
-         if (daikin.power && daikin.acvalid)
+         if (daikin.power && daikin.acvalid && !daikin.control_changed)
          {                      // Local auto controls
             if (now > daikin.acvalid)
             {                   // End of auto mode
@@ -937,56 +939,69 @@ void app_main()
                   daikin_set_t(temp, (daikin.acmin + daikin.acmax) / 2);
             } else
             {                   // Auto mode
+               // Get the settings atomically
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                float min = daikin.acmin;
                float max = daikin.acmax;
                float current = daikin.achome;
                xSemaphoreGive(daikin.mutex);
-               uint8_t hot = daikin.compressor == 1;
-               if (isnan(current))      // We don't have one, so treat as same as A/C view
+               uint8_t hot = (daikin.compressor == 1);  // Are we in heating mode?
+               // Current temperature
+               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
-               float reference = daikin.home;   // We assume it is using home as reference
-               if (daikin.compressor == 1)
-                  max += switch10 / 10.0;       // Switching overshoot allowed
+               // What the A/C is using as current temperature
+               float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
+               // Sensible limits in case some not set
+               if (isnan(min))
+                  min = 16;
+               if (isnan(max))
+                  max = 32;
+               // Apply hysteresis
+               if (hot)
+                  max += switch10 / 10.0;       // Overshoot for switching (heating)
                else
-                  min -= switch10 / 10.0;
-               float set = min + reference - current;
-               if (!isnan(min) && min > current && (hot || daikin.acswitch < now))
-               {                // Heating
-                  if (!hot)
-                     daikin.acswitch = now + switchtime;        // Switched
-                  daikin_set_e(mode, "H");
-                  set = max + reference - current - offset10 / 10.0;    // Ensure heating
-               } else if (!isnan(max) && max < current && (!hot || daikin.acswitch < now))
-               {                // Cooling
-                  if (hot)
-                     daikin.acswitch = now + switchtime;        // Switched
-                  daikin_set_e(mode, "C");
-                  set = max + reference - current - offset10 / 10.0;    // Ensure cooling
-               } else if (daikin.compressor == 1)
-                  set = min + reference - current - offset10 / 10.0;    // Heating and in range so back off
-               else if (daikin.compressor == 2)
-                  set = max + reference - current + offset10 / 10.0;    // Cooling and in range so back off
-               // Fan logic
-               if ((!isnan(min) && min > current) || (!isnan(max) && max < current))
-               {                // Not at target
-                  if (daikin.fan && daikin.fan < 5)
-                  {             // can increase fan
-                     if (!daikin.acfan)
-                        daikin.acfan = now + fantime;   // Set time to increase
-                     else if (daikin.acfan < now)
-                     {          // Switch fan
-                        daikin.acfan = 0;
-                        daikin_set_v(fan, daikin.fan + fanstep);
-                     }
+                  min -= switch10 / 10.0;       // Overshoot for switching (cooling)
+               // What do we want to set to
+               float set = min + reference - current;   // Where we will set the temperature
+               // Consider beyond limits - remember the limits have hysteresis applied
+               if (min > current)
+               {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
+                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  {             // Can we switch to heating - time limits applied
+                     daikin.acswitch = now;     // Switched
+                     daikin_set_e(mode, "H");
                   }
+                  set = max + reference - current + offset10 / 10.0;    // Ensure heating by applying A/C offset to force it
+               } else if (max < current)
+               {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
+                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  {             // Can we switch to cooling - time limits applied
+                     daikin.acswitch = now;     // Switched
+                     daikin_set_e(mode, "C");
+                  }
+                  set = max + reference - current - offset10 / 10.0;    // Ensure cooling by applying A/C offset to force it
+               } else if (hot)
+                  set = min + reference - current - offset10 / 10.0;    // Heating mode but apply negative offset to not actually heat any more than this
+               else
+                  set = max + reference - current + offset10 / 10.0;    // Cooling mode but apply positive offset to not actually cool any more than this
+               // Check if we are approaching target or beyond it
+               if ((hot && current < min) || (!hot && current > max))
+               {                // Approaching target - if we have been doing this too long, increase the fan
+                  daikin.acapproaching = now;
+                  if (fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
+                     daikin_set_v(fan, daikin.fan + fanstep);
                } else
-                  daikin.acfan = 0;     // Don't switch fan as we hit temperature
+               {                // Beyond target, but not yet switched - if we have been here too long and not switched we may reduce fan
+                  daikin.acbeyond = now;
+                  if (fanstep && fantime && daikin.acapproaching + fantime < now && daikin.fan && daikin.fan > 1)
+                     daikin_set_v(fan, daikin.fan - fanstep);
+               }
+               // Limit settings to acceptable values
                if (set < 16)
                   set = 16;
                if (set > 32)
                   set = 32;
-               daikin_set_t(temp, set);
+               daikin_set_t(temp, set); // Apply temperature setting
             }
          }
          if (reporting && !revk_link_down())
