@@ -32,9 +32,10 @@ const char TAG[] = "Daikin";
 // Daikin status
 #define acstatus		\
 	b(online)		\
-	e(compressor,XHC)	\
 	s(model,20)		\
 	t(home)			\
+	b(heat)			\
+	b(slave)		\
 	t(outside)		\
 	t(inlet)		\
 	t(liquid)		\
@@ -54,7 +55,7 @@ const char TAG[] = "Daikin";
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(switchdelay,900)	\
-	u32(autotime,600)	\
+	u32(controltime,600)	\
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
@@ -118,7 +119,7 @@ struct {
    float acmin;                 // Min (heat to this) - NAN to leave to ac
    float acmax;                 // Max (cool to this) - NAN to leave to ac
    float achome;                // Reported home temp from external source
-   uint32_t acvalid;            // uptime to which auto mode is valid
+   uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
    uint32_t acbeyond;           // Last time we were at or beyond target temp
@@ -293,8 +294,8 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(online, 1);
       set_val(power, payload[0]);
       set_val(mode, payload[1]);
-      set_val(compressor, payload[2]);
-      // set_temp(temp, payload[3] + 0.1 * (payload[4] & 0xF)); // From BD
+      set_val(heat, payload[2] == 1);
+      set_val(slave, payload[9]);
       set_val(fan, (payload[6] >> 4) & 7);
    }
    if (cmd == 0xCB && len >= 2)
@@ -576,6 +577,37 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    }
    if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
       daikin.status_changed = 1;        // Report status on connect
+   if (!strcmp(suffix, "control"))
+   {                            // Control, e.g. from environmental monitor
+      float home = NAN;
+      float min = NAN;
+      float max = NAN;
+      jo_type_t t = jo_next(j); // Start object
+      while (t == JO_TAG)
+      {
+         char tag[20] = "",
+             val[20] = "";
+         jo_strncpy(j, tag, sizeof(tag));
+         t = jo_next(j);
+         jo_strncpy(j, val, sizeof(val));
+         if (!strcmp(tag, "home"))
+            home = strtof(val, NULL);
+         if (!strcmp(tag, "min"))
+            min = strtof(val, NULL);
+         if (!strcmp(tag, "max"))
+            max = strtof(val, NULL);
+         if (!strcmp(tag, "temp"))
+            min = max = strtof(val, NULL);
+         t = jo_skip(j);
+      }
+      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+      daikin.controlvalid = uptime() + controltime;
+      daikin.achome = home;
+      daikin.acmin = min;
+      daikin.acmax = max;
+      xSemaphoreGive(daikin.mutex);
+      return "";
+   }
    jo_t s = jo_object_alloc();
    char value[20] = "";
    jo_strncpy(j, value, sizeof(value));
@@ -585,44 +617,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    if (!strcmp(suffix, "off"))
       jo_bool(s, "power", 0);
    if (!strcmp(suffix, "auto"))
-   {
-      float home = NAN;
-      float min = NAN;
-      float max = NAN;
-      uint32_t valid = 0;
-      if (jo_here(j) == JO_OBJECT)
-      {
-         jo_type_t t = jo_next(j);      // Start object
-         while (t == JO_TAG)
-         {
-            char tag[20] = "",
-                val[20] = "";
-            jo_strncpy(j, tag, sizeof(tag));
-            t = jo_next(j);
-            jo_strncpy(j, val, sizeof(val));
-            if (!strcmp(tag, "home"))
-               home = strtof(val, NULL);
-            if (!strcmp(tag, "min"))
-               min = strtof(val, NULL);
-            if (!strcmp(tag, "max"))
-               max = strtof(val, NULL);
-            if (!strcmp(tag, "temp"))
-               min = max = strtof(val, NULL);
-            t = jo_skip(j);
-         }
-         valid = uptime() + autotime;
-         jo_bool(s, "power", daikin.power);     // Dummy so not an error... Messy
-      } else
-      {
-         jo_string(s, "mode", "A");     // Simply setting auto mode on indoor unit
-      }
-      xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-      daikin.acvalid = valid;
-      daikin.achome = home;
-      daikin.acmin = min;
-      daikin.acmax = max;
-      xSemaphoreGive(daikin.mutex);
-   }
+      jo_string(s, "mode", "A");
    if (!strcmp(suffix, "heat"))
       jo_string(s, "mode", "H");
    if (!strcmp(suffix, "cool"))
@@ -667,13 +662,13 @@ static esp_err_t web_root(httpd_req_t * req)
    char temp[500];
    if (!daikin.power)
       httpd_resp_sendstr_chunk(req, "<p>Powered off</p>");
-   else if (daikin.compressor == 1)
+   else if (daikin.heat)
       httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
    else
       httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
    snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
    httpd_resp_sendstr_chunk(req, temp);
-   if (daikin.acvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
+   if (daikin.controlvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
    {
       httpd_resp_sendstr_chunk(req, "<p>External control target ");
       if (daikin.acmin == daikin.acmax)
@@ -907,7 +902,7 @@ void app_main()
 #undef  t
 #undef  e
 #undef  s
-             jo_bool(j, "auto-override", daikin.acvalid ? 1 : 0);
+             jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
             xSemaphoreGive(daikin.mutex);
             revk_state("status", &j);
          }
@@ -928,12 +923,12 @@ void app_main()
             daikin.control_changed = 0; // Give up on changes
          }
          uint32_t now = uptime();
-         revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.compressor == 1 ? "R" : "B");
-         if (daikin.power && daikin.acvalid && !daikin.control_changed)
+         revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
+         if (daikin.power && daikin.controlvalid && !daikin.control_changed)
          {                      // Local auto controls
-            if (now > daikin.acvalid)
+            if (now > daikin.controlvalid)
             {                   // End of auto mode
-               daikin.acvalid = 0;
+               daikin.controlvalid = 0;
                daikin_set_e(mode, "A");
                if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
                   daikin_set_t(temp, (daikin.acmin + daikin.acmax) / 2);
@@ -945,7 +940,7 @@ void app_main()
                float max = daikin.acmax;
                float current = daikin.achome;
                xSemaphoreGive(daikin.mutex);
-               uint8_t hot = (daikin.compressor == 1);  // Are we in heating mode?
+               uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
@@ -966,7 +961,7 @@ void app_main()
                // Consider beyond limits - remember the limits have hysteresis applied
                if (min > current)
                {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (!hot && (daikin.slave || !daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to heating - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
@@ -974,7 +969,7 @@ void app_main()
                   set = max + reference - current + offset10 / 10.0;    // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (hot && (daikin.slave || !daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to cooling - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
@@ -1017,9 +1012,9 @@ void app_main()
                   gmtime_r(&clock, &tm);
                   jo_stringf(j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                }
-               uint8_t hot = daikin.compressor == 1;
+               uint8_t hot = daikin.heat;
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-               uint32_t valid = daikin.acvalid;
+               uint32_t valid = daikin.controlvalid;
                float min = daikin.acmin;
                float max = daikin.acmax;
                float home = daikin.achome;
