@@ -1024,8 +1024,7 @@ void app_main()
                   temp = daikin.home;
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.3f", temp);
-               if (daikin.power)
-                  jo_bool(j, "heat", hot);
+               jo_bool(j, "heat", hot && daikin.power && !daikin.slave);
                if (valid)
                {                // Our control...
                   float target = (hot ? min : max);
