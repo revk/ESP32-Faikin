@@ -51,7 +51,8 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(offset10,15)	\
+	u8l(coolbias10,15)	\
+	u8l(heatbias10,20)	\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(switchdelay,900)	\
@@ -966,7 +967,7 @@ void app_main()
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
                   }
-                  set = max + reference - current + offset10 / 10.0;    // Ensure heating by applying A/C offset to force it
+                  set = max + reference - current + heatbias10 / 10.0;  // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
                   if (daikin.mode != 2 && (daikin.slave || !daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
@@ -974,22 +975,28 @@ void app_main()
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
                   }
-                  set = max + reference - current - offset10 / 10.0;    // Ensure cooling by applying A/C offset to force it
+                  set = max + reference - current - coolbias10 / 10.0;  // Ensure cooling by applying A/C offset to force it
                } else if (hot)
-                  set = min + reference - current - offset10 / 10.0;    // Heating mode but apply negative offset to not actually heat any more than this
+                  set = min + reference - current - heatbias10 / 10.0;  // Heating mode but apply negative offset to not actually heat any more than this
                else
-                  set = max + reference - current + offset10 / 10.0;    // Cooling mode but apply positive offset to not actually cool any more than this
+                  set = max + reference - current + coolbias10 / 10.0;  // Cooling mode but apply positive offset to not actually cool any more than this
                // Check if we are approaching target or beyond it
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
                   if (fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
+                  {
+                     daikin.acbeyond = now;     // Delay next fan
                      daikin_set_v(fan, daikin.fan + fanstep);
+                  }
                } else
                {                // Beyond target, but not yet switched - if we have been here too long and not switched we may reduce fan
                   daikin.acbeyond = now;
                   if (fanstep && fantime && daikin.acapproaching + fantime < now && daikin.fan && daikin.fan > 1)
+                  {
+                     daikin.acapproaching = now;        // Delay next fan
                      daikin_set_v(fan, daikin.fan - fanstep);
+                  }
                }
                // Limit settings to acceptable values
                if (set < 16)
