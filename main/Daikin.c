@@ -1023,7 +1023,7 @@ void app_main()
                if (now > reporting + 30 && (!valid || isnan(temp)))
                   temp = daikin.home;
                if (!isnan(temp))
-                  jo_litf(j, "temp", "%.1f", temp);
+                  jo_litf(j, "temp", "%.3f", temp);
                if (daikin.power)
                   jo_bool(j, "heat", hot);
                if (valid)
