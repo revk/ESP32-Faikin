@@ -57,7 +57,7 @@ const char TAG[] = "Daikin";
 	u32(autotime,600)	\
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
-	u32(reporting,300)	\
+	u32(reporting,60)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -966,7 +966,7 @@ void app_main()
                // Consider beyond limits - remember the limits have hysteresis applied
                if (min > current)
                {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (!hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to heating - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
@@ -974,7 +974,7 @@ void app_main()
                   set = max + reference - current + offset10 / 10.0;    // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now || !daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (hot && (!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
                   {             // Can we switch to cooling - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
@@ -985,7 +985,7 @@ void app_main()
                else
                   set = max + reference - current + offset10 / 10.0;    // Cooling mode but apply positive offset to not actually cool any more than this
                // Check if we are approaching target or beyond it
-               if ((hot && current < min) || (!hot && current > max))
+               if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
                   if (fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
@@ -1025,7 +1025,7 @@ void app_main()
                float home = daikin.achome;
                xSemaphoreGive(daikin.mutex);
                float temp = home;
-               if (!valid || (now > reporting && isnan(temp)))
+               if (now > reporting + 30 && (!valid || isnan(temp)))
                   temp = daikin.home;
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.1f", temp);
@@ -1035,7 +1035,7 @@ void app_main()
                {                // Our control...
                   float target = (hot ? min : max);
                   jo_litf(j, "temp-target", "%.3f", target);
-               } else if (now > reporting && !isnan(daikin.temp))
+               } else if (now > reporting + 30 && !isnan(daikin.temp))
                   jo_litf(j, "temp-target", "%.1f", daikin.temp);       // reference temp
                char topic[100];
                snprintf(topic, sizeof(topic), "state/Env/%s/data", hostname);
