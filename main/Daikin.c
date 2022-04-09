@@ -672,6 +672,7 @@ jo_t daikin_status(void)
 // Web
 static esp_err_t web_root(httpd_req_t * req)
 {
+   // TODO cookies
    if (revk_link_down())
       return revk_web_config(req);      // Direct to web set up
    httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
@@ -679,39 +680,62 @@ static esp_err_t web_root(httpd_req_t * req)
    if (*hostname)
       httpd_resp_sendstr_chunk(req, hostname);
    httpd_resp_sendstr_chunk(req, "</h1>");
-   // TODO dummy
-   httpd_resp_sendstr_chunk(req, "<div id=live>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
-   char temp[500];
-   if (!daikin.power)
-      httpd_resp_sendstr_chunk(req, "<p>Powered off</p>");
-   else if (daikin.heat)
-      httpd_resp_sendstr_chunk(req, "<p>Heating</p>");
-   else
-      httpd_resp_sendstr_chunk(req, "<p>Cooling</p>");
-   snprintf(temp, sizeof(temp), "<p>Current temp %.1fC</p>", isnan(daikin.achome) ? daikin.home : daikin.achome);
-   httpd_resp_sendstr_chunk(req, temp);
-   if (daikin.controlvalid && !isnan(daikin.acmin) && !isnan(daikin.acmax))
-   {
-      httpd_resp_sendstr_chunk(req, "<p>External control target ");
-      if (daikin.acmin == daikin.acmax)
-         snprintf(temp, sizeof(temp), "%.1fC</p>", daikin.acmin);
-      else
-         snprintf(temp, sizeof(temp), "<p>External control target %.1fC - %.1fC</p>", daikin.acmin, daikin.acmax);
-   } else
-      snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
-   httpd_resp_sendstr_chunk(req, temp);
-   httpd_resp_sendstr_chunk(req, "</div>");
-   // TODO login and cookie
-   // TODO web socket and js
+   httpd_resp_sendstr_chunk(req, "<table id=live>");
+   void add(const char *tag, const char *field, ...) {
+      httpd_resp_sendstr_chunk(req, "<tr><td>");
+      httpd_resp_sendstr_chunk(req, tag);
+      httpd_resp_sendstr_chunk(req, "</td><td id=");
+      httpd_resp_sendstr_chunk(req, field);
+      httpd_resp_sendstr_chunk(req, "></td><td>");
+      va_list ap;
+      va_start(ap, field);
+      while (1)
+      {
+         tag = va_arg(ap, char *);
+         if (!tag)
+            break;
+         const char *value = va_arg(ap, char *);
+         httpd_resp_sendstr_chunk(req, "<button onclick=\"w('");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, "',");
+         if (*value == '-' || *value == '+')
+         {
+            httpd_resp_sendstr_chunk(req, field);
+            httpd_resp_sendstr_chunk(req, value);
+         } else
+            httpd_resp_sendstr_chunk(req, value);
+         httpd_resp_sendstr_chunk(req, ");\">");
+         httpd_resp_sendstr_chunk(req, tag);
+         httpd_resp_sendstr_chunk(req, "</button>");
+      }
+      va_end(ap);
+      httpd_resp_sendstr_chunk(req, "</td></tr>");
+   }
+   add("Power", "power", "On", "true", "Off", "false", NULL);
+   add("Mode", "mode", "Auto", "'A'", "Heat", "'H'", "Cool", "'C'", "Dry", "'D'", "Fan", "'F'", NULL);
+   add("Fan", "fan", "Low", "'1'", "Medium", "'3'", "High", "'5'", NULL);
+   add("Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
+   add("Temp", "home", NULL);
+   add("System control", "control", NULL);
+   httpd_resp_sendstr_chunk(req, "</table>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
+                            "var temp=0;"       //
+                            "function s(n,v){document.getElementById(n).textContent=v;}"        //
+                            "function w(n,v){m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"        //
                             "ws.onclose=function(e){document.getElementById('live').style.visibility='hidden';};"       //
                             "ws.onmessage=function(e){" //
                             "o=JSON.parse(e.data);"     //
-                            "console.log(o);"   //
+                            "s('power',o.power?'On':'Off');"    //
+                            "s('control',o.control?'On':'Off');"        //
+                            "s('mode',o.mode=='A'?'Auto':o.mode=='H'?'Heat':o.mode=='C'?'Cool':o.mode=='D'?'Dry':o.mode=='F'?'Fan':'?');"       //
+                            "s('home',o.home+'C');"     //
+                            "s('temp',o.temp+'C');"     //
+                            "s('fan',o.fan);"   //
+                            "temp=o.temp;"      //
                             "};"        //
-                            "setInterval(function() {ws.send('');},1000);"     //
+                            "setInterval(function() {ws.send('');},1000);"      //
                             "</script>");
    httpd_resp_sendstr_chunk(req, NULL);
    return ESP_OK;
@@ -719,6 +743,7 @@ static esp_err_t web_root(httpd_req_t * req)
 
 static esp_err_t web_status(httpd_req_t * req)
 {                               // Web socket status report
+   // TODO cookies
    int fd = httpd_req_to_sockfd(req);
    void wsend(jo_t * jp) {
       char *js = jo_finisha(jp);
@@ -739,7 +764,7 @@ static esp_err_t web_status(httpd_req_t * req)
       return ESP_OK;
    }
    if (req->method == HTTP_GET)
-      return status(); // Send status on initial connect
+      return status();          // Send status on initial connect
    // received packet
    httpd_ws_frame_t ws_pkt;
    uint8_t *buf = NULL;
@@ -760,6 +785,7 @@ static esp_err_t web_status(httpd_req_t * req)
       jo_t j = jo_parse_mem(buf, ws_pkt.len);
       if (j)
       {
+         daikin_control(j);
          jo_free(&j);
       }
    }
