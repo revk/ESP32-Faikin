@@ -102,7 +102,10 @@ accontrol acstatus
 #undef	t
 #undef	e
 #undef	s
-// The current state
+// Globals
+static httpd_handle_t webserver = NULL;
+
+// The current aircon state
 struct {
    SemaphoreHandle_t mutex;     // Control changes
    uint64_t control_changed;    // Which control fields are being set
@@ -647,6 +650,24 @@ const char *app_callback(int client, const char *prefix, const char *target, con
    return ret;
 }
 
+jo_t daikin_status(void)
+{
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   jo_t j = jo_object_alloc();
+#define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
+#define t(name)         if(daikin.status_known&CONTROL_##name)jo_litf(j,#name,"%.1f",daikin.name);
+#define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
+#define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
+   accontrol acstatus
+#undef  b
+#undef  t
+#undef  e
+#undef  s
+    jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
+   xSemaphoreGive(daikin.mutex);
+   return j;
+}
+
 // --------------------------------------------------------------------------------
 // Web
 static esp_err_t web_root(httpd_req_t * req)
@@ -659,6 +680,7 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, hostname);
    httpd_resp_sendstr_chunk(req, "</h1>");
    // TODO dummy
+   httpd_resp_sendstr_chunk(req, "<div id=live>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    char temp[500];
    if (!daikin.power)
@@ -679,10 +701,70 @@ static esp_err_t web_root(httpd_req_t * req)
    } else
       snprintf(temp, sizeof(temp), "<p>Target temp %.1fC</p>", daikin.temp);
    httpd_resp_sendstr_chunk(req, temp);
+   httpd_resp_sendstr_chunk(req, "</div>");
    // TODO login and cookie
    // TODO web socket and js
+   httpd_resp_sendstr_chunk(req, "<script>"     //
+                            "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
+                            "ws.onclose=function(e){document.getElementById('live').style.visibility='hidden';};"       //
+                            "ws.onmessage=function(e){" //
+                            "o=JSON.parse(e.data);"     //
+                            "console.log(o);"   //
+                            "};"        //
+                            "setInterval(function() {ws.send('');},1000);"     //
+                            "</script>");
    httpd_resp_sendstr_chunk(req, NULL);
    return ESP_OK;
+}
+
+static esp_err_t web_status(httpd_req_t * req)
+{                               // Web socket status report
+   int fd = httpd_req_to_sockfd(req);
+   void wsend(jo_t * jp) {
+      char *js = jo_finisha(jp);
+      if (js)
+      {
+         httpd_ws_frame_t ws_pkt;
+         memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+         ws_pkt.payload = (uint8_t *) js;
+         ws_pkt.len = strlen(js);
+         ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+         httpd_ws_send_frame_async(req->handle, fd, &ws_pkt);
+         free(js);
+      }
+   }
+   esp_err_t status(void) {
+      jo_t j = daikin_status();
+      wsend(&j);
+      return ESP_OK;
+   }
+   if (req->method == HTTP_GET)
+      return status(); // Send status on initial connect
+   // received packet
+   httpd_ws_frame_t ws_pkt;
+   uint8_t *buf = NULL;
+   memset(&ws_pkt, 0, sizeof(httpd_ws_frame_t));
+   ws_pkt.type = HTTPD_WS_TYPE_TEXT;
+   esp_err_t ret = httpd_ws_recv_frame(req, &ws_pkt, 0);
+   if (ret)
+      return ret;
+   if (!ws_pkt.len)
+      return status();          // Empty string
+   buf = calloc(1, ws_pkt.len + 1);
+   if (!buf)
+      return ESP_ERR_NO_MEM;
+   ws_pkt.payload = buf;
+   ret = httpd_ws_recv_frame(req, &ws_pkt, ws_pkt.len);
+   if (!ret)
+   {
+      jo_t j = jo_parse_mem(buf, ws_pkt.len);
+      if (j)
+      {
+         jo_free(&j);
+      }
+   }
+   free(buf);
+   return ret;
 }
 
 // --------------------------------------------------------------------------------
@@ -747,8 +829,7 @@ void app_main()
 
    // Web interface
    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
-   httpd_handle_t server = NULL;
-   if (!httpd_start(&server, &config))
+   if (!httpd_start(&webserver, &config))
    {
       {
          httpd_uri_t uri = {
@@ -757,7 +838,7 @@ void app_main()
             .handler = web_root,
             .user_ctx = NULL
          };
-         REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
       {
          httpd_uri_t uri = {
@@ -766,8 +847,19 @@ void app_main()
             .handler = revk_web_config,
             .user_ctx = NULL
          };
-         REVK_ERR_CHECK(httpd_register_uri_handler(server, &uri));
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
+      {
+         httpd_uri_t uri = {
+            .uri = "/status",
+            .method = HTTP_GET,
+            .handler = web_status,
+            .is_websocket = true,
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+      }
+
+      revk_web_config_start(webserver);
    }
 
    while (1)
@@ -892,19 +984,7 @@ void app_main()
          if (!daikin.control_changed && daikin.status_changed)
          {
             daikin.status_changed = 0;
-            xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-            jo_t j = jo_object_alloc();
-#define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
-#define t(name)         if(daikin.status_known&CONTROL_##name)jo_litf(j,#name,"%.1f",daikin.name);
-#define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
-#define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
-            accontrol acstatus
-#undef  b
-#undef  t
-#undef  e
-#undef  s
-             jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
-            xSemaphoreGive(daikin.mutex);
+            jo_t j = daikin_status();
             revk_state("status", &j);
          }
          if (!daikin.control_changed)
