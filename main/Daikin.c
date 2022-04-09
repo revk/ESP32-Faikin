@@ -759,12 +759,12 @@ static esp_err_t web_root(httpd_req_t * req)
       if (change)
       {
          void pm(const char *d) {
-            httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox onchange=\"w('");
+            httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox onchange=\"if(this.checked)w('");
             httpd_resp_sendstr_chunk(req, field);
             httpd_resp_sendstr_chunk(req, "',");
             httpd_resp_sendstr_chunk(req, field);
             httpd_resp_sendstr_chunk(req, d);
-            httpd_resp_sendstr_chunk(req, "0.5);\"><span class=button>");
+            httpd_resp_sendstr_chunk(req, "0.5);this.checked=false;\"><span class=button>");
             httpd_resp_sendstr_chunk(req, d);
             httpd_resp_sendstr_chunk(req, "</span></label>");
          }
@@ -773,7 +773,7 @@ static esp_err_t web_root(httpd_req_t * req)
       }
       httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox><span class=button id=");
       httpd_resp_sendstr_chunk(req, field);
-      httpd_resp_sendstr_chunk(req, "></span></label>");
+      httpd_resp_sendstr_chunk(req, " onchange=\"this.checked=false;\"></span></label>");
       httpd_resp_sendstr_chunk(req, "</td></tr>");
    }
    addb("Power", "power");
@@ -817,8 +817,8 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('swingv',o.swingv);"     //
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
-                            "s('home',o.home+'℃');"   //
-                            "s('temp',o.temp+'℃');"   //
+                            "s('home',(o.home+'℃').replace('.5','½'));"      //
+                            "s('temp',(o.temp+'℃').replace('.5','½'));"      //
                             "e('fan',o.fan);"   //
                             "temp=o.temp;"      //
                             "};"        //
@@ -877,7 +877,7 @@ static esp_err_t web_status(httpd_req_t * req)
       }
    }
    free(buf);
-   return ret;
+   return status();
 }
 
 // --------------------------------------------------------------------------------
