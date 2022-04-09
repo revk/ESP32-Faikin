@@ -670,24 +670,53 @@ jo_t daikin_status(void)
 
 // --------------------------------------------------------------------------------
 // Web
+static void web_head(httpd_req_t * req, const char *title)
+{
+   httpd_resp_set_type(req, "text/html; charset=utf-8");
+   httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
+   httpd_resp_sendstr_chunk(req, "<html><head><title>");
+   if (title)
+      httpd_resp_sendstr_chunk(req, title);
+   httpd_resp_sendstr_chunk(req, "</title></head><style>"       //
+                            "body {font-family:sans-serif;background:#8cf;}"    //
+                            ".switch,.box{position:relative;display:inline-block;width:60px;height:34px;margin:3px;}"      //
+                            ".switch input,.box input{opacity:0;width:0;height:0;}"     //
+                            ".slider,.button{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;-webkit-transition:.4s;transition:.4s;}"      //
+                            ".slider:before{position:absolute;content:\"\";height:26px;width:26px;left:4px;bottom:3px;background-color:white;-webkit-transition:.4s;transition:.4s;}"   //
+                            "input:checked+.slider,input:checked+.button{background-color:#12bd20;}"    //
+                            "input:checked+.slider:before{-webkit-transform:translateX(26px);-ms-transform:translateX(26px);transform:translateX(26px);}"       //
+                            "span.slider:before{border-radius:50%;}" //
+                            "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #444;}"       //
+                            "</style><body><h1>");
+   if (title)
+      httpd_resp_sendstr_chunk(req, title);
+   httpd_resp_sendstr_chunk(req, "</h1>");
+}
+
+static esp_err_t web_foot(httpd_req_t * req)
+{
+   httpd_resp_sendstr_chunk(req, "<hr><address>");
+   char temp[20];
+   snprintf(temp, sizeof(temp), "%012llX", revk_binid);
+   httpd_resp_sendstr_chunk(req, temp);
+   httpd_resp_sendstr_chunk(req, "</address></body></html>");
+   return ESP_OK;
+}
+
 static esp_err_t web_root(httpd_req_t * req)
 {
    // TODO cookies
    if (revk_link_down())
       return revk_web_config(req);      // Direct to web set up
-   httpd_resp_set_type(req, "text/html; charset=utf-8");
-   httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
-   httpd_resp_sendstr_chunk(req, "<html><body style='font-family:sans-serif;background:#8cf;'><h1>");
-   if (*hostname)
-      httpd_resp_sendstr_chunk(req, hostname);
-   httpd_resp_sendstr_chunk(req, "</h1>");
-   httpd_resp_sendstr_chunk(req, "<table id=live>");
-   void add(const char *tag, const char *field, ...) {
+   web_head(req, *hostname ? hostname : appname);
+   httpd_resp_sendstr_chunk(req, "<form name=F><table id=live>");
+   void addh(const char *tag) {
       httpd_resp_sendstr_chunk(req, "<tr><td>");
       httpd_resp_sendstr_chunk(req, tag);
-      httpd_resp_sendstr_chunk(req, "</td><td id=");
-      httpd_resp_sendstr_chunk(req, field);
-      httpd_resp_sendstr_chunk(req, "></td><td>");
+      httpd_resp_sendstr_chunk(req, "</td><td>");
+   }
+   void add(const char *tag, const char *field, ...) {
+      addh(tag);
       if (daikin.online)
       {
          va_list ap;
@@ -698,40 +727,72 @@ static esp_err_t web_root(httpd_req_t * req)
             if (!tag)
                break;
             const char *value = va_arg(ap, char *);
-            httpd_resp_sendstr_chunk(req, "<button onclick=\"w('");
+            httpd_resp_sendstr_chunk(req, "<label class=box><input type=radio name=");
             httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, "',");
-            if (*value == '-' || *value == '+')
-            {
-               httpd_resp_sendstr_chunk(req, field);
-               httpd_resp_sendstr_chunk(req, value);
-            } else
-               httpd_resp_sendstr_chunk(req, value);
-            httpd_resp_sendstr_chunk(req, ");\">");
+            httpd_resp_sendstr_chunk(req, " value=");
+            httpd_resp_sendstr_chunk(req, value);
+            httpd_resp_sendstr_chunk(req, " id=");
+            httpd_resp_sendstr_chunk(req, field);
+            httpd_resp_sendstr_chunk(req, value);
+            httpd_resp_sendstr_chunk(req, " onchange=\"if(this.checked)w('");
+            httpd_resp_sendstr_chunk(req, field);
+            httpd_resp_sendstr_chunk(req, "','");
+            httpd_resp_sendstr_chunk(req, value);
+            httpd_resp_sendstr_chunk(req, "');\"><span class=button>");
             httpd_resp_sendstr_chunk(req, tag);
-            httpd_resp_sendstr_chunk(req, "</button>");
+            httpd_resp_sendstr_chunk(req, "</span></label>");
          }
          va_end(ap);
       }
       httpd_resp_sendstr_chunk(req, "</td></tr>");
    }
-   add("Power", "power", "On", "true", "Off", "false", NULL);
-   add("Mode", "mode", "Auto", "'A'", "Heat", "'H'", "Cool", "'C'", "Dry", "'D'", "Fan", "'F'", NULL);
+   void addb(const char *tag, const char *field) {
+      addh(tag);
+      httpd_resp_sendstr_chunk(req, "<label class=switch><input type=checkbox id=");
+      httpd_resp_sendstr_chunk(req, field);
+      httpd_resp_sendstr_chunk(req, " onchange=\"w('");
+      httpd_resp_sendstr_chunk(req, field);
+      httpd_resp_sendstr_chunk(req, "',this.checked);\"><span class=slider></span></label></td></tr>");
+   }
+   void addt(const char *tag, const char *field, uint8_t change) {
+      addh(tag);
+      if (change)
+      {
+         void pm(const char *d) {
+            httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox onchange=\"w('");
+            httpd_resp_sendstr_chunk(req, field);
+            httpd_resp_sendstr_chunk(req, "',");
+            httpd_resp_sendstr_chunk(req, field);
+            httpd_resp_sendstr_chunk(req, d);
+            httpd_resp_sendstr_chunk(req, "0.5);\"><span class=button>");
+            httpd_resp_sendstr_chunk(req, d);
+            httpd_resp_sendstr_chunk(req, "</span></label>");
+         }
+         pm("-");
+         pm("+");
+      }
+      httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox><span class=button id=");
+      httpd_resp_sendstr_chunk(req, field);
+      httpd_resp_sendstr_chunk(req, "></span></label>");
+      httpd_resp_sendstr_chunk(req, "</td></tr>");
+   }
+   addb("Power", "power");
+   add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1)
-      add("Fan", "fan", "Night", "'Q'", "1", "'1'", "2", "'2'", "3", "'3'", "4", "'4'", "5", "'5'", "Auto", "'A'", NULL);
+      add("Fan", "fan", "Night", "Q", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", NULL);
    else
-      add("Fan", "fan", "Low", "'1'", "Medium", "'3'", "High", "'5'", NULL);
-   add("Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
-   add("Temp", "home", NULL);
+      add("Fan", "fan", "Low", "1", "Medium", "3", "High", "5", NULL);
+   addt("Target", "temp", 1);
+   addt("Temp", "home", 0);
    if (daikin.status_known & CONTROL_powerful)
-      add("Powerful", "powerful", "On", "true", "Off", "false", NULL);
+      addb("Powerful", "powerful");
    if (daikin.status_known & CONTROL_econo)
-      add("Econo", "econo", "On", "true", "Off", "false", NULL);
+      addb("Econo", "econo");
    if (daikin.status_known & CONTROL_swingv)
-      add("Swing&nbsp;Vert", "swingv", "On", "true", "Off", "false", NULL);
+      addb("Swing&nbsp;Vert", "swingv");
    if (daikin.status_known & CONTROL_swingh)
-      add("Swing&nbsp;Horz", "swingh", "On", "true", "Off", "false", NULL);
-   httpd_resp_sendstr_chunk(req, "</table>");
+      addb("Swing&nbsp;Horz", "swingh");
+   httpd_resp_sendstr_chunk(req, "</table></form>");
    httpd_resp_sendstr_chunk(req, "<p id=slave style='display:none'>Another unit is controlling the mode, so this unit is not operating at present.</p>");
    httpd_resp_sendstr_chunk(req, "<p id=control style='display:none'>Automatic control means some functions are limited.</p>");
    httpd_resp_sendstr_chunk(req, "<p id=offline style='display:none'>System is off line.</p>");
@@ -739,13 +800,14 @@ static esp_err_t web_root(httpd_req_t * req)
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
                             "var temp=0;"       //
-                            "function b(n,v){var d=document.getElementById(n);if(d)d.textContent=v?'On':'Off';}"        //
+                            "function b(n,v){var d=document.getElementById(n);if(d)d.checked=v;}"       //
                             "function h(n,v){var d=document.getElementById(n);if(d)d.style.display=v?'block':'none';}"  //
                             "function s(n,v){var d=document.getElementById(n);if(d)d.textContent=v;}"   //
-                            "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"    //
-                            "ws.onclose=function(e){document.getElementById('live').style.visibility='hidden';};"       //
-                            "ws.onmessage=function(e){" //
-                            "o=JSON.parse(e.data);"     //
+                            "function e(n,v){var d=document.getElementById(n+v);if(d)d.checked=true;}"  //
+                            "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m))}"     //
+                            "ws.onclose=function(v){document.getElementById('live').style.visibility='hidden';};"       //
+                            "ws.onmessage=function(v){" //
+                            "o=JSON.parse(v.data);"     //
                             "b('power',o.power);"       //
                             "h('offline',!o.online);"   //
                             "h('control',o.control);"   //
@@ -754,16 +816,16 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('swingh',o.swingh);"     //
                             "b('swingv',o.swingv);"     //
                             "b('econo',o.econo);"       //
-                            "s('mode',o.mode=='A'?'Auto':o.mode=='H'?'Heat':o.mode=='C'?'Cool':o.mode=='D'?'Dry':o.mode=='F'?'Fan':'?');"       //
+                            "e('mode',o.mode);" //
                             "s('home',o.home+'℃');"   //
                             "s('temp',o.temp+'℃');"   //
-                            "s('fan',o.fan=='A'?'Auto':o.fan=='Q'?'Night':o.fan);"      //
+                            "e('fan',o.fan);"   //
                             "temp=o.temp;"      //
                             "};"        //
                             "setInterval(function() {ws.send('');},1000);"      //
                             "</script>");
    httpd_resp_sendstr_chunk(req, NULL);
-   return ESP_OK;
+   return web_foot(req);;
 }
 
 static esp_err_t web_status(httpd_req_t * req)
