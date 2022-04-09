@@ -675,6 +675,7 @@ static esp_err_t web_root(httpd_req_t * req)
    // TODO cookies
    if (revk_link_down())
       return revk_web_config(req);      // Direct to web set up
+   httpd_resp_set_type(req, "text/html; charset=utf-8");
    httpd_resp_sendstr_chunk(req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
    httpd_resp_sendstr_chunk(req, "<html><body style='font-family:sans-serif;background:#8cf;'><h1>");
    if (*hostname)
@@ -735,8 +736,8 @@ static esp_err_t web_root(httpd_req_t * req)
                             "o=JSON.parse(e.data);"     //
                             "s('power',o.power?'On':'Off');"    //
                             "s('mode',o.mode=='A'?'Auto':o.mode=='H'?'Heat':o.mode=='C'?'Cool':o.mode=='D'?'Dry':o.mode=='F'?'Fan':'?');"       //
-                            "s('home',o.home+'℃');"     //
-                            "s('temp',o.temp+'℃');"     //
+                            "s('home',o.home+'℃');"   //
+                            "s('temp',o.temp+'℃');"   //
                             "s('fan',o.fan);"   //
                             "temp=o.temp;"      //
                             "};"        //
@@ -1068,12 +1069,14 @@ void app_main()
                   max += switch10 / 10.0;       // Overshoot for switching (heating)
                else
                   min -= switch10 / 10.0;       // Overshoot for switching (cooling)
+               if (daikin.mode == 3)
+                  daikin_set_e(mode, hot ? "H" : "C");  // Out of auto
                // What do we want to set to
                float set = min + reference - current;   // Where we will set the temperature
                // Consider beyond limits - remember the limits have hysteresis applied
                if (min > current)
                {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (daikin.mode != 1 && (daikin.slave || !daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now)))
                   {             // Can we switch to heating - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
@@ -1081,7 +1084,7 @@ void app_main()
                   set = max + reference - current + heatbias10 / 10.0;  // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (daikin.mode != 2 && (daikin.slave || !daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))
+                  if (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now)))
                   {             // Can we switch to cooling - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
