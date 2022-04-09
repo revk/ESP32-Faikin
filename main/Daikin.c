@@ -1,5 +1,5 @@
 /* Daikin app */
-/* Copyright �2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
+/* Copyright ©2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
 
 static __attribute__((unused))
 const char TAG[] = "Daikin";
@@ -687,37 +687,43 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, "</td><td id=");
       httpd_resp_sendstr_chunk(req, field);
       httpd_resp_sendstr_chunk(req, "></td><td>");
-      va_list ap;
-      va_start(ap, field);
-      while (1)
+      if (daikin.online)
       {
-         tag = va_arg(ap, char *);
-         if (!tag)
-            break;
-         const char *value = va_arg(ap, char *);
-         httpd_resp_sendstr_chunk(req, "<button onclick=\"w('");
-         httpd_resp_sendstr_chunk(req, field);
-         httpd_resp_sendstr_chunk(req, "',");
-         if (*value == '-' || *value == '+')
+         va_list ap;
+         va_start(ap, field);
+         while (1)
          {
+            tag = va_arg(ap, char *);
+            if (!tag)
+               break;
+            const char *value = va_arg(ap, char *);
+            httpd_resp_sendstr_chunk(req, "<button onclick=\"w('");
             httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, value);
-         } else
-            httpd_resp_sendstr_chunk(req, value);
-         httpd_resp_sendstr_chunk(req, ");\">");
-         httpd_resp_sendstr_chunk(req, tag);
-         httpd_resp_sendstr_chunk(req, "</button>");
+            httpd_resp_sendstr_chunk(req, "',");
+            if (*value == '-' || *value == '+')
+            {
+               httpd_resp_sendstr_chunk(req, field);
+               httpd_resp_sendstr_chunk(req, value);
+            } else
+               httpd_resp_sendstr_chunk(req, value);
+            httpd_resp_sendstr_chunk(req, ");\">");
+            httpd_resp_sendstr_chunk(req, tag);
+            httpd_resp_sendstr_chunk(req, "</button>");
+         }
+         va_end(ap);
       }
-      va_end(ap);
       httpd_resp_sendstr_chunk(req, "</td></tr>");
    }
    add("Power", "power", "On", "true", "Off", "false", NULL);
    add("Mode", "mode", "Auto", "'A'", "Heat", "'H'", "Cool", "'C'", "Dry", "'D'", "Fan", "'F'", NULL);
    add("Fan", "fan", "Low", "'1'", "Medium", "'3'", "High", "'5'", NULL);
-   add("Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
+   add(daikin.controlvalid ? "Target*" : "Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
    add("Temp", "home", NULL);
-   add("System control", "control", NULL);
    httpd_resp_sendstr_chunk(req, "</table>");
+   if (daikin.controlvalid)
+      httpd_resp_sendstr_chunk(req, "<p>* Automatic control means some functions are limited.</p>");
+   if (!daikin.online)
+      httpd_resp_sendstr_chunk(req, "<p>System is off line.</p>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
@@ -728,10 +734,9 @@ static esp_err_t web_root(httpd_req_t * req)
                             "ws.onmessage=function(e){" //
                             "o=JSON.parse(e.data);"     //
                             "s('power',o.power?'On':'Off');"    //
-                            "s('control',o.control?'On':'Off');"        //
                             "s('mode',o.mode=='A'?'Auto':o.mode=='H'?'Heat':o.mode=='C'?'Cool':o.mode=='D'?'Dry':o.mode=='F'?'Fan':'?');"       //
-                            "s('home',o.home+'C');"     //
-                            "s('temp',o.temp+'C');"     //
+                            "s('home',o.home+'℃');"     //
+                            "s('temp',o.temp+'℃');"     //
                             "s('fan',o.fan);"   //
                             "temp=o.temp;"      //
                             "};"        //
