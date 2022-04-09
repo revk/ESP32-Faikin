@@ -680,7 +680,6 @@ static esp_err_t web_root(httpd_req_t * req)
    if (*hostname)
       httpd_resp_sendstr_chunk(req, hostname);
    httpd_resp_sendstr_chunk(req, "</h1>");
-   httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<table id=live>");
    void add(const char *tag, const char *field, ...) {
       httpd_resp_sendstr_chunk(req, "<tr><td>");
@@ -719,6 +718,7 @@ static esp_err_t web_root(httpd_req_t * req)
    add("Temp", "home", NULL);
    add("System control", "control", NULL);
    httpd_resp_sendstr_chunk(req, "</table>");
+   httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
                             "var temp=0;"       //
