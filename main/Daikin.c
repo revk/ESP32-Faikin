@@ -686,7 +686,7 @@ static void web_head(httpd_req_t * req, const char *title)
                             "input:checked+.slider,input:checked+.button{background-color:#12bd20;}"    //
                             "input:checked+.slider:before{-webkit-transform:translateX(26px);-ms-transform:translateX(26px);transform:translateX(26px);}"       //
                             "span.slider:before{border-radius:50%;}" //
-                            "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #444;}"       //
+                            "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"       //
                             "</style><body><h1>");
    if (title)
       httpd_resp_sendstr_chunk(req, title);
