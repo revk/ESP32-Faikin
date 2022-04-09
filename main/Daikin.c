@@ -781,7 +781,7 @@ static esp_err_t web_root(httpd_req_t * req)
    if (fanstep == 1)
       add("Fan", "fan", "Night", "Q", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", NULL);
    else
-      add("Fan", "fan", "Low", "1", "Medium", "3", "High", "5", NULL);
+      add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addt("Target", "temp", 1);
    addt("Temp", "home", 0);
    if (daikin.status_known & CONTROL_powerful)
