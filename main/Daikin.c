@@ -717,28 +717,47 @@ static esp_err_t web_root(httpd_req_t * req)
    }
    add("Power", "power", "On", "true", "Off", "false", NULL);
    add("Mode", "mode", "Auto", "'A'", "Heat", "'H'", "Cool", "'C'", "Dry", "'D'", "Fan", "'F'", NULL);
-   add("Fan", "fan", "Low", "'1'", "Medium", "'3'", "High", "'5'", NULL);
-   add(daikin.controlvalid ? "Target*" : "Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
+   if (fanstep == 1)
+      add("Fan", "fan", "Night", "'Q'", "1", "'1'", "2", "'2'", "3", "'3'", "4", "'4'", "5", "'5'", "Auto", "'A'", NULL);
+   else
+      add("Fan", "fan", "Low", "'1'", "Medium", "'3'", "High", "'5'", NULL);
+   add("Target", "temp", "-", "-0.5", "+", "+0.5", NULL);
    add("Temp", "home", NULL);
+   if (daikin.status_known & CONTROL_powerful)
+      add("Powerful", "powerful", "On", "true", "Off", "false", NULL);
+   if (daikin.status_known & CONTROL_econo)
+      add("Econo", "econo", "On", "true", "Off", "false", NULL);
+   if (daikin.status_known & CONTROL_swingv)
+      add("Swing&nbsp;Vert", "swingv", "On", "true", "Off", "false", NULL);
+   if (daikin.status_known & CONTROL_swingh)
+      add("Swing&nbsp;Horz", "swingh", "On", "true", "Off", "false", NULL);
    httpd_resp_sendstr_chunk(req, "</table>");
-   if (daikin.controlvalid)
-      httpd_resp_sendstr_chunk(req, "<p>* Automatic control means some functions are limited.</p>");
-   if (!daikin.online)
-      httpd_resp_sendstr_chunk(req, "<p>System is off line.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=slave style='display:none'>Another unit is controlling the mode, so this unit is not operating at present.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=control style='display:none'>Automatic control means some functions are limited.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=offline style='display:none'>System is off line.</p>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
                             "var temp=0;"       //
-                            "function s(n,v){document.getElementById(n).textContent=v;}"        //
-                            "function w(n,v){m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"        //
+                            "function b(n,v){var d=document.getElementById(n);if(d)d.textContent=v?'On':'Off';}"        //
+                            "function h(n,v){var d=document.getElementById(n);if(d)d.style.display=v?'block':'none';}"  //
+                            "function s(n,v){var d=document.getElementById(n);if(d)d.textContent=v;}"   //
+                            "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"    //
                             "ws.onclose=function(e){document.getElementById('live').style.visibility='hidden';};"       //
                             "ws.onmessage=function(e){" //
                             "o=JSON.parse(e.data);"     //
-                            "s('power',o.power?'On':'Off');"    //
+                            "b('power',o.power);"       //
+                            "h('offline',!o.online);"   //
+                            "h('control',o.control);"   //
+                            "h('slave',o.slave);"       //
+                            "b('powerful',o.powerful);" //
+                            "b('swingh',o.swingh);"     //
+                            "b('swingv',o.swingv);"     //
+                            "b('econo',o.econo);"       //
                             "s('mode',o.mode=='A'?'Auto':o.mode=='H'?'Heat':o.mode=='C'?'Cool':o.mode=='D'?'Dry':o.mode=='F'?'Fan':'?');"       //
                             "s('home',o.home+'℃');"   //
                             "s('temp',o.temp+'℃');"   //
-                            "s('fan',o.fan);"   //
+                            "s('fan',o.fan=='A'?'Auto':o.fan=='Q'?'Night':o.fan);"      //
                             "temp=o.temp;"      //
                             "};"        //
                             "setInterval(function() {ws.send('');},1000);"      //
