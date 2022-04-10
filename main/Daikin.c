@@ -703,6 +703,15 @@ static esp_err_t web_foot(httpd_req_t * req)
    return ESP_OK;
 }
 
+static esp_err_t web_icon(httpd_req_t * req)
+{                               // serve image -  maybe make more generic file serve
+   extern const char start[] asm("_binary_apple_touch_icon_png_start");
+   extern const char end[] asm("_binary_apple_touch_icon_png_end");
+   httpd_resp_set_type(req, "image/png");
+   httpd_resp_send(req, start, end - start);
+   return ESP_OK;
+}
+
 static esp_err_t web_root(httpd_req_t * req)
 {
    // TODO cookies
@@ -949,6 +958,15 @@ void app_main()
             .uri = "/",
             .method = HTTP_GET,
             .handler = web_root,
+            .user_ctx = NULL
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+      }
+      {
+         httpd_uri_t uri = {
+            .uri = "/apple-touch-icon.png",
+            .method = HTTP_GET,
+            .handler = web_icon,
             .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
