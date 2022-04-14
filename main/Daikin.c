@@ -596,12 +596,26 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          jo_strncpy(j, val, sizeof(val));
          if (!strcmp(tag, "home"))
             home = strtof(val, NULL);
-         if (!strcmp(tag, "min"))
-            min = strtof(val, NULL);
-         if (!strcmp(tag, "max"))
-            max = strtof(val, NULL);
          if (!strcmp(tag, "temp"))
-            min = max = strtof(val, NULL);
+         {
+            if (jo_here(j) == JO_ARRAY)
+            {
+               jo_next(j);
+               if (jo_here(j) == JO_NUMBER)
+               {
+                  jo_strncpy(j, val, sizeof(val));
+                  min = strtof(val, NULL);
+                  jo_next(j);
+               }
+               if (jo_here(j) == JO_NUMBER)
+               {
+                  jo_strncpy(j, val, sizeof(val));
+                  max = strtof(val, NULL);
+                  jo_next(j);
+               }
+            } else
+               min = max = strtof(val, NULL);
+         }
          t = jo_skip(j);
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
@@ -807,14 +821,16 @@ static esp_err_t web_root(httpd_req_t * req)
    httpd_resp_sendstr_chunk(req, "<p id=offline style='display:none'>System is off line.</p>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
-                            "var ws = new WebSocket('ws://'+window.location.host+'/status');"   //
-                            "var temp=0;"       //
-                            "function b(n,v){var d=document.getElementById(n);if(d)d.checked=v;}"       //
-                            "function h(n,v){var d=document.getElementById(n);if(d)d.style.display=v?'block':'none';}"  //
-                            "function s(n,v){var d=document.getElementById(n);if(d)d.textContent=v;}"   //
-                            "function e(n,v){var d=document.getElementById(n+v);if(d)d.checked=true;}"  //
+                            "function g(n){return document.getElementById(n);};"        //
+                            "function c(){return new WebSocket('ws://'+window.location.host+'/status');};"      //
+                            "function b(n,v){var d=g(n);if(d)d.checked=v;}"     //
+                            "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"        //
+                            "function s(n,v){var d=g(n);if(d)d.textContent=v;}" //
+                            "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"        //
                             "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m))}"     //
-                            "ws.onclose=function(v){document.getElementById('live').style.visibility='hidden';};"       //
+                            "var ws=c();"       //
+                            "var temp=0;"       //
+                            "ws.onclose=function(v){g('live').style.visibility='hidden';};"     //
                             "ws.onmessage=function(v){" //
                             "o=JSON.parse(v.data);"     //
                             "b('power',o.power);"       //
@@ -1197,7 +1213,7 @@ void app_main()
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
-                  if (fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
+                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
                   {
                      daikin.acbeyond = now;     // Delay next fan
                      daikin_set_v(fan, daikin.fan + fanstep);
@@ -1247,8 +1263,15 @@ void app_main()
                jo_bool(j, "heat", hot && daikin.power && !daikin.slave);
                if (valid)
                {                // Our control...
-                  float target = (hot ? min : max);
-                  jo_litf(j, "temp-target", "%.3f", target);
+                  if (min == max)
+                     jo_litf(j, "temp-target", "%.3f", min);
+                  else
+                  {
+                     jo_array(j, "temp-target");
+                     jo_litf(j, NULL, "%.3f", min);
+                     jo_litf(j, NULL, "%.3f", max);
+                     jo_close(j);
+                  }
                } else if (now > reporting + 30 && !isnan(daikin.temp))
                   jo_litf(j, "temp-target", "%.1f", daikin.temp);       // reference temp
                char topic[100];
