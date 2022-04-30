@@ -426,11 +426,13 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       c += buf[i];
    if (c != buf[len - 2])
    {
-      daikin.talking = 0;
-      jo_t j = jo_object_alloc();
-      jo_stringf(j, "badsum", "%02X", c);
-      jo_base16(j, "data", buf, len);
-      revk_error("comms", &j);
+      if (debug)
+      {
+         jo_t j = jo_object_alloc();
+         jo_stringf(j, "badsum", "%02X", c);
+         jo_base16(j, "data", buf, len);
+         revk_error("comms", &j);
+      }
       return;
    }
    if (len < 5 || buf[0] != 2 || buf[len - 1] != 3 || buf[1] != cmd + 1 || buf[2] != cmd2)
