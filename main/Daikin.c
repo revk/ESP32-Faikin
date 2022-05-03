@@ -411,7 +411,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       if (buf[len - 1] == 3)
          break;
    }
-   // Send ACK
+   // Send ACK regardless, data is repeated, so will be sent again if we ignore due to checksum, for example.
    temp = 6;
    uart_write_bytes(uart, &temp, 1);
    if (dump)
@@ -426,18 +426,15 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       c += buf[i];
    if (c != buf[len - 2])
    {
-      if (debug)
-      {
-         jo_t j = jo_object_alloc();
-         jo_stringf(j, "badsum", "%02X", c);
-         jo_base16(j, "data", buf, len);
-         revk_error("comms", &j);
-      }
-      return;
+      jo_t j = jo_object_alloc();
+      jo_stringf(j, "badsum", "%02X", c);
+      jo_base16(j, "data", buf, len);
+      revk_error("comms", &j);
+      return; // Ignore - it'll get resent some time
    }
    if (len < 5 || buf[0] != 2 || buf[len - 1] != 3 || buf[1] != cmd + 1 || buf[2] != cmd2)
-   {
-      daikin.talking = 0;
+   {                            // Bad message
+      daikin.talking = 0; // Fail, restart comms
       jo_t j = jo_object_alloc();
       if (buf[0] != 2)
          jo_bool(j, "badhead", 1);
