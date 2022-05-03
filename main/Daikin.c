@@ -12,6 +12,12 @@ const char TAG[] = "Daikin";
 #include "esp_http_server.h"
 #include <math.h>
 
+#define	STX	2
+#define	ETX	3
+#define	ENQ	5
+#define	ACK	6
+#define	NAK	21
+
 // The following define the controls and status for the Daikin, using macros
 // e(name,tags) Enumerated value, uses single character from tags, e.g. FHCA456D means "F" is 0, "H" is 1, etc
 // b(name)      Boolean
@@ -352,7 +358,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    }
    uint8_t buf[256],
     temp;
-   buf[0] = 2;
+   buf[0] = STX;
    buf[1] = cmd;
    buf[2] = cmd2;
    if (len)
@@ -360,10 +366,10 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    uint8_t c = 0;
    for (int i = 1; i < 3 + len; i++)
       c += buf[i];
-   if (c == 3)
-      c = 5;                    // Seems 03 sent as 05
+   if (c == ETX)
+      c = ENQ;                  // Seems 03 sent as 05
    buf[3 + len] = c;
-   buf[4 + len] = 3;
+   buf[4 + len] = ETX;
    if (dump)
    {
       jo_t j = jo_object_alloc();
@@ -373,13 +379,18 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    uart_write_bytes(uart, buf, 5 + len);
    // Wait ACK
    len = uart_read_bytes(uart, &temp, 1, 100 / portTICK_PERIOD_MS);
-   if (len != 1 || temp != 6)
+   if (len != 1 || temp != ACK)
    {
       daikin.talking = 0;
       jo_t j = jo_object_alloc();
-      jo_bool(j, "noack", 1);
-      if (len)
-         jo_stringf(j, "value", "%02X", temp);
+      if (len == 1 && temp == NAK)
+         jo_bool(j, "nak", 1);
+      else
+      {
+         jo_bool(j, "noack", 1);
+         if (len)
+            jo_stringf(j, "value", "%02X", temp);
+      }
       revk_error("comms", &j);
       return;
    }
@@ -396,7 +407,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
          revk_error("comms", &j);
          return;
       }
-      if (*buf == 2)
+      if (*buf == STX)
          break;
    }
    while (len < sizeof(buf))
@@ -410,11 +421,11 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
          return;
       }
       len++;
-      if (buf[len - 1] == 3)
+      if (buf[len - 1] == ETX)
          break;
    }
    // Send ACK regardless, data is repeated, so will be sent again if we ignore due to checksum, for example.
-   temp = 6;
+   temp = ACK;
    uart_write_bytes(uart, &temp, 1);
    if (dump)
    {
@@ -426,15 +437,15 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    c = 0;
    for (int i = 1; i < len - 2; i++)
       c += buf[i];
-   if (c != buf[len - 2] && (c != 3 || buf[len - 2] != 5))
-   {                            // Seeds checksum of 03 actually sends as 05
+   if (c != buf[len - 2] && (c != ACK || buf[len - 2] != ENQ))
+   {                            // Sees checksum of 03 actually sends as 05
       jo_t j = jo_object_alloc();
       jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
       return;                   // Ignore - it'll get resent some time
    }
-   if (len < 5 || buf[0] != 2 || buf[len - 1] != 3 || buf[1] != cmd + 1 || buf[2] != cmd2)
+   if (len < 5 || buf[0] != STX || buf[len - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
    {                            // Bad message
       daikin.talking = 0;       // Fail, restart comms
       jo_t j = jo_object_alloc();
