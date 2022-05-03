@@ -360,6 +360,8 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    uint8_t c = 0;
    for (int i = 1; i < 3 + len; i++)
       c += buf[i];
+   if (c == 3)
+      c = 5;                    // Seems 03 sent as 05
    buf[3 + len] = c;
    buf[4 + len] = 3;
    if (dump)
@@ -424,17 +426,17 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    c = 0;
    for (int i = 1; i < len - 2; i++)
       c += buf[i];
-   if (c != buf[len - 2])
-   {
+   if (c != buf[len - 2] && (c != 3 || buf[len - 2] != 5))
+   {                            // Seeds checksum of 03 actually sends as 05
       jo_t j = jo_object_alloc();
       jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
-      return; // Ignore - it'll get resent some time
+      return;                   // Ignore - it'll get resent some time
    }
    if (len < 5 || buf[0] != 2 || buf[len - 1] != 3 || buf[1] != cmd + 1 || buf[2] != cmd2)
    {                            // Bad message
-      daikin.talking = 0; // Fail, restart comms
+      daikin.talking = 0;       // Fail, restart comms
       jo_t j = jo_object_alloc();
       if (buf[0] != 2)
          jo_bool(j, "badhead", 1);
