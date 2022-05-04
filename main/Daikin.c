@@ -234,6 +234,7 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       jo_stringn(j, "text", (char *) payload, len);
       revk_info("rx", &j);
    }
+   // Remember to add to polling if we add more handlers
    if (cmd == 'G' && len == 4)
       switch (cmd2)
       {
@@ -1045,33 +1046,34 @@ void app_main()
          if (s21)
          {                      // Older S21
             char temp[5];
-            daikin_s21_command('F', '2', 0, NULL);
+	    // These are what their wifi polls, we comment out the ones we don't care about
             daikin_s21_command('F', '1', 0, NULL);
-            daikin_s21_command('F', '3', 0, NULL);
-            daikin_s21_command('F', '4', 0, NULL);
+            //daikin_s21_command('F', '2', 0, NULL);
+            //daikin_s21_command('F', '3', 0, NULL);
+            //daikin_s21_command('F', '4', 0, NULL);
             daikin_s21_command('F', '5', 0, NULL);
-            daikin_s21_command('F', '8', 0, NULL);
-            daikin_s21_command('F', '9', 0, NULL);
             daikin_s21_command('F', '6', 0, NULL);
             daikin_s21_command('F', '7', 0, NULL);
-            daikin_s21_command('F', 'B', 0, NULL);
-            daikin_s21_command('F', 'G', 0, NULL);
-            daikin_s21_command('F', 'K', 0, NULL);
-            daikin_s21_command('F', 'M', 0, NULL);
-            daikin_s21_command('F', 'N', 0, NULL);
-            daikin_s21_command('F', 'P', 0, NULL);
-            daikin_s21_command('F', 'Q', 0, NULL);
-            daikin_s21_command('F', 'S', 0, NULL);
-            daikin_s21_command('F', 'T', 0, NULL);
-            daikin_s21_command('F', 'U', 2, "02");
-            daikin_s21_command('F', 'U', 2, "04");
+            //daikin_s21_command('F', '8', 0, NULL);
+            //daikin_s21_command('F', '9', 0, NULL);
+            //daikin_s21_command('F', 'B', 0, NULL);
+            //daikin_s21_command('F', 'G', 0, NULL);
+            //daikin_s21_command('F', 'K', 0, NULL);
+            //daikin_s21_command('F', 'M', 0, NULL);
+            //daikin_s21_command('F', 'N', 0, NULL);
+            //daikin_s21_command('F', 'P', 0, NULL);
+            //daikin_s21_command('F', 'Q', 0, NULL);
+            //daikin_s21_command('F', 'S', 0, NULL);
+            //daikin_s21_command('F', 'T', 0, NULL);
+            //daikin_s21_command('F', 'U', 2, "02");
+            //daikin_s21_command('F', 'U', 2, "04");
             daikin_s21_command('R', 'H', 0, NULL);
-            daikin_s21_command('R', 'N', 0, NULL);
+            //daikin_s21_command('R', 'N', 0, NULL); // May be a useful temp, needs working out
             daikin_s21_command('R', 'I', 0, NULL);
             daikin_s21_command('R', 'a', 0, NULL);
-            daikin_s21_command('R', 'X', 0, NULL);
-            daikin_s21_command('R', 'D', 0, NULL);
-            daikin_s21_command('R', 'L', 0, NULL);
+            //daikin_s21_command('R', 'X', 0, NULL);
+            //daikin_s21_command('R', 'D', 0, NULL);
+            //daikin_s21_command('R', 'L', 0, NULL);
             if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
             {                   // D1
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
