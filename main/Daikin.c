@@ -57,8 +57,10 @@ const char TAG[] = "Daikin";
 	bl(dump)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(coolbias10,15)	\
-	u8l(heatbias10,20)	\
+	u8l(coolover,2)		\
+	u8l(coolback,5)		\
+	u8l(heatover,2)		\
+	u8l(heatback,5)		\
 	u8l(switch10,5)		\
 	u32(switchtime,3600)	\
 	u32(switchdelay,900)	\
@@ -1046,7 +1048,7 @@ void app_main()
          if (s21)
          {                      // Older S21
             char temp[5];
-	    // These are what their wifi polls, we comment out the ones we don't care about
+            // These are what their wifi polls, we comment out the ones we don't care about
             daikin_s21_command('F', '1', 0, NULL);
             //daikin_s21_command('F', '2', 0, NULL);
             //daikin_s21_command('F', '3', 0, NULL);
@@ -1205,24 +1207,28 @@ void app_main()
                // Consider beyond limits - remember the limits have hysteresis applied
                if (min > current)
                {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now)))
+                  if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                   {             // Can we switch to heating - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "H");
+                     if (fanstep && fantime)
+                        daikin_set_v(fan, 1);
                   }
-                  set = max + reference - current + heatbias10 / 10.0;  // Ensure heating by applying A/C offset to force it
+                  set = max + reference - current + heatover;  // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now)))
+                  if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                   {             // Can we switch to cooling - time limits applied
                      daikin.acswitch = now;     // Switched
                      daikin_set_e(mode, "C");
+                     if (fanstep && fantime)
+                        daikin_set_v(fan, 1);
                   }
-                  set = max + reference - current - coolbias10 / 10.0;  // Ensure cooling by applying A/C offset to force it
+                  set = max + reference - current - coolover;  // Ensure cooling by applying A/C offset to force it
                } else if (hot)
-                  set = min + reference - current - heatbias10 / 10.0;  // Heating mode but apply negative offset to not actually heat any more than this
+                  set = min + reference - current - heatback;  // Heating mode but apply negative offset to not actually heat any more than this
                else
-                  set = max + reference - current + coolbias10 / 10.0;  // Cooling mode but apply positive offset to not actually cool any more than this
+                  set = max + reference - current + coolback;  // Cooling mode but apply positive offset to not actually cool any more than this
                // Check if we are approaching target or beyond it
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
