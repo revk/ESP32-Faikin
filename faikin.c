@@ -145,6 +145,7 @@ main(int argc, const char *argv[])
             l = read(p, buf + len, sizeof(buf) - len);
             if (l <= 0)
                break;
+	    if(!len&&*buf!=0x6)continue;
             len += l;
          }
          if (!len)
