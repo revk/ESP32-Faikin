@@ -684,7 +684,7 @@ jo_t daikin_status(void)
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    jo_t j = jo_object_alloc();
 #define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
-#define t(name)         if(daikin.status_known&CONTROL_##name)jo_litf(j,#name,"%.1f",daikin.name);
+#define t(name)         if(daikin.status_known&CONTROL_##name){if(daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
    accontrol acstatus
@@ -1157,7 +1157,7 @@ void app_main()
             // Report failed settings
             jo_t j = jo_object_alloc();
 #define b(name)         if(daikin.control_changed&CONTROL_##name)jo_bool(j,#name,daikin.name);
-#define t(name)         if(daikin.control_changed&CONTROL_##name)jo_litf(j,#name,"%.1f",daikin.name);
+#define t(name)         if(daikin.control_changed&CONTROL_##name){if(daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
 #define e(name,values)  if((daikin.control_changed&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
             accontrol
 #undef  b
@@ -1190,6 +1190,8 @@ void app_main()
                   current = daikin.home;
                // What the A/C is using as current temperature
                float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
+               if (reference >= 100)    // Assume invalid
+                  reference = daikin.inlet;
                // Sensible limits in case some not set
                if (isnan(min))
                   min = 16;
@@ -1214,7 +1216,7 @@ void app_main()
                      if (fanstep && fantime)
                         daikin_set_v(fan, 1);
                   }
-                  set = max + reference - current + heatover;  // Ensure heating by applying A/C offset to force it
+                  set = max + reference - current + heatover;   // Ensure heating by applying A/C offset to force it
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
                   if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
@@ -1224,11 +1226,11 @@ void app_main()
                      if (fanstep && fantime)
                         daikin_set_v(fan, 1);
                   }
-                  set = max + reference - current - coolover;  // Ensure cooling by applying A/C offset to force it
+                  set = max + reference - current - coolover;   // Ensure cooling by applying A/C offset to force it
                } else if (hot)
-                  set = min + reference - current - heatback;  // Heating mode but apply negative offset to not actually heat any more than this
+                  set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                else
-                  set = max + reference - current + coolback;  // Cooling mode but apply positive offset to not actually cool any more than this
+                  set = max + reference - current + coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
                // Check if we are approaching target or beyond it
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
