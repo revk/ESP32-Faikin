@@ -18,4 +18,6 @@ Git clone this `--recursive` to get all the submodules, and it should build with
 
 # Complete module in 3D printed case
 
-![272006](https://user-images.githubusercontent.com/996983/169687551-765b1dd6-9963-4420-85a4-89ed758b9953.jpg)
+The wiring from the existing wifi modules fits directly (albeit only 4 pins used).
+
+![272012](https://user-images.githubusercontent.com/996983/169694456-bd870348-f9bf-4c31-a2e3-00da13320ffc.jpg)
