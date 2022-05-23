@@ -99,7 +99,7 @@ main(int argc, const char *argv[])
    {
       if (debug)
       {
-         printf("Tx %02X", cmd);
+         printf("[32mTx %02X", cmd);
          for (int i = 0; i < len; i++)
             printf(" %02X", payload[i]);
          printf("\n");
@@ -118,7 +118,7 @@ main(int argc, const char *argv[])
                       buf[5 + len] = 0xFF - c;
       if              (dump)
       {
-         printf("Tx");
+         printf("[32;1mTx");
          for (int i = 0; i < len + 6; i++)
             printf(" %02X", buf[i]);
          printf("\n");
@@ -145,14 +145,15 @@ main(int argc, const char *argv[])
             l = read(p, buf + len, sizeof(buf) - len);
             if (l <= 0)
                break;
-	    if(!len&&*buf!=0x6)continue;
+            if (!len && *buf != 0x6)
+               continue;
             len += l;
          }
          if (!len)
             continue;
          if (dump)
          {
-            printf("Rx");
+            printf("[31mRx");
             for (int i = 0; i < len; i++)
                printf(" %02X", buf[i]);
             printf("\n");
@@ -168,7 +169,7 @@ main(int argc, const char *argv[])
       }
       if (debug)
       {
-         printf("Rx %02X", cmd);
+         printf("[31;1mRx %02X", cmd);
          for (int i = 0; i < len; i++)
             printf(" %02X", payload[i]);
          printf("\n");
@@ -197,31 +198,31 @@ main(int argc, const char *argv[])
          {
             unsigned char   res[] = {0xBE, 0x0A, 0x6F, 0x0B, 0x7A, 0x01, 0xBE, 0x0A, 0x40, 0x0B, 0xBE, 0x0A, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x05, 0x00, 0x14, 0x00, 0x04, 0x5E, 0x00};
             res[0] = t1;
-            res[1] = t1>>8;
+            res[1] = t1 >> 8;
             res[2] = t2;
-            res[3] = t2>>8;
+            res[3] = t2 >> 8;
             res[4] = t3;
-            res[5] = t3>>8;
+            res[5] = t3 >> 8;
             res[6] = t4;
-            res[7] = t4>>8;
+            res[7] = t4 >> 8;
             res[8] = t5;
-            res[9] = t5>>8;
+            res[9] = t5 >> 8;
             res[10] = t6;
-            res[11] = t6>>8;
+            res[11] = t6 >> 8;
             res[12] = t7;
-            res[13] = t7>>8;
+            res[13] = t7 >> 8;
             res[14] = t8;
-            res[15] = t8>>8;
+            res[15] = t8 >> 8;
             res[16] = t9;
-            res[17] = t9>>8;
+            res[17] = t9 >> 8;
             res[18] = t10;
-            res[19] = t10>>8;
+            res[19] = t10 >> 8;
             res[20] = t11;
-            res[21] = t11>>8;
+            res[21] = t11 >> 8;
             res[22] = t12;
-            res[23] = t12>>8;
+            res[23] = t12 >> 8;
             res[24] = t13;
-            res[25] = t13>>8;
+            res[25] = t13 >> 8;
             acsend(cmd, res, sizeof(res));
          }
          break;
@@ -233,6 +234,15 @@ main(int argc, const char *argv[])
          break;
       case 0xCA:
          {
+            if (payload[0])
+               power = (payload[0] & 1);
+            if (payload[1])
+            {
+               mode = (payload[1] & 0xF);
+               comp = (mode == 1 ? 1 : 2);
+            }
+            if (payload[3])
+               temp = (payload[3] + (payload[4] & 0x7F) * 0.1);
             unsigned char   res[] = {0x01, 0x02, 0x02, 0x16, 0x00, 0x00, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x00};
             res[0] = power;
             res[1] = mode;
@@ -245,7 +255,9 @@ main(int argc, const char *argv[])
          break;
       case 0xCB:
          {
-            unsigned char   res[] = {0x60, 0x21};
+            unsigned char   res[] = {0x06, 0x21};
+            res[0] = (mode == 1 || mode == 2) ? mode : 6;
+            res[1] = (fan << 4) + 1;
             acsend(cmd, res, sizeof(res));
          }
          break;
