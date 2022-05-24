@@ -68,6 +68,7 @@ const char TAG[] = "Daikin";
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
+	b(noantifreeze)		\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -325,7 +326,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
          set_temp(liquid, t);
       if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0))
          set_temp(temp, t);
-#if 0
+#if 1
       if (debug)
       {
          jo_t j = jo_object_alloc();    // Debug dump
@@ -1226,7 +1227,15 @@ void app_main()
                      if (fanstep && fantime)
                         daikin_set_v(fan, 1);
                   }
-                  set = max + reference - current - coolover;   // Ensure cooling by applying A/C offset to force it
+                  static uint16_t freeze = 0;
+                  if ((daikin.status_known & CONTROL_liquid) && daikin.liquid < 4 && freeze < 65535)
+                     freeze++;
+                  else
+                     freeze = 0;
+                  if (!noantifreeze && freeze > 500)
+                     set = max + reference - current + coolback;        // Avoid freezing the coil
+                  else
+                     set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
                } else if (hot)
                   set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                else
