@@ -68,7 +68,7 @@ const char TAG[] = "Daikin";
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
-	b(noantifreeze)		\
+	u32(antifreeze,500)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -136,6 +136,7 @@ struct {
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
    uint32_t acbeyond;           // Last time we were at or beyond target temp
+   uint32_t freeze;             // Last time we were not freezing
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
 
@@ -1167,8 +1168,12 @@ void app_main()
                 revk_error("failed-set", &j);
             daikin.control_changed = 0; // Give up on changes
          }
-         uint32_t now = uptime();
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
+         uint32_t now = uptime();
+         if ((daikin.status_known & CONTROL_liquid) && daikin.liquid < 0)
+            daikin.freeze = now;
+         else
+            daikin.freeze = 0;
          if (daikin.power && daikin.controlvalid && !daikin.control_changed)
          {                      // Local auto controls
             if (now > daikin.controlvalid)
@@ -1227,12 +1232,7 @@ void app_main()
                      if (fanstep && fantime)
                         daikin_set_v(fan, 1);
                   }
-                  static uint16_t freeze = 0;
-                  if ((daikin.status_known & CONTROL_liquid) && daikin.liquid < 4 && freeze < 65535)
-                     freeze++;
-                  else
-                     freeze = 0;
-                  if (!noantifreeze && freeze > 500)
+                  if (antifreeze && daikin.freeze && daikin.freeze - now > antifreeze)
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
@@ -1291,6 +1291,8 @@ void app_main()
                   temp = daikin.home;
                if (!isnan(temp))
                   jo_litf(j, "temp", "%.3f", temp);
+               if (daikin.status_known & CONTROL_liquid)
+                  jo_litf(j, "temp-liquid", "%.3f", daikin.liquid);
                jo_bool(j, "heat", hot && daikin.power && !daikin.slave);
                if (valid)
                {                // Our control...
