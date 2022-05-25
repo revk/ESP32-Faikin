@@ -72,7 +72,7 @@ const char TAG[] = "Daikin";
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
-	u32(antifreeze,300)	\
+	u32(antifreeze,400)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -390,12 +390,11 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Unknown
-      set_val(antifreeze, payload[8]);
+      set_val(antifreeze, payload[6]);
       set_int(fanrpm, (payload[2] + (payload[3] << 8) + 5) / 10 * 10);  // Round a bit
 #if 0
       jo_t j = jo_object_alloc();
       jo_base16(j, "be", payload, len);
-      jo_litf(j, "t", "%.2f", (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);      // Maybe a temp
       jo_int(j, "v", (payload[2] + (payload[3] << 8))); // Maybe a fan speed?
       revk_info("rx", &j);
 #endif
@@ -769,7 +768,9 @@ static void web_head(httpd_req_t * req, const char *title)
    if (title)
       httpd_resp_sendstr_chunk(req, title);
    httpd_resp_sendstr_chunk(req, "</title></head><style>"       //
-                            "body {font-family:sans-serif;background:#8cf;}"    //
+                            "body{font-family:sans-serif;background:#8cf;}"     //
+			    ".on{opacity:1;transition:1s;}" // 
+			    ".off{opacity:0;transition:1s;}" // 
                             ".switch,.box{position:relative;display:inline-block;width:64px;height:34px;margin:3px;}"   //
                             ".switch input,.box input{opacity:0;width:0;height:0;}"     //
                             ".slider,.button{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;-webkit-transition:.4s;transition:.4s;}"      //
@@ -809,42 +810,44 @@ static esp_err_t web_root(httpd_req_t * req)
    if (revk_link_down())
       return revk_web_config(req);      // Direct to web set up
    web_head(req, *hostname ? hostname : appname);
-   httpd_resp_sendstr_chunk(req, "<form name=F><table id=live>");
-   void addh(const char *tag) {
+   httpd_resp_sendstr_chunk(req, "<div id=top class=off><form name=F><table id=live>");
+   void addh(const char *tag) { // Head (well, start of row)
       httpd_resp_sendstr_chunk(req, "<tr><td>");
       httpd_resp_sendstr_chunk(req, tag);
       httpd_resp_sendstr_chunk(req, "</td><td>");
    }
+   void addf(const char *tag) { // Foot (well, end of row)
+      httpd_resp_sendstr_chunk(req, "</td><td id=");
+      httpd_resp_sendstr_chunk(req, tag);
+      httpd_resp_sendstr_chunk(req, "></td></tr>");
+   }
    void add(const char *tag, const char *field, ...) {
       addh(tag);
-      if (daikin.online)
+      va_list ap;
+      va_start(ap, field);
+      while (1)
       {
-         va_list ap;
-         va_start(ap, field);
-         while (1)
-         {
-            tag = va_arg(ap, char *);
-            if (!tag)
-               break;
-            const char *value = va_arg(ap, char *);
-            httpd_resp_sendstr_chunk(req, "<label class=box><input type=radio name=");
-            httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, " value=");
-            httpd_resp_sendstr_chunk(req, value);
-            httpd_resp_sendstr_chunk(req, " id=");
-            httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, value);
-            httpd_resp_sendstr_chunk(req, " onchange=\"if(this.checked)w('");
-            httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, "','");
-            httpd_resp_sendstr_chunk(req, value);
-            httpd_resp_sendstr_chunk(req, "');\"><span class=button>");
-            httpd_resp_sendstr_chunk(req, tag);
-            httpd_resp_sendstr_chunk(req, "</span></label>");
-         }
-         va_end(ap);
+         const char *tag = va_arg(ap, char *);
+         if (!tag)
+            break;
+         const char *value = va_arg(ap, char *);
+         httpd_resp_sendstr_chunk(req, "<label class=box><input type=radio name=");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, " value=");
+         httpd_resp_sendstr_chunk(req, value);
+         httpd_resp_sendstr_chunk(req, " id=");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, value);
+         httpd_resp_sendstr_chunk(req, " onchange=\"if(this.checked)w('");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, "','");
+         httpd_resp_sendstr_chunk(req, value);
+         httpd_resp_sendstr_chunk(req, "');\"><span class=button>");
+         httpd_resp_sendstr_chunk(req, tag);
+         httpd_resp_sendstr_chunk(req, "</span></label>");
       }
-      httpd_resp_sendstr_chunk(req, "</td></tr>");
+      va_end(ap);
+      addf(tag);
    }
    void addb(const char *tag, const char *field) {
       addh(tag);
@@ -852,29 +855,24 @@ static esp_err_t web_root(httpd_req_t * req)
       httpd_resp_sendstr_chunk(req, field);
       httpd_resp_sendstr_chunk(req, " onchange=\"w('");
       httpd_resp_sendstr_chunk(req, field);
-      httpd_resp_sendstr_chunk(req, "',this.checked);\"><span class=slider></span></label></td></tr>");
+      httpd_resp_sendstr_chunk(req, "',this.checked);\"><span class=slider></span></label>");
+      addf(tag);
    }
-   void addt(const char *tag, const char *field, uint8_t change) {
+   void addpm(const char *tag, const char *field) {
       addh(tag);
-      if (change)
-      {
-         void pm(const char *d) {
-            httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox onchange=\"if(this.checked)w('");
-            httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, "',");
-            httpd_resp_sendstr_chunk(req, field);
-            httpd_resp_sendstr_chunk(req, d);
-            httpd_resp_sendstr_chunk(req, "0.5);this.checked=false;\"><span class=button>");
-            httpd_resp_sendstr_chunk(req, d);
-            httpd_resp_sendstr_chunk(req, "</span></label>");
-         }
-         pm("-");
-         pm("+");
+      void pm(const char *d) {
+         httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox onchange=\"if(this.checked)w('");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, "',");
+         httpd_resp_sendstr_chunk(req, field);
+         httpd_resp_sendstr_chunk(req, d);
+         httpd_resp_sendstr_chunk(req, "0.5);this.checked=false;\"><span class=button>");
+         httpd_resp_sendstr_chunk(req, d);
+         httpd_resp_sendstr_chunk(req, "</span></label>");
       }
-      httpd_resp_sendstr_chunk(req, "<label class=box><input type=checkbox><span class=button id=");
-      httpd_resp_sendstr_chunk(req, field);
-      httpd_resp_sendstr_chunk(req, " onchange=\"this.checked=false;\"></span></label>");
-      httpd_resp_sendstr_chunk(req, "</td></tr>");
+      pm("-");
+      pm("+");
+      addf(tag);
    }
    addb("Power", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
@@ -882,8 +880,8 @@ static esp_err_t web_root(httpd_req_t * req)
       add("Fan", "fan", "Night", "Q", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", NULL);
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addt("Target", "temp", 1);
-   addt("Temp", "home", 0);
+   addpm("Target", "temp");
+   httpd_resp_sendstr_chunk(req, "<tr><td>Temp</td><td id=Temp></td></tr>");
    if (daikin.status_known & CONTROL_powerful)
       addb("Powerful", "powerful");
    if (daikin.status_known & CONTROL_econo)
@@ -893,37 +891,45 @@ static esp_err_t web_root(httpd_req_t * req)
    if (daikin.status_known & CONTROL_swingh)
       addb("Swing&nbsp;Horz", "swingh");
    httpd_resp_sendstr_chunk(req, "</table></form>");
-   httpd_resp_sendstr_chunk(req, "<p id=slave style='display:none'>Another unit is controlling the mode, so this unit is not operating at present.</p>");
-   httpd_resp_sendstr_chunk(req, "<p id=control style='display:none'>Automatic control means some functions are limited.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
    httpd_resp_sendstr_chunk(req, "<p id=offline style='display:none'>System is off line.</p>");
+   httpd_resp_sendstr_chunk(req, "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
+   httpd_resp_sendstr_chunk(req, "</div>");
    httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
+                            "var ws=0;" //
+                            "var temp=0;"       //
                             "function g(n){return document.getElementById(n);};"        //
-                            "function c(){return new WebSocket('ws://'+window.location.host+'/status');};"      //
                             "function b(n,v){var d=g(n);if(d)d.checked=v;}"     //
                             "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"        //
                             "function s(n,v){var d=g(n);if(d)d.textContent=v;}" //
                             "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"        //
                             "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m))}"     //
-                            "var ws=c();"       //
-                            "var temp=0;"       //
-                            "ws.onclose=function(v){g('live').style.visibility='hidden';};"     //
+                            "function c(){"     //
+                            "ws=new WebSocket('ws://'+window.location.host+'/status');" //
+			    "ws.onopen=function(v){g('top').className='on';};" //
+                            "ws.onclose=function(v){g('top').className='off';setTimeout(function() {c();},1000);};"  //
+                            "ws.onerror=function(v){g('top').className='off';setTimeout(function() {c();},10000);};"  //
                             "ws.onmessage=function(v){" //
                             "o=JSON.parse(v.data);"     //
                             "b('power',o.power);"       //
                             "h('offline',!o.online);"   //
                             "h('control',o.control);"   //
                             "h('slave',o.slave);"       //
+                            "h('antifreeze',o.antifreeze);"     //
                             "b('powerful',o.powerful);" //
                             "b('swingh',o.swingh);"     //
                             "b('swingv',o.swingv);"     //
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
-                            "s('home',(o.home+'℃').replace('.5','½'));"      //
-                            "s('temp',(o.temp+'℃').replace('.5','½'));"      //
+                            "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
+                            "s('Temp',(o.home+'℃').replace('.5','½'));"      //
+                            "s('Mode',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
+                            "if(o.fanrpm)s('Fan',o.fanrpm+'RPM'+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                             "e('fan',o.fan);"   //
                             "temp=o.temp;"      //
-                            "};"        //
+                            "};};c();"  //
                             "setInterval(function() {ws.send('');},1000);"      //
                             "</script>");
    httpd_resp_sendstr_chunk(req, NULL);
@@ -1232,10 +1238,10 @@ void app_main()
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
          uint32_t now = uptime();
-         if ((daikin.status_known & CONTROL_liquid) && daikin.liquid < 0)
-            daikin.freeze = now;
-         else
+         if (!(daikin.status_known & CONTROL_liquid) || daikin.liquid > 0)
             daikin.freeze = 0;
+         else if (!daikin.freeze)
+            daikin.freeze = now;
          if (daikin.power && daikin.controlvalid && !daikin.control_changed)
          {                      // Local auto controls
             if (now > daikin.controlvalid)
