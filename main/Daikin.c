@@ -1232,7 +1232,7 @@ void app_main()
                      if (fanstep && fantime)
                         daikin_set_v(fan, 1);
                   }
-                  if (antifreeze && daikin.freeze && daikin.freeze - now > antifreeze)
+                  if (antifreeze && daikin.freeze && now - daikin.freeze > antifreeze)
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
