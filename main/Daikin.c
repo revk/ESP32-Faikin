@@ -22,6 +22,7 @@ const char TAG[] = "Daikin";
 // e(name,tags) Enumerated value, uses single character from tags, e.g. FHCA456D means "F" is 0, "H" is 1, etc
 // b(name)      Boolean
 // t(name)      Temperature
+// i(name)      Integer
 // s(name,len)  String (for status only, e.g. model)
 
 // Daikin controls
@@ -42,12 +43,15 @@ const char TAG[] = "Daikin";
 	t(home)			\
 	b(heat)			\
 	b(slave)		\
+	b(antifreeze)		\
+	i(fanrpm)			\
 	t(outside)		\
 	t(inlet)		\
 	t(liquid)		\
 
 // Macros for setting values
 #define	daikin_set_v(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
+#define	daikin_set_i(name,value)	daikin_set_int(#name,&daikin.name,CONTROL_##name,value)
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
@@ -68,7 +72,7 @@ const char TAG[] = "Daikin";
 	u32(fantime,3600)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
-	u32(antifreeze,500)	\
+	u32(antifreeze,300)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 
@@ -94,21 +98,25 @@ settings
 enum {                          // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
 #define	t(name)		b(name)
+#define	i(name)		b(name)
 #define	e(name,values)	b(name)
 #define	s(name,len)	b(name)
    accontrol acstatus
 #undef	b
 #undef	t
+#undef	i
 #undef	e
 #undef	s
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
+#define	i(name)		b(name)
 #define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
 #define	s(name,len)	b(name)
 accontrol acstatus
 #undef	b
 #undef	t
+#undef	i
 #undef	e
 #undef	s
 // Globals
@@ -122,11 +130,13 @@ struct {
    uint8_t control_count;       // How many times we have tried to change control and not worked yet
 #define	b(name)		uint8_t	name;
 #define	t(name)		float name;
+#define	i(name)		int name;
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
    accontrol acstatus
 #undef	b
 #undef	t
+#undef	i
 #undef	e
 #undef	s
    float acmin;                 // Min (heat to this) - NAN to leave to ac
@@ -143,6 +153,19 @@ struct {
 } daikin;
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
+{                               // Setting a value (uint8_t)
+   if (*ptr == value)
+      return NULL;              // No change
+   if (!(daikin.status_known & flag))
+      return "Setting cannot be controlled";
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   *ptr = value;
+   daikin.control_changed |= flag;
+   xSemaphoreGive(daikin.mutex);
+   return NULL;
+}
+
+const char *daikin_set_int(const char *name, int *ptr, uint64_t flag, int value)
 {                               // Setting a value (uint8_t)
    if (*ptr == value)
       return NULL;              // No change
@@ -202,6 +225,29 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
    xSemaphoreGive(daikin.mutex);
 }
 
+void set_int(const char *name, int *ptr, uint64_t flag, int val)
+{
+   xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+   if (!(daikin.status_known & flag))
+   {
+      daikin.status_known |= flag;
+      daikin.status_changed = 1;
+   }
+   if (*ptr == val)
+   {                            // No change
+      if (daikin.control_changed & flag)
+      {
+         daikin.control_changed &= ~flag;
+         daikin.status_changed = 1;
+      }
+   } else if (!(daikin.control_changed & flag))
+   {                            // Changed (and not something we are trying to set)
+      *ptr = val;
+      daikin.status_changed = 1;
+   }
+   xSemaphoreGive(daikin.mutex);
+}
+
 void set_float(const char *name, float *ptr, uint64_t flag, float val)
 {
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
@@ -226,6 +272,7 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
 }
 
 #define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
+#define set_int(name,val) set_int(#name,&daikin.name,CONTROL_##name,val)
 #define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
 
 void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
@@ -343,6 +390,15 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Unknown
+      set_val(antifreeze, payload[8]);
+      set_int(fanrpm, (payload[2] + (payload[3] << 8) + 5) / 10 * 10);  // Round a bit
+#if 0
+      jo_t j = jo_object_alloc();
+      jo_base16(j, "be", payload, len);
+      jo_litf(j, "t", "%.2f", (int16_t) (payload[2] + (payload[3] << 8)) / 128.0);      // Maybe a temp
+      jo_int(j, "v", (payload[2] + (payload[3] << 8))); // Maybe a fan speed?
+      revk_info("rx", &j);
+#endif
    }
 }
 
@@ -566,10 +622,12 @@ const char *daikin_control(jo_t j)
       jo_strncpy(j, val, sizeof(val));
 #define	b(name)		if(!strcmp(tag,#name)){if(t!=JO_TRUE&&t!=JO_FALSE)err= "Expecting boolean";else err=daikin_set_v(name,t==JO_TRUE?1:0);}
 #define	t(name)		if(!strcmp(tag,#name)){if(t!=JO_NUMBER)err= "Expecting number";else err=daikin_set_t(name,jo_read_float(j));}
+#define	i(name)		if(!strcmp(tag,#name)){if(t!=JO_NUMBER)err= "Expecting number";else err=daikin_set_i(name,jo_read_int(j));}
 #define	e(name,values)	if(!strcmp(tag,#name)){if(t!=JO_STRING)err= "Expecting string";else err=daikin_set_e(name,val);}
       accontrol
 #undef	b
 #undef	t
+#undef	i
 #undef	e
           if (err)
       {                         // Error report
@@ -687,11 +745,13 @@ jo_t daikin_status(void)
    jo_t j = jo_object_alloc();
 #define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
 #define t(name)         if(daikin.status_known&CONTROL_##name){if(daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
+#define i(name)         if(daikin.status_known&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
    accontrol acstatus
 #undef  b
 #undef  t
+#undef  i
 #undef  e
 #undef  s
     jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
@@ -1160,10 +1220,12 @@ void app_main()
             jo_t j = jo_object_alloc();
 #define b(name)         if(daikin.control_changed&CONTROL_##name)jo_bool(j,#name,daikin.name);
 #define t(name)         if(daikin.control_changed&CONTROL_##name){if(daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
+#define i(name)         if(daikin.control_changed&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.control_changed&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
             accontrol
 #undef  b
 #undef  t
+#undef  i
 #undef  e
                 revk_error("failed-set", &j);
             daikin.control_changed = 0; // Give up on changes
