@@ -644,7 +644,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime() + controltime;
-      daikin.remote = home;
+      daikin.env = home;
       daikin.mintarget = min;
       daikin.maxtarget = max;
       xSemaphoreGive(daikin.mutex);
@@ -1212,7 +1212,7 @@ void app_main()
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
-               float current = daikin.remote;
+               float current = daikin.env;
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature

@@ -24,7 +24,7 @@
 #define s(name,len)     // String, e.g. model
 #endif
 
-t(remote)
+t(env)
 r(target)
 
 #include "acfields.m"
