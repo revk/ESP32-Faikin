@@ -121,21 +121,26 @@ int main(int argc, const char *argv[])
             j_t j = j_find(data, name);
             if (!j)
                return j;
-            if (sql_colnum(res, name) < 0)
-            {                   // Create field
-               if (*type == '~' || *type == '=')
+            void check(const char *prefix, const char *type) {
+               char field[100];
+               sprintf(field, "%s%s", prefix, name);
+               if (sql_colnum(res, field) < 0)
                {
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `min%#S` %s", sqltable, name, type + 1));
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `max%#S` %s", sqltable, name, type + 1));
-                  if (*type == '~')
-                     type++;
-                  else
-                     type = NULL;
+                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `%#S` %s", sqltable, field, type));
+                  changed++;
                }
-               if (type)
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `%#S` %s", sqltable, name, type));
-               changed++;
             }
+            if (*type == '~' || *type == '=')
+            {
+               check("min", type + 1);
+               check("max", type + 1);
+               if (*type == '~')
+                  type++;
+               else
+                  type = NULL;
+            }
+            if (type)
+               check("", type);
             return j;
          }
 #define	b(name)	if((j=find(#name,"decimal(4,2)"))){sql_sprintf(&s,",`%#S`=%s",#name,j_istrue(j)?"1":j_isbool(j)?"0":j_isnumber(j)?j_val(j):"NULL");}
@@ -145,7 +150,9 @@ int main(int argc, const char *argv[])
 #define	t(name)	if((j=find(#name,"~decimal(6,2)"))){if(j_isarray(j)&&j_len(j)==3&&j_isnumber(j_index(j,0))&&j_isnumber(j_index(j,1))&&j_isnumber(j_index(j,2)))	\
 		sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j_index(j,0)),#name,j_val(j_index(j,1)),#name,j_val(j_index(j,2))); \
 		else if(j_isnumber(j))sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j),#name,j_val(j),#name,j_val(j));}
-#define	r(name)	if((j=find(#name,"=decimal(6,2)"))){if(j_isnumber(j))sql_sprintf(&s,",`%#S`=%s",j_val(j));}
+#define	r(name)	if((j=find(#name,"=decimal(6,2)"))){if(j_isarray(j)&&j_len(j)==2&&j_isnumber(j_index(j,0))&&j_isnumber(j_index(j,1))) \
+		sql_sprintf(&s,",`min%#S`=%s,`max%#S`=%s",#name,j_val(j_index(j,0)),#name,j_val(j_index(j,1)));	\
+		else if(j_isnumber(j))sql_sprintf(&s,",`min%#S`=%s,`max%#S`=%s",#name,j_val(j),#name,j_val(j));}
 #define e(name,t) if((j=find(#name,"char(1)"))){if(j_isstring(j))sql_sprintf(&s,",`%#S`=%#s",#name,j_val(j));}
 #include "main/acextras.m"
          sql_safe_query_s(&sql, &s);
@@ -156,6 +163,7 @@ int main(int argc, const char *argv[])
          }
       }
    }
+
    mosquitto_connect_callback_set(mqtt, connect);
    mosquitto_disconnect_callback_set(mqtt, disconnect);
    mosquitto_message_callback_set(mqtt, message);

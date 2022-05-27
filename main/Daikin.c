@@ -89,7 +89,7 @@ struct {
    uint64_t control_changed;    // Which control fields are being set
    uint64_t status_known;       // Which fields we know, and hence can control
    uint8_t control_count;       // How many times we have tried to change control and not worked yet
-   uint32_t statscount;              // Stats count
+   uint32_t statscount;         // Stats count
 #define	b(name)		uint8_t	name;uint32_t total##name;
 #define	t(name)		float name;float min##name;float total##name;float max##name;
 #define	r(name)		float min##name;float max##name;
@@ -104,6 +104,7 @@ struct {
    uint32_t freeze;             // Last time we were not freezing
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
+   uint8_t status_report:1;     // Status report
 } daikin;
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -578,7 +579,7 @@ const char *daikin_control(jo_t j)
 #define	i(name)		if(!strcmp(tag,#name)){if(t!=JO_NUMBER)err= "Expecting number";else err=daikin_set_i(name,jo_read_int(j));}
 #define	e(name,values)	if(!strcmp(tag,#name)){if(t!=JO_STRING)err= "Expecting string";else err=daikin_set_e(name,val);}
 #include "accontrols.m"
-          if (err)
+      if (err)
       {                         // Error report
          jo_t j = jo_object_alloc();
          jo_string(j, "field", tag);
@@ -604,7 +605,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       return "";
    }
    if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
-      daikin.status_changed = 1;        // Report status on connect
+      daikin.status_report = 1; // Report status on connect
    if (!strcmp(suffix, "control"))
    {                            // Control, e.g. from environmental monitor
       float env = NAN;
@@ -698,7 +699,7 @@ jo_t daikin_status(void)
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
 #include "acfields.m"
-    jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
+   jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
    xSemaphoreGive(daikin.mutex);
    return j;
 }
@@ -1158,14 +1159,15 @@ void app_main()
             daikin_command(0xCA, sizeof(ca), ca);
             daikin_command(0xCB, sizeof(cb), cb);
          }
-         if (!daikin.control_changed && daikin.status_changed)
+         if (!daikin.control_changed && (daikin.status_changed || daikin.status_report))
          {
             daikin.status_changed = 0;
-            if (debug)
+            if (debug || daikin.status_report)
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
             }
+            daikin.status_report = 0;
          }
          // Stats
 #define b(name)         if(daikin.name)daikin.total##name++;
@@ -1176,7 +1178,7 @@ void app_main()
 	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
 	 		daikin.total##name+=daikin.name;
 #include "acextras.m"
-          daikin.statscount++;
+         daikin.statscount++;
          if (!daikin.control_changed)
             daikin.control_count = 0;
          else if (daikin.control_count++ > 10)
@@ -1188,7 +1190,7 @@ void app_main()
 #define i(name)         if(daikin.control_changed&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.control_changed&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "accontrols.m"
-                revk_error("failed-set", &j);
+            revk_error("failed-set", &j);
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
@@ -1307,17 +1309,17 @@ void app_main()
                   }
 #define	b(name)		if(!daikin.total##name)jo_bool(j,#name,0);else if(daikin.total##name==daikin.statscount)jo_bool(j,#name,1);else jo_litf(j,#name,"%.2f",(float)daikin.total##name/daikin.statscount); \
 		  	daikin.total##name=0;
-#define	t(name)		if(!isnan(daikin.name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.3f",daikin.total##name/daikin.statscount);	\
-		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.3f",daikin.min##name);jo_litf(j,NULL,"%.3f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.3f",daikin.max##name);jo_close(j);}}	\
+#define	t(name)		if(!isnan(daikin.name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.total##name/daikin.statscount);	\
+		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}	\
 		  	daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
-#define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.3f",daikin.min##name);	\
-			else {jo_array(j,#name);jo_litf(j,NULL,"%.3f",daikin.min##name);jo_litf(j,NULL,"%.3f",daikin.max##name);jo_close(j);}}
+#define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.min##name);	\
+			else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}
 #define	i(name)		if(daikin.min##name==daikin.max##name)jo_int(j,#name,daikin.total##name/daikin.statscount);     \
                         else {jo_array(j,#name);jo_int(j,NULL,daikin.min##name);jo_int(j,NULL,daikin.total##name/daikin.statscount);jo_int(j,NULL,daikin.max##name);jo_close(j);}       \
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
-                   daikin.statscount=0;
+                  daikin.statscount = 0;
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
                }
             }
