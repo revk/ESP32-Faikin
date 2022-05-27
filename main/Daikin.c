@@ -1207,7 +1207,10 @@ void app_main()
                daikin.controlvalid = 0;
                daikin_set_e(mode, "A");
                if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
-                  daikin_set_t(temp, (daikin.mintarget + daikin.maxtarget) / 2);
+                  daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
+               daikin.mintarget = NAN;
+               daikin.maxtarget = NAN;
+               daikin.env = NAN;
             } else
             {                   // Auto mode
                // Get the settings atomically
