@@ -1313,7 +1313,7 @@ void app_main()
                   }
 #define	b(name)		if(!daikin.total##name)jo_bool(j,#name,0);else if(daikin.total##name==daikin.statscount)jo_bool(j,#name,1);else jo_litf(j,#name,"%.2f",(float)daikin.total##name/daikin.statscount); \
 		  	daikin.total##name=0;
-#define	t(name)		if(!isnan(daikin.name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.total##name/daikin.statscount);	\
+#define	t(name)		if(!isnan(daikin.total##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.total##name/daikin.statscount);	\
 		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}	\
 		  	daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
 #define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.min##name);	\
