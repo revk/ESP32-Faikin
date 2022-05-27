@@ -13,3 +13,6 @@
 [submodule "AJL"]
 	path = AJL
 	url = https://github.com/revk/AJL
+[submodule "AXL"]
+	path = AXL
+	url = https://github.com/revk/AXL

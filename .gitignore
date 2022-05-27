@@ -14,3 +14,4 @@ sdkconfig
 faikin
 daikinlog
 daikinlog.service
+daikingraph
