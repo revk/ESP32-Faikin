@@ -89,9 +89,9 @@ struct {
    uint64_t control_changed;    // Which control fields are being set
    uint64_t status_known;       // Which fields we know, and hence can control
    uint8_t control_count;       // How many times we have tried to change control and not worked yet
-   uint32_t statscount;         // Stats count
+   uint32_t statscount;		// Count for b() i(), etc.
 #define	b(name)		uint8_t	name;uint32_t total##name;
-#define	t(name)		float name;float min##name;float total##name;float max##name;
+#define	t(name)		float name;float min##name;float total##name;float max##name;uint32_t count##name;
 #define	r(name)		float min##name;float max##name;
 #define	i(name)		int name;int min##name;int total##name;int max##name;
 #define	e(name,values)	uint8_t name;
@@ -1171,14 +1171,14 @@ void app_main()
          }
          // Stats
 #define b(name)         if(daikin.name)daikin.total##name++;
-#define t(name)		if(!daikin.statscount||daikin.min##name>daikin.name)daikin.min##name=daikin.name;	\
-	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
-	 		daikin.total##name+=daikin.name;
+#define t(name)		if(!isnan(daikin.name)){if(!daikin.count##name||daikin.min##name>daikin.name)daikin.min##name=daikin.name;	\
+	 		if(!daikin.count##name||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
+	 		daikin.total##name+=daikin.name;daikin.count##name++;}
 #define i(name)		if(!daikin.statscount||daikin.min##name>daikin.name)daikin.min##name=daikin.name;	\
 	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
 	 		daikin.total##name+=daikin.name;
 #include "acextras.m"
-         daikin.statscount++;
+	 daikin.statscount++;
          if (!daikin.control_changed)
             daikin.control_count = 0;
          else if (daikin.control_count++ > 10)
@@ -1303,8 +1303,8 @@ void app_main()
             if (clock / reporting != last / reporting)
             {
                last = clock;
-               if (daikin.statscount)
-               {
+	       if(daikin.statscount)
+	       {
                   jo_t j = jo_object_alloc();
                   {             // Timestamp
                      struct tm tm;
@@ -1313,9 +1313,9 @@ void app_main()
                   }
 #define	b(name)		if(!daikin.total##name)jo_bool(j,#name,0);else if(daikin.total##name==daikin.statscount)jo_bool(j,#name,1);else jo_litf(j,#name,"%.2f",(float)daikin.total##name/daikin.statscount); \
 		  	daikin.total##name=0;
-#define	t(name)		if(!isnan(daikin.total##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.total##name/daikin.statscount);	\
-		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}	\
-		  	daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
+#define	t(name)		if(!isnan(daikin.total##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.total##name/daikin.count##name);	\
+		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.total##name/daikin.count##name);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}	\
+		  	daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;daikin.count##name=0;
 #define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.min##name);	\
 			else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}
 #define	i(name)		if(daikin.min##name==daikin.max##name)jo_int(j,#name,daikin.total##name/daikin.statscount);     \
@@ -1323,9 +1323,9 @@ void app_main()
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
-                  daikin.statscount = 0;
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
-               }
+		  daikin.statscount=0;
+	       }
             }
          }
       }
