@@ -112,7 +112,14 @@ int main(int argc, const char *argv[])
          if (debug)
             warnx("%.*s", msg->payloadlen, (char *) msg->payload);
          if (!res)
-            res = sql_safe_query_store_free(&sql, sql_printf("SELECT * FROM `%#S` LIMIT 0", sqltable));
+         {
+            res = sql_query_store_free(&sql, sql_printf("SELECT * FROM `%#S` LIMIT 0", sqltable));
+            if (!res)
+            {
+               sql_safe_query_free(&sql, sql_printf("CREATE TABLE `%#S` (`tag` varchar(20) not null,`when` datetime not null,primary key (`tag`,`when`))", sqltable));
+               res = sql_safe_query_store_free(&sql, sql_printf("SELECT * FROM `%#S` LIMIT 0", sqltable));
+            }
+         }
          sql_string_t s = { };
          sql_sprintf(&s, "INSERT IGNORE INTO `%#S` SET `tag`=%#s,`when`=NOW()", sqltable, tag);
          int changed = 0;
