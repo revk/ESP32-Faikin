@@ -13,7 +13,7 @@ all:
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: $(PROJECT_NAME)$(SUFFIX).bin
 
-tools:	faikin
+tools:	faikin daikinlog
 
 set:    wroom solo pico
 
@@ -64,8 +64,18 @@ LIBS=
 INCLUDES=
 endif
 
+SQLINC=$(shell mariadb_config --include)
+SQLLIB=$(shell mariadb_config --libs)
+SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
+CCOPTS=${SQLINC} -I. -I/usr/local/ssl/include -D_GNU_SOURCE -g -Wall -funsigned-char -lm
+OPTS=-L/usr/local/ssl/lib ${SQLLIB} ${CCOPTS}
+
 faikin: faikin.c
 	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
+
+daikinlog: daikinlog.c SQLlib/sqllib.o AJL/ajl.o
+	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAJL AJL/ajl.o ${OPTS}
+
 
 scad:	$(patsubst %,KiCad/%.scad,$(MODELS))
 stl:	$(patsubst %,KiCad/%.stl,$(MODELS))

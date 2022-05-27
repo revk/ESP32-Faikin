@@ -7,3 +7,9 @@
 [submodule "PCBCase"]
 	path = PCBCase
 	url = https://github.com/revk/PCBCase
+[submodule "SQLlib"]
+	path = SQLlib
+	url = https://github.com/revk/SQLlib
+[submodule "AJL"]
+	path = AJL
+	url = https://github.com/revk/AJL
