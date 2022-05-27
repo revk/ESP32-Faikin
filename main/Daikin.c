@@ -648,6 +648,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
+      daikin.control = 1;
       xSemaphoreGive(daikin.mutex);
       return "";
    }
@@ -699,7 +700,6 @@ jo_t daikin_status(void)
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
 #include "acfields.m"
-   jo_bool(j, "control", daikin.controlvalid ? 1 : 0);
    xSemaphoreGive(daikin.mutex);
    return j;
 }
@@ -1205,6 +1205,7 @@ void app_main()
             if (now > daikin.controlvalid)
             {                   // End of auto mode
                daikin.controlvalid = 0;
+               daikin.control = 0;
                daikin_set_e(mode, "A");
                if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...

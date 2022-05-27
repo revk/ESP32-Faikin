@@ -25,6 +25,7 @@
 #endif
 
 b(online)
+b(control)
 s(model,20)
 t(home)
 b(heat)
