@@ -67,6 +67,7 @@ settings
 enum {                          // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
 #define	t(name)		b(name)
+#define	r(name)		b(name)
 #define	i(name)		b(name)
 #define	e(name,values)	b(name)
 #define	s(name,len)	b(name)
@@ -74,6 +75,7 @@ enum {                          // Number the control fields
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
+#define	r(name)		b(name)
 #define	i(name)		b(name)
 #define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
 #define	s(name,len)	b(name)
@@ -90,13 +92,11 @@ struct {
    uint32_t statscount;              // Stats count
 #define	b(name)		uint8_t	name;uint32_t total##name;
 #define	t(name)		float name;float min##name;float total##name;float max##name;
+#define	r(name)		float min##name;float max##name;
 #define	i(name)		int name;int min##name;int total##name;int max##name;
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
-#include "acfields.m"
-   float acmin;                 // Min (heat to this) - NAN to leave to ac
-   float acmax;                 // Max (cool to this) - NAN to leave to ac
-   float achome;                // Reported home temp from external source
+#include "acextras.m"
    uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
@@ -644,9 +644,9 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime() + controltime;
-      daikin.achome = home;
-      daikin.acmin = min;
-      daikin.acmax = max;
+      daikin.remote = home;
+      daikin.mintarget = min;
+      daikin.maxtarget = max;
       xSemaphoreGive(daikin.mutex);
       return "";
    }
@@ -940,9 +940,9 @@ void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
    daikin.status_known = CONTROL_online;
-   daikin.achome = NAN;
-   daikin.acmin = NAN;
-   daikin.acmax = NAN;
+#define	t(name)	daikin.name=NAN;
+#define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
+#include "acextras.m"
    revk_boot(&app_callback);
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
@@ -1175,7 +1175,7 @@ void app_main()
 #define i(name)		if(!daikin.statscount||daikin.min##name>daikin.name)daikin.min##name=daikin.name;	\
 	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
 	 		daikin.total##name+=daikin.name;
-#include "acfields.m"
+#include "acextras.m"
           daikin.statscount++;
          if (!daikin.control_changed)
             daikin.control_count = 0;
@@ -1204,15 +1204,15 @@ void app_main()
             {                   // End of auto mode
                daikin.controlvalid = 0;
                daikin_set_e(mode, "A");
-               if (!isnan(daikin.acmin) && !isnan(daikin.acmax))
-                  daikin_set_t(temp, (daikin.acmin + daikin.acmax) / 2);
+               if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
+                  daikin_set_t(temp, (daikin.mintarget + daikin.maxtarget) / 2);
             } else
             {                   // Auto mode
                // Get the settings atomically
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-               float min = daikin.acmin;
-               float max = daikin.acmax;
-               float current = daikin.achome;
+               float min = daikin.mintarget;
+               float max = daikin.maxtarget;
+               float current = daikin.remote;
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
@@ -1307,14 +1307,16 @@ void app_main()
                   }
 #define	b(name)		if(!daikin.total##name)jo_bool(j,#name,0);else if(daikin.total##name==daikin.statscount)jo_bool(j,#name,1);else jo_litf(j,#name,"%.2f",(float)daikin.total##name/daikin.statscount); \
 		  	daikin.total##name=0;
-#define	t(name)		if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.3f",daikin.total##name/daikin.statscount);	\
-		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.3f",daikin.min##name);jo_litf(j,NULL,"%.3f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.3f",daikin.max##name);jo_close(j);}	\
+#define	t(name)		if(!isnan(daikin.name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.3f",daikin.total##name/daikin.statscount);	\
+		  	else {jo_array(j,#name);jo_litf(j,NULL,"%.3f",daikin.min##name);jo_litf(j,NULL,"%.3f",daikin.total##name/daikin.statscount);jo_litf(j,NULL,"%.3f",daikin.max##name);jo_close(j);}}	\
 		  	daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
+#define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.3f",daikin.min##name);	\
+			else {jo_array(j,#name);jo_litf(j,NULL,"%.3f",daikin.min##name);jo_litf(j,NULL,"%.3f",daikin.max##name);jo_close(j);}}
 #define	i(name)		if(daikin.min##name==daikin.max##name)jo_int(j,#name,daikin.total##name/daikin.statscount);     \
                         else {jo_array(j,#name);jo_int(j,NULL,daikin.min##name);jo_int(j,NULL,daikin.total##name/daikin.statscount);jo_int(j,NULL,daikin.max##name);jo_close(j);}       \
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
-#include "acfields.m"
+#include "acextras.m"
                    daikin.statscount=0;
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
                }

@@ -123,27 +123,31 @@ int main(int argc, const char *argv[])
                return j;
             if (sql_colnum(res, name) < 0)
             {                   // Create field
-               if (*type == '~')
+               if (*type == '~' || *type == '=')
                {
-                  type++;
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `min%#S` %s", sqltable, name, type));
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `%#S` %s", sqltable, name, type));
-                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `max%#S` %s", sqltable, name, type));
-               } else
+                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `min%#S` %s", sqltable, name, type + 1));
+                  sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `max%#S` %s", sqltable, name, type + 1));
+                  if (*type == '~')
+                     type++;
+                  else
+                     type = NULL;
+               }
+               if (type)
                   sql_safe_query_free(&sql, sql_printf("ALTER TABLE `%#S` ADD `%#S` %s", sqltable, name, type));
                changed++;
             }
             return j;
          }
-#define	b(name)	if((j=find(#name,"decimal(6,2)"))){sql_sprintf(&s,",`%#S`=%s",#name,j_istrue(j)?"1":j_isbool(j)?"0":j_isnumber(j)?j_val(j):"NULL");}
+#define	b(name)	if((j=find(#name,"decimal(4,2)"))){sql_sprintf(&s,",`%#S`=%s",#name,j_istrue(j)?"1":j_isbool(j)?"0":j_isnumber(j)?j_val(j):"NULL");}
 #define	i(name)	if((j=find(#name,"~int"))){if(j_isarray(j)&&j_len(j)==3&&j_isnumber(j_index(j,0))&&j_isnumber(j_index(j,1))&&j_isnumber(j_index(j,2)))	\
 		sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j_index(j,0)),#name,j_val(j_index(j,1)),#name,j_val(j_index(j,2))); \
 		else if(j_isnumber(j))sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j),#name,j_val(j),#name,j_val(j));}
 #define	t(name)	if((j=find(#name,"~decimal(6,2)"))){if(j_isarray(j)&&j_len(j)==3&&j_isnumber(j_index(j,0))&&j_isnumber(j_index(j,1))&&j_isnumber(j_index(j,2)))	\
 		sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j_index(j,0)),#name,j_val(j_index(j,1)),#name,j_val(j_index(j,2))); \
 		else if(j_isnumber(j))sql_sprintf(&s,",`min%#S`=%s,`%#S`=%s,`max%#S`=%s",#name,j_val(j),#name,j_val(j),#name,j_val(j));}
+#define	r(name)	if((j=find(#name,"=decimal(6,2)"))){if(j_isnumber(j))sql_sprintf(&s,",`%#S`=%s",j_val(j));}
 #define e(name,t) if((j=find(#name,"char(1)"))){if(j_isstring(j))sql_sprintf(&s,",`%#S`=%#s",#name,j_val(j));}
-#include "main/acfields.m"
+#include "main/acextras.m"
          sql_safe_query_s(&sql, &s);
          if (changed)
          {

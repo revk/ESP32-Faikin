@@ -24,15 +24,7 @@
 #define s(name,len)     // String, e.g. model
 #endif
 
-b(online)
-s(model,20)
-t(home)
-b(heat)
-b(slave)
-b(antifreeze)
-i(fanrpm)
-t(outside)
-t(inlet)
-t(liquid)
+t(remote)
+r(target)
 
-#include "accontrols.m"
+#include "acfields.m"

@@ -12,6 +12,10 @@
 #define	t(name)		// Temperature
 #endif
 
+#ifndef	r
+#define	r(name)		// Temperature range (only min/max, and not stats)
+#endif
+
 #ifndef	i
 #define	i(name)		// Integer
 #endif
@@ -34,4 +38,4 @@ b(powerful)
 #undef	t
 #undef	i
 #undef	s
-
+#undef	r
