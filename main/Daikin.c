@@ -607,7 +607,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.status_changed = 1;        // Report status on connect
    if (!strcmp(suffix, "control"))
    {                            // Control, e.g. from environmental monitor
-      float home = NAN;
+      float env = NAN;
       float min = NAN;
       float max = NAN;
       jo_type_t t = jo_next(j); // Start object
@@ -618,9 +618,9 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          jo_strncpy(j, tag, sizeof(tag));
          t = jo_next(j);
          jo_strncpy(j, val, sizeof(val));
-         if (!strcmp(tag, "home"))
-            home = strtof(val, NULL);
-         if (!strcmp(tag, "temp"))
+         if (!strcmp(tag, "env"))
+            env = strtof(val, NULL);
+         if (!strcmp(tag, "target"))
          {
             if (jo_here(j) == JO_ARRAY)
             {
@@ -644,7 +644,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime() + controltime;
-      daikin.env = home;
+      daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
       xSemaphoreGive(daikin.mutex);
