@@ -115,11 +115,11 @@ int main(int argc, const char *argv[])
          {
             res = sql_query_store_free(&sql, sql_printf("SELECT * FROM `%#S` LIMIT 0", sqltable));
             if (!res)
-               sql_safe_query_free(&sql, sql_printf("CREATE TABLE `%#S` (`tag` varchar(20) not null,`when` datetime not null,primary key (`tag`,`when`))", sqltable));
+               sql_safe_query_free(&sql, sql_printf("CREATE TABLE `%#S` (`tag` varchar(20) not null,`utc` datetime not null,primary key (`tag`,`utc`))", sqltable));
             // Leaving res as NULL is fine as sql_coln will return -1 for that...
          }
          sql_string_t s = { };
-         sql_sprintf(&s, "INSERT IGNORE INTO `%#S` SET `tag`=%#s,`when`=NOW()", sqltable, tag);
+         sql_sprintf(&s, "INSERT IGNORE INTO `%#S` SET `tag`=%#s,`utc`=%#U", sqltable, tag,time(0));
          int changed = 0;
          j_t j;
          j_t find(const char *name, const char *type) {
