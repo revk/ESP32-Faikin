@@ -25,6 +25,7 @@ int main(int argc, const char *argv[])
    const char *title = NULL;
    const char *control = NULL;
    const char *me = NULL;
+   const char *href = NULL;
    const char *targetcol = "#080";
    const char *tempcol = "#080";
    const char *envcol = "#800";
@@ -81,7 +82,8 @@ int main(int argc, const char *argv[])
          { "anti-freeze-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &antifreezecol, 0, "Anti freeze colour", "#rgb" },
          { "slave-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &slavecol, 0, "Slave colour", "#rgb" },
          { "fanrpm-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &fanrpmcol, 0, "Fan RPM/100 colour", "#rgb" },
-         { "me", 0, POPT_ARG_STRING | POPT_ARGFLAG_DOC_HIDDEN, &me, 0, "Me link", "URL" },
+         { "me", 0, POPT_ARG_STRING | POPT_ARGFLAG_DOC_HIDDEN, &me, 0, "Me link (e.g. for mastodon)", "URL" },
+         { "href", 0, POPT_ARG_STRING | POPT_ARGFLAG_DOC_HIDDEN, &href, 0, "Self link", "URL" },
          POPT_AUTOHELP { }
       };
 
@@ -189,7 +191,7 @@ int main(int argc, const char *argv[])
       FILE *f = open_memstream(&path, &len);
       char m = 'M';
       double last;
-      SQL_RES *select(const char *order) { // Trust field name
+      SQL_RES *select(const char *order) {      // Trust field name
          return sql_safe_query_store_free(&sql, sql_printf("SELECT min(`utc`) AS `utc`,max(max%s) AS `max`,min(min%s) AS `min` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U GROUP BY substring(`utc`,1,%d) ORDER BY `utc` %s", field, field, sqltable, tag, sod, eod, group, order));
       }
       // Forward
@@ -263,10 +265,10 @@ int main(int argc, const char *argv[])
    targetcol = range(ranges, "target", targetcol, 19);
    if (targetcol)
    {
-	   trace(traces,"IF(mintarget=maxtarget,mintarget,NULL)",targetcol);
+      trace(traces, "IF(mintarget=maxtarget,mintarget,NULL)", targetcol);
       tempcol = NULL;
    }
-   fanrpmcol=rangetrace(ranges,traces,"fanrpm/100",fanrpmcol);
+   fanrpmcol = rangetrace(ranges, traces, "fanrpm/100", fanrpmcol);
    tempcol = rangetrace(ranges, traces, "temp", tempcol);
    envcol = rangetrace(ranges, traces, "env", envcol);
    homecol = rangetrace(ranges, traces, "home", homecol);
@@ -334,7 +336,7 @@ int main(int argc, const char *argv[])
    heatcol = band("least(`power`,`heat`)-`slave`", heatcol);
    coolcol = band("`power`-`heat`-`slave`-`antifreeze`", coolcol);
    antifreezecol = band("`antifreeze`", antifreezecol);
-   slavecol=band("least(`slave`,`power`)",slavecol);
+   slavecol = band("least(`slave`,`power`)", slavecol);
 
    // Grid
    if (!nogrid)
@@ -427,6 +429,33 @@ int main(int argc, const char *argv[])
             xml_addf(t, "@y", "%d", y);
             xml_add(t, "@text-anchor", "end");
             xml_add(t, "@fill", colour);
+         }
+         if (href)
+         {
+            y += 17;
+	    struct tm tm;
+	    localtime_r(&sod, &tm);
+	    tm.tm_mday--;
+	    tm.tm_isdst=0;
+	    mktime(&tm);
+            xml_t t = xml_element_add(labels, "a");
+            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s", href, tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday, tag);
+            t = xml_element_add(t, "text");
+            xml_element_set_content(t, "<");
+            xml_addf(t, "@x", "%.2f", xsize * hours + left - 20);
+            xml_addf(t, "@y", "%d", y);
+            xml_add(t, "@text-anchor", "end");
+            t = xml_element_add(labels, "a");
+	    localtime_r(&sod, &tm);
+	    tm.tm_mday++;
+	    tm.tm_isdst=0;
+	    mktime(&tm);
+            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s", href, tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday, tag);
+            t = xml_element_add(t, "text");
+            xml_element_set_content(t, ">");
+            xml_addf(t, "@x", "%.2f", xsize * hours + left - 1);
+            xml_addf(t, "@y", "%d", y);
+            xml_add(t, "@text-anchor", "end");
          }
          label(date, "black");
          label(tag, "black");
