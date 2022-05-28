@@ -436,6 +436,9 @@ int main(int argc, const char *argv[])
    // Axis
    if (!noaxis)
    {
+      double y = maxtemp;
+      if (mintemp > 0)
+         y = maxtemp - mintemp;
       for (int h = 0; h < hours; h++)
       {
          struct tm tm;
@@ -443,7 +446,7 @@ int main(int argc, const char *argv[])
          localtime_r(&when, &tm);
          xml_t t = xml_addf(axis, "+text", "%02d", tm.tm_hour);
          xml_addf(t, "@x", "%.2f", left + xsize * h + 1);
-         xml_addf(t, "@y", "%.2f", ysize * maxtemp - 1);
+         xml_addf(t, "@y", "%.2f", ysize * y - 1);
       }
       for (double temp = ceil(mintemp); temp <= floor(maxtemp); temp += 1)
       {
