@@ -22,6 +22,7 @@ int main(int argc, const char *argv[])
    const char *sqlconffile = NULL;
    const char *sqltable = "daikin";
    const char *tag = NULL;
+   const char *skip = NULL;
    const char *title = NULL;
    const char *control = NULL;
    const char *me = NULL;
@@ -60,8 +61,9 @@ int main(int argc, const char *argv[])
          { "sql-debug", 'v', POPT_ARG_NONE, &sqldebug, 0, "SQL Debug" },
          { "x-size", 0, POPT_ARG_DOUBLE | POPT_ARGFLAG_SHOW_DEFAULT, &xsize, 0, "X size per hour", "pixels" },
          { "y-size", 0, POPT_ARG_DOUBLE | POPT_ARGFLAG_SHOW_DEFAULT, &ysize, 0, "Y size per step", "pixels" },
-         { "tag", 'i', POPT_ARG_STRING, &tag, 0, "Device ID", "tag" },
          { "date", 'D', POPT_ARG_STRING, &date, 0, "Date", "YYYY-MM-DD" },
+         { "tag", 'i', POPT_ARG_STRING, &tag, 0, "Device ID", "tag" },
+         { "skip", 0, POPT_ARG_STRING, &skip, 0, "Fields not to show", "tags" },
          { "title", 'T', POPT_ARG_STRING, &title, 0, "Title", "text" },
          { "temp-top", 0, POPT_ARG_INT, &temptop, 0, "Top temp", "C" },
          { "back", 0, POPT_ARG_INT, &back, 0, "Back days", "N" },
@@ -114,6 +116,12 @@ int main(int argc, const char *argv[])
       {
          *s++ = 0;
          tag = s;
+         s = strchr(tag, '/');
+         if (s)
+         {
+            *s++ = 0;
+            skip = s;
+         }
       }
    }
 
@@ -121,6 +129,47 @@ int main(int argc, const char *argv[])
       errx(1, "Specify --tag");
    if (!date || !*date)
       errx(1, "Specify --date");
+   if (skip)
+      for (const char *s = skip; *s; s++)
+         switch (*s)
+         {
+         case 'H':
+            homecol = NULL;
+            break;
+         case 'S':
+            tempcol = NULL;
+            break;
+         case 'L':
+            liquidcol = NULL;
+            break;
+         case 'I':
+            inletcol = NULL;
+            break;
+         case 'O':
+            outsidecol = NULL;
+            break;
+         case 'T':
+            targetcol = NULL;
+            break;
+         case 'E':
+            envcol = NULL;
+            break;
+         case 'F':
+            fanrpmcol = NULL;
+            break;
+         case 'h':
+            heatcol = NULL;
+            break;
+         case 'c':
+            coolcol = NULL;
+            break;
+         case 's':
+            slavecol = NULL;
+            break;
+         case 'a':
+            antifreezecol = NULL;
+            break;
+         }
 
    time_t sod,
     eod;                        // Start and end of day
@@ -277,6 +326,13 @@ int main(int argc, const char *argv[])
    outsidecol = rangetrace(ranges, traces, "outside", outsidecol);
 
    // Set range of temps shown
+   if (isnan(mintemp))
+   {
+      mintemp = -1;
+      maxtemp = 1;
+   }
+   if (maxtemp < 5)
+      maxtemp = 5;
    mintemp = floor(mintemp) - 0.5;
    maxtemp = ceil(maxtemp) + 0.5;
 
@@ -419,11 +475,18 @@ int main(int argc, const char *argv[])
       }
       if (!nolabels)
       {
-         void label(const char *text, const char *colour) {
+         void label(const char *text, const char *colour, char zap) {
             if (!colour)
                return;
+            if (!href)
+               zap = 0;
             y += 17;
-            xml_t t = xml_element_add(labels, "text");
+            xml_t t = xml_element_add(labels, zap ? "a" : "text");
+            if (zap)
+            {
+               xml_addf(t, "@href", "%s/%s/%s/%s%c", href, date, tag, skip ? : "", zap);
+               t = xml_element_add(t, "text");
+            }
             xml_element_set_content(t, text);
             xml_addf(t, "@x", "%.2f", xsize * hours + left - 1);
             xml_addf(t, "@y", "%d", y);
@@ -433,44 +496,54 @@ int main(int argc, const char *argv[])
          if (href)
          {
             y += 17;
-	    struct tm tm;
-	    localtime_r(&sod, &tm);
-	    tm.tm_mday--;
-	    tm.tm_isdst=0;
-	    mktime(&tm);
+            struct tm tm;
+            localtime_r(&sod, &tm);
+            tm.tm_mday--;
+            tm.tm_isdst = 0;
+            mktime(&tm);
             xml_t t = xml_element_add(labels, "a");
-            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s", href, tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday, tag);
+            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s/%s", href, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tag, skip);
             t = xml_element_add(t, "text");
             xml_element_set_content(t, "<");
-            xml_addf(t, "@x", "%.2f", xsize * hours + left - 20);
+            xml_addf(t, "@x", "%.2f", xsize * hours + left - 41);
             xml_addf(t, "@y", "%d", y);
             xml_add(t, "@text-anchor", "end");
+            if (skip && *skip)
+            {
+               t = xml_element_add(labels, "a");
+               xml_addf(t, "@href", "%s/%s/%s", href, date, tag);
+               t = xml_element_add(t, "text");
+               xml_element_set_content(t, "*");
+               xml_addf(t, "@x", "%.2f", xsize * hours + left - 21);
+               xml_addf(t, "@y", "%d", y);
+               xml_add(t, "@text-anchor", "end");
+            }
             t = xml_element_add(labels, "a");
-	    localtime_r(&sod, &tm);
-	    tm.tm_mday++;
-	    tm.tm_isdst=0;
-	    mktime(&tm);
-            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s", href, tm.tm_year+1900,tm.tm_mon+1,tm.tm_mday, tag);
+            localtime_r(&sod, &tm);
+            tm.tm_mday++;
+            tm.tm_isdst = 0;
+            mktime(&tm);
+            xml_addf(t, "@href", "%s/%04d-%02d-%02d/%s/%s", href, tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday, tag, skip);
             t = xml_element_add(t, "text");
             xml_element_set_content(t, ">");
             xml_addf(t, "@x", "%.2f", xsize * hours + left - 1);
             xml_addf(t, "@y", "%d", y);
             xml_add(t, "@text-anchor", "end");
          }
-         label(date, "black");
-         label(tag, "black");
-         label("Home", homecol);
-         label("TempSet", tempcol);
-         label("Liquid", liquidcol);
-         label("Inlet", inletcol);
-         label("Outside", outsidecol);
-         label("EnvTarget", targetcol);
-         label("Env", envcol);
-         label("FanRPM/100", fanrpmcol);
-         label("Heat", heatcol);
-         label("Cool", coolcol);
-         label("Slave", slavecol);
-         label("Anti-Freeze", antifreezecol);
+         label(date, "black", 0);
+         label(tag, "black", 0);
+         label("Home", homecol, 'H');
+         label("TempSet", tempcol, 'S');
+         label("Liquid", liquidcol, 'L');
+         label("Inlet", inletcol, 'I');
+         label("Outside", outsidecol, 'O');
+         label("EnvTarget", targetcol, 'T');
+         label("Env", envcol, 'E');
+         label("FanRPM/100", fanrpmcol, 'F');
+         label("Heat", heatcol, 'h');
+         label("Cool", coolcol, 'c');
+         label("Slave", slavecol, 's');
+         label("Anti-Freeze", antifreezecol, 'a');
       }
    }
    // Set width/height/offset
