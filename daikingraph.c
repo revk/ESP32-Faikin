@@ -135,10 +135,10 @@ int main(int argc, const char *argv[])
       xml_addf(svg, "a@rel=me@href", me);
    xml_element_set_namespace(svg, xml_namespace(svg, NULL, "http://www.w3.org/2000/svg"));
    xml_t top = xml_element_add(svg, "g");       // Top level, adjusted for position as temps all plotted from 0C as Y=0
-   xml_t axis = xml_element_add(top, "g");      // Axis labels
    xml_t grid = xml_element_add(top, "g");      // Grid 1C/1hour
    xml_t ranges = xml_element_add(top, "g");    // Ranges
    xml_t traces = xml_element_add(top, "g");    // Traces
+   xml_t axis = xml_element_add(svg, "g");      // Axis labels (not offset as text ends up upside down)
    xml_t labels = xml_element_add(svg, "g");    // Title (not offset)
 
    double utcx(SQL_RES * res) {
@@ -301,14 +301,14 @@ int main(int argc, const char *argv[])
          time_t when = sod + 3600 * h;
          localtime_r(&when, &tm);
          xml_t t = xml_addf(axis, "+text", "%02d", tm.tm_hour);
-         xml_addf(t, "@x", "%.2f", xsize * h);
-         xml_add(t, "@y", "-1");
+         xml_addf(t, "@x", "%.2f", left + xsize * h + 1);
+         xml_addf(t, "@y", "%.2f", ysize * maxtemp - 1);
       }
       for (double temp = ceil(mintemp); temp <= floor(maxtemp); temp += 1)
       {
          xml_t t = xml_addf(axis, "+text", "%.0f", temp);
-         xml_add(t, "@x", "-1");
-         xml_addf(t, "@y", "%.2f", ysize * temp + 7);
+         xml_addf(t, "@x", "%.2f", left - 1);
+         xml_addf(t, "@y", "%.2f", ysize * maxtemp - (ysize * temp - 6));
          xml_add(t, "@text-anchor", "end");
       }
    }
@@ -352,8 +352,8 @@ int main(int argc, const char *argv[])
             xml_add(t, "@fill", colour);
             warnx(text);
          }
-	 label(date,"black");
-	 label(tag,"black");
+         label(date, "black");
+         label(tag, "black");
          label("Target", targetcol);
          label("Env", envcol);
          label("Home", homecol);
