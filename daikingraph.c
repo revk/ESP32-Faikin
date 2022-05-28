@@ -290,8 +290,14 @@ int main(int argc, const char *argv[])
       char m = 'M';
       // Forward (trust the trace field name)
       SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,%s AS `val` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, sqltable, tag, sod, eod));
+      double lastx = NAN;
       while (sql_fetch_row(res))
-         addpos(f, &m, utcx(res), tempy(res, "val"));
+      {
+         double x = utcx(res);
+         if (!isnan(lastx) || x - lastx > xsize / 4)
+            m = 'M';            // gap
+         addpos(f, &m, x, tempy(res, "val"));
+      }
       sql_free_result(res);
       fclose(f);
       if (*path)
