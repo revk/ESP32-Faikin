@@ -26,6 +26,7 @@ int main(int argc, const char *argv[])
    const char *control = NULL;
    const char *me = NULL;
    const char *targetcol = "#080";
+   const char *tempcol = "#080";
    const char *envcol = "#800";
    const char *homecol = "#880";
    const char *liquidcol = "#008";
@@ -64,6 +65,7 @@ int main(int argc, const char *argv[])
          { "no-labels", 0, POPT_ARG_NONE, &nolabels, 0, "No labels" },
          { "debug", 'V', POPT_ARG_NONE, &debug, 0, "Debug" },
          { "target-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &targetcol, 0, "Target colour", "#rgb" },
+         { "temp-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &tempcol, 0, "Temp colour", "#rgb" },
          { "env-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &envcol, 0, "Env colour", "#rgb" },
          { "home-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &homecol, 0, "Home colour", "#rgb" },
          { "liquid-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &liquidcol, 0, "Liquid colour", "#rgb" },
@@ -169,6 +171,8 @@ int main(int argc, const char *argv[])
    }
 
    const char *range(xml_t g, const char *field, const char *colour, int group) {       // Plot a temp range based on min/max of field
+      if (!colour)
+         return colour;
       char *min,
       *max;
       if (asprintf(&min, "min%s", field) < 0 || asprintf(&max, "max%s", field) < 0)
@@ -222,6 +226,8 @@ int main(int argc, const char *argv[])
       return colour;
    }
    const char *trace(xml_t g, const char *field, const char *colour) {  // Plot trace
+      if (!colour)
+         return colour;
       char *path;
       size_t len;
       FILE *f = open_memstream(&path, &len);
@@ -250,6 +256,9 @@ int main(int argc, const char *argv[])
    }
 
    targetcol = range(ranges, "target", targetcol, 19);
+   if (targetcol)
+      tempcol = NULL;
+   tempcol = rangetrace(ranges, traces, "temp", tempcol);
    envcol = rangetrace(ranges, traces, "env", envcol);
    homecol = rangetrace(ranges, traces, "home", homecol);
    liquidcol = rangetrace(ranges, traces, "liquid", liquidcol);
@@ -354,12 +363,13 @@ int main(int argc, const char *argv[])
          }
          label(date, "black");
          label(tag, "black");
-         label("Target", targetcol);
-         label("Env", envcol);
          label("Home", homecol);
+         label("TempSet", tempcol);
          label("Liquid", liquidcol);
          label("Inlet", inletcol);
          label("Outside", outsidecol);
+         label("EnvTarget", targetcol);
+         label("Env", envcol);
       }
    }
    // Set width/height/offset
