@@ -171,8 +171,8 @@ int main(int argc, const char *argv[])
    }
 
    const char *range(xml_t g, const char *field, const char *colour, int group) {       // Plot a temp range based on min/max of field
-      if (!colour)
-         return colour;
+      if (!colour || !*colour)
+         return NULL;
       char *min,
       *max;
       if (asprintf(&min, "min%s", field) < 0 || asprintf(&max, "max%s", field) < 0)
@@ -226,8 +226,8 @@ int main(int argc, const char *argv[])
       return colour;
    }
    const char *trace(xml_t g, const char *field, const char *colour) {  // Plot trace
-      if (!colour)
-         return colour;
+      if (!colour || !*colour)
+         return NULL;
       char *path;
       size_t len;
       FILE *f = open_memstream(&path, &len);
