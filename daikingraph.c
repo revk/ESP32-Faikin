@@ -32,6 +32,10 @@ int main(int argc, const char *argv[])
    const char *liquidcol = "#008";
    const char *inletcol = "#808";
    const char *outsidecol = "#088";
+   const char *heatcol = "#f00";
+   const char *coolcol = "#00f";
+   const char *antifreezecol = "#f0f";
+   const char *slavecol = "#0f0";
    const char *date = NULL;
    double xsize = 36;           // Per hour
    double ysize = 36;           // Per degree
@@ -71,6 +75,10 @@ int main(int argc, const char *argv[])
          { "liquid-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &liquidcol, 0, "Liquid colour", "#rgb" },
          { "inlet-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &inletcol, 0, "Inlet colour", "#rgb" },
          { "outside-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &outsidecol, 0, "Outside colour", "#rgb" },
+         { "heat-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &heatcol, 0, "Heat colour", "#rgb" },
+         { "cool-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &coolcol, 0, "Cool colour", "#rgb" },
+         { "anti-freeze-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &antifreezecol, 0, "Anti freeze colour", "#rgb" },
+         { "slave-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &slavecol, 0, "Slave colour", "#rgb" },
          { "me", 0, POPT_ARG_STRING | POPT_ARGFLAG_DOC_HIDDEN, &me, 0, "Me link", "URL" },
          POPT_AUTOHELP { }
       };
@@ -138,6 +146,7 @@ int main(int argc, const char *argv[])
    xml_element_set_namespace(svg, xml_namespace(svg, NULL, "http://www.w3.org/2000/svg"));
    xml_t top = xml_element_add(svg, "g");       // Top level, adjusted for position as temps all plotted from 0C as Y=0
    xml_t grid = xml_element_add(top, "g");      // Grid 1C/1hour
+   xml_t bands = xml_element_add(top, "g");     // Bands (booleans)
    xml_t ranges = xml_element_add(top, "g");    // Ranges
    xml_t traces = xml_element_add(top, "g");    // Traces
    xml_t axis = xml_element_add(svg, "g");      // Axis labels (not offset as text ends up upside down)
@@ -173,24 +182,20 @@ int main(int argc, const char *argv[])
    const char *range(xml_t g, const char *field, const char *colour, int group) {       // Plot a temp range based on min/max of field
       if (!colour || !*colour)
          return NULL;
-      char *min,
-      *max;
-      if (asprintf(&min, "min%s", field) < 0 || asprintf(&max, "max%s", field) < 0)
-         errx(1, "malloc");
       char *path;
       size_t len;
       FILE *f = open_memstream(&path, &len);
       char m = 'M';
       double last;
       SQL_RES *select(const char *order) {
-         return sql_safe_query_store_free(&sql, sql_printf("SELECT min(`utc`) AS `utc`,max(`%#S`) AS `%#S`,min(`%#S`) AS `%#S` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U GROUP BY substring(`utc`,1,%d) ORDER BY `utc` %s", max, max, min, min, sqltable, tag, sod, eod, group, order));
+         return sql_safe_query_store_free(&sql, sql_printf("SELECT min(`utc`) AS `utc`,max(`max%#S`) AS `max`,min(`min%#S`) AS `min` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U GROUP BY substring(`utc`,1,%d) ORDER BY `utc` %s", field, field, sqltable, tag, sod, eod, group, order));
       }
       // Forward
       last = NAN;
       SQL_RES *res = select("asc");
       while (sql_fetch_row(res))
       {
-         double t = tempy(res, max);
+         double t = tempy(res, "max");
          addpos(f, &m, utcx(res), isnan(last) || t > last ? t : last);
          last = t;
       }
@@ -201,7 +206,7 @@ int main(int argc, const char *argv[])
       double lastx = NAN;
       while (sql_fetch_row(res))
       {
-         double t = tempy(res, min);
+         double t = tempy(res, "min");
          if (!isnan(lastx))
             addpos(f, &m, lastx, isnan(last) || t < last ? t : last);
          last = t;
@@ -221,8 +226,6 @@ int main(int argc, const char *argv[])
       } else
          colour = NULL;
       free(path);
-      free(min);
-      free(max);
       return colour;
    }
    const char *trace(xml_t g, const char *field, const char *colour) {  // Plot trace
@@ -232,10 +235,10 @@ int main(int argc, const char *argv[])
       size_t len;
       FILE *f = open_memstream(&path, &len);
       char m = 'M';
-      // Forward
-      SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,`%#S` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, sqltable, tag, sod, eod));
+      // Forward (trust the trace field name)
+      SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,%s AS `val` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, sqltable, tag, sod, eod));
       while (sql_fetch_row(res))
-         addpos(f, &m, utcx(res), tempy(res, field));
+         addpos(f, &m, utcx(res), tempy(res, "val"));
       sql_free_result(res);
       fclose(f);
       if (*path)
@@ -257,7 +260,10 @@ int main(int argc, const char *argv[])
 
    targetcol = range(ranges, "target", targetcol, 19);
    if (targetcol)
+   {
+	   trace(traces,"IF(mintarget=maxtarget,mintarget,NULL)",targetcol);
       tempcol = NULL;
+   }
    tempcol = rangetrace(ranges, traces, "temp", tempcol);
    envcol = rangetrace(ranges, traces, "env", envcol);
    homecol = rangetrace(ranges, traces, "home", homecol);
@@ -268,6 +274,65 @@ int main(int argc, const char *argv[])
    // Set range of temps shown
    mintemp = floor(mintemp) - 0.5;
    maxtemp = ceil(maxtemp) + 0.5;
+
+   // Bands (booleans)
+   const char *band(const char *field, const char *colour) {
+      if (!colour || !*colour)
+         return NULL;
+      char *path;
+      size_t len;
+      FILE *f = open_memstream(&path, &len);
+      char m = 'M';
+      SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,%s AS `val` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, sqltable, tag, sod, eod));
+      double lastx = NAN;
+      double startx = NAN;
+      void end(double x, double v) {    // End
+         double endx = lastx * (1 - v) + x * v;
+         m = 'M';
+         addpos(f, &m, startx, ysize * mintemp);
+         addpos(f, &m, startx, ysize * maxtemp);
+         addpos(f, &m, endx, ysize * maxtemp);
+         addpos(f, &m, endx, ysize * mintemp);
+         startx = NAN;
+      }
+      while (sql_fetch_row(res))
+      {
+         double x = utcx(res);
+         double v = strtod(sql_colz(res, "val"), NULL);
+         if (v < 0)
+            v = 0;
+         if (v > 1)
+            v = 1;
+         if (!isnan(lastx))
+         {
+            if (v > 0 && isnan(startx))
+               startx = lastx * v + x * (1 - v);
+            if (v < 1 && !isnan(startx))
+               end(x, v);
+         }
+         lastx = x;
+      }
+      if (!isnan(startx))
+         end(lastx, 1);
+      sql_free_result(res);
+      fclose(f);
+      if (*path)
+      {
+         xml_t p = xml_element_add(bands, "path");
+         xml_add(p, "@d", path);
+         xml_add(p, "@fill", colour);
+         xml_add(p, "@stroke", "none");
+         xml_add(p, "@opacity", "0.25");
+      } else
+         colour = NULL;
+      free(path);
+      return colour;
+   }
+   heatcol = band("least(`power`,`heat`)-`slave`", heatcol);
+   coolcol = band("`power`-`heat`-`slave`", coolcol);
+   antifreezecol = band("`antifreeze`", antifreezecol);
+   slavecol=band("least(`slave`,`power`)",slavecol);
+
    // Grid
    if (!nogrid)
    {
@@ -359,7 +424,6 @@ int main(int argc, const char *argv[])
             xml_addf(t, "@y", "%d", y);
             xml_add(t, "@text-anchor", "end");
             xml_add(t, "@fill", colour);
-            warnx(text);
          }
          label(date, "black");
          label(tag, "black");
@@ -370,6 +434,10 @@ int main(int argc, const char *argv[])
          label("Outside", outsidecol);
          label("EnvTarget", targetcol);
          label("Env", envcol);
+         label("Heat", heatcol);
+         label("Cool", coolcol);
+         label("Slave", slavecol);
+         label("Anti-Freeze", antifreezecol);
       }
    }
    // Set width/height/offset
