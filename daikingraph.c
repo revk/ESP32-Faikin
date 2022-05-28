@@ -34,8 +34,9 @@ int main(int argc, const char *argv[])
    const char *outsidecol = "#088";
    const char *heatcol = "#f00";
    const char *coolcol = "#00f";
-   const char *antifreezecol = "#f0f";
+   const char *antifreezecol = "#ff0";
    const char *slavecol = "#0f0";
+   const char *fanrpmcol = "#000";
    const char *date = NULL;
    double xsize = 36;           // Per hour
    double ysize = 36;           // Per degree
@@ -79,6 +80,7 @@ int main(int argc, const char *argv[])
          { "cool-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &coolcol, 0, "Cool colour", "#rgb" },
          { "anti-freeze-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &antifreezecol, 0, "Anti freeze colour", "#rgb" },
          { "slave-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &slavecol, 0, "Slave colour", "#rgb" },
+         { "fanrpm-colour", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &fanrpmcol, 0, "Fan RPM/100 colour", "#rgb" },
          { "me", 0, POPT_ARG_STRING | POPT_ARGFLAG_DOC_HIDDEN, &me, 0, "Me link", "URL" },
          POPT_AUTOHELP { }
       };
@@ -187,8 +189,8 @@ int main(int argc, const char *argv[])
       FILE *f = open_memstream(&path, &len);
       char m = 'M';
       double last;
-      SQL_RES *select(const char *order) {
-         return sql_safe_query_store_free(&sql, sql_printf("SELECT min(`utc`) AS `utc`,max(`max%#S`) AS `max`,min(`min%#S`) AS `min` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U GROUP BY substring(`utc`,1,%d) ORDER BY `utc` %s", field, field, sqltable, tag, sod, eod, group, order));
+      SQL_RES *select(const char *order) { // Trust field name
+         return sql_safe_query_store_free(&sql, sql_printf("SELECT min(`utc`) AS `utc`,max(max%s) AS `max`,min(min%s) AS `min` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U GROUP BY substring(`utc`,1,%d) ORDER BY `utc` %s", field, field, sqltable, tag, sod, eod, group, order));
       }
       // Forward
       last = NAN;
@@ -264,6 +266,7 @@ int main(int argc, const char *argv[])
 	   trace(traces,"IF(mintarget=maxtarget,mintarget,NULL)",targetcol);
       tempcol = NULL;
    }
+   fanrpmcol=rangetrace(ranges,traces,"fanrpm/100",fanrpmcol);
    tempcol = rangetrace(ranges, traces, "temp", tempcol);
    envcol = rangetrace(ranges, traces, "env", envcol);
    homecol = rangetrace(ranges, traces, "home", homecol);
@@ -329,7 +332,7 @@ int main(int argc, const char *argv[])
       return colour;
    }
    heatcol = band("least(`power`,`heat`)-`slave`", heatcol);
-   coolcol = band("`power`-`heat`-`slave`", coolcol);
+   coolcol = band("`power`-`heat`-`slave`-`antifreeze`", coolcol);
    antifreezecol = band("`antifreeze`", antifreezecol);
    slavecol=band("least(`slave`,`power`)",slavecol);
 
@@ -434,6 +437,7 @@ int main(int argc, const char *argv[])
          label("Outside", outsidecol);
          label("EnvTarget", targetcol);
          label("Env", envcol);
+         label("FanRPM/100", fanrpmcol);
          label("Heat", heatcol);
          label("Cool", coolcol);
          label("Slave", slavecol);
