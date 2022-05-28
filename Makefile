@@ -7,7 +7,7 @@ PROJECT_NAME := Daikin
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 MODELS := Daikin
 
-all:
+all:	tools
 	@echo Make: $(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
