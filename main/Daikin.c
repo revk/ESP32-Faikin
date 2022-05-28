@@ -1317,9 +1317,9 @@ void app_main()
 		  	daikin.min##name=NAN;daikin.total##name=0;daikin.max##name=NAN;daikin.count##name=0;
 #define	r(name)		if(!isnan(daikin.min##name)&&!isnan(daikin.max##name)){if(daikin.min##name==daikin.max##name)jo_litf(j,#name,"%.2f",daikin.min##name);	\
 			else {jo_array(j,#name);jo_litf(j,NULL,"%.2f",daikin.min##name);jo_litf(j,NULL,"%.2f",daikin.max##name);jo_close(j);}}
-#define	i(name)		if(daikin.min##name==daikin.max##name)jo_int(j,#name,daikin.total##name/daikin.statscount);     \
+#define	i(name)		if(daikin.status_known&CONTROL_##name){if(daikin.min##name==daikin.max##name)jo_int(j,#name,daikin.total##name/daikin.statscount);     \
                         else {jo_array(j,#name);jo_int(j,NULL,daikin.min##name);jo_int(j,NULL,daikin.total##name/daikin.statscount);jo_int(j,NULL,daikin.max##name);jo_close(j);}       \
-                        daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;
+                        daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;}
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
