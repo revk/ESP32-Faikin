@@ -294,9 +294,10 @@ int main(int argc, const char *argv[])
       while (sql_fetch_row(res))
       {
          double x = utcx(res);
-         if (!isnan(lastx) || x - lastx > xsize / 4)
+         double y = tempy(res, "val");
+         if (isnan(y) || !isnan(lastx) || x - lastx > xsize / 4)
             m = 'M';            // gap
-         addpos(f, &m, x, tempy(res, "val"));
+         addpos(f, &m, x, y);
       }
       sql_free_result(res);
       fclose(f);
