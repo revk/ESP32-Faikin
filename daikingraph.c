@@ -177,13 +177,26 @@ int main(int argc, const char *argv[])
    double mintemp = NAN,
        maxtemp = NAN;           // Min and max temps seen
    {
-      int Y,
-       M,
-       D;
-      if (sscanf(date, "%d-%d-%d", &Y, &M, &D) != 3)
-         errx(1, "Bad date");
-      struct tm t = {.tm_year = Y - 1900,.tm_mon = M - 1,.tm_mday = D,.tm_isdst = -1 };
+      struct tm t = {.tm_isdst = -1 };
+      if (!strcasecmp(date, "today"))
+      {
+         sod = time(0);
+         localtime_r(&sod, &t);
+      } else
+      {
+         int Y,
+          M,
+          D;
+         if (sscanf(date, "%d-%d-%d", &Y, &M, &D) != 3)
+            errx(1, "Bad date");
+         t.tm_year = Y - 1900;
+         t.tm_mon = M - 1;
+         t.tm_mday = D;
+      }
+      t.tm_hour = t.tm_min = t.tm_sec = 0;
+      t.tm_isdst = -1;
       sod = mktime(&t);
+      localtime_r(&sod, &t);
       t.tm_mday++;
       t.tm_isdst = -1;
       eod = mktime(&t);
