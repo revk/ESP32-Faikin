@@ -30,9 +30,9 @@ int main(int argc, const char *argv[])
    const char *targetcol = "#080";
    const char *tempcol = "#080";
    const char *envcol = "#800";
-   const char *homecol = "#880";
+   const char *homecol = "#cc0";
    const char *liquidcol = "#008";
-   const char *inletcol = "#808";
+   const char *inletcol = "#c8c";
    const char *outsidecol = "#088";
    const char *heatcol = "#f00";
    const char *coolcol = "#00f";
@@ -339,11 +339,11 @@ int main(int argc, const char *argv[])
    }
    fanrpmcol = rangetrace(ranges, traces, "fanrpm/100", fanrpmcol);
    tempcol = rangetrace(ranges, traces, "temp", tempcol);
-   envcol = rangetrace(ranges, traces, "env", envcol);
-   homecol = rangetrace(ranges, traces, "home", homecol);
+   outsidecol = rangetrace(ranges, traces, "outside", outsidecol);
    liquidcol = rangetrace(ranges, traces, "liquid", liquidcol);
    inletcol = rangetrace(ranges, traces, "inlet", inletcol);
-   outsidecol = rangetrace(ranges, traces, "outside", outsidecol);
+   homecol = rangetrace(ranges, traces, "home", homecol);
+   envcol = rangetrace(ranges, traces, "env", envcol);
 
    // Set range of temps shown
    if (isnan(mintemp))
