@@ -24,7 +24,6 @@ int main(int argc, const char *argv[])
    const char *tag = NULL;
    const char *skip = NULL;
    const char *title = NULL;
-   const char *control = NULL;
    const char *me = NULL;
    const char *href = NULL;
    const char *targetcol = "#080";
@@ -39,7 +38,8 @@ int main(int argc, const char *argv[])
    const char *antifreezecol = "#ff0";
    const char *slavecol = "#0f0";
    const char *fanrpmcol = "#000";
-   const char *date = NULL;
+   char *date = NULL;
+   char *control = NULL;
    double xsize = 36;           // Per hour
    double ysize = 36;           // Per degree
    double left = 36;            // Left margin
@@ -182,6 +182,7 @@ int main(int argc, const char *argv[])
       {
          sod = time(0);
          localtime_r(&sod, &t);
+         asprintf(&date, "%04d-%02d-%02d", t.tm_year + 1900, t.tm_mon + 1, t.tm_mday);
       } else
       {
          int Y,
