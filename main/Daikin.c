@@ -345,8 +345,11 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Unknown
-      set_val(antifreeze, payload[6]);
       set_int(fanrpm, (payload[2] + (payload[3] << 8) + 5));
+      set_val(flap, payload[5]);
+      set_val(antifreeze, payload[6]);
+      // 0001B0040100000001
+      // 010476050101000001
 #if 0
       jo_t j = jo_object_alloc();	// Debug
       jo_base16(j, "be", payload, len);
