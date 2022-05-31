@@ -537,7 +537,7 @@ int main(int argc, const char *argv[])
                t = xml_element_add(labels, "a");
                xml_addf(t, "@href", "%s/%s/%s", href, date, tag);
                t = xml_element_add(t, "text");
-               xml_element_set_content(t, "*");
+               xml_element_set_content(t, "❉");
                xml_addf(t, "@x", "%.2f", xsize * hours + left - 21);
                xml_addf(t, "@y", "%d", y);
                xml_add(t, "@text-anchor", "end");
