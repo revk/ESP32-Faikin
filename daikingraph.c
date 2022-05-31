@@ -531,7 +531,7 @@ int main(int argc, const char *argv[])
             xml_element_set_content(t, "<");
             xml_addf(t, "@x", "%.2f", xsize * hours + left - 41);
             xml_addf(t, "@y", "%d", y);
-            xml_add(t, "@text-anchor", "end");
+            xml_add(t, "@text-anchor", "start");
             if (skip && *skip)
             {
                t = xml_element_add(labels, "a");
@@ -540,7 +540,7 @@ int main(int argc, const char *argv[])
                xml_element_set_content(t, "❉");
                xml_addf(t, "@x", "%.2f", xsize * hours + left - 21);
                xml_addf(t, "@y", "%d", y);
-               xml_add(t, "@text-anchor", "end");
+               xml_add(t, "@text-anchor", "middle");
             }
             t = xml_element_add(labels, "a");
             localtime_r(&sod, &tm);
