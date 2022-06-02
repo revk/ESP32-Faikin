@@ -358,9 +358,6 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
 }
 
-#undef set_val
-#undef set_temp
-
 void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 {
    if (!daikin.talking)
