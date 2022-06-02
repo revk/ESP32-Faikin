@@ -647,8 +647,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
-      set_val(control, 1);
       xSemaphoreGive(daikin.mutex);
+      set_val(control, 1); // Outside mux as sets mux itself, D'oh
       return "";
    }
    jo_t s = jo_object_alloc();
