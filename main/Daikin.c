@@ -1154,7 +1154,8 @@ void app_main()
                   int t = lroundf(daikin.temp * 10);
                   ca[3] = t / 10;
                   ca[4] = 0x80 + (t % 10);
-               }
+               } else
+                  daikin.control_changed &= ~CONTROL_temp;
                if (daikin.mode == 1 || daikin.mode == 2)
                   cb[0] = daikin.mode;
                else
@@ -1272,8 +1273,7 @@ void app_main()
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
-               }
-               else if (hot)
+               } else if (hot)
                   set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                else
                   set = max + reference - current + coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
