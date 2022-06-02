@@ -40,6 +40,7 @@ const char TAG[] = "Daikin";
 	u32(switchdelay,900)	\
 	u32(controltime,600)	\
 	u32(fantime,3600)	\
+	u32(temppredict,60)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
 	u32(antifreeze,400)	\
@@ -948,6 +949,7 @@ static esp_err_t web_status(httpd_req_t * req)
 void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
+   memset(&daikin, 0, sizeof(daikin));
    daikin.status_known = CONTROL_online;
 #define	t(name)	daikin.name=NAN;
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
@@ -1231,7 +1233,7 @@ void app_main()
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
                static uint32_t lasttime = 0;
-               if (now / 60 != lasttime / 60)
+               if (temppredict && now / temppredict != lasttime / temppredict)
                {                // Every minute - predictive
                   lasttime = now;
                   daikin.envdelta = current - daikin.envlast;
