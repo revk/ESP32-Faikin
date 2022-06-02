@@ -101,7 +101,7 @@ struct {
 #include "acextras.m"
    float envlast;               // Predictive, last period value
    float envdelta;              // Predictive, diff to last
-   float envdelt2;              // Predictive, previous diff
+   float envdelta2;             // Predictive, previous diff
    uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
@@ -1237,11 +1237,12 @@ void app_main()
                if (temppredict && now / temppredict != lasttime / temppredict)
                {                // Every minute - predictive
                   lasttime = now;
-                  daikin.envdelt2 = daikin.envdelta;
+                  daikin.envdelta2 = daikin.envdelta;
                   daikin.envdelta = current - daikin.envlast;
                   daikin.envlast = current;
                }
-               current += daikin.envdelta + daikin.envdelt2;    // Push forward one minute
+               if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
+                  current += daikin.envdelta + daikin.envdelta2;        // Push forward one minute
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
