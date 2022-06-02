@@ -28,6 +28,7 @@ const char TAG[] = "Daikin";
 #define	settings		\
 	bl(debug)		\
 	bl(dump)		\
+	bl(livestatus)		\
 	b(s21)			\
 	u8(uart,1)		\
 	u8l(coolover,5)		\
@@ -648,7 +649,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.mintarget = min;
       daikin.maxtarget = max;
       xSemaphoreGive(daikin.mutex);
-      set_val(control, 1); // Outside mux as sets mux itself, D'oh
+      set_val(control, 1);      // Outside mux as sets mux itself, D'oh
       return "";
    }
    jo_t s = jo_object_alloc();
@@ -820,10 +821,9 @@ static esp_err_t web_root(httpd_req_t * req)
       pm("+");
       addf(tag);
    }
-   void addhf(const char *tag)
-   {
-	   addh(tag);
-	   addf(tag);
+   void addhf(const char *tag) {
+      addh(tag);
+      addf(tag);
    }
    addb("Power", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
@@ -877,7 +877,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "e('mode',o.mode);" //
                             "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
                             "s('Temp',(o.home+'℃').replace('.5','½'));"      //
-                            "s('Coil',(o.liquid+'℃'));"      //
+                            "s('Coil',(o.liquid+'℃'));"       //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
                             "e('fan',o.fan);"   //
@@ -1167,7 +1167,7 @@ void app_main()
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report))
          {
             daikin.status_changed = 0;
-            if (debug || daikin.status_report)
+            if (debug || daikin.status_report || livestatus)
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
