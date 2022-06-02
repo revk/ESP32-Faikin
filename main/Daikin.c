@@ -89,7 +89,7 @@ struct {
    uint64_t control_changed;    // Which control fields are being set
    uint64_t status_known;       // Which fields we know, and hence can control
    uint8_t control_count;       // How many times we have tried to change control and not worked yet
-   uint32_t statscount;		// Count for b() i(), etc.
+   uint32_t statscount;         // Count for b() i(), etc.
 #define	b(name)		uint8_t	name;uint32_t total##name;
 #define	t(name)		float name;float min##name;float total##name;float max##name;uint32_t count##name;
 #define	r(name)		float min##name;float max##name;
@@ -351,7 +351,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       // 0001B0040100000001
       // 010476050101000001
 #if 0
-      jo_t j = jo_object_alloc();	// Debug
+      jo_t j = jo_object_alloc();       // Debug
       jo_base16(j, "be", payload, len);
       revk_info("rx", &j);
 #endif
@@ -650,7 +650,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
-      daikin.control = 1;
+      set_val(control, 1);
       xSemaphoreGive(daikin.mutex);
       return "";
    }
@@ -1180,7 +1180,7 @@ void app_main()
 	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
 	 		daikin.total##name+=daikin.name;
 #include "acextras.m"
-	 daikin.statscount++;
+         daikin.statscount++;
          if (!daikin.control_changed)
             daikin.control_count = 0;
          else if (daikin.control_count++ > 10)
@@ -1207,7 +1207,7 @@ void app_main()
             if (now > daikin.controlvalid)
             {                   // End of auto mode
                daikin.controlvalid = 0;
-               daikin.control = 0;
+               set_val(control, 0);
                daikin_set_e(mode, "A");
                if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
@@ -1305,8 +1305,8 @@ void app_main()
             if (clock / reporting != last / reporting)
             {
                last = clock;
-	       if(daikin.statscount)
-	       {
+               if (daikin.statscount)
+               {
                   jo_t j = jo_object_alloc();
                   {             // Timestamp
                      struct tm tm;
@@ -1326,8 +1326,8 @@ void app_main()
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
-		  daikin.statscount=0;
-	       }
+                  daikin.statscount = 0;
+               }
             }
          }
       }
