@@ -351,6 +351,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(antifreeze, payload[6]);
       // 0001B0040100000001
       // 010476050101000001
+      // 010000000100000001
 #if 0
       jo_t j = jo_object_alloc();       // Debug
       jo_base16(j, "be", payload, len);
