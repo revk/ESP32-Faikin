@@ -820,6 +820,11 @@ static esp_err_t web_root(httpd_req_t * req)
       pm("+");
       addf(tag);
    }
+   void addhf(const char *tag)
+   {
+	   addh(tag);
+	   addf(tag);
+   }
    addb("Power", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1)
@@ -827,8 +832,8 @@ static esp_err_t web_root(httpd_req_t * req)
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addpm("Target", "temp");
-   addh("Temp");
-   addf("Temp");
+   addhf("Temp");
+   addhf("Coil");
    if (daikin.status_known & CONTROL_powerful)
       addb("Powerful", "powerful");
    if (daikin.status_known & CONTROL_econo)
@@ -872,6 +877,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "e('mode',o.mode);" //
                             "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
                             "s('Temp',(o.home+'℃').replace('.5','½'));"      //
+                            "s('Coil',(o.liquid+'℃'));"      //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
                             "e('fan',o.fan);"   //
