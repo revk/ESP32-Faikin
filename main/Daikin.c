@@ -98,6 +98,8 @@ struct {
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
 #include "acextras.m"
+   float envlast,
+    envdelta;                   // Predictive env
    uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
@@ -1226,11 +1228,19 @@ void app_main()
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
                float current = daikin.env;
+               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
+                  current = daikin.home;
+               static uint32_t lasttime = 0;
+               if (now / 60 != lasttime / 60)
+               {                // Every minute - predictive
+                  lasttime = now;
+                  daikin.envdelta = current - daikin.envlast;
+                  daikin.envlast = current;
+               }
+               current += daikin.envdelta;      // Push forward one minute
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
-               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
-                  current = daikin.home;
                // What the A/C is using as current temperature
                float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
                if (reference >= 100)    // Assume invalid
