@@ -110,7 +110,7 @@ struct {
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
    uint8_t status_report:1;     // Status report
-} daikin;
+} daikin = { };
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
 {                               // Setting a value (uint8_t)
@@ -950,7 +950,6 @@ static esp_err_t web_status(httpd_req_t * req)
 void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
-   memset(&daikin, 0, sizeof(daikin));
    daikin.status_known = CONTROL_online;
 #define	t(name)	daikin.name=NAN;
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
