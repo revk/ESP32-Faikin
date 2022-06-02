@@ -1241,7 +1241,7 @@ void app_main()
                   daikin.envlast = current;
                }
                if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
-                  current += daikin.envdelta + daikin.envdelta2;        // Push forward one minute
+                  current += (daikin.envdelta + daikin.envdelta2) / 2;  // Push forward one minute
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
