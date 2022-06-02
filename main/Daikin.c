@@ -1272,8 +1272,7 @@ void app_main()
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
-               } else if (max == min)
-                  set = min + reference - current;      // Exact match temperature!
+               }
                else if (hot)
                   set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                else
