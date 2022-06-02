@@ -571,8 +571,8 @@ int main(int argc, const char *argv[])
       }
    }
    // Set width/height/offset
-         xml_add(top, "@stroke-linecap", "round");
-      xml_add(top, "@stroke-linejoin", "round");
+   xml_add(top, "@stroke-linecap", "round");
+   xml_add(top, "@stroke-linejoin", "round");
    xml_addf(svg, "@width", "%.0f", xsize * hours + left);
    xml_addf(svg, "@height", "%.0f", ysize * (maxtemp - mintemp));
    xml_addf(top, "@transform", "translate(%.1f,%.1f)scale(1,-1)", left, ysize * maxtemp);

@@ -28,6 +28,7 @@ const char TAG[] = "Daikin";
 #define	settings		\
 	bl(debug)		\
 	bl(dump)		\
+	bl(livestatus)		\
 	b(s21)			\
 	u8(uart,1)		\
 	u8l(coolover,5)		\
@@ -39,6 +40,7 @@ const char TAG[] = "Daikin";
 	u32(switchdelay,900)	\
 	u32(controltime,600)	\
 	u32(fantime,3600)	\
+	u32(temppredict,60)	\
 	u8(fanstep,2)		\
 	u32(reporting,60)	\
 	u32(antifreeze,400)	\
@@ -89,7 +91,7 @@ struct {
    uint64_t control_changed;    // Which control fields are being set
    uint64_t status_known;       // Which fields we know, and hence can control
    uint8_t control_count;       // How many times we have tried to change control and not worked yet
-   uint32_t statscount;		// Count for b() i(), etc.
+   uint32_t statscount;         // Count for b() i(), etc.
 #define	b(name)		uint8_t	name;uint32_t total##name;
 #define	t(name)		float name;float min##name;float total##name;float max##name;uint32_t count##name;
 #define	r(name)		float min##name;float max##name;
@@ -97,6 +99,9 @@ struct {
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
 #include "acextras.m"
+   float envlast;               // Predictive, last period value
+   float envdelta;              // Predictive, diff to last
+   float envdelta2;             // Predictive, previous diff
    uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t acswitch;           // Last time we switched hot/cold
    uint32_t acapproaching;      // Last time we were approaching target temp
@@ -350,16 +355,14 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       set_val(antifreeze, payload[6]);
       // 0001B0040100000001
       // 010476050101000001
+      // 010000000100000001
 #if 0
-      jo_t j = jo_object_alloc();	// Debug
+      jo_t j = jo_object_alloc();       // Debug
       jo_base16(j, "be", payload, len);
       revk_info("rx", &j);
 #endif
    }
 }
-
-#undef set_val
-#undef set_temp
 
 void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 {
@@ -650,8 +653,8 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
-      daikin.control = 1;
       xSemaphoreGive(daikin.mutex);
+      set_val(control, 1);      // Outside mux as sets mux itself, D'oh
       return "";
    }
    jo_t s = jo_object_alloc();
@@ -823,6 +826,10 @@ static esp_err_t web_root(httpd_req_t * req)
       pm("+");
       addf(tag);
    }
+   void addhf(const char *tag) {
+      addh(tag);
+      addf(tag);
+   }
    addb("Power", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1)
@@ -830,8 +837,8 @@ static esp_err_t web_root(httpd_req_t * req)
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addpm("Target", "temp");
-   addh("Temp");
-   addf("Temp");
+   addhf("Temp");
+   addhf("Coil");
    if (daikin.status_known & CONTROL_powerful)
       addb("Powerful", "powerful");
    if (daikin.status_known & CONTROL_econo)
@@ -875,6 +882,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "e('mode',o.mode);" //
                             "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
                             "s('Temp',(o.home+'℃').replace('.5','½'));"      //
+                            "s('Coil',(o.liquid+'℃'));"       //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
                             "e('fan',o.fan);"   //
@@ -942,6 +950,7 @@ static esp_err_t web_status(httpd_req_t * req)
 void app_main()
 {
    daikin.mutex = xSemaphoreCreateMutex();
+   memset(&daikin, 0, sizeof(daikin));
    daikin.status_known = CONTROL_online;
 #define	t(name)	daikin.name=NAN;
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
@@ -1150,7 +1159,8 @@ void app_main()
                   int t = lroundf(daikin.temp * 10);
                   ca[3] = t / 10;
                   ca[4] = 0x80 + (t % 10);
-               }
+               } else
+                  daikin.control_changed &= ~CONTROL_temp;
                if (daikin.mode == 1 || daikin.mode == 2)
                   cb[0] = daikin.mode;
                else
@@ -1164,7 +1174,7 @@ void app_main()
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report))
          {
             daikin.status_changed = 0;
-            if (debug || daikin.status_report)
+            if (debug || daikin.status_report || livestatus)
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
@@ -1180,7 +1190,7 @@ void app_main()
 	 		if(!daikin.statscount||daikin.max##name<daikin.name)daikin.max##name=daikin.name;	\
 	 		daikin.total##name+=daikin.name;
 #include "acextras.m"
-	 daikin.statscount++;
+         daikin.statscount++;
          if (!daikin.control_changed)
             daikin.control_count = 0;
          else if (daikin.control_count++ > 10)
@@ -1207,7 +1217,7 @@ void app_main()
             if (now > daikin.controlvalid)
             {                   // End of auto mode
                daikin.controlvalid = 0;
-               daikin.control = 0;
+               set_val(control, 0);
                daikin_set_e(mode, "A");
                if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
@@ -1221,11 +1231,21 @@ void app_main()
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
                float current = daikin.env;
+               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
+                  current = daikin.home;
+               static uint32_t lasttime = 0;
+               if (temppredict && now / temppredict != lasttime / temppredict)
+               {                // Every minute - predictive
+                  lasttime = now;
+                  daikin.envdelta2 = daikin.envdelta;
+                  daikin.envdelta = current - daikin.envlast;
+                  daikin.envlast = current;
+               }
+               if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
+                  current += daikin.envdelta + daikin.envdelta2;        // Push forward one minute
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
-               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
-                  current = daikin.home;
                // What the A/C is using as current temperature
                float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
                if (reference >= 100)    // Assume invalid
@@ -1305,8 +1325,8 @@ void app_main()
             if (clock / reporting != last / reporting)
             {
                last = clock;
-	       if(daikin.statscount)
-	       {
+               if (daikin.statscount)
+               {
                   jo_t j = jo_object_alloc();
                   {             // Timestamp
                      struct tm tm;
@@ -1326,8 +1346,8 @@ void app_main()
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
-		  daikin.statscount=0;
-	       }
+                  daikin.statscount = 0;
+               }
             }
          }
       }
