@@ -41,8 +41,8 @@ const char TAG[] = "Daikin";
 	u32(controltime,600)	\
 	u32(fantime,3600)	\
 	u32(temppredict,60)	\
-	u32(temppredictmult,2)	\
-	u8(fanstep,2)		\
+	u8l(temppredictmult,2)	\
+	u8(fanstep,4)		\
 	u32(reporting,60)	\
 	u32(antifreeze,400)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
@@ -1242,9 +1242,7 @@ void app_main()
                   daikin.envlast = current;
                }
                if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
-                  current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Push forward one minute multiplied
-               else
-                  current += daikin.envdelta;   // on min
+                  current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Predict
                xSemaphoreGive(daikin.mutex);
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
