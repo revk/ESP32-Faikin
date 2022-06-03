@@ -1228,6 +1228,7 @@ void app_main()
             {                   // Auto mode
                // Get the settings atomically
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+               uint8_t hot = daikin.heat;       // Are we in heating mode?
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
                float current = daikin.env;
@@ -1241,10 +1242,9 @@ void app_main()
                   daikin.envdelta = current - daikin.envlast;
                   daikin.envlast = current;
                }
-               if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
+               if ((!hot && daikin.envdelta < 0 && daikin.envdelta2 < 0) || (hot && daikin.envdelta > 0 && daikin.envdelta2 > 0))
                   current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Predict
                xSemaphoreGive(daikin.mutex);
-               uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
                // What the A/C is using as current temperature
                float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
