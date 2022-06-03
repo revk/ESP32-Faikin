@@ -259,6 +259,7 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val(online, 1);
          set_val(power, (payload[0] == '1') ? 1 : 0);
          set_val(mode, "03721003"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
+         set_val(heat, daikin.mode == 1);       // Crude - TODO find if anything actually tells us this
          set_temp(temp, 18.0 + 0.5 * (payload[2] - '@'));
          if (payload[3] == 'A')
             set_val(fan, 0);    // Auto
