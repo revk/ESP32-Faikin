@@ -1319,10 +1319,7 @@ void app_main()
                if (fantime && daikin.back + daikin.over > fantime)
                {                // Consider fan back off
                   if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                  {             // Less than 50% duty - back off fan
-                     daikin.acapproaching = now;        // Delay next fan
-                     daikin_set_v(fan, daikin.fan - fanstep);
-                  }
+                     daikin_set_v(fan, daikin.fan - fanstep); // Less than 50% duty - back off fan
                   daikin.back = daikin.over = 0;
                }
                // Limit settings to acceptable values
