@@ -893,7 +893,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('swingv',o.swingv);"     //
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
-                            "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
+                            "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':'')+(o.target?(' / '+o.target+'℃').replace('.5','½'):''));"       //
                             "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"    //
                             "s('Coil',(o.liquid+'℃'));"       //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
