@@ -74,7 +74,7 @@ enum {                          // Number the control fields
 #define	i(name)		b(name)
 #define	e(name,values)	b(name)
 #define	s(name,len)	b(name)
-#include "acfields.m"
+#include "acextras.m"
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
@@ -82,7 +82,7 @@ enum {                          // Number the control fields
 #define	i(name)		b(name)
 #define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
 #define	s(name,len)	b(name)
-#include "acfields.m"
+#include "acextras.m"
 // Globals
 static httpd_handle_t webserver = NULL;
 
@@ -651,11 +651,13 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime() + controltime;
-      daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
+      daikin.env = env;
+      daikin.status_known |= CONTROL_env;       // So we report it
+      daikin.control = 1;
+      daikin.status_known |= CONTROL_control;   // So we report it
       xSemaphoreGive(daikin.mutex);
-      set_val(control, 1);      // Outside mux as sets mux itself, D'oh
       return "";
    }
    jo_t s = jo_object_alloc();
@@ -705,7 +707,7 @@ jo_t daikin_status(void)
 #define i(name)         if(daikin.status_known&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
-#include "acfields.m"
+#include "acextras.m"
    xSemaphoreGive(daikin.mutex);
    return j;
 }
@@ -882,7 +884,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
                             "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
-                            "s('Temp',(o.home+'℃').replace('.5','½'));"      //
+                            "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"    //
                             "s('Coil',(o.liquid+'℃'));"       //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
@@ -1223,6 +1225,7 @@ void app_main()
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
                daikin.mintarget = NAN;
                daikin.maxtarget = NAN;
+               daikin.status_known &= ~CONTROL_env;
                daikin.env = NAN;
             } else
             {                   // Auto mode
@@ -1242,7 +1245,7 @@ void app_main()
                   daikin.envdelta = current - daikin.envlast;
                   daikin.envlast = current;
                }
-               if ((!hot && daikin.envdelta < 0 && daikin.envdelta2 < 0) || (hot && daikin.envdelta > 0 && daikin.envdelta2 > 0))
+               if ((!hot && daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (hot && daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
                   current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Predict
                xSemaphoreGive(daikin.mutex);
                // Current temperature
@@ -1304,6 +1307,7 @@ void app_main()
                } else
                {                // Beyond target, but not yet switched - if we have been here too long and not switched we may reduce fan
                   daikin.acbeyond = now;
+                  // TODO better way to work out we can reduce fan...
                   if (fanstep && fantime && daikin.acapproaching + fantime < now && daikin.fan && daikin.fan > 1)
                   {
                      daikin.acapproaching = now;        // Delay next fan
