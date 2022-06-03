@@ -12,4 +12,22 @@ menu "RevK"
 	help
 		Rx GPIO, prefix with minus for inverted
 
+	config DAIKIN_B1
+	string "Button 1 GPIO (up)"
+	default ""
+	help
+		Button 1 GPIO, used for up
+
+	config DAIKIN_B2
+	string "Button 2 GPIO (select)"
+	default ""
+	help
+		Button 2 GPIO, used for select
+
+	config DAIKIN_B3
+	string "Button 3 GPIO (down)"
+	default ""
+	help
+		Button 3 GPIO, used for down
+
 endmenu
