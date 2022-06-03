@@ -41,11 +41,15 @@ const char TAG[] = "Daikin";
 	u32(controltime,600)	\
 	u32(fantime,3600)	\
 	u32(temppredict,60)	\
-	u8(fanstep,2)		\
+	u8l(temppredictmult,2)	\
+	u8(fanstep,4)		\
 	u32(reporting,60)	\
 	u32(antifreeze,400)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
+	io(b1,CONFIG_DAIKIN_B1)	\
+	io(b2,CONFIG_DAIKIN_B2)	\
+	io(b3,CONFIG_DAIKIN_B3)	\
 
 #define u32(n,d) uint32_t n;
 #define s8(n,d) int8_t n;
@@ -73,7 +77,7 @@ enum {                          // Number the control fields
 #define	i(name)		b(name)
 #define	e(name,values)	b(name)
 #define	s(name,len)	b(name)
-#include "acfields.m"
+#include "acextras.m"
 };
 #define	b(name)		const uint64_t CONTROL_##name=(1ULL<<CONTROL_##name##_pos);
 #define	t(name)		b(name)
@@ -81,7 +85,7 @@ enum {                          // Number the control fields
 #define	i(name)		b(name)
 #define	e(name,values)	b(name) const char CONTROL_##name##_VALUES[]=#values;
 #define	s(name,len)	b(name)
-#include "acfields.m"
+#include "acextras.m"
 // Globals
 static httpd_handle_t webserver = NULL;
 
@@ -107,6 +111,8 @@ struct {
    uint32_t acapproaching;      // Last time we were approaching target temp
    uint32_t acbeyond;           // Last time we were at or beyond target temp
    uint32_t freeze;             // Last time we were not freezing
+   uint32_t back;               // Count of back - used to decide we can reduce fan
+   uint32_t over;               // Count of over - used to decide we can reduce fan
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
    uint8_t status_report:1;     // Status report
@@ -650,11 +656,13 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime() + controltime;
-      daikin.env = env;
       daikin.mintarget = min;
       daikin.maxtarget = max;
+      daikin.env = env;
+      daikin.status_known |= CONTROL_env;       // So we report it
+      daikin.control = 1;
+      daikin.status_known |= CONTROL_control;   // So we report it
       xSemaphoreGive(daikin.mutex);
-      set_val(control, 1);      // Outside mux as sets mux itself, D'oh
       return "";
    }
    jo_t s = jo_object_alloc();
@@ -704,7 +712,7 @@ jo_t daikin_status(void)
 #define i(name)         if(daikin.status_known&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
-#include "acfields.m"
+#include "acextras.m"
    xSemaphoreGive(daikin.mutex);
    return j;
 }
@@ -881,7 +889,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
                             "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
-                            "s('Temp',(o.home+'℃').replace('.5','½'));"      //
+                            "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"    //
                             "s('Coil',(o.liquid+'℃'));"       //
                             "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
@@ -1211,7 +1219,7 @@ void app_main()
             daikin.freeze = 0;
          else if (!daikin.freeze)
             daikin.freeze = now;
-         if (daikin.power && daikin.controlvalid && !daikin.control_changed)
+         if (daikin.power && daikin.controlvalid)
          {                      // Local auto controls
             if (now > daikin.controlvalid)
             {                   // End of auto mode
@@ -1222,13 +1230,17 @@ void app_main()
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
                daikin.mintarget = NAN;
                daikin.maxtarget = NAN;
+               daikin.status_known &= ~CONTROL_env;
                daikin.env = NAN;
+               daikin.back = daikin.over = 0;
             } else
             {                   // Auto mode
                // Get the settings atomically
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+               uint8_t hot = daikin.heat;       // Are we in heating mode?
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
+               // TODO manual control override
                float current = daikin.env;
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
@@ -1240,10 +1252,9 @@ void app_main()
                   daikin.envdelta = current - daikin.envlast;
                   daikin.envlast = current;
                }
-               if ((daikin.envdelta < 0 && daikin.envdelta2 < 0) || (daikin.envdelta > 0 || daikin.envdelta2 > 0))
-                  current += daikin.envdelta + daikin.envdelta2;        // Push forward one minute
+               if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
+                  current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Predict
                xSemaphoreGive(daikin.mutex);
-               uint8_t hot = daikin.heat;       // Are we in heating mode?
                // Current temperature
                // What the A/C is using as current temperature
                float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
@@ -1274,6 +1285,7 @@ void app_main()
                         daikin_set_v(fan, 1);
                   }
                   set = max + reference - current + heatover;   // Ensure heating by applying A/C offset to force it
+                  daikin.over++;
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
                   if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
@@ -1287,27 +1299,32 @@ void app_main()
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
-               } else if (hot)
-                  set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
-               else
-                  set = max + reference - current + coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
+                  daikin.over++;
+               } else
+               {                // back off
+                  daikin.back++;
+                  if (hot)
+                     set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
+                  else
+                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
+               }
                // Check if we are approaching target or beyond it
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
-                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
+                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
                   {
                      daikin.acbeyond = now;     // Delay next fan
                      daikin_set_v(fan, daikin.fan + fanstep);
                   }
                } else
-               {                // Beyond target, but not yet switched - if we have been here too long and not switched we may reduce fan
-                  daikin.acbeyond = now;
-                  if (fanstep && fantime && daikin.acapproaching + fantime < now && daikin.fan && daikin.fan > 1)
-                  {
-                     daikin.acapproaching = now;        // Delay next fan
-                     daikin_set_v(fan, daikin.fan - fanstep);
-                  }
+                  daikin.acbeyond = now;        // Beyond target, but not yet switched
+               // Check if stable
+               if (fantime && daikin.back + daikin.over > fantime)
+               {                // Consider fan back off
+                  if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                     daikin_set_v(fan, daikin.fan - fanstep);   // Less than 50% duty - back off fan
+                  daikin.back = daikin.over = 0;
                }
                // Limit settings to acceptable values
                if (set < 16)
