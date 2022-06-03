@@ -666,7 +666,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.maxtarget = max;
       daikin.env = env;
       daikin.status_known |= CONTROL_env;       // So we report it
-      daikin.control = 1;
+      daikin.control = (!isnan(min) && !isnan(max) ? 1 : 0);
       daikin.status_known |= CONTROL_control;   // So we report it
       xSemaphoreGive(daikin.mutex);
       return ret ? : "";
