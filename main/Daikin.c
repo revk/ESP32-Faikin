@@ -1249,6 +1249,8 @@ void app_main()
                float current = daikin.env;
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
+               xSemaphoreGive(daikin.mutex);
+               // Predict
                static uint32_t lasttime = 0;
                if (temppredict && now / temppredict != lasttime / temppredict)
                {                // Every minute - predictive
@@ -1259,84 +1261,81 @@ void app_main()
                }
                if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
                   current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;        // Predict
-               xSemaphoreGive(daikin.mutex);
-               // Current temperature
-               // What the A/C is using as current temperature
-               float reference = daikin.home;   // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
-               if (reference >= 100)    // Assume invalid
-                  reference = daikin.inlet;
-               // Sensible limits in case some not set
-               if (isnan(min))
-                  min = 16;
-               if (isnan(max))
-                  max = 32;
-               // Apply hysteresis
-               if (hot)
-                  max += switch10 / 10.0;       // Overshoot for switching (heating)
-               else
-                  min -= switch10 / 10.0;       // Overshoot for switching (cooling)
-               if (daikin.mode == 3)
-                  daikin_set_e(mode, hot ? "H" : "C");  // Out of auto
-               // What do we want to set to
-               float set = min + reference - current;   // Where we will set the temperature
-               // Consider beyond limits - remember the limits have hysteresis applied
-               if (min > current)
-               {                // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                  if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
-                  {             // Can we switch to heating - time limits applied
-                     daikin.acswitch = now;     // Switched
-                     daikin_set_e(mode, "H");
-                     if (fanstep && fantime)
-                        daikin_set_v(fan, 1);
-                  }
-                  set = max + reference - current + heatover;   // Ensure heating by applying A/C offset to force it
-                  daikin.over++;
-               } else if (max < current)
-               {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                  if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
-                  {             // Can we switch to cooling - time limits applied
-                     daikin.acswitch = now;     // Switched
-                     daikin_set_e(mode, "C");
-                     if (fanstep && fantime)
-                        daikin_set_v(fan, 1);
-                  }
-                  if (antifreeze && daikin.freeze && now - daikin.freeze > antifreeze)
-                     set = max + reference - current + coolback;        // Avoid freezing the coil
-                  else
-                     set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
-                  daikin.over++;
-               } else
-               {                // back off
-                  daikin.back++;
+               if (!isnan(min) && !isnan(max))
+               {                // Control
+                  // Current temperature
+                  // What the A/C is using as current temperature
+                  float reference = daikin.home;        // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
+                  if (reference >= 100) // Assume invalid
+                     reference = daikin.inlet;
+                  // Apply hysteresis
                   if (hot)
-                     set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
+                     max += switch10 / 10.0;    // Overshoot for switching (heating)
                   else
-                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
-               }
-               // Check if we are approaching target or beyond it
-               if ((hot && current <= min) || (!hot && current >= max))
-               {                // Approaching target - if we have been doing this too long, increase the fan
-                  daikin.acapproaching = now;
-                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
-                  {
-                     daikin.acbeyond = now;     // Delay next fan
-                     daikin_set_v(fan, daikin.fan + fanstep);
+                     min -= switch10 / 10.0;    // Overshoot for switching (cooling)
+                  if (daikin.mode == 3)
+                     daikin_set_e(mode, hot ? "H" : "C");       // Out of auto
+                  // What do we want to set to
+                  float set = min + reference - current;        // Where we will set the temperature
+                  // Consider beyond limits - remember the limits have hysteresis applied
+                  if (min > current)
+                  {             // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
+                     if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     {          // Can we switch to heating - time limits applied
+                        daikin.acswitch = now;  // Switched
+                        daikin_set_e(mode, "H");
+                        if (fanstep && fantime)
+                           daikin_set_v(fan, 1);
+                     }
+                     set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
+                     daikin.over++;
+                  } else if (max < current)
+                  {             // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
+                     if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     {          // Can we switch to cooling - time limits applied
+                        daikin.acswitch = now;  // Switched
+                        daikin_set_e(mode, "C");
+                        if (fanstep && fantime)
+                           daikin_set_v(fan, 1);
+                     }
+                     if (antifreeze && daikin.freeze && now - daikin.freeze > antifreeze)
+                        set = max + reference - current + coolback;     // Avoid freezing the coil
+                     else
+                        set = max + reference - current - coolover;     // Ensure cooling by applying A/C offset to force it
+                     daikin.over++;
+                  } else
+                  {             // back off
+                     daikin.back++;
+                     if (hot)
+                        set = min + reference - current - heatback;     // Heating mode but apply negative offset to not actually heat any more than this
+                     else
+                        set = max + reference - current + coolback;     // Cooling mode but apply positive offset to not actually cool any more than this
                   }
-               } else
-                  daikin.acbeyond = now;        // Beyond target, but not yet switched
-               // Check if stable
-               if (fantime && daikin.back + daikin.over > fantime)
-               {                // Consider fan back off
-                  if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                     daikin_set_v(fan, daikin.fan - fanstep);   // Less than 50% duty - back off fan
-                  daikin.back = daikin.over = 0;
+                  // Check if we are approaching target or beyond it
+                  if ((hot && current <= min) || (!hot && current >= max))
+                  {             // Approaching target - if we have been doing this too long, increase the fan
+                     daikin.acapproaching = now;
+                     if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
+                     {
+                        daikin.acbeyond = now;  // Delay next fan
+                        daikin_set_v(fan, daikin.fan + fanstep);
+                     }
+                  } else
+                     daikin.acbeyond = now;     // Beyond target, but not yet switched
+                  // Check if stable
+                  if (fantime && daikin.back + daikin.over > fantime)
+                  {             // Consider fan back off
+                     if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                        daikin_set_v(fan, daikin.fan - fanstep);        // Less than 50% duty - back off fan
+                     daikin.back = daikin.over = 0;
+                  }
+                  // Limit settings to acceptable values
+                  if (set < 16)
+                     set = 16;
+                  if (set > 32)
+                     set = 32;
+                  daikin_set_t(temp, set);      // Apply temperature setting
                }
-               // Limit settings to acceptable values
-               if (set < 16)
-                  set = 16;
-               if (set > 32)
-                  set = 32;
-               daikin_set_t(temp, set); // Apply temperature setting
             }
          }
          if (reporting && !revk_link_down())
