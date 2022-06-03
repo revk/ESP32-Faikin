@@ -1216,7 +1216,7 @@ void app_main()
             daikin.freeze = 0;
          else if (!daikin.freeze)
             daikin.freeze = now;
-         if (daikin.power && daikin.controlvalid && !daikin.control_changed)
+         if (daikin.power && daikin.controlvalid)
          {                      // Local auto controls
             if (now > daikin.controlvalid)
             {                   // End of auto mode
@@ -1237,6 +1237,7 @@ void app_main()
                uint8_t hot = daikin.heat;       // Are we in heating mode?
                float min = daikin.mintarget;
                float max = daikin.maxtarget;
+               // TODO manual control override
                float current = daikin.env;
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
