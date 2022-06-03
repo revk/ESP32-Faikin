@@ -1224,7 +1224,7 @@ void app_main()
             if (now > daikin.controlvalid)
             {                   // End of auto mode
                daikin.controlvalid = 0;
-               set_val(control, 0);
+               daikin.control = 0;
                daikin_set_e(mode, "A");
                if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
                   daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);        // Not ideal...
