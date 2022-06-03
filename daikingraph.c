@@ -410,10 +410,10 @@ int main(int argc, const char *argv[])
       free(path);
       return colour;
    }
-   heatcol = band("least(`power`,`heat`,1-`slave`)", heatcol);
-   coolcol = band("least(`power`,1-`heat`,1-`slave`,1-`antifreeze`)", coolcol);
-   antifreezecol = band("least(`power`,`antifreeze`)", antifreezecol);
-   slavecol = band("least(`power`,`slave`)", slavecol);
+   heatcol = band("least(`power`,`heat`,1-COALESCE(`slave`,0))", heatcol);
+   coolcol = band("least(`power`,1-`heat`,1-COALESCE(`slave`,0),1-COALESCE(`antifreeze`,0))", coolcol);
+   antifreezecol = band("least(`power`,COALESCE(`antifreeze`,0))", antifreezecol);
+   slavecol = band("least(`power`,COALESCE(`slave`,0))", slavecol);
 
    // Grid
    if (!nogrid)
