@@ -108,6 +108,8 @@ struct {
    uint32_t acapproaching;      // Last time we were approaching target temp
    uint32_t acbeyond;           // Last time we were at or beyond target temp
    uint32_t freeze;             // Last time we were not freezing
+   uint32_t back;               // Count of back - used to decide we can reduce fan
+   uint32_t over;               // Count of over - used to decide we can reduce fan
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
    uint8_t status_report:1;     // Status report
@@ -1227,6 +1229,7 @@ void app_main()
                daikin.maxtarget = NAN;
                daikin.status_known &= ~CONTROL_env;
                daikin.env = NAN;
+               daikin.back = daikin.over = 0;
             } else
             {                   // Auto mode
                // Get the settings atomically
@@ -1278,6 +1281,7 @@ void app_main()
                         daikin_set_v(fan, 1);
                   }
                   set = max + reference - current + heatover;   // Ensure heating by applying A/C offset to force it
+                  daikin.over++;
                } else if (max < current)
                {                // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
                   if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
@@ -1291,28 +1295,35 @@ void app_main()
                      set = max + reference - current + coolback;        // Avoid freezing the coil
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
-               } else if (hot)
-                  set = min + reference - current - heatback;   // Heating mode but apply negative offset to not actually heat any more than this
-               else
-                  set = max + reference - current + coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
+                  daikin.over++;
+               } else
+               {                // back off
+                  daikin.back++;
+                  if (hot)
+                     set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
+                  else
+                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
+               }
                // Check if we are approaching target or beyond it
                if ((hot && current <= min) || (!hot && current >= max))
                {                // Approaching target - if we have been doing this too long, increase the fan
                   daikin.acapproaching = now;
-                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan && daikin.fan < 5)
+                  if (!daikin.slave && fanstep && fantime && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
                   {
                      daikin.acbeyond = now;     // Delay next fan
                      daikin_set_v(fan, daikin.fan + fanstep);
                   }
                } else
-               {                // Beyond target, but not yet switched - if we have been here too long and not switched we may reduce fan
-                  daikin.acbeyond = now;
-                  // TODO better way to work out we can reduce fan...
-                  if (fanstep && fantime && daikin.acapproaching + fantime < now && daikin.fan && daikin.fan > 1)
-                  {
+                  daikin.acbeyond = now;        // Beyond target, but not yet switched
+               // Check if stable
+               if (fantime && daikin.back + daikin.over > fantime)
+               {                // Consider fan back off
+                  if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                  {             // Less than 50% duty - back off fan
                      daikin.acapproaching = now;        // Delay next fan
                      daikin_set_v(fan, daikin.fan - fanstep);
                   }
+                  daikin.back = daikin.over = 0;
                }
                // Limit settings to acceptable values
                if (set < 16)
