@@ -606,6 +606,7 @@ const char *daikin_control(jo_t j)
 // --------------------------------------------------------------------------------
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
+   const char *ret = NULL;
    if (client || !prefix || target || strcmp(prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
@@ -632,7 +633,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          jo_strncpy(j, val, sizeof(val));
          if (!strcmp(tag, "env"))
             env = strtof(val, NULL);
-         if (!strcmp(tag, "target"))
+         else if (!strcmp(tag, "target"))
          {
             if (jo_here(j) == JO_ARRAY)
             {
@@ -652,6 +653,11 @@ const char *app_callback(int client, const char *prefix, const char *target, con
             } else
                min = max = strtof(val, NULL);
          }
+#define	b(name)		else if(!strcmp(tag,#name)){if(t!=JO_TRUE&&t!=JO_FALSE)ret= "Expecting boolean";else ret=daikin_set_v(name,t==JO_TRUE?1:0);}
+#define	t(name)		else if(!strcmp(tag,#name)){if(t!=JO_NUMBER)ret= "Expecting number";else ret=daikin_set_t(name,jo_read_float(j));}
+#define	i(name)		else if(!strcmp(tag,#name)){if(t!=JO_NUMBER)ret= "Expecting number";else ret=daikin_set_i(name,jo_read_int(j));}
+#define	e(name,values)	else if(!strcmp(tag,#name)){if(t!=JO_STRING)ret= "Expecting string";else ret=daikin_set_e(name,val);}
+#include "accontrols.m"
          t = jo_skip(j);
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
@@ -663,7 +669,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.control = 1;
       daikin.status_known |= CONTROL_control;   // So we report it
       xSemaphoreGive(daikin.mutex);
-      return "";
+      return ret ? : "";
    }
    jo_t s = jo_object_alloc();
    char value[20] = "";
@@ -693,7 +699,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       jo_lit(s, "temp", value);
    jo_close(s);
    jo_rewind(s);
-   const char *ret = NULL;
    if (jo_next(s) == JO_TAG)
    {
       jo_rewind(s);
