@@ -38,7 +38,7 @@ const char TAG[] = "Daikin";
 	u8l(switch10,5)		\
 	u32(switchtime,1800)	\
 	u32(switchdelay,900)	\
-	u32(controltime,600)	\
+	u32(controltime,150)	\
 	u32(fantime,1800)	\
 	u32(temppredict,60)	\
 	u8l(temppredictmult,2)	\
