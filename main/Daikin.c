@@ -1237,6 +1237,11 @@ void app_main()
                daikin.fanlast = now;
                daikin.fansaved = 0;
             }
+            daikin_set_e(mode, "A");
+            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
+               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
+            daikin.mintarget = NAN;
+            daikin.maxtarget = NAN;
          }
          void controlstart(void) {
             if (daikin.control)
@@ -1249,11 +1254,6 @@ void app_main()
                daikin.fansaved = daikin.fan;
                daikin_set_v(fan, 5);    // Max fan at start
             }
-            daikin_set_e(mode, "A");
-            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
-               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
-            daikin.mintarget = NAN;
-            daikin.maxtarget = NAN;
          }
          // Track anti-freeze logic
          if (!(daikin.status_known & CONTROL_liquid) || daikin.liquid > 0)
