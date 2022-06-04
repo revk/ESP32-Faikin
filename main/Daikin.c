@@ -1233,7 +1233,9 @@ void app_main()
             set_val(control, 1);
             daikin.back = daikin.over = 0;
             daikin.fanlast = now;
-            daikin.acswitch = now;
+            daikin.acswitch = 0;
+            daikin.acapproaching = 0;
+            daikin.acbeyond = 0;
             if (daikin.fan)
             {                   // Not in auto mode
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
@@ -1250,7 +1252,7 @@ void app_main()
                daikin.fansaved = 0;
             }
             // We were controlling, so set to a non controlling mode, best guess
-            daikin_set_e(mode, "A");
+            // daikin_set_e(mode, "A");
             if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
                daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
             daikin.mintarget = NAN;
@@ -1311,10 +1313,31 @@ void app_main()
                      daikin_set_e(mode, hot ? "H" : "C");       // Out of auto
                   // What do we want to set to
                   float set = min + reference - current;        // Where we will set the temperature
+                  // Check if we are approaching target or beyond it
+                  if ((hot && current <= min) || (!hot && current >= max))
+                  {             // Approaching target - if we have been doing this too long, increase the fan
+                     daikin.acapproaching = now;
+                     if (!daikin.slave && fanstep && fantime && daikin.fanlast + fantime < now && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
+                     {
+                        daikin_set_v(fan, daikin.fan + fanstep);
+                        daikin.fanlast = now;
+                     }
+                     if (daikin.fansaved && daikin.fan != 5)
+                        daikin.fansaved = 0;    // Manually overridden
+                  } else
+                  {
+                     daikin.acbeyond = now;     // Beyond target, but not yet switched
+                     if (daikin.fansaved)
+                     {
+                        daikin_set_v(fan, daikin.fansaved);     // revert
+                        daikin.fanlast = now;
+                        daikin.fansaved = 0;
+                     }
+                  }
                   // Consider beyond limits - remember the limits have hysteresis applied
                   if (min > current)
                   {             // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                     if (!hot && (daikin.slave || (daikin.acswitch + switchtime < now && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                      {          // Can we switch to heating - time limits applied
                         daikin.acswitch = now;  // Switched
                         daikin_set_e(mode, "H");
@@ -1328,7 +1351,7 @@ void app_main()
                      daikin.over++;
                   } else if (max < current)
                   {             // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                     if (hot && (daikin.slave || (daikin.acswitch + switchtime < now && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                      {          // Can we switch to cooling - time limits applied
                         daikin.acswitch = now;  // Switched
                         daikin_set_e(mode, "C");
@@ -1351,28 +1374,7 @@ void app_main()
                      else
                         set = max + reference - current + coolback;     // Cooling mode but apply positive offset to not actually cool any more than this
                   }
-                  // Check if we are approaching target or beyond it
-                  if ((hot && current <= min) || (!hot && current >= max))
-                  {             // Approaching target - if we have been doing this too long, increase the fan
-                     daikin.acapproaching = now;
-                     if (!daikin.slave && fanstep && fantime && daikin.fanlast + fantime < now && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
-                     {
-                        daikin_set_v(fan, daikin.fan + fanstep);
-                        daikin.fanlast = now;
-                     }
-                     if (daikin.fansaved && daikin.fan != 5)
-                        daikin.fansaved = 0;    // Manually overridden
-                  } else
-                  {
-                     daikin.acbeyond = now;     // Beyond target, but not yet switched
-                     if (daikin.fansaved)
-                     {
-                        daikin_set_v(fan, daikin.fansaved);     // revert
-                        daikin.fanlast = now;
-                        daikin.fansaved = 0;
-                     }
-                  }
-                  // Check if stable
+                  // Check if stable and we can consider reducing fan
                   if (fantime && daikin.fanlast + fantime < now)
                   {             // Consider fan back off
                      if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
