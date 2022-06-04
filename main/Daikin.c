@@ -1190,7 +1190,7 @@ void app_main()
          }
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
-            uint8_t send = ((debug || daikin.status_report || daikin.mode_changed || livestatus) ? 1 : 0);
+            uint8_t send = ((debug || (livestatus && daikin.status_report) || daikin.mode_changed) ? 1 : 0);
             daikin.status_changed = 0;
             daikin.mode_changed = 0;
             daikin.status_report = 0;
