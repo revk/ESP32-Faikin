@@ -117,6 +117,7 @@ struct {
    uint8_t fansaved;            // Saved fan we override at start
    uint8_t talking:1;           // We are getting answers
    uint8_t status_changed:1;    // Status has changed
+   uint8_t mode_changed:1;      // Status or control has changed for enum or bool
    uint8_t status_report:1;     // Status report
 } daikin = { };
 
@@ -129,6 +130,7 @@ const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uin
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    *ptr = value;
    daikin.control_changed |= flag;
+   daikin.mode_changed = 1;
    xSemaphoreGive(daikin.mutex);
    return NULL;
 }
@@ -178,6 +180,7 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
    {
       daikin.status_known |= flag;
       daikin.status_changed = 1;
+      daikin.mode_changed = 1;
    }
    if (*ptr == val)
    {                            // No change
@@ -1187,15 +1190,17 @@ void app_main()
             daikin_command(0xCA, sizeof(ca), ca);
             daikin_command(0xCB, sizeof(cb), cb);
          }
-         if (!daikin.control_changed && (daikin.status_changed || daikin.status_report))
+         if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
+            uint8_t send = (debug || daikin.status_report || daikin.mode_changed || livestatus) ? 1 : 0;
             daikin.status_changed = 0;
-            if (debug || daikin.status_report || livestatus)
+            daikin.mode_changed = 0;
+            daikin.status_report = 0;
+            if (send)
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
             }
-            daikin.status_report = 0;
          }
          // Stats
 #define b(name)         if(daikin.name)daikin.total##name++;
