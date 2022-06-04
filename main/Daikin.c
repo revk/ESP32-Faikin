@@ -674,8 +674,6 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.env = env;
       daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive(daikin.mutex);
-      if (isnan(min) || isnan(max))
-         set_val(control, 0);   // Not controlling
       return ret ? : "";
    }
    jo_t s = jo_object_alloc();
@@ -1192,7 +1190,7 @@ void app_main()
          }
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
-            uint8_t send = (debug || daikin.status_report || daikin.mode_changed || livestatus) ? 1 : 0;
+            uint8_t send = ((debug || daikin.status_report || daikin.mode_changed || livestatus) ? 1 : 0);
             daikin.status_changed = 0;
             daikin.mode_changed = 0;
             daikin.status_report = 0;
@@ -1229,6 +1227,30 @@ void app_main()
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
          uint32_t now = uptime();
+         void controlstop(void) {
+            if (!daikin.control)
+               return;
+            set_val(control, 0);
+            if (daikin.fansaved)
+            {
+               daikin_set_v(fan, daikin.fansaved);      // revert
+               daikin.fanlast = now;
+               daikin.fansaved = 0;
+            }
+         }
+         void controlstart(void) {
+            if (daikin.control)
+               return;
+            set_val(control, 1);
+            daikin.back = daikin.over = 0;
+            daikin.fanlast = now;
+            if (daikin.fan)
+            {                   // Not in auto mode
+               daikin.fansaved = daikin.fan;
+               daikin_set_v(fan, 5);    // Max fan at start
+            }
+         }
+         // Track anti-freeze logic
          if (!(daikin.status_known & CONTROL_liquid) || daikin.liquid > 0)
             daikin.freeze = 0;
          else if (!daikin.freeze)
@@ -1246,6 +1268,7 @@ void app_main()
                daikin.maxtarget = NAN;
                daikin.status_known &= ~CONTROL_env;
                daikin.env = NAN;
+               controlstop();
             } else
             {                   // Auto mode
                // Get the settings atomically
@@ -1258,19 +1281,11 @@ void app_main()
                if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
                   current = daikin.home;
                xSemaphoreGive(daikin.mutex);
-               if (!isnan(min) && !isnan(max))
+               if (isnan(min) || isnan(max))
+                  controlstop();
+               else
                {                // Control
-                  if (!daikin.control)
-                  {             // Starting - init some stuff
-                     set_val(control, 1);
-                     daikin.back = daikin.over = 0;
-                     daikin.fanlast = now;
-                     if (daikin.fan)
-                     {          // Not in auto mode
-                        daikin.fansaved = daikin.fan;
-                        daikin_set_v(fan, 5);   // Max fan at start
-                     }
-                  }
+                  controlstart();
                   // Predict
                   static uint32_t lasttime = 0;
                   if (temppredict && now / temppredict != lasttime / temppredict)
@@ -1373,7 +1388,8 @@ void app_main()
                   daikin_set_t(temp, set);      // Apply temperature setting
                }
             }
-         }
+         } else
+            controlstop();
          if (reporting && !revk_link_down())
          {                      // Environment logging
             time_t clock = time(0);
