@@ -1227,23 +1227,7 @@ void app_main()
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
          uint32_t now = uptime();
-         void controlstop(void) {
-            if (!daikin.control)
-               return;
-            set_val(control, 0);
-            if (daikin.fansaved)
-            {
-               daikin_set_v(fan, daikin.fansaved);      // revert
-               daikin.fanlast = now;
-               daikin.fansaved = 0;
-            }
-            daikin_set_e(mode, "A");
-            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
-               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
-            daikin.mintarget = NAN;
-            daikin.maxtarget = NAN;
-         }
-         void controlstart(void) {
+         void controlstart(void) {      // Start controlling
             if (daikin.control)
                return;
             set_val(control, 1);
@@ -1251,9 +1235,25 @@ void app_main()
             daikin.fanlast = now;
             if (daikin.fan)
             {                   // Not in auto mode
-               daikin.fansaved = daikin.fan;
+               daikin.fansaved = daikin.fan;    // Save for when we get to temp
                daikin_set_v(fan, 5);    // Max fan at start
             }
+         }
+         void controlstop(void) {       // Stop controlling
+            if (!daikin.control)
+               return;
+            set_val(control, 0);
+            if (daikin.fansaved)
+            {                   // Restore saved fan setting
+               daikin_set_v(fan, daikin.fansaved);
+               daikin.fansaved = 0;
+            }
+            // We were controlling, so set to a non controlling mode, best guess
+            daikin_set_e(mode, "A");
+            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
+               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
+            daikin.mintarget = NAN;
+            daikin.maxtarget = NAN;
          }
          // Track anti-freeze logic
          if (!(daikin.status_known & CONTROL_liquid) || daikin.liquid > 0)
