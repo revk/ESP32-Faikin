@@ -36,10 +36,10 @@ const char TAG[] = "Daikin";
 	u8l(heatover,5)		\
 	u8l(heatback,5)		\
 	u8l(switch10,5)		\
-	u32(switchtime,3600)	\
+	u32(switchtime,1800)	\
 	u32(switchdelay,900)	\
 	u32(controltime,600)	\
-	u32(fantime,3600)	\
+	u32(fantime,1800)	\
 	u32(temppredict,60)	\
 	u8l(temppredictmult,2)	\
 	u8(fanstep,4)		\
@@ -1233,6 +1233,7 @@ void app_main()
             set_val(control, 1);
             daikin.back = daikin.over = 0;
             daikin.fanlast = now;
+            daikin.acswitch = now;
             if (daikin.fan)
             {                   // Not in auto mode
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
@@ -1313,7 +1314,7 @@ void app_main()
                   // Consider beyond limits - remember the limits have hysteresis applied
                   if (min > current)
                   {             // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                     if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     if (!hot && (daikin.slave || (daikin.acswitch + switchtime < now && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                      {          // Can we switch to heating - time limits applied
                         daikin.acswitch = now;  // Switched
                         daikin_set_e(mode, "H");
@@ -1327,7 +1328,7 @@ void app_main()
                      daikin.over++;
                   } else if (max < current)
                   {             // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                     if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
+                     if (hot && (daikin.slave || (daikin.acswitch + switchtime < now && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
                      {          // Can we switch to cooling - time limits applied
                         daikin.acswitch = now;  // Switched
                         daikin_set_e(mode, "C");
