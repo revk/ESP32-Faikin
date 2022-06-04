@@ -1255,7 +1255,7 @@ void app_main()
             daikin.freeze = 0;
          else if (!daikin.freeze)
             daikin.freeze = now;
-         if (daikin.power && daikin.controlvalid)
+         if (daikin.power && daikin.controlvalid && !revk_shutting_down())
          {                      // Local auto controls
             if (now > daikin.controlvalid)
             {                   // End of auto mode
