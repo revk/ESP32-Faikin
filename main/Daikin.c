@@ -40,8 +40,8 @@ const char TAG[] = "Daikin";
 	u32(switchdelay,900)	\
 	u32(controltime,150)	\
 	u32(fantime,1800)	\
-	u32(temppredict,60)	\
-	u8l(temppredictmult,2)	\
+	u32(tpredicts,30)	\
+	u32(tpredictt,120)	\
 	u8(fanstep,4)		\
 	u32(reporting,60)	\
 	u32(antifreeze,400)	\
@@ -1263,6 +1263,30 @@ void app_main()
             daikin.freeze = 0;
          else if (!daikin.freeze)
             daikin.freeze = now;
+         // Basic temp tracking
+         xSemaphoreTake(daikin.mutex, portMAX_DELAY);
+         uint8_t hot = daikin.heat;     // Are we in heating mode?
+         float min = daikin.mintarget;
+         float max = daikin.maxtarget;
+         float current = daikin.env;
+         if (isnan(current))    // We don't have one, so treat as same as A/C view of current temp
+            current = daikin.home;
+         xSemaphoreGive(daikin.mutex);
+         // Predict temp changes
+         if (tpredicts)
+         {
+            static uint32_t lasttime = 0;
+            if (now / tpredicts != lasttime / tpredicts)
+            {                   // Every minute - predictive
+               lasttime = now;
+               daikin.envdelta2 = daikin.envdelta;
+               daikin.envdelta = current - daikin.envlast;
+               daikin.envlast = current;
+            }
+            if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
+               current += (daikin.envdelta + daikin.envdelta2) * tpredictt / tpredicts; // Predict
+         }
+         // Control
          if (daikin.power && daikin.controlvalid && !revk_shutting_down())
          {                      // Local auto controls
             if (now > daikin.controlvalid)
@@ -1273,33 +1297,13 @@ void app_main()
                controlstop();
             } else
             {                   // Auto mode
-               // Get the settings atomically
-               xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-               uint8_t hot = daikin.heat;       // Are we in heating mode?
-               float min = daikin.mintarget;
-               float max = daikin.maxtarget;
                // TODO manual control override
-               float current = daikin.env;
-               if (isnan(current))      // We don't have one, so treat as same as A/C view of current temp
-                  current = daikin.home;
-               xSemaphoreGive(daikin.mutex);
+               // Get the settings atomically
                if (isnan(min) || isnan(max))
                   controlstop();
                else
                {                // Control
                   controlstart();
-                  // Predict
-                  static uint32_t lasttime = 0;
-                  if (temppredict && now / temppredict != lasttime / temppredict)
-                  {             // Every minute - predictive
-                     lasttime = now;
-                     daikin.envdelta2 = daikin.envdelta;
-                     daikin.envdelta = current - daikin.envlast;
-                     daikin.envlast = current;
-                  }
-                  if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
-                     current += (daikin.envdelta + daikin.envdelta2) * temppredictmult / 2;     // Predict
-                  // Current temperature
                   // What the A/C is using as current temperature
                   float reference = daikin.home;        // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
                   if (reference >= 100) // Assume invalid
