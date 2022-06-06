@@ -1284,7 +1284,7 @@ void app_main()
                daikin.envlast = current;
             }
             if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
-               current += (daikin.envdelta + daikin.envdelta2) * tpredictt / tpredicts; // Predict
+               current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
          // Control
          if (daikin.power && daikin.controlvalid && !revk_shutting_down())
