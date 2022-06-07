@@ -36,15 +36,12 @@ const char TAG[] = "Daikin";
 	u8l(heatover,5)		\
 	u8l(heatback,5)		\
 	u8l(switch10,5)		\
-	u32(switchtime,1800)	\
-	u32(switchdelay,900)	\
-	u32(controltime,150)	\
-	u32(fantime,1800)	\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
-	u8(fanstep,4)		\
+	u32(tsample,900)	\
+	u32(tcontrol,300)	\
+	u8(fanstep,1)		\
 	u32(reporting,60)	\
-	u32(antifreeze,400)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
 	io(b1,CONFIG_DAIKIN_B1)	\
@@ -107,15 +104,16 @@ struct {
    float envdelta;              // Predictive, diff to last
    float envdelta2;             // Predictive, previous diff
    uint32_t controlvalid;       // uptime to which auto mode is valid
-   uint32_t acswitch;           // Last time we switched hot/cold
-   uint32_t acapproaching;      // Last time we were approaching target temp
-   uint32_t acbeyond;           // Last time we were at or beyond target temp
-   uint32_t fanlast;            // Last fan change
-   uint32_t freeze;             // Last time we were not freezing
-   uint32_t back;               // Count of back - used to decide we can reduce fan
-   uint32_t over;               // Count of over - used to decide we can reduce fan
+   uint32_t sample;             // Last uptime sampled
+   uint32_t counta,
+    counta2;                    // Count of "approaching temp", and previous sample
+   uint32_t countb,
+    countb2;                    // Count of "beyond temp", and previous sample
+   uint32_t countt,
+    countt2;                    // Count total, and previous sample
    uint8_t fansaved;            // Saved fan we override at start
    uint8_t talking:1;           // We are getting answers
+   uint8_t lastheat:1;          // Last heat mode
    uint8_t status_changed:1;    // Status has changed
    uint8_t mode_changed:1;      // Status or control has changed for enum or bool
    uint8_t status_report:1;     // Status report
@@ -668,7 +666,7 @@ const char *app_callback(int client, const char *prefix, const char *target, con
          t = jo_skip(j);
       }
       xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-      daikin.controlvalid = uptime() + controltime;
+      daikin.controlvalid = uptime() + tcontrol;
       daikin.mintarget = min;
       daikin.maxtarget = max;
       daikin.env = env;
@@ -1227,42 +1225,6 @@ void app_main()
          }
          revk_blink(0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
          uint32_t now = uptime();
-         void controlstart(void) {      // Start controlling
-            if (daikin.control)
-               return;
-            set_val(control, 1);
-            daikin.back = daikin.over = 0;
-            daikin.fanlast = now;
-            daikin.acswitch = 0;
-            daikin.acapproaching = 0;
-            daikin.acbeyond = 0;
-            if (daikin.fan)
-            {                   // Not in auto mode
-               daikin.fansaved = daikin.fan;    // Save for when we get to temp
-               daikin_set_v(fan, 5);    // Max fan at start
-            }
-         }
-         void controlstop(void) {       // Stop controlling
-            if (!daikin.control)
-               return;
-            set_val(control, 0);
-            if (daikin.fansaved)
-            {                   // Restore saved fan setting
-               daikin_set_v(fan, daikin.fansaved);
-               daikin.fansaved = 0;
-            }
-            // We were controlling, so set to a non controlling mode, best guess
-            // daikin_set_e(mode, "A");
-            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
-               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);   // Not ideal...
-            daikin.mintarget = NAN;
-            daikin.maxtarget = NAN;
-         }
-         // Track anti-freeze logic
-         if (!(daikin.status_known & CONTROL_liquid) || daikin.liquid > 0)
-            daikin.freeze = 0;
-         else if (!daikin.freeze)
-            daikin.freeze = now;
          // Basic temp tracking
          xSemaphoreTake(daikin.mutex, portMAX_DELAY);
          uint8_t hot = daikin.heat;     // Are we in heating mode?
@@ -1286,6 +1248,46 @@ void app_main()
             if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
+         // Apply hysteresis
+         if (hot)
+            max += switch10 / 10.0;     // Overshoot for switching (heating)
+         else
+            min -= switch10 / 10.0;     // Overshoot for switching (cooling)
+         void samplestart(void) {       // Start sampling for fan/switch controls
+            daikin.counta = daikin.counta2 = daikin.countb = daikin.countb2 = daikin.countt = daikin.countt2 = 0;       // Reset sample counts
+            daikin.sample = now;        // Start sample period
+         }
+         void controlstart(void) {      // Start controlling
+            if (daikin.control)
+               return;
+            set_val(control, 1);
+            samplestart();
+            if (daikin.fan && ((hot && current < min - 2 * switch10 * 0.1) || (!hot && current > max + 2 * switch10 * 0.1)))
+            {                   // Not in auto mode, and not close to target temp - force a high fan to get there
+               daikin.fansaved = daikin.fan;    // Save for when we get to temp
+               daikin_set_v(fan, 5);    // Max fan at start
+            }
+            if (hot && current > max + 2 * switch10 * 0.1)
+               daikin_set_e(mode, "C"); // Set cooling as noticeably over temp
+            else if (!hot && current < min - 2 * switch10 * 0.1)
+               daikin_set_e(mode, "H"); // Set heating as noticeably under temp
+         }
+         void controlstop(void) {       // Stop controlling
+            if (!daikin.control)
+               return;
+            set_val(control, 0);
+            if (daikin.fansaved)
+            {                   // Restore saved fan setting
+               daikin_set_v(fan, daikin.fansaved);
+               daikin.fansaved = 0;
+	       samplestart();	// Initial phase complete, start samples again.
+            }
+            // We were controlling, so set to a non controlling mode, best guess at sane settings for now
+            if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
+               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);
+            daikin.mintarget = NAN;
+            daikin.maxtarget = NAN;
+         }
          // Control
          if (daikin.power && daikin.controlvalid && !revk_shutting_down())
          {                      // Local auto controls
@@ -1304,87 +1306,60 @@ void app_main()
                else
                {                // Control
                   controlstart();
+                  if (daikin.lastheat != hot)
+                  {             // If we change mode, start samples again
+                     daikin.lastheat = hot;
+                     samplestart();
+                  }
                   // What the A/C is using as current temperature
                   float reference = daikin.home;        // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
                   if (reference >= 100) // Assume invalid
                      reference = daikin.inlet;
-                  // Apply hysteresis
-                  if (hot)
-                     max += switch10 / 10.0;    // Overshoot for switching (heating)
-                  else
-                     min -= switch10 / 10.0;    // Overshoot for switching (cooling)
                   if (daikin.mode == 3)
                      daikin_set_e(mode, hot ? "H" : "C");       // Out of auto
-                  // What do we want to set to
+                  // Temp set
                   float set = min + reference - current;        // Where we will set the temperature
-                  // Check if we are approaching target or beyond it
-                  if ((hot && current <= min) || (!hot && current >= max))
-                  {             // Approaching target - if we have been doing this too long, increase the fan
-                     daikin.acapproaching = now;
-                     if (!daikin.slave && fanstep && fantime && daikin.fanlast + fantime < now && daikin.acbeyond + fantime < now && daikin.fan >= 1 && daikin.fan < 5)
-                     {
-                        daikin_set_v(fan, daikin.fan + fanstep);
-                        daikin.fanlast = now;
-                     }
-                     if (daikin.fansaved && daikin.fan != 5)
-                        daikin.fansaved = 0;    // Manually overridden
-                  } else
+                  daikin.countt++;      // Total
+                  if ((hot && current < min) || (!hot && current > max))
                   {
-                     daikin.acbeyond = now;     // Beyond target, but not yet switched
-                     if (daikin.fansaved)
-                     {
-                        daikin_set_v(fan, daikin.fansaved);     // revert
-                        daikin.fanlast = now;
-                        daikin.fansaved = 0;
-                     }
-                  }
-                  // Consider beyond limits - remember the limits have hysteresis applied
-                  if (min > current)
-                  {             // Below min means we should be heating, if we are not then min was already reduced so time to switch to heating as well.
-                     if (!hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
-                     {          // Can we switch to heating - time limits applied
-                        daikin.acswitch = now;  // Switched
-                        daikin_set_e(mode, "H");
-                        if (fanstep && fantime)
-                        {
-                           daikin_set_v(fan, 1);
-                           daikin.fanlast = now;
-                        }
-                     }
-                     set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
-                     daikin.over++;
-                  } else if (max < current)
-                  {             // Above max means we should be cooling, if we are not then max was already increased so time to switch to cooling as well
-                     if (hot && (daikin.slave || ((!daikin.acswitch || daikin.acswitch + switchtime < now) && (!daikin.acapproaching || daikin.acapproaching + switchdelay < now))))
-                     {          // Can we switch to cooling - time limits applied
-                        daikin.acswitch = now;  // Switched
-                        daikin_set_e(mode, "C");
-                        if (fanstep && fantime)
-                        {
-                           daikin_set_v(fan, 1);
-                           daikin.fanlast = now;
-                        }
-                     }
-                     if (antifreeze && daikin.freeze && now - daikin.freeze > antifreeze)
-                        set = max + reference - current + coolback;     // Avoid freezing the coil
+                     daikin.counta++;   // Approaching temp
+                     if (hot)
+                        set = max + reference - current + heatover;     // Ensure heating by applying A/C offset to force it
                      else
                         set = max + reference - current - coolover;     // Ensure cooling by applying A/C offset to force it
-                     daikin.over++;
                   } else
-                  {             // back off
-                     daikin.back++;
+                  {             // At or beyond temp
+                     if (daikin.fansaved)
+                     {
+                        daikin_set_v(fan, daikin.fansaved);     // revert fan speed
+                        daikin.fansaved = 0;
+                     }
+                     if ((hot && current > max) || (!hot && current < min))
+                        daikin.countb++;        // Beyond
                      if (hot)
                         set = min + reference - current - heatback;     // Heating mode but apply negative offset to not actually heat any more than this
                      else
                         set = max + reference - current + coolback;     // Cooling mode but apply positive offset to not actually cool any more than this
+
                   }
-                  // Check if stable and we can consider reducing fan
-                  if (fantime && daikin.fanlast + fantime < now)
-                  {             // Consider fan back off
-                     if (daikin.back > daikin.over && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                        daikin_set_v(fan, daikin.fan - fanstep);        // Less than 50% duty - back off fan
-                     daikin.back = daikin.over = 0;
-                     daikin.fanlast = now;      // Start sampling again
+                  if (daikin.sample + tsample < now)
+                  {             // New sample, consider some changes
+                     if ((daikin.counta + daikin.counta2) * 3 < (daikin.countt + daikin.countt2) && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                        daikin_set_v(fan, daikin.fan - fanstep);        // Reduce fan as less than 33% approaching
+                     if (!daikin.slave && (daikin.counta + daikin.counta2) * 3 > (daikin.countt + daikin.countt2) * 2 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
+                        daikin_set_v(fan, daikin.fan + fanstep);        // Increase fan as more than 66% approaching (no point if slave)
+                     if (daikin.countb + daikin.countb2 == daikin.countt + daikin.countt2 || (daikin.slave && !(daikin.counta + daikin.counta2 + daikin.countb + daikin.countb2)))
+                     {          // Mode switch as 100% beyond target temp, or 100% in range and in slave mode
+                        daikin_set_e(mode, hot ? "C" : "H");    // Swap mode
+                        if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                           daikin_set_v(fan, 1);
+                     }
+                     // Next sample
+                     daikin.counta2 = daikin.counta;
+                     daikin.countb2 = daikin.countb;
+                     daikin.countt2 = daikin.countt;
+                     daikin.counta = daikin.countb = daikin.countt = 0;
+                     daikin.sample = now;
                   }
                   // Limit settings to acceptable values
                   if (set < 16)
