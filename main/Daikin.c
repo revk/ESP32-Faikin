@@ -167,13 +167,12 @@ const char *daikin_set_temp(const char *name, float *ptr, uint64_t flag, float v
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    *ptr = value;
    daikin.control_changed |= flag;
-   daikin.mode_changed = 1;
    xSemaphoreGive(daikin.mutex);
    return NULL;
 }
 
 void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
-{
+{                               // Updating status
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
    {
@@ -197,7 +196,7 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
 }
 
 void set_int(const char *name, int *ptr, uint64_t flag, int val)
-{
+{                               // Updating status
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
    {
@@ -221,7 +220,7 @@ void set_int(const char *name, int *ptr, uint64_t flag, int val)
 }
 
 void set_float(const char *name, float *ptr, uint64_t flag, float val)
-{
+{                               // Updating status
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
    {
