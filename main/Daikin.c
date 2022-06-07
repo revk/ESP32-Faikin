@@ -1280,7 +1280,6 @@ void app_main()
             {                   // Restore saved fan setting
                daikin_set_v(fan, daikin.fansaved);
                daikin.fansaved = 0;
-	       samplestart();	// Initial phase complete, start samples again.
             }
             // We were controlling, so set to a non controlling mode, best guess at sane settings for now
             if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
@@ -1333,6 +1332,7 @@ void app_main()
                      {
                         daikin_set_v(fan, daikin.fansaved);     // revert fan speed
                         daikin.fansaved = 0;
+                        samplestart();  // Initial phase complete, start samples again.
                      }
                      if ((hot && current > max) || (!hot && current < min))
                         daikin.countb++;        // Beyond
@@ -1344,12 +1344,28 @@ void app_main()
                   }
                   if (daikin.sample + tsample < now)
                   {             // New sample, consider some changes
+#if 1
+                     jo_t j = jo_object_alloc();
+                     jo_array(j, "a");
+                     jo_int(j, NULL, daikin.counta2);
+                     jo_int(j, NULL, daikin.counta);
+                     jo_close(j);
+                     jo_array(j, "b");
+                     jo_int(j, NULL, daikin.countb2);
+                     jo_int(j, NULL, daikin.countb);
+                     jo_close(j);
+                     jo_array(j, "t");
+                     jo_int(j, NULL, daikin.countt2);
+                     jo_int(j, NULL, daikin.countt);
+                     jo_close(j);
+                     revk_info("sampling", &j);
+#endif
                      if ((daikin.counta + daikin.counta2) * 3 < (daikin.countt + daikin.countt2) && fanstep && daikin.fan > 1 && daikin.fan <= 5)
                         daikin_set_v(fan, daikin.fan - fanstep);        // Reduce fan as less than 33% approaching
                      if (!daikin.slave && (daikin.counta + daikin.counta2) * 3 > (daikin.countt + daikin.countt2) * 2 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
                         daikin_set_v(fan, daikin.fan + fanstep);        // Increase fan as more than 66% approaching (no point if slave)
-                     if (daikin.countb + daikin.countb2 == daikin.countt + daikin.countt2 || (daikin.slave && !(daikin.counta + daikin.counta2 + daikin.countb + daikin.countb2)))
-                     {          // Mode switch as 100% beyond target temp, or 100% in range and in slave mode
+                     if (daikin.countb + daikin.countb2 == daikin.countt + daikin.countt2 || (daikin.slave && !(daikin.counta + daikin.counta2)))
+                     {          // Mode switch as 100% beyond target temp, or 100% not approaching and in slave mode
                         daikin_set_e(mode, hot ? "C" : "H");    // Swap mode
                         if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
                            daikin_set_v(fan, 1);
