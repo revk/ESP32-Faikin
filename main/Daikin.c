@@ -1357,9 +1357,9 @@ void app_main()
                      daikin.sample = now;
                      if (t2)
                      {          // Decisions (if we have more than one sample)
-                        if (a * 7 < t * 10 && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                        if (a * 10 < t * 7 && fanstep && daikin.fan > 1 && daikin.fan <= 5)
                            daikin_set_v(fan, daikin.fan - fanstep);     // Reduce fan
-                        if (!daikin.slave && a * 9 > t * 10 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
+                        if (!daikin.slave && a * 10 > t * 9 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
                            daikin_set_v(fan, daikin.fan + fanstep);     // Increase fan
                         if (b * 2 > t || (daikin.slave && !a))
                         {       // Mode switch
