@@ -295,56 +295,76 @@ int main(int argc, const char *argv[])
       free(path);
       return colour;
    }
-   const char *trace(xml_t g, const char *field, const char *colour) {  // Plot trace
+   const char *trace(xml_t g, const char *field, const char *width, const char *colour) {       // Plot trace
       if (!colour || !*colour)
          return NULL;
-      char *path;
+      char *path = NULL;
       size_t len;
-      FILE *f = open_memstream(&path, &len);
+      FILE *f = NULL;
       char m = 'M';
-      // Forward (trust the trace field name)
-      SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,%s AS `val` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, sqltable, tag, sod, eod));
       double lastx = NAN;
+      double lastw = NAN;
+      void endpath(void) {
+         fclose(f);
+         if (*path)
+         {
+            xml_t p = xml_element_add(g, "path");
+            xml_add(p, "@d", path);
+            xml_add(p, "@fill", "none");
+            xml_add(p, "@stroke", colour);
+            xml_addf(p, "@stroke-width", "%.1f", lastw);
+         } else
+            colour = NULL;
+         free(path);
+      }
+      // Forward (trust the trace field name)
+      SQL_RES *res = sql_safe_query_store_free(&sql, sql_printf("SELECT `utc`,%s AS `val`,%s AS `w` FROM `%#S` WHERE `tag`=%#s AND `utc`>=%#U AND `utc`<=%#U ORDER BY `utc`", field, width, sqltable, tag, sod, eod));
       while (sql_fetch_row(res))
       {
          double x = utcx(res);
          double y = tempy(res, "val");
-         if (isnan(y) || !isnan(lastx) || x - lastx > xsize / 4)
+         double w = strtod(sql_colz(res, "w"), NULL);
+         if (isnan(lastw) || w != lastw)
+         {
+            if (f)
+            {
+               addpos(f, &m, x, y);
+               endpath();
+            }
+            lastw = w;
+            f = open_memstream(&path, &len);
+            m = 'M';
+            lastx = NAN;
+         }
+         if (isnan(y) || isnan(lastx) || x - lastx > xsize / 30)
             m = 'M';            // gap
          addpos(f, &m, x, y);
+         lastx = x;
       }
       sql_free_result(res);
-      fclose(f);
-      if (*path)
-      {
-         xml_t p = xml_element_add(g, "path");
-         xml_add(p, "@d", path);
-         xml_add(p, "@fill", "none");
-         xml_add(p, "@stroke", colour);
-      } else
-         colour = NULL;
-      free(path);
+      if (f)
+         endpath();
       return colour;
    }
-   const char *rangetrace(xml_t g, xml_t g2, const char *field, const char *colour) {   // Plot a temp range based on min/max of field and trace
+   const char *rangetrace(xml_t g, xml_t g2, const char *field, const char *width, const char *colour) {        // Plot a temp range based on min/max of field and trace
       const char *col = range(g, field, colour, 15);
-      trace(g2, field, colour);
+      trace(g2, field, width, colour);
       return col;
    }
 
    targetcol = range(ranges, "target", targetcol, 19);
    if (targetcol)
    {
-      trace(traces, "IF(mintarget=maxtarget,mintarget,NULL)", targetcol);
+      trace(traces, "IF(mintarget=maxtarget,mintarget,NULL)", "1", targetcol);
       tempcol = NULL;
    }
-   fanrpmcol = rangetrace(ranges, traces, "fanrpm/100", fanrpmcol);
-   tempcol = rangetrace(ranges, traces, "temp", tempcol);
-   outsidecol = rangetrace(ranges, traces, "outside", outsidecol);
-   liquidcol = rangetrace(ranges, traces, "liquid", liquidcol);
-   inletcol = rangetrace(ranges, traces, "inlet", inletcol);
-   homecol = rangetrace(ranges, traces, "home", homecol);
-   envcol = rangetrace(ranges, traces, "env", envcol);
+   fanrpmcol = rangetrace(ranges, traces, "fanrpm/100", "1", fanrpmcol);
+   tempcol = rangetrace(ranges, traces, "temp", "1", tempcol);
+   outsidecol = rangetrace(ranges, traces, "outside", "1", outsidecol);
+   liquidcol = rangetrace(ranges, traces, "liquid", "1", liquidcol);
+   inletcol = rangetrace(ranges, traces, "inlet", "1", inletcol);
+   homecol = rangetrace(ranges, traces, "home", "1", homecol);
+   envcol = rangetrace(ranges, traces, "env", "GREATEST(COALESCE(`fanrpm`/100-10,`fan`),1)", envcol);
 
    // Set range of temps shown
    if (isnan(mintemp))
