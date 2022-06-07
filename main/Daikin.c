@@ -1345,6 +1345,7 @@ void app_main()
                   }
                   if (daikin.sample + tsample < now)
                   {             // New sample, consider some changes
+                     int t2 = daikin.countt2;
                      int a = daikin.counta + daikin.counta2;    // Approaching
                      int b = daikin.countb + daikin.countb2;    // Beyond
                      int t = daikin.countt + daikin.countt2;    // Total (includes neither approaching or beyond, i.e. in range)
@@ -1353,18 +1354,20 @@ void app_main()
                      daikin.countb2 = daikin.countb;
                      daikin.countt2 = daikin.countt;
                      daikin.counta = daikin.countb = daikin.countt = 0;
-                     // Decisions
-                     if (a * 3 < t && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                        daikin_set_v(fan, daikin.fan - fanstep);        // Reduce fan as less than 33% approaching
-                     if (!daikin.slave && a * 3 > t * 2 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
-                        daikin_set_v(fan, daikin.fan + fanstep);        // Increase fan as more than 66% approaching (no point if slave)
-                     if (b * 2 > t || (daikin.slave && !a))
-                     {          // Mode switch as 100% beyond target temp, or 100% not approaching and in slave mode
-                        daikin_set_e(mode, hot ? "C" : "H");    // Swap mode
-                        if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                           daikin_set_v(fan, 1);
-                     }
                      daikin.sample = now;
+                     if (t2)
+                     { // Decisions (if we have more than one sample)
+                        if (a * 3 < t && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                           daikin_set_v(fan, daikin.fan - fanstep);     // Reduce fan as less than 33% approaching
+                        if (!daikin.slave && a * 3 > t * 2 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
+                           daikin_set_v(fan, daikin.fan + fanstep);     // Increase fan as more than 66% approaching (no point if slave)
+                        if (b * 2 > t || (daikin.slave && !a))
+                        {       // Mode switch as 100% beyond target temp, or 100% not approaching and in slave mode
+                           daikin_set_e(mode, hot ? "C" : "H"); // Swap mode
+                           if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                              daikin_set_v(fan, 1);
+                        }
+                     }
                   }
                   // Limit settings to acceptable values
                   if (set < 16)
