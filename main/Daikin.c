@@ -140,8 +140,8 @@ const char *daikin_set_int(const char *name, int *ptr, uint64_t flag, int value)
    if (!(daikin.status_known & flag))
       return "Setting cannot be controlled";
    xSemaphoreTake(daikin.mutex, portMAX_DELAY);
-   if (*ptr / 10 != value / 10)
-      daikin.control_changed |= flag;
+   daikin.control_changed |= flag;
+   daikin.mode_changed = 1;
    *ptr = value;
    xSemaphoreGive(daikin.mutex);
    return NULL;
@@ -179,7 +179,6 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
    {
       daikin.status_known |= flag;
       daikin.status_changed = 1;
-      daikin.mode_changed = 1;
    }
    if (*ptr == val)
    {                            // No change
@@ -192,6 +191,7 @@ void set_uint8(const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
    {                            // Changed (and not something we are trying to set)
       *ptr = val;
       daikin.status_changed = 1;
+      daikin.mode_changed = 1;
    }
    xSemaphoreGive(daikin.mutex);
 }
@@ -213,8 +213,9 @@ void set_int(const char *name, int *ptr, uint64_t flag, int val)
       }
    } else if (!(daikin.control_changed & flag))
    {                            // Changed (and not something we are trying to set)
+      if (*ptr / 10 != val / 10)
+         daikin.status_changed = 1;
       *ptr = val;
-      daikin.status_changed = 1;
    }
    xSemaphoreGive(daikin.mutex);
 }
@@ -1345,7 +1346,7 @@ void app_main()
                   }
                   if (daikin.sample + tsample < now)
                   {             // New sample, consider some changes
-#if 1
+#if 0
                      jo_t j = jo_object_alloc();
                      jo_array(j, "a");
                      jo_int(j, NULL, daikin.counta2);
