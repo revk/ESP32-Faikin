@@ -1357,12 +1357,12 @@ void app_main()
                      daikin.sample = now;
                      if (t2)
                      {          // Decisions (if we have more than one sample)
-                        if (a * 2 < t && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                           daikin_set_v(fan, daikin.fan - fanstep);     // Reduce fan as less than 50% approaching
-                        if (!daikin.slave && a * 4 > t * 3 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
-                           daikin_set_v(fan, daikin.fan + fanstep);     // Increase fan as more than 75% approaching (no point if slave)
+                        if (a * 7 < t * 10 && fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                           daikin_set_v(fan, daikin.fan - fanstep);     // Reduce fan
+                        if (!daikin.slave && a * 9 > t * 10 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
+                           daikin_set_v(fan, daikin.fan + fanstep);     // Increase fan
                         if (b * 2 > t || (daikin.slave && !a))
-                        {       // Mode switch as 50% beyond target temp, or 100% not approaching and in slave mode
+                        {       // Mode switch
                            daikin_set_e(mode, hot ? "C" : "H"); // Swap mode
                            if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
                               daikin_set_v(fan, 1);
