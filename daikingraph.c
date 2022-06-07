@@ -364,7 +364,7 @@ int main(int argc, const char *argv[])
    liquidcol = rangetrace(ranges, traces, "liquid", "1", liquidcol);
    inletcol = rangetrace(ranges, traces, "inlet", "1", inletcol);
    homecol = rangetrace(ranges, traces, "home", "1", homecol);
-   envcol = rangetrace(ranges, traces, "env", "GREATEST(COALESCE(`fanrpm`/100-10,`fan`),1)", envcol);
+   envcol = rangetrace(ranges, traces, "env", "GREATEST(COALESCE(round((`fanrpm`-900)/100),`fan`)/2.0,0.5)", envcol);
 
    // Set range of temps shown
    if (isnan(mintemp))
