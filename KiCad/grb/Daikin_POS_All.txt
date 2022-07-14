@@ -1,11 +1,10 @@
-### Module positions - created on 2022-06-02 09:50
+### Module positions - created on 2022-06-02 11:38
 ### Printed by pcb_positions plugin
 ## Unit = mm, Angle = deg.
 ## Pcb Height 19.600mm, Pcb Width 13.300mm [based on Edge bounding box]
 ## Side : ALL
 ## Board Aux Origin: 0.000mm ,0.000mm
 # Ref         Val                 Package                       PosX       PosY       Pin1_PosX  Pin1_PosY    Rot     Side      Type
-J2            Prog                Shelly                        99.8000    -56.3000   104.8800   -56.3000      0.0    bottom    THD
 U1            ESP32-PICO-MINI-02  ESP32-PICO-MINI-02            99.8000    -44.0932   93.9000    -40.0932      0.0    top       SMD
 J1            SPOX                Molex_MiniSPOX_H4RA           99.8000    -51.3400   96.0500    -51.3400      0.0    top       THD
 C4            10uF                Hidden                        94.2500    -45.0500   0.0000     0.0000      -90.0    bottom    SMD
@@ -15,6 +14,7 @@ Q3            PMF250XNEX          SOT-323_SC-70                 104.0500   -48.4
 D2            Schottky            Hidden                        97.3700    -44.6700   0.0000     0.0000        0.0    bottom    SMD
 C2            0.1uF               Hidden                        101.7500   -41.7500   0.0000     0.0000      -90.0    bottom    SMD
 R6            30k 1% or NF        R_0603                        102.3250   -39.4000   101.5000   -39.4000      0.0    bottom    SMD
+J2            Prog                Shelly                        99.8000    -56.3000   104.8800   -56.3000      0.0    bottom    THD
 R1            680R                R_0603                        103.1000   -44.6000   103.1000   -43.7750    -90.0    bottom    SMD
 R3            220R                R_0603                        105.6500   -44.6000   105.6500   -43.7750    -90.0    bottom    SMD
 R4            10K                 R_0603                        95.3000    -48.1500   94.4750    -48.1500      0.0    bottom    SMD

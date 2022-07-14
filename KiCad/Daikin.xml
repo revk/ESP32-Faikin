@@ -2,15 +2,15 @@
 <export version="E">
   <design>
     <source>/Users/adrian/git/ESP32-Daikin/KiCad/Daikin.kicad_sch</source>
-    <date>Sunday, 03 April 2022 at 14:45:45</date>
-    <tool>Eeschema (6.0.2-0)</tool>
-    <textvar name="DATE">2022-04-02</textvar>
+    <date>Thursday, 02 June 2022 at 11:30:24</date>
+    <tool>Eeschema (6.0.5-0)</tool>
+    <textvar name="DATE">2022-06-02</textvar>
     <sheet number="1" name="/" tstamps="/">
       <title_block>
         <title>Daikin ESP32-PICO-MINI module</title>
         <company/>
         <rev>1</rev>
-        <date>2022-04-02</date>
+        <date>2022-06-02</date>
         <source>Daikin.kicad_sch</source>
         <comment number="1" value="@TheRealRevK"/>
         <comment number="2" value="www.me.uk"/>
@@ -28,7 +28,11 @@
     <comp ref="C1">
       <value>10nF</value>
       <footprint>RevK:C_0603</footprint>
+      <fields>
+        <field name="Part No">0603-10nF-50V</field>
+      </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Part No" value="0603-10nF-50V"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -39,10 +43,11 @@
       <footprint>RevK:Hidden</footprint>
       <fields>
         <field name="Note">X7R or X5R 0603</field>
+        <field name="Part No">0603-100nF-50V</field>
       </fields>
       <libsource lib="RevK" part="Hidden" description=""/>
       <property name="Note" value="X7R or X5R 0603"/>
-      <property name="Part No" value=""/>
+      <property name="Part No" value="0603-100nF-50V"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -53,10 +58,11 @@
       <footprint>RevK:Hidden</footprint>
       <fields>
         <field name="Note">0603 or 0805</field>
+        <field name="Part No">0805-2.2uF-25V</field>
       </fields>
       <libsource lib="RevK" part="Hidden" description=""/>
       <property name="Note" value="0603 or 0805"/>
-      <property name="Part No" value=""/>
+      <property name="Part No" value="0805-2.2uF-25V"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -67,10 +73,11 @@
       <footprint>RevK:Hidden</footprint>
       <fields>
         <field name="Note">0603 or 0805</field>
+        <field name="Part No">0805-10uF-16V</field>
       </fields>
       <libsource lib="RevK" part="Hidden" description=""/>
       <property name="Note" value="0603 or 0805"/>
-      <property name="Part No" value=""/>
+      <property name="Part No" value="0805-10uF-16V"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -79,7 +86,11 @@
     <comp ref="C5">
       <value>100nF</value>
       <footprint>RevK:C_0603</footprint>
+      <fields>
+        <field name="Part No">0603-100nF-25V</field>
+      </fields>
       <libsource lib="Device" part="C" description="Unpolarized capacitor"/>
+      <property name="Part No" value="0603-100nF-25V"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -120,9 +131,14 @@
     <comp ref="J1">
       <value>SPOX</value>
       <footprint>RevK:Molex_MiniSPOX_H4RA</footprint>
+      <fields>
+        <field name="Part No">22057025</field>
+      </fields>
       <libsource lib="Connector_Generic" part="Conn_01x04" description="Generic connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"/>
+      <property name="Part No" value="22057025"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
+      <property name="exclude_from_board"/>
       <sheetpath names="/" tstamps="/"/>
       <tstamps>af073fa6-a783-40f2-9751-692984a62ffc</tstamps>
     </comp>
@@ -132,11 +148,11 @@
       <datasheet>https://www.mouser.co.uk/datasheet/2/987/Laird_Performance_TYA4020_series__Rev_A_-1877538.pdf</datasheet>
       <fields>
         <field name="Manufacturer">Laird</field>
-        <field name="Part No">TYA4020</field>
+        <field name="Part No">TYA40206R8M-10</field>
       </fields>
       <libsource lib="RevK" part="Hidden" description=""/>
       <property name="Manufacturer" value="Laird"/>
-      <property name="Part No" value="TYA4020"/>
+      <property name="Part No" value="TYA40206R8M-10"/>
       <property name="Note" value=""/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
@@ -146,7 +162,11 @@
     <comp ref="Q3">
       <value>PMF250XNEX</value>
       <footprint>Package_TO_SOT_SMD:SOT-323_SC-70</footprint>
+      <fields>
+        <field name="Part No">PMF250XNEX</field>
+      </fields>
       <libsource lib="RevK" part="NX7002AK" description="N-MOSFET transistor, gate/source/drain"/>
+      <property name="Part No" value="PMF250XNEX"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -155,7 +175,11 @@
     <comp ref="R1">
       <value>680R</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-680R</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-680R"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -164,7 +188,11 @@
     <comp ref="R2">
       <value>2K</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-2K</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-2K"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -173,7 +201,11 @@
     <comp ref="R3">
       <value>220R</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-220R</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-220R"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -182,7 +214,11 @@
     <comp ref="R4">
       <value>10K</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-10K</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-10K"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -191,7 +227,11 @@
     <comp ref="R5">
       <value>100k 1% or 0R</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-100k</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-100k"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -200,7 +240,11 @@
     <comp ref="R6">
       <value>30k 1% or NF</value>
       <footprint>RevK:R_0603</footprint>
+      <fields>
+        <field name="Part No">0603-30k</field>
+      </fields>
       <libsource lib="Device" part="R" description="Resistor"/>
+      <property name="Part No" value="0603-30k"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -213,6 +257,7 @@
         <field name="MANUFACTURER">Espressif</field>
         <field name="MAXIMUM_PACKAGE_HEIGHT">2.55mm</field>
         <field name="PARTREV">v1.0</field>
+        <field name="Part No">ESP32-PICO-MINI-02-N8R2</field>
         <field name="STANDARD">Manufacturer Recommendations</field>
       </fields>
       <libsource lib="RevK" part="ESP32-PICO-MINI-02" description=""/>
@@ -220,6 +265,7 @@
       <property name="MAXIMUM_PACKAGE_HEIGHT" value="2.55mm"/>
       <property name="PARTREV" value="v1.0"/>
       <property name="STANDARD" value="Manufacturer Recommendations"/>
+      <property name="Part No" value="ESP32-PICO-MINI-02-N8R2"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -230,11 +276,11 @@
       <footprint>RevK:RegulatorBlockFB</footprint>
       <fields>
         <field name="Manufacturer">TI</field>
-        <field name="Part No">LMR16006YQ3</field>
+        <field name="Part No">LMR16006YQ3DDCRQ1</field>
       </fields>
       <libsource lib="RevK" part="LMR16006+FB" description=""/>
       <property name="Manufacturer" value="TI"/>
-      <property name="Part No" value="LMR16006YQ3"/>
+      <property name="Part No" value="LMR16006YQ3DDCRQ1"/>
       <property name="Sheetname" value=""/>
       <property name="Sheetfile" value="Daikin.kicad_sch"/>
       <sheetpath names="/" tstamps="/"/>
@@ -259,26 +305,6 @@
         <pin num="2" name="Pin_2" type="power_out"/>
         <pin num="3" name="Pin_3" type="passive"/>
         <pin num="4" name="Pin_4" type="passive"/>
-      </pins>
-    </libpart>
-    <libpart lib="Connector_Generic" part="Conn_01x05">
-      <description>Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)</description>
-      <docs>~</docs>
-      <footprints>
-        <fp>Connector*:*_1x??_*</fp>
-      </footprints>
-      <fields>
-        <field name="Reference">J2</field>
-        <field name="Value">Prog</field>
-        <field name="Footprint">Connector_PinHeader_2.54mm:PinHeader_1x05_P2.54mm_Vertical</field>
-        <field name="Datasheet">~</field>
-      </fields>
-      <pins>
-        <pin num="1" name="Pin_1" type="power_in"/>
-        <pin num="2" name="Pin_2" type="passive"/>
-        <pin num="3" name="Pin_3" type="power_in"/>
-        <pin num="4" name="Pin_4" type="passive"/>
-        <pin num="5" name="Pin_5" type="passive"/>
       </pins>
     </libpart>
     <libpart lib="Device" part="C">
@@ -438,6 +464,20 @@
         <pin num="1" name="G" type="input"/>
         <pin num="2" name="S" type="passive"/>
         <pin num="3" name="D" type="passive"/>
+      </pins>
+    </libpart>
+    <libpart lib="RevK" part="Shelly">
+      <fields>
+        <field name="Reference">J</field>
+        <field name="Value">Shelly</field>
+        <field name="Footprint">RevK:Shelly</field>
+      </fields>
+      <pins>
+        <pin num="1" name="GND" type="power_in"/>
+        <pin num="2" name="0" type="output"/>
+        <pin num="3" name="3V3" type="power_in"/>
+        <pin num="4" name="Rx" type="output"/>
+        <pin num="5" name="Tx" type="input"/>
       </pins>
     </libpart>
   </libparts>
