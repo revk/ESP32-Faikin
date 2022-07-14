@@ -31,7 +31,7 @@ const char TAG[] = "Daikin";
 	bl(livestatus)		\
 	b(s21)			\
 	u8(uart,1)		\
-	u8l(autoband,5)		\
+	u8l(autoband,3)		\
 	u8l(coolover,5)		\
 	u8l(coolback,5)		\
 	u8l(heatover,5)		\
@@ -1301,6 +1301,14 @@ void app_main()
             int a = daikin.counta + daikin.counta2;     // Approaching
             int b = daikin.countb + daikin.countb2;     // Beyond
             int t = daikin.countt + daikin.countt2;     // Total (includes neither approaching or beyond, i.e. in range)
+            if (debug)
+            {
+               jo_t j = jo_object_alloc();
+               jo_int(j, "a", a);
+               jo_int(j, "b", b);
+               jo_int(j, "t", t);
+               revk_info("sample", &j);
+            }
             // Next sample
             daikin.counta2 = daikin.counta;
             daikin.countb2 = daikin.countb;
