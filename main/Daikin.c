@@ -1251,10 +1251,13 @@ void app_main()
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
          // Apply hysteresis
-         if (hot)
-            max += switch10 / 10.0;     // Overshoot for switching (heating)
-         else
-            min -= switch10 / 10.0;     // Overshoot for switching (cooling)
+         if (daikin.power)
+         {
+            if (hot)
+               max += switch10 / 10.0;  // Overshoot for switching (heating)
+            else
+               min -= switch10 / 10.0;  // Overshoot for switching (cooling)
+         }
          void samplestart(void) {       // Start sampling for fan/switch controls
             daikin.counta = daikin.counta2 = daikin.countb = daikin.countb2 = daikin.countt = daikin.countt2 = 0;       // Reset sample counts
             daikin.sample = now;        // Start sample period
