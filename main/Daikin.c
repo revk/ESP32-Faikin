@@ -1251,7 +1251,7 @@ void app_main()
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
          // Apply hysteresis
-         if (daikin.power)
+         if (daikin.control)
          {
             if (hot)
                max += switch10 / 10.0;  // Overshoot for switching (heating)
