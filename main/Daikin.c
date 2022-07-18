@@ -33,10 +33,10 @@ const char TAG[] = "Daikin";
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
-	u8l(coolover,5)		\
-	u8l(coolback,5)		\
-	u8l(heatover,5)		\
-	u8l(heatback,5)		\
+	u8l(coolover,6)		\
+	u8l(coolback,6)		\
+	u8l(heatover,6)		\
+	u8l(heatback,6)		\
 	u8l(switch10,5)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
