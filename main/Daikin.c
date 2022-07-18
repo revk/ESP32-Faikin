@@ -31,6 +31,7 @@ const char TAG[] = "Daikin";
 	bl(livestatus)		\
 	b(s21)			\
 	u8(uart,1)		\
+	u8l(thermref,50)	\
 	u8l(autoband,3)		\
 	u8l(coolover,5)		\
 	u8l(coolback,5)		\
@@ -290,18 +291,19 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       float t = (payload[0] - '0') * 0.1 + (payload[1] - '0') + (payload[2] - '0') * 10;
       if (payload[3] == '-')
          t = -t;
-      switch (cmd2)
-      {                         // Temperatures
-      case 'H':                // Guess
-         set_temp(home, t);
-         break;
-      case 'a':                // Guess
-         set_temp(outside, t);
-         break;
-      case 'I':                // Guess
-         set_temp(liquid, t);
-         break;
-      }
+      if (t < 100)              // Sanity check
+         switch (cmd2)
+         {                      // Temperatures
+         case 'H':             // Guess
+            set_temp(home, t);
+            break;
+         case 'a':             // Guess
+            set_temp(outside, t);
+            break;
+         case 'I':             // Guess
+            set_temp(liquid, t);
+            break;
+         }
    }
 }
 
@@ -339,13 +341,13 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures - we assume 0000 is not set
       float t;
-      if ((t = (int16_t) (payload[0] + (payload[1] << 8)) / 128.0))
+      if ((t = (int16_t) (payload[0] + (payload[1] << 8)) / 128.0) && t < 100)
          set_temp(inlet, t);
-      if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0))
+      if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0) && t < 100)
          set_temp(home, t);
-      if ((t = (int16_t) (payload[4] + (payload[5] << 8)) / 128.0))
+      if ((t = (int16_t) (payload[4] + (payload[5] << 8)) / 128.0) && t < 100)
          set_temp(liquid, t);
-      if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0))
+      if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0) && t < 100)
          set_temp(temp, t);
 #if 1
       if (debug)
@@ -1366,9 +1368,14 @@ void app_main()
                      samplestart();
                   }
                   // What the A/C is using as current temperature
-                  float reference = daikin.home;        // Reference for what we set - we are assuming the A/C is using this (what if it is not?)
-                  if (reference >= 100) // Assume invalid
+                  float reference = NAN;
+                  if (!isnan(daikin.home) && !isnan(daikin.inlet))
+                     reference = (daikin.home * thermref + daikin.inlet * (100 - thermref)) / 100;      // thermref is how much inlet and home are used as reference
+                  else if (!isnan(daikin.home))
+                     reference = daikin.home;
+                  else if (!isnan(daikin.inlet))
                      reference = daikin.inlet;
+                  // It looks like the ducted units are using inlet in some way, even when field settings say controller.
                   if (daikin.mode == 3)
                      daikin_set_e(mode, hot ? "H" : "C");       // Out of auto
                   // Temp set
@@ -1397,7 +1404,8 @@ void app_main()
                      set = 16;
                   if (set > 32)
                      set = 32;
-                  daikin_set_t(temp, set);      // Apply temperature setting
+                  if (!isnan(reference))
+                     daikin_set_t(temp, set);   // Apply temperature setting
                }
             }
          } else
