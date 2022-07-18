@@ -38,6 +38,7 @@ const char TAG[] = "Daikin";
 	u8l(heatover,6)		\
 	u8l(heatback,6)		\
 	u8l(switch10,5)		\
+	u8l(push10,1)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
@@ -1256,9 +1257,14 @@ void app_main()
          if (daikin.control)
          {
             if (hot)
+            {
                max += switch10 / 10.0;  // Overshoot for switching (heating)
-            else
+               min += push10 / 10.0;    // Adjust target
+            } else
+            {
                min -= switch10 / 10.0;  // Overshoot for switching (cooling)
+               max -= push10 / 10.0;    // Adjust target
+            }
          }
          void samplestart(void) {       // Start sampling for fan/switch controls
             daikin.counta = daikin.counta2 = daikin.countb = daikin.countb2 = daikin.countt = daikin.countt2 = 0;       // Reset sample counts
