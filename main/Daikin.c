@@ -1369,11 +1369,11 @@ void app_main()
                   }
                   // What the A/C is using as current temperature
                   float reference = NAN;
-                  if (!isnan(daikin.home) && !isnan(daikin.inlet))
+                  if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))
                      reference = (daikin.home * thermref + daikin.inlet * (100 - thermref)) / 100;      // thermref is how much inlet and home are used as reference
-                  else if (!isnan(daikin.home))
+                  else if (daikin.status_known & CONTROL_home)
                      reference = daikin.home;
-                  else if (!isnan(daikin.inlet))
+                  else if (daikin.status_known & CONTROL_inlet)
                      reference = daikin.inlet;
                   // It looks like the ducted units are using inlet in some way, even when field settings say controller.
                   if (daikin.mode == 3)
