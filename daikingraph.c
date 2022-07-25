@@ -21,7 +21,8 @@ int main(int argc, const char *argv[])
    const char *sqlpassword = NULL;
    const char *sqlconffile = NULL;
    const char *sqltable = "daikin";
-   const char *sqlweather = NULL;
+   const char *sqlweather = "weather";
+   const char *weathertag = NULL;
    const char *tag = NULL;
    const char *skip = NULL;
    const char *title = NULL;
@@ -60,6 +61,7 @@ int main(int argc, const char *argv[])
          { "sql-password", 'P', POPT_ARG_STRING, &sqlpassword, 0, "SQL password", "pass" },
          { "sql-table", 't', POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &sqltable, 0, "SQL table", "table" },
          { "sql-weather", 0, POPT_ARG_STRING | POPT_ARGFLAG_SHOW_DEFAULT, &sqlweather, 0, "SQL weather table", "table" },
+         { "weather-tag", 0, POPT_ARG_STRING, &weathertag, 0, "SQL weather tag", "tag" },
          { "sql-debug", 'v', POPT_ARG_NONE, &sqldebug, 0, "SQL Debug" },
          { "x-size", 0, POPT_ARG_DOUBLE | POPT_ARGFLAG_SHOW_DEFAULT, &xsize, 0, "X size per hour", "pixels" },
          { "y-size", 0, POPT_ARG_DOUBLE | POPT_ARGFLAG_SHOW_DEFAULT, &ysize, 0, "Y size per step", "pixels" },
@@ -248,7 +250,7 @@ int main(int argc, const char *argv[])
       *m = 'L';
    }
 
-   const char *range(xml_t g, const char *table, const char *field, const char *colour, int group) {    // Plot a temp range based on min/max of field
+   const char *range(xml_t g, const char *table, const char *tag, const char *field, const char *colour, int group) {   // Plot a temp range based on min/max of field
       if (!colour || !*colour)
          return NULL;
       char *path;
@@ -297,7 +299,7 @@ int main(int argc, const char *argv[])
       free(path);
       return colour;
    }
-   const char *trace(xml_t g, const char *table, const char *field, const char *width, const char *colour) {    // Plot trace
+   const char *trace(xml_t g, const char *table, const char *tag, const char *field, const char *width, const char *colour) {   // Plot trace
       if (!colour || !*colour)
          return NULL;
       char *path = NULL;
@@ -348,28 +350,28 @@ int main(int argc, const char *argv[])
          endpath();
       return colour;
    }
-   const char *rangetrace(xml_t g, xml_t g2, const char *table, const char *field, const char *width, const char *colour) {     // Plot a temp range based on min/max of field and trace
-      const char *col = range(g, table, field, colour, 15);
-      trace(g2, table, field, width, colour);
+   const char *rangetrace(xml_t g, xml_t g2, const char *table, const char *tag, const char *field, const char *width, const char *colour) {    // Plot a temp range based on min/max of field and trace
+      const char *col = range(g, table, tag, field, colour, 15);
+      trace(g2, table, tag, field, width, colour);
       return col;
    }
 
-   targetcol = range(ranges, sqltable, "target", targetcol, 19);
+   targetcol = range(ranges, sqltable, tag, "target", targetcol, 19);
    if (targetcol)
    {
-      trace(traces, sqltable, "IF(mintarget=maxtarget,mintarget,NULL)", "1", targetcol);
+      trace(traces, sqltable, tag, "IF(mintarget=maxtarget,mintarget,NULL)", "1", targetcol);
       tempcol = NULL;
    }
-   fanrpmcol = rangetrace(ranges, traces, sqltable, "fanrpm/100", "1", fanrpmcol);
-   tempcol = rangetrace(ranges, traces, sqltable, "temp", "1", tempcol);
-   if (sqlweather)
-      outsidecol = trace(traces, sqlweather, "tempc", "1", outsidecol);
+   fanrpmcol = rangetrace(ranges, traces, sqltable, tag, "fanrpm/100", "1", fanrpmcol);
+   tempcol = rangetrace(ranges, traces, sqltable, tag, "temp", "1", tempcol);
+   if (sqlweather && weathertag)
+      outsidecol = trace(traces, sqlweather, weathertag, "tempc", "1", outsidecol);
    else
-      outsidecol = rangetrace(ranges, traces, sqltable, "outside", "1", outsidecol);
-   liquidcol = rangetrace(ranges, traces, sqltable, "liquid", "1", liquidcol);
-   inletcol = rangetrace(ranges, traces, sqltable, "inlet", "1", inletcol);
-   homecol = rangetrace(ranges, traces, sqltable, "home", "1", homecol);
-   envcol = rangetrace(ranges, traces, sqltable, "env", "GREATEST(COALESCE(round((`fanrpm`-900)/100),`fan`)/2.0,0.5)", envcol);
+      outsidecol = rangetrace(ranges, traces, sqltable, tag, "outside", "1", outsidecol);
+   liquidcol = rangetrace(ranges, traces, sqltable, tag, "liquid", "1", liquidcol);
+   inletcol = rangetrace(ranges, traces, sqltable, tag, "inlet", "1", inletcol);
+   homecol = rangetrace(ranges, traces, sqltable, tag, "home", "1", homecol);
+   envcol = rangetrace(ranges, traces, sqltable, tag, "env", "GREATEST(COALESCE(round((`fanrpm`-900)/100),`fan`)/2.0,0.5)", envcol);
 
    // Set range of temps shown
    if (isnan(mintemp))
@@ -383,7 +385,7 @@ int main(int argc, const char *argv[])
    maxtemp = ceil(maxtemp) + 0.5;
 
    // Bands (booleans)
-   const char *band(const char *table, const char *field, const char *colour) {
+   const char *band(const char *table, const char *tag, const char *field, const char *colour) {
       if (!colour || !*colour)
          return NULL;
       char *path;
@@ -435,10 +437,10 @@ int main(int argc, const char *argv[])
       free(path);
       return colour;
    }
-   heatcol = band(sqltable, "least(`power`,`heat`,1-COALESCE(`slave`,0))", heatcol);
-   coolcol = band(sqltable, "least(`power`,1-`heat`,1-COALESCE(`slave`,0),1-COALESCE(`antifreeze`,0))", coolcol);
-   antifreezecol = band(sqltable, "least(`power`,COALESCE(`antifreeze`,0))", antifreezecol);
-   slavecol = band(sqltable, "least(`power`,COALESCE(`slave`,0))", slavecol);
+   heatcol = band(sqltable, tag, "least(`power`,`heat`,1-COALESCE(`slave`,0))", heatcol);
+   coolcol = band(sqltable, tag, "least(`power`,1-`heat`,1-COALESCE(`slave`,0),1-COALESCE(`antifreeze`,0))", coolcol);
+   antifreezecol = band(sqltable, tag, "least(`power`,COALESCE(`antifreeze`,0))", antifreezecol);
+   slavecol = band(sqltable, tag, "least(`power`,COALESCE(`slave`,0))", slavecol);
 
    // Grid
    if (!nogrid)
