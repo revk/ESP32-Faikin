@@ -37,6 +37,7 @@ monitor:
 
 clean:
 	idf.py clean
+	rm */*.o
 
 menuconfig:
 	idf.py menuconfig
@@ -63,6 +64,13 @@ else
 LIBS=
 INCLUDES=
 endif
+
+SQLlib/sqllib.o: SQLlib/sqllib.c
+	make -C SQLlib
+AXL/axl.o: AXL/axl.c
+	make -C AXL
+AJL/ajl.o: AJL/ajl.c
+	make -C AJL
 
 SQLINC=$(shell mariadb_config --include)
 SQLLIB=$(shell mariadb_config --libs)
