@@ -48,7 +48,6 @@ pull:
 
 update:
 	git submodule update --init --recursive --remote
-	git commit -a -m "Library update"
 
 # Program the FTDI
 ftdi: ftdizap/ftdizap
