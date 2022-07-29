@@ -12,6 +12,10 @@ const char TAG[] = "Daikin";
 #include "esp_http_server.h"
 #include <math.h>
 
+#ifndef	CONFIG_HTTPD_WS_SUPPORT
+#error Need CONFIG_HTTPD_WS_SUPPORT
+#endif
+
 #define	STX	2
 #define	ETX	3
 #define	ENQ	5
