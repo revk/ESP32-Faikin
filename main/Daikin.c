@@ -1322,6 +1322,10 @@ void app_main()
                jo_int(j, "a", a);
                jo_int(j, "b", b);
                jo_int(j, "t", t);
+               jo_int(j, "t2", t2);
+               jo_litf(j, "current", "%.2f", current);
+               jo_litf(j, "min", "%.2f", min);
+               jo_litf(j, "max", "%.2f", max);
                revk_info("sample", &j);
             }
             // Next sample
@@ -1339,7 +1343,7 @@ void app_main()
                   else if (!daikin.power && (a == t || b == t))
                      daikin_set_v(power, 1);    // Turn on as out of band for last two period
                }
-               if (daikin.power)
+               if (daikin.power && !isnan(min) && !isnan(max))
                {
                   if (a * 10 < t * 7 && fanstep && daikin.fan > 1 && daikin.fan <= 5)
                      daikin_set_v(fan, daikin.fan - fanstep);   // Reduce fan
