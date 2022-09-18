@@ -1349,7 +1349,7 @@ void app_main()
                      daikin_set_v(fan, daikin.fan - fanstep);   // Reduce fan
                   if (!daikin.slave && a * 10 > t * 9 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
                      daikin_set_v(fan, daikin.fan + fanstep);   // Increase fan
-                  if (b * 2 > t || (daikin.slave && !a))
+                  if ((b * 3 > t * 2 || daikin.slave) && !a)
                   {             // Mode switch
                      daikin_set_e(mode, hot ? "C" : "H");       // Swap mode
                      if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
