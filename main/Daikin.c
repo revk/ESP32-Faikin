@@ -46,7 +46,7 @@ const char TAG[] = "Daikin";
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
-	u32(tcontrol,300)	\
+	u32(tcontrol,600)	\
 	u8(fanstep,1)		\
 	u32(reporting,60)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
@@ -1300,7 +1300,7 @@ void app_main()
             }
             // We were controlling, so set to a non controlling mode, best guess at sane settings for now
             if (!isnan(daikin.mintarget) && !isnan(daikin.maxtarget))
-               daikin_set_t(temp, daikin.heat ? daikin.mintarget : daikin.maxtarget);
+               daikin_set_t(temp, daikin.heat ? daikin.maxtarget : daikin.mintarget);
             daikin.mintarget = NAN;
             daikin.maxtarget = NAN;
          }
@@ -1349,7 +1349,7 @@ void app_main()
                      daikin_set_v(fan, daikin.fan - fanstep);   // Reduce fan
                   if (!daikin.slave && a * 10 > t * 9 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
                      daikin_set_v(fan, daikin.fan + fanstep);   // Increase fan
-                  if ((b * 3 > t * 2 || daikin.slave) && !a)
+                  if ((b * 2 > t || daikin.slave) && !a)
                   {             // Mode switch
                      daikin_set_e(mode, hot ? "C" : "H");       // Swap mode
                      if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
