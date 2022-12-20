@@ -7,13 +7,28 @@ PROJECT_NAME := Daikin
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 MODELS := Daikin
 
+ifneq ($(wildcard /usr/bin/mysql_config),)
+SQLINC=$(shell mysql_config --include)
+SQLLIB=$(shell mysql_config --libs)
+SQLVER=$(shell mysql_config --version | sed 'sx\..*xx')
+endif
+ifneq ($(wildcard /usr/bin/mariadb_config),)
+SQLINC=$(shell mariadb_config --include)
+SQLLIB=$(shell mariadb_config --libs)
+SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
+endif
+
+ifdef	SQLINC
+TOOLS := faikin daikinlog daikingraph
+endif
+
 all:	tools
 	@echo Make: $(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: $(PROJECT_NAME)$(SUFFIX).bin
 
-tools:	faikin daikinlog daikingraph
+tools:	$(TOOLS)
 
 set:    wroom solo pico
 
@@ -71,9 +86,7 @@ AXL/axl.o: AXL/axl.c
 AJL/ajl.o: AJL/ajl.c
 	make -C AJL
 
-SQLINC=$(shell mariadb_config --include)
-SQLLIB=$(shell mariadb_config --libs)
-SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
+
 CCOPTS=${SQLINC} -I. -I/usr/local/ssl/include -D_GNU_SOURCE -g -Wall -funsigned-char -lm
 OPTS=-L/usr/local/ssl/lib ${SQLLIB} ${CCOPTS}
 
