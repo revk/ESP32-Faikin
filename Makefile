@@ -7,6 +7,10 @@ PROJECT_NAME := Daikin
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 MODELS := Daikin
 
+ifeq ($(wildcard /bin/csh),)
+$(error	Please install /bin/csh or equivalent)
+endif
+
 ifneq ($(wildcard /usr/bin/mysql_config),)
 SQLINC=$(shell mysql_config --include)
 SQLLIB=$(shell mysql_config --libs)
@@ -20,6 +24,8 @@ endif
 
 ifdef	SQLINC
 TOOLS := faikin daikinlog daikingraph
+else
+$(warning mariadb/mysql not installed, needed for tools)
 endif
 
 all:	tools
