@@ -330,7 +330,7 @@
     (zone (net 0) (net_name "") (layers *.Cu) (tstamp a6170e4d-a822-4645-928b-82798f6d911d) (hatch full 0.508)
       (connect_pads (clearance 0))
       (min_thickness 0.01)
-      (keepout (tracks allowed) (vias not_allowed) (pads allowed ) (copperpour allowed) (footprints allowed))
+      (keepout (tracks allowed) (vias not_allowed) (pads allowed) (copperpour allowed) (footprints allowed))
       (fill (thermal_gap 0.508) (thermal_bridge_width 0.508))
       (polygon
         (pts
@@ -344,7 +344,7 @@
     (zone (net 0) (net_name "") (layer "F.Cu") (tstamp f20fcb33-47ad-4669-8ff5-f9d7dd3ee512) (hatch full 0.508)
       (connect_pads (clearance 0))
       (min_thickness 0.01)
-      (keepout (tracks not_allowed) (vias not_allowed) (pads not_allowed ) (copperpour not_allowed) (footprints allowed))
+      (keepout (tracks not_allowed) (vias not_allowed) (pads not_allowed) (copperpour not_allowed) (footprints allowed))
       (fill (thermal_gap 0.508) (thermal_bridge_width 0.508))
       (polygon
         (pts
@@ -358,7 +358,7 @@
     (zone (net 0) (net_name "") (layer "B.Cu") (tstamp c9033652-54c2-4234-9e50-583152ba7b41) (hatch full 0.508)
       (connect_pads (clearance 0))
       (min_thickness 0.01)
-      (keepout (tracks not_allowed) (vias not_allowed) (pads not_allowed ) (copperpour not_allowed) (footprints allowed))
+      (keepout (tracks not_allowed) (vias not_allowed) (pads not_allowed) (copperpour not_allowed) (footprints allowed))
       (fill (thermal_gap 0.508) (thermal_bridge_width 0.508))
       (polygon
         (pts
@@ -418,8 +418,8 @@
       (net 2 "TX") (pinfunction "Pin_3") (pintype "passive") (tstamp 5cce9413-b0a6-481b-aaf1-4fdb13236f7b))
     (pad "4" thru_hole oval (at 3.75 0) (size 1.7 1.85) (drill 0.85) (layers *.Cu *.Mask)
       (net 38 "Net-(J1-Pad4)") (pinfunction "Pin_4") (pintype "passive") (tstamp 82d69b25-3686-440c-a49d-8bc1c81c9908))
-    (model "/Users/adrian/Documents/KiCad/3D/22057045.stp"
-      (offset (xyz 0 -3.6 2.5))
+    (model "/Users/adrian/Documents/KiCad/3D/22057055.stp"
+      (offset (xyz 1.25 -3.6 2.5))
       (scale (xyz 1 1 1))
       (rotate (xyz 0 0 180))
     )
@@ -1160,7 +1160,7 @@
       (net 8 "DC") (pinfunction "VIN") (pintype "power_in") (zone_connect 0)
       (options (clearance outline) (anchor rect))
       (primitives
-    (gr_arc (start 0.001745 0.000002) (mid 0.707723 0.293511) (end 1 1) (width 0.5))
+    (gr_arc (start 0.001745 0.000002) (mid 0.707107 0.292894) (end 0.999998 0.998256) (width 0.5))
       ) (tstamp e030dfcc-c9ff-4ee4-b5b4-b074c8792db9))
     (pad "3" smd custom (at -1.1 -4.5 180) (size 0.1 0.1) (layers "B.Cu")
       (net 1 "GND") (pinfunction "GND") (pintype "power_in") (clearance 0.2) (zone_connect 0)
