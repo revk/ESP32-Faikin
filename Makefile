@@ -58,7 +58,6 @@ monitor:
 
 clean:
 	idf.py clean
-	rm */*.o
 
 menuconfig:
 	idf.py menuconfig
