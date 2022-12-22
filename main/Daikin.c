@@ -49,8 +49,8 @@ const char TAG[] = "Daikin";
 	u32(tcontrol,600)	\
 	u8(fanstep,1)		\
 	u32(reporting,60)	\
-	io(tx,26)	\
-	io(rx,-27)	\
+	io(tx,CONFIG_DAIKIN_TX)	\
+	io(rx,CONFIG_DAIKIN_RX)	\
 
 #define u32(n,d) uint32_t n;
 #define s8(n,d) int8_t n;
