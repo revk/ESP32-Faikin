@@ -1004,6 +1004,7 @@ void app_main()
          .parity = UART_PARITY_EVEN,
          .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+         .source_clk = UART_SCLK_DEFAULT,
       };
       if (!err)
          err = uart_param_config(uart, &uart_config);
