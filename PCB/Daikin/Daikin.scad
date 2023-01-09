@@ -1,6 +1,6 @@
-// Generated case design for KiCad/Daikin.kicad_pcb
+// Generated case design for PCB/Daikin/Daikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-01-05 14:30:20
+// Generated 2023-01-09 08:01:52
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1

@@ -1,9 +1,0 @@
-### Module positions - created on 2022-06-02 11:38
-### Printed by pcb_positions plugin
-## Unit = mm, Angle = deg.
-## Pcb Height 19.600mm, Pcb Width 13.300mm [based on Edge bounding box]
-## Side : top
-## Board Aux Origin: 0.000mm ,0.000mm
-# Ref         Val                 Package                       PosX       PosY       Pin1_PosX  Pin1_PosY    Rot     Side      Type
-U1            ESP32-PICO-MINI-02  ESP32-PICO-MINI-02            99.8000    -44.0932   93.9000    -40.0932      0.0    top       SMD
-## End

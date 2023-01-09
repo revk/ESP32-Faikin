@@ -5,7 +5,6 @@
 
 PROJECT_NAME := Daikin
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
-MODELS := Daikin
 
 ifeq ($(wildcard /bin/csh),)
 $(error	Please install /bin/csh or equivalent)
@@ -104,14 +103,13 @@ daikinlog: daikinlog.c SQLlib/sqllib.o AJL/ajl.o main/acextras.m main/acfields.m
 daikingraph: daikingraph.c SQLlib/sqllib.o AXL/axl.o
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAXL AXL/axl.o -lcurl ${OPTS}
 
-scad:	$(patsubst %,KiCad/%.scad,$(MODELS))
-stl:	$(patsubst %,KiCad/%.stl,$(MODELS))
-
-%.stl: %.scad
+%.stl:	%.scad
 	echo "Making $@"
 	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
 	echo "Made $@"
 
-KiCad/Daikin.scad: KiCad/Daikin.kicad_pcb PCBCase/case Makefile
+stl: 	PCB/Daikin/Daikin.stl
+
+PCB/Daikin/Daikin.scad: PCB/Daikin/Daikin.kicad_pcb PCBCase/case Makefile
 	PCBCase/case -o $@ $< --edge=2 --base=2.5
 
