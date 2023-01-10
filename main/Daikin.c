@@ -977,7 +977,8 @@ void app_main()
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
 #include "acextras.m"
    revk_boot(&app_callback);
-#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "#d,SETTING_SET|SETTING_BITFIELD);
+#define str(x) #x
+#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD);
 #define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
 #define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
