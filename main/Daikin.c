@@ -28,12 +28,18 @@ const char TAG[] = "Daikin";
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
+#ifdef	CONFIG_DAIKIN_S21
+#define	S21 true
+#else
+#define	S21 false
+#endif
+
 // Settings (RevK library used by MQTT setting command)
 #define	settings		\
 	bl(debug)		\
 	bl(dump)		\
 	bl(livestatus)		\
-	b(s21)			\
+	b(s21,S21)			\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
@@ -56,7 +62,7 @@ const char TAG[] = "Daikin";
 #define s8(n,d) int8_t n;
 #define u8(n,d) uint8_t n;
 #define u8l(n,d) uint8_t n;
-#define b(n) uint8_t n;
+#define b(n,d) uint8_t n;
 #define bl(n) uint8_t n;
 #define s(n) char * n;
 #define io(n,d)           uint8_t n;
@@ -979,12 +985,12 @@ void app_main()
    revk_boot(&app_callback);
 #define str(x) #x
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD);
-#define b(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN);
+#define b(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_BOOLEAN);
 #define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
-#define u32(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
-#define s8(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_SIGNED);
-#define u8(n,d) revk_register(#n,0,sizeof(n),&n,#d,0);
-#define u8l(n,d) revk_register(#n,0,sizeof(n),&n,#d,SETTING_LIVE);
+#define u32(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
+#define s8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_SIGNED);
+#define u8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
+#define u8l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
 #define s(n) revk_register(#n,0,0,&n,NULL,0);
    settings
 #undef io
@@ -997,6 +1003,7 @@ void app_main()
 #undef s
        revk_start();
    {                            // Init uart
+      ESP_LOGI(TAG,"Starting UART%s",s21?" S21":"");
       esp_err_t err = 0;
       // Init UART for Mobile
       uart_config_t uart_config = {

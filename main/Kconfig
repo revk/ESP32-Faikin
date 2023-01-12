@@ -12,4 +12,10 @@ menu "Daikin"
         help
                 GPIO for rx (prefix - to invert)
 
+        config DAIKIN_S21
+        bool "Use S21 protocol"
+        default n
+        help
+                Select for S21 protocol
+
 endmenu
