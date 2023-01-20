@@ -28,18 +28,11 @@ const char TAG[] = "Daikin";
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
-#ifdef	CONFIG_DAIKIN_S21
-#define	S21 true
-#else
-#define	S21 false
-#endif
-
 // Settings (RevK library used by MQTT setting command)
 #define	settings		\
 	bl(debug)		\
 	bl(dump)		\
 	bl(livestatus)		\
-	b(s21,S21)			\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
@@ -1024,9 +1017,10 @@ void app_main()
          return;
       }
    }
-   void uart_setup(void)
-   {
-      ESP_LOGI(TAG,"Starting UART%s",s21?" S21":"");
+   static uint8_t s21 = 0;
+   void uart_setup(void) {
+      s21 = 1 - s21;
+      ESP_LOGI(TAG, "Starting UART%s", s21 ? " S21" : "");
       uart_config_t uart_config = {
          .baud_rate = s21 ? 2400 : 9600,
          .data_bits = UART_DATA_8_BITS,
@@ -1035,7 +1029,7 @@ void app_main()
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
          .source_clk = UART_SCLK_DEFAULT,
       };
-         REVK_ERR_CHECK(uart_param_config(uart, &uart_config));
+      REVK_ERR_CHECK(uart_param_config(uart, &uart_config));
    }
 
    // Web interface
@@ -1467,7 +1461,5 @@ void app_main()
          }
       }
       while (daikin.talking);
-      ESP_LOGE(TAG,"Not connected, switching S21 mode");
-      s21=1-s21; // Try alternative
    }
 }
