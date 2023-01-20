@@ -88,6 +88,8 @@ enum {                          // Number the control fields
 #include "acextras.m"
 // Globals
 static httpd_handle_t webserver = NULL;
+static uint8_t s21 = 0;
+static uint8_t s21_set = 0;
 
 // The current aircon state and stats
 struct {
@@ -249,11 +251,18 @@ void set_float(const char *name, float *ptr, uint64_t flag, float val)
 #define set_int(name,val) set_int(#name,&daikin.name,CONTROL_##name,val)
 #define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
 
+jo_t jo_comms_alloc(void)
+{
+   jo_t j = jo_object_alloc();
+   jo_bool(j, s21_set ? "s21" : "s21-try", s21);
+   return j;
+}
+
 void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
    if (debug && len)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
       jo_base16(j, "payload", payload, len);
       jo_stringn(j, "text", (char *) payload, len);
@@ -312,7 +321,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
    if (debug && len)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       jo_base16(j, "payload", payload, len);
       revk_info("rx", &j);
@@ -373,7 +382,7 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
       // 010476050101000001
       // 010000000100000001
 #if 0
-      jo_t j = jo_object_alloc();       // Debug
+      jo_t j = jo_comms_alloc();        // Debug
       jo_base16(j, "be", payload, len);
       revk_info("rx", &j);
 #endif
@@ -386,7 +395,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       return;                   // Failed
    if (debug && len)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
       jo_base16(j, "payload", payload, len);
       jo_stringn(j, "text", (char *) payload, len);
@@ -408,7 +417,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    buf[4 + len] = ETX;
    if (dump)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_base16(j, "dump", buf, len + 5);
       revk_info("tx", &j);
    }
@@ -418,7 +427,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    if (len != 1 || temp != ACK)
    {
       daikin.talking = 0;
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       if (len == 1 && temp == NAK)
          jo_bool(j, "nak", 1);
       else
@@ -438,7 +447,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       if (len != 1)
       {
          daikin.talking = 0;
-         jo_t j = jo_object_alloc();
+         jo_t j = jo_comms_alloc();
          jo_bool(j, "timeout", 1);
          revk_error("comms", &j);
          return;
@@ -451,7 +460,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       if (uart_read_bytes(uart, buf + len, 1, 10 / portTICK_PERIOD_MS) != 1)
       {
          daikin.talking = 0;
-         jo_t j = jo_object_alloc();
+         jo_t j = jo_comms_alloc();
          jo_bool(j, "timeout", 1);
          revk_error("comms", &j);
          return;
@@ -465,7 +474,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    uart_write_bytes(uart, &temp, 1);
    if (dump)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_base16(j, "dump", buf, len);
       revk_info("rx", &j);
    }
@@ -475,16 +484,18 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       c += buf[i];
    if (c != buf[len - 2] && (c != ACK || buf[len - 2] != ENQ))
    {                            // Sees checksum of 03 actually sends as 05
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
       return;                   // Ignore - it'll get resent some time
    }
+   if (buf[0] == STX)
+      s21_set = 1;              // Good format
    if (len < 5 || buf[0] != STX || buf[len - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
    {                            // Bad message
       daikin.talking = 0;       // Fail, restart comms
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       if (buf[0] != 2)
          jo_bool(j, "badhead", 1);
       if (buf[1] != cmd + 1 || buf[2] != cmd2)
@@ -502,7 +513,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
       return;                   // Failed
    if (debug && len)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
       jo_base16(j, "payload", payload, len);
       revk_info("tx", &j);
@@ -521,7 +532,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    buf[5 + len] = 0xFF - c;
    if (dump)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_base16(j, "dump", buf, len + 6);
       revk_info("tx", &j);
    }
@@ -531,14 +542,14 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (len <= 0)
    {
       daikin.talking = 0;
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_bool(j, "timeout", 1);
       revk_error("comms", &j);
       return;
    }
    if (dump)
    {
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_base16(j, "dump", buf, len);
       revk_info("rx", &j);
    }
@@ -549,17 +560,19 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (c != 0xFF)
    {
       daikin.talking = 0;
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
       return;
    }
+   if (buf[0] == 0x06)
+      s21_set = 1;              // Good message format
    // Process response
    if (buf[1] == 0xFF)
    {                            // Error report
       daikin.talking = 0;
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       jo_bool(j, "fault", 1);
       jo_base16(j, "data", buf, len);
       revk_error("comms", &j);
@@ -568,7 +581,7 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (len < 6 || buf[0] != 0x06 || buf[1] != cmd || buf[2] != len || buf[3] != 1)
    {                            // Basic checks
       daikin.talking = 0;
-      jo_t j = jo_object_alloc();
+      jo_t j = jo_comms_alloc();
       if (buf[0] != 0x06)
          jo_bool(j, "badhead", 1);
       if (buf[1] != cmd)
@@ -995,9 +1008,21 @@ void app_main()
 #undef bl
 #undef s
        revk_start();
-   {                            // Init uart
+   void uart_setup(void) {
       esp_err_t err = 0;
-      // Init UART for Mobile
+      if (!s21_set)
+         s21 = 1 - s21;         // Flip
+      ESP_LOGI(TAG, "Starting UART%s", s21 ? " S21" : "");
+      uart_config_t uart_config = {
+         .baud_rate = s21 ? 2400 : 9600,
+         .data_bits = UART_DATA_8_BITS,
+         .parity = UART_PARITY_EVEN,
+         .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
+         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+         .source_clk = UART_SCLK_DEFAULT,
+      };
+      if (!err)
+         err = uart_param_config(uart, &uart_config);
       if (!err)
          err = uart_set_pin(uart, port_mask(tx), port_mask(rx), -1, -1);
       if (!err && ((tx & PORT_INV) || (rx & PORT_INV)))
@@ -1016,20 +1041,6 @@ void app_main()
          revk_error("uart", &j);
          return;
       }
-   }
-   static uint8_t s21 = 0;
-   void uart_setup(void) {
-      s21 = 1 - s21;
-      ESP_LOGI(TAG, "Starting UART%s", s21 ? " S21" : "");
-      uart_config_t uart_config = {
-         .baud_rate = s21 ? 2400 : 9600,
-         .data_bits = UART_DATA_8_BITS,
-         .parity = UART_PARITY_EVEN,
-         .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
-         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-         .source_clk = UART_SCLK_DEFAULT,
-      };
-      REVK_ERR_CHECK(uart_param_config(uart, &uart_config));
    }
 
    // Web interface
@@ -1078,9 +1089,12 @@ void app_main()
 
    while (1)
    {                            // Main loop
-      sleep(1);
-      uart_setup();
-      uart_flush(uart);         // Clean start
+      {                         // Poke UART
+         uart_setup();
+         sleep(1);
+         uart_flush(uart);      // Clean start
+      }
+
       daikin.talking = 1;
       if (!s21)
       {                         // Startup
@@ -1091,7 +1105,7 @@ void app_main()
          daikin_command(0xBA, 0, NULL);
          daikin_command(0xBB, 0, NULL);
       }
-      if (daikin.online != daikin.talking)
+      if (s21_set && daikin.online != daikin.talking)
       {
          daikin.online = daikin.talking;
          daikin.status_changed = 1;
@@ -1461,5 +1475,6 @@ void app_main()
          }
       }
       while (daikin.talking);
+      uart_driver_delete(uart);
    }
 }
