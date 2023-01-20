@@ -1003,19 +1003,8 @@ void app_main()
 #undef s
        revk_start();
    {                            // Init uart
-      ESP_LOGI(TAG,"Starting UART%s",s21?" S21":"");
       esp_err_t err = 0;
       // Init UART for Mobile
-      uart_config_t uart_config = {
-         .baud_rate = s21 ? 2400 : 9600,
-         .data_bits = UART_DATA_8_BITS,
-         .parity = UART_PARITY_EVEN,
-         .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
-         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-         .source_clk = UART_SCLK_DEFAULT,
-      };
-      if (!err)
-         err = uart_param_config(uart, &uart_config);
       if (!err)
          err = uart_set_pin(uart, port_mask(tx), port_mask(rx), -1, -1);
       if (!err && ((tx & PORT_INV) || (rx & PORT_INV)))
@@ -1034,6 +1023,19 @@ void app_main()
          revk_error("uart", &j);
          return;
       }
+   }
+   void uart_setup(void)
+   {
+      ESP_LOGI(TAG,"Starting UART%s",s21?" S21":"");
+      uart_config_t uart_config = {
+         .baud_rate = s21 ? 2400 : 9600,
+         .data_bits = UART_DATA_8_BITS,
+         .parity = UART_PARITY_EVEN,
+         .stop_bits = s21 ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
+         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+         .source_clk = UART_SCLK_DEFAULT,
+      };
+         REVK_ERR_CHECK(uart_param_config(uart, &uart_config));
    }
 
    // Web interface
@@ -1083,6 +1085,7 @@ void app_main()
    while (1)
    {                            // Main loop
       sleep(1);
+      uart_setup();
       uart_flush(uart);         // Clean start
       daikin.talking = 1;
       if (!s21)
@@ -1464,5 +1467,7 @@ void app_main()
          }
       }
       while (daikin.talking);
+      ESP_LOGE(TAG,"Not connected, switching S21 mode");
+      s21=1-s21; // Try alternative
    }
 }
