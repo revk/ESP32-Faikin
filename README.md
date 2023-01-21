@@ -8,9 +8,9 @@ This is code to run on an ESP32 module and connect to a Daikin aircon unit in pl
 
 Basically, Daikin have gone all cloudy with the latest WiFi controllers. This module is designed to provide an alternative.
 
-* Simple local web based control, easy to save as desktop icon on phone
+* Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone.
 * MQTT reporting and controls
-* Works with https://github.com/revk/ESP32-EnvMon Environmental Monitor for finer control
+* Works with https://github.com/revk/ESP32-EnvMon Environmental Monitor for finer control and status display
 * Automatically works out if S21 or alternative protocol used on ducted units
 * Backwards compatible /aircon/get_control_info and /aircon/set_control_info URLs (work in progress)
 
