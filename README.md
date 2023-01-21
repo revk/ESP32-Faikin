@@ -18,6 +18,8 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 
 Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variables, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. https://github.com/revk/Shelly-Tasmotizer-PCB or similar, and of course the full ESP IDF environment.
 
+If you want to purchase an assembled PCB, see https://www.aa.net.uk/etc/circuit-boards/
+
 The wiring from the existing wifi modules fits directly (albeit only 4 pins used).
 
 ![272012](https://user-images.githubusercontent.com/996983/169694456-bd870348-f9bf-4c31-a2e3-00da13320ffc.jpg)
