@@ -11,6 +11,7 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 * Simple local web based control, easy to save as desktop icon on phone
 * MQTT reporting and controls
 * Works with https://github.com/revk/ESP32-EnvMon Environmental Monitor for finer control
+* Automatically works out if S21 or alternative protocol used on ducted units
 * Backwards compatible /aircon/get_control_info and /aircon/set_control_info URLs (work in progress)
 
 # Building
