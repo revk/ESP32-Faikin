@@ -997,6 +997,7 @@ static esp_err_t web_get_control_info(httpd_req_t * req)
    for (int i = 1; i <= 7; i++)
       if (i != 6)
          o += sprintf(o, ",dh%d=0", i);
+   o+=sprintf(o,"dhh=0");
    if (daikin.mode <= 7)
       o += sprintf(o, ",b_mode=%c", "64310002"[daikin.mode]);   // Mapped from FHCA456D
    o += sprintf(o, ",b_stemp=%.1f", daikin.temp);
