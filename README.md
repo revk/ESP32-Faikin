@@ -13,7 +13,7 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 * Includes linux mysql/mariadb based logging and graphing tools
 * Works with https://github.com/revk/ESP32-EnvMon Environmental Monitor for finer control and status display
 * Automatically works out if S21 or alternative protocol used on ducted units
-* Backwards compatible /aircon/get_control_info and /aircon/set_control_info URLs (work in progress)
+* Backwards compatible `/aircon/get_control_info` and `/aircon/set_control_info` URLs (work in progress)
 
 # Building
 
