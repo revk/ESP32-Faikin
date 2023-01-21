@@ -1333,10 +1333,6 @@
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid 1bf76969-2e71-4f5c-b528-7c500a7c510b)
   )
-  (text "Needs new LED from LCSC" (at 99.695 143.51 0)
-    (effects (font (size 5 5)) (justify left bottom))
-    (uuid f0f74d21-66c9-4f81-86ea-26597ff153a9)
-  )
 
   (global_label "G" (shape input) (at 81.28 63.5 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))

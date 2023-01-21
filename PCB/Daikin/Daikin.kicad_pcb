@@ -1180,7 +1180,7 @@
       (net 7 "DC") (pinfunction "VIN") (pintype "power_in") (zone_connect 0)
       (options (clearance outline) (anchor rect))
       (primitives
-    (gr_arc (start 0.001745 0.000002) (mid 0.707106 0.292893) (end 0.999998 0.998254) (width 0.5))
+    (gr_arc (start 0.001745 0.000002) (mid 0.706489 0.292277) (end 0.999993 0.996509) (width 0.5))
       ) (tstamp 549de93d-a6c5-40b0-ac90-5a03efc262df))
     (pad "6" smd rect (at 0.95 -1.35 90) (size 1.1 0.6) (layers "B.Cu" "B.Paste" "B.Mask")
       (net 40 "unconnected-(U2-Pad6)") (pinfunction "SW") (pintype "no_connect") (clearance 0.2) (tstamp 2d9003f8-a39a-48c7-ab51-07ad8e3f135e))
