@@ -979,6 +979,42 @@ static esp_err_t web_status(httpd_req_t * req)
    return status();
 }
 
+static esp_err_t web_get_control_info(httpd_req_t * req)
+{
+   httpd_resp_set_type(req, "text/plain");
+   char resp[1000],*o=resp;
+   o+=sprintf(o,"ret=OK");
+   o+=sprintf(o,",pow=%d",daikin.power);
+   if(daikin.mode<=7)o+=sprintf(o,",mode=%c","64310002"[daikin.mode]); // Mapped from FHCA456D
+   o+=sprintf(o,",adv=%s",daikin.powerful?"2":"");
+   o+=sprintf(o,",stemp=%.1f",daikin.temp);
+   o+=sprintf(o,",shum=0");
+   for(int i=1;i<=7;i++)if(i!=6)o+=sprintf(o,",dt%d=%.1f",i,daikin.temp);
+   for(int i=1;i<=7;i++)if(i!=6)o+=sprintf(o,",dh%d=0",i);
+   if(daikin.mode<=7)o+=sprintf(o,",b_mode=%c","64310002"[daikin.mode]); // Mapped from FHCA456D
+   o+=sprintf(o,",b_stemp=%.1f",daikin.temp);
+   o+=sprintf(o,",b_shum=0");
+   o+=sprintf(o,",alert=255");
+   if(daikin.fan<=6)o+=sprintf(o,",f_rate=%c","A34567B"[daikin.fan]);
+   o+=sprintf(o,",f_dir=%d",daikin.swingh*2+daikin.swingv); 
+   for(int i=1;i<=7;i++)if(i!=6)o+=sprintf(o,",dfr%d=0",i);
+   o+=sprintf(o,",dfrh=0");
+   for(int i=1;i<=7;i++)if(i!=6)o+=sprintf(o,",dfd%d=0",i);
+   o+=sprintf(o,",dmdh=0");
+   o+=sprintf(o,",dmnd_run=0");
+   o+=sprintf(o,",en_demand=0");
+   httpd_resp_sendstr(req,resp);
+      return ESP_OK;
+}
+
+static esp_err_t web_set_control_info(httpd_req_t * req)
+{
+   // TODO
+   httpd_resp_set_type(req, "text/plain");
+   httpd_resp_sendstr(req,"ret=OK,adv=");
+      return ESP_OK;
+}
+
 // --------------------------------------------------------------------------------
 // Main
 void app_main()
@@ -1052,7 +1088,6 @@ void app_main()
             .uri = "/",
             .method = HTTP_GET,
             .handler = web_root,
-            .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
@@ -1061,7 +1096,6 @@ void app_main()
             .uri = "/apple-touch-icon.png",
             .method = HTTP_GET,
             .handler = web_icon,
-            .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
@@ -1070,7 +1104,6 @@ void app_main()
             .uri = "/wifi",
             .method = HTTP_GET,
             .handler = revk_web_config,
-            .user_ctx = NULL
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
@@ -1080,6 +1113,22 @@ void app_main()
             .method = HTTP_GET,
             .handler = web_status,
             .is_websocket = true,
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+      }
+      {
+         httpd_uri_t uri = {
+            .uri = "/aircon/get_control_info",
+            .method = HTTP_GET,
+            .handler = web_get_control_info,
+         };
+         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+      }
+      {
+         httpd_uri_t uri = {
+            .uri = "/aircon/set_control_info",
+            .method = HTTP_GET,
+            .handler = web_set_control_info,
          };
          REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
       }
