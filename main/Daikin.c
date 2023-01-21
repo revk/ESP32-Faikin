@@ -1021,14 +1021,15 @@ static esp_err_t web_get_control_info(httpd_req_t * req)
 
 static esp_err_t web_set_control_info(httpd_req_t * req)
 {
-	   if (httpd_req_get_url_query_len(req))
+   if (httpd_req_get_url_query_len(req))
    {
-      char query[1000],value[10];
+      char query[1000],
+       value[10];
       if (!httpd_req_get_url_query_str(req, query, sizeof(query)))
       {
-	                  if (!httpd_query_key_value(query, "pow", value, sizeof(value)) && *value)
-				  daikin_set_v(power,*value=='1');
-			  // TODO stemp, mode, f_rate
+         if (!httpd_query_key_value(query, "pow", value, sizeof(value)) && *value)
+            daikin_set_v(power, *value == '1');
+         // TODO stemp, mode, f_rate
       }
    }
    httpd_resp_set_type(req, "text/plain");
