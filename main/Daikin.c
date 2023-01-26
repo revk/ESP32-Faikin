@@ -374,10 +374,14 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 #endif
    }
    if (cmd == 0xBE && len >= 9)
-   {                            // Unknown
+   {                            // Status/flags?
       set_int(fanrpm, (payload[2] + (payload[3] << 8)));
+      // Flag4 ?
       set_val(flap, payload[5]);
       set_val(antifreeze, payload[6]);
+      // Flag7 ?
+      // Flag8 ?
+      // Flag9 ?
       // 0001B0040100000001
       // 010476050101000001
       // 010000000100000001
