@@ -1001,7 +1001,7 @@ static esp_err_t web_get_control_info(httpd_req_t * req)
    for (int i = 1; i <= 7; i++)
       if (i != 6)
          o += sprintf(o, ",dh%d=0", i);
-   o+=sprintf(o,"dhh=0");
+   o += sprintf(o, "dhh=0");
    if (daikin.mode <= 7)
       o += sprintf(o, ",b_mode=%c", "64310002"[daikin.mode]);   // Mapped from FHCA456D
    o += sprintf(o, ",b_stemp=%.1f", daikin.temp);
@@ -1031,10 +1031,15 @@ static esp_err_t web_set_control_info(httpd_req_t * req)
       char query[1000],
        value[10];
       if (!httpd_req_get_url_query_str(req, query, sizeof(query)))
-      {
+      {                         // Assumes sane values sent mostly, and no error checking
          if (!httpd_query_key_value(query, "pow", value, sizeof(value)) && *value)
             daikin_set_v(power, *value == '1');
-         // TODO stemp, mode, f_rate
+         if (!httpd_query_key_value(query, "mode", value, sizeof(value)) && *value && *value >= '1' && *value <= '7')
+            daikin_set_v(mode, "03721003"[*value - '0']);
+         if (!httpd_query_key_value(query, "stemp", value, sizeof(value)) && *value)
+            daikin_set_t(temp, strtof(value, NULL));
+         if (!httpd_query_key_value(query, "f_rate", value, sizeof(value)) && *value)
+            daikin_set_v(fan, *value == 'A' ? 0 : *value == 'B' ? 6 : *value - '0');
       }
    }
    httpd_resp_set_type(req, "text/plain");
