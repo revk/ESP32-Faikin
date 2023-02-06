@@ -1176,7 +1176,7 @@
       (net 7 "DC") (pinfunction "VIN") (pintype "power_in") (zone_connect 0)
       (options (clearance outline) (anchor rect))
       (primitives
-    (gr_arc (start 0.001745 0.000002) (mid 0.707723 0.293511) (end 1 1) (width 0.5))
+    (gr_arc (start 0.001745 0.000002) (mid 0.707107 0.292894) (end 0.999998 0.998256) (width 0.5))
       ) (tstamp 64943f1a-2eb7-4db3-80dd-d9cdba4faf49))
     (pad "5" smd rect (at 0 -1.35 90) (size 1.1 0.6) (layers "B.Cu" "B.Paste" "B.Mask")
       (net 7 "DC") (pinfunction "VIN") (pintype "power_in") (clearance 0.2) (zone_connect 0) (tstamp 896f58ed-2e7b-471e-9612-587f4547db54))
@@ -1313,7 +1313,7 @@
   (gr_text "26" (at 101.033332 52.7) (layer "B.SilkS") (tstamp 05665f37-550a-401f-969c-ae60ac722fd1)
     (effects (font (size 0.5 0.5) (thickness 0.08)) (justify mirror))
   )
-  (gr_text "Daikin\nWiFi" (at 100.2 48.9) (layer "B.SilkS") (tstamp 4375ab9a-cebb-448a-bb75-1fa4fe977171)
+  (gr_text "Faikin\nWiFi" (at 100.2 48.9) (layer "B.SilkS") (tstamp 4375ab9a-cebb-448a-bb75-1fa4fe977171)
     (effects (font (size 0.75 0.75) (thickness 0.1)) (justify mirror))
   )
   (gr_text "GND" (at 96.1 52.7) (layer "B.SilkS") (tstamp 47ed1776-79bf-4b23-bc6c-ebad054d52ac)
