@@ -30,6 +30,7 @@ const char TAG[] = "Daikin";
 
 // Settings (RevK library used by MQTT setting command)
 #define	settings		\
+	u8(webcontrol,2)	\
 	bl(debug)		\
 	bl(dump)		\
 	bl(livestatus)		\
@@ -797,7 +798,10 @@ static esp_err_t web_icon(httpd_req_t * req)
 static esp_err_t web_root(httpd_req_t * req)
 {
    // TODO cookies
-   if (revk_link_down())
+   // webcontrol=0 means no web
+   // webcontrol=1 means user settings, not wifi settings
+   // webcontrol=2 means all
+   if (revk_link_down() && webcontrol >= 2)
       return revk_web_config(req);      // Direct to web set up
    web_head(req, *hostname ? hostname : appname);
    httpd_resp_sendstr_chunk(req, "<div id=top class=off><form name=F><table id=live>");
@@ -891,7 +895,8 @@ static esp_err_t web_root(httpd_req_t * req)
    httpd_resp_sendstr_chunk(req, "<p id=offline style='display:none'>System is off line.</p>");
    httpd_resp_sendstr_chunk(req, "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
    httpd_resp_sendstr_chunk(req, "</div>");
-   httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
+   if (webcontrol >= 2)
+      httpd_resp_sendstr_chunk(req, "<p><a href='wifi'>WiFi Setup</a></p>");
    httpd_resp_sendstr_chunk(req, "<script>"     //
                             "var ws=0;" //
                             "var temp=0;"       //
@@ -1115,56 +1120,59 @@ void app_main()
    httpd_config_t config = HTTPD_DEFAULT_CONFIG();
    if (!httpd_start(&webserver, &config))
    {
+      if (webcontrol)
       {
-         httpd_uri_t uri = {
-            .uri = "/",
-            .method = HTTP_GET,
-            .handler = web_root,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         {
+            httpd_uri_t uri = {
+               .uri = "/",
+               .method = HTTP_GET,
+               .handler = web_root,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
+         {
+            httpd_uri_t uri = {
+               .uri = "/apple-touch-icon.png",
+               .method = HTTP_GET,
+               .handler = web_icon,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
+         if (webcontrol >= 2)
+         {
+            httpd_uri_t uri = {
+               .uri = "/wifi",
+               .method = HTTP_GET,
+               .handler = revk_web_config,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
+         {
+            httpd_uri_t uri = {
+               .uri = "/status",
+               .method = HTTP_GET,
+               .handler = web_status,
+               .is_websocket = true,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
+         {
+            httpd_uri_t uri = {
+               .uri = "/aircon/get_control_info",
+               .method = HTTP_GET,
+               .handler = web_get_control_info,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
+         {
+            httpd_uri_t uri = {
+               .uri = "/aircon/set_control_info",
+               .method = HTTP_GET,
+               .handler = web_set_control_info,
+            };
+            REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
+         }
       }
-      {
-         httpd_uri_t uri = {
-            .uri = "/apple-touch-icon.png",
-            .method = HTTP_GET,
-            .handler = web_icon,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
-      }
-      {
-         httpd_uri_t uri = {
-            .uri = "/wifi",
-            .method = HTTP_GET,
-            .handler = revk_web_config,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
-      }
-      {
-         httpd_uri_t uri = {
-            .uri = "/status",
-            .method = HTTP_GET,
-            .handler = web_status,
-            .is_websocket = true,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
-      }
-      {
-         httpd_uri_t uri = {
-            .uri = "/aircon/get_control_info",
-            .method = HTTP_GET,
-            .handler = web_get_control_info,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
-      }
-      {
-         httpd_uri_t uri = {
-            .uri = "/aircon/set_control_info",
-            .method = HTTP_GET,
-            .handler = web_set_control_info,
-         };
-         REVK_ERR_CHECK(httpd_register_uri_handler(webserver, &uri));
-      }
-
       revk_web_config_start(webserver);
    }
 
