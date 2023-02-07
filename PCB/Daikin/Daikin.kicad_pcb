@@ -37,15 +37,15 @@
 
   (setup
     (stackup
-      (layer "F.SilkS" (type "Top Silk Screen"))
+      (layer "F.SilkS" (type "Top Silk Screen") (color "White"))
       (layer "F.Paste" (type "Top Solder Paste"))
-      (layer "F.Mask" (type "Top Solder Mask") (thickness 0.01))
+      (layer "F.Mask" (type "Top Solder Mask") (color "Purple") (thickness 0.01))
       (layer "F.Cu" (type "copper") (thickness 0.035))
       (layer "dielectric 1" (type "core") (thickness 0.71) (material "FR4") (epsilon_r 4.5) (loss_tangent 0.02))
       (layer "B.Cu" (type "copper") (thickness 0.035))
-      (layer "B.Mask" (type "Bottom Solder Mask") (thickness 0.01))
+      (layer "B.Mask" (type "Bottom Solder Mask") (color "Purple") (thickness 0.01))
       (layer "B.Paste" (type "Bottom Solder Paste"))
-      (layer "B.SilkS" (type "Bottom Silk Screen"))
+      (layer "B.SilkS" (type "Bottom Silk Screen") (color "White"))
       (copper_finish "None")
       (dielectric_constraints no)
     )
@@ -1176,7 +1176,7 @@
       (net 7 "DC") (pinfunction "VIN") (pintype "power_in") (zone_connect 0)
       (options (clearance outline) (anchor rect))
       (primitives
-    (gr_arc (start 0.001745 0.000002) (mid 0.706489 0.292277) (end 0.999993 0.996509) (width 0.5))
+    (gr_arc (start 0.001745 0.000002) (mid 0.705871 0.29166) (end 0.999986 0.994764) (width 0.5))
       ) (tstamp 64943f1a-2eb7-4db3-80dd-d9cdba4faf49))
     (pad "5" smd rect (at 0 -1.35 90) (size 1.1 0.6) (layers "B.Cu" "B.Paste" "B.Mask")
       (net 7 "DC") (pinfunction "VIN") (pintype "power_in") (clearance 0.2) (zone_connect 0) (tstamp 896f58ed-2e7b-471e-9612-587f4547db54))
