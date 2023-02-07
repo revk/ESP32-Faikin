@@ -1,6 +1,6 @@
 // Generated case design for PCB/Daikin/Daikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-02-07 07:43:05
+// Generated 2023-02-07 15:16:16
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -11,7 +11,7 @@
 margin=0.500000;
 overlap=2.000000;
 lip=0.000000;
-casebase=2.600000;
+casebase=3.000000;
 casetop=5.000000;
 casewall=3.000000;
 fit=0.000000;
@@ -63,12 +63,13 @@ translate([-13.2/2,-16.6/2,0])
 
 module m1(pushed=false,hulled=false)
 { // RevK:JLC-PinHeader_1x04_P2.54mm_Right PinHeader_1x05_P2.54mm_Horizontal
-translate([-0.25,-11.43,-2.5]) // Uncropped pins
-cube([0.5,12.7,3]);
-translate([-1.27,-11.43,-1]) // Cropped pins
-cube([2.54,12.7,3]);
-translate([-1.27,-11.43,0])
-cube([100,12.7,2.54]);
+n=5;
+translate([-0.25,-(n-0.5)*2.54,-2.5]) // Un-cropped pins
+cube([0.5,n*2.54,3]);
+translate([-1.27,-(n-0.5)*2.54,-1]) // Cropped pins
+cube([2.54,n*2.54,3]);
+translate([-1.27,-(n-0.5)*2.54-0.25,0])
+cube([100,n*2.54+0.5,2.54]);
 
 }
 

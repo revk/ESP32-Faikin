@@ -111,5 +111,5 @@ daikingraph: daikingraph.c SQLlib/sqllib.o AXL/axl.o
 stl: 	PCB/Daikin/Daikin.stl
 
 PCB/Daikin/Daikin.scad: PCB/Daikin/Daikin.kicad_pcb PCBCase/case Makefile
-	PCBCase/case -o $@ $< --edge=2 --base=2.6
+	PCBCase/case -o $@ $< --edge=2 --base=3
 
