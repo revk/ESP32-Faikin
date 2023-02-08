@@ -879,10 +879,10 @@ static esp_err_t web_root(httpd_req_t * req)
       addh(tag);
       addf(tag);
    }
-   addb("Power", "power");
+   addb("⏻", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1)
-      add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", NULL);
+      add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addpm("Set", "temp");
@@ -930,10 +930,10 @@ static esp_err_t web_root(httpd_req_t * req)
                             "b('swingv',o.swingv);"     //
                             "b('econo',o.econo);"       //
                             "e('mode',o.mode);" //
-                            "s('Target',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
+                            "s('Set',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"  //
                             "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"    //
                             "s('Coil',(o.liquid+'℃'));"       //
-                            "s('Power',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
+                            "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
                             "e('fan',o.fan);"   //
                             "temp=o.temp;"      //
