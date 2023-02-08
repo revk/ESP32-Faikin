@@ -819,11 +819,18 @@ static esp_err_t web_root(httpd_req_t * req)
       addh(tag);
       va_list ap;
       va_start(ap, field);
+      int n = 0;
       while (1)
       {
          const char *tag = va_arg(ap, char *);
          if (!tag)
             break;
+         if (n == 5)
+         {
+            httpd_resp_sendstr_chunk(req, "</tr><tr><td></td>");
+            n = 0;
+         }
+         n++;
          const char *value = va_arg(ap, char *);
          httpd_resp_sendstr_chunk(req, "<td><label class=box><input type=radio name=");
          httpd_resp_sendstr_chunk(req, field);
@@ -875,20 +882,20 @@ static esp_err_t web_root(httpd_req_t * req)
    addb("Power", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1)
-      add("Fan", "fan", "Auto", "A", "Night", "Q", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", NULL);
+      add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", NULL);
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addpm("Target", "temp");
+   addpm("Set", "temp");
    addhf("Temp");
    addhf("Coil");
-   if (daikin.status_known & CONTROL_powerful)
-      addb("Powerful", "powerful");
    if (daikin.status_known & CONTROL_econo)
-      addb("Econo", "econo");
+      addb("Eco", "econo");
+   if (daikin.status_known & CONTROL_powerful)
+      addb("💪", "powerful");
    if (daikin.status_known & CONTROL_swingv)
-      addb("Swing&nbsp;Vert", "swingv");
+      addb("↕", "swingv");
    if (daikin.status_known & CONTROL_swingh)
-      addb("Swing&nbsp;Horz", "swingh");
+      addb("↔", "swingh");
    httpd_resp_sendstr_chunk(req, "</table></form>");
    httpd_resp_sendstr_chunk(req, "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
    httpd_resp_sendstr_chunk(req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
