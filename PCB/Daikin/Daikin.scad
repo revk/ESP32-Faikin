@@ -1,6 +1,6 @@
 // Generated case design for PCB/Daikin/Daikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-02-08 08:13:08
+// Generated 2023-02-08 15:36:30
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -22,9 +22,9 @@ hullcap=1.000000;
 hulledge=1.000000;
 useredge=true;
 
-module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[13.200000,0.400000],[13.200000,16.100000],[13.082843,16.382843],[12.800000,16.500000],[0.400000,16.500000],[0.117157,16.382843],[0.000000,16.100000],[0.000000,0.400000],[0.117157,0.117157],[0.400000,0.000000],[12.800000,0.000000],[13.082843,0.117157]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
-
 module outline(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[12.800000,19.500000],[0.400000,19.500000],[0.117157,19.382843],[0.000000,19.100000],[0.000000,0.400000],[0.117157,0.117157],[0.400000,0.000000],[12.800000,0.000000],[13.082843,0.117157],[13.200000,0.400000],[13.200000,19.100000],[13.082843,19.382843]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
+
+module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[13.200000,3.400000],[13.200000,19.100000],[13.082843,19.382843],[12.800000,19.500000],[0.400000,19.500000],[0.117157,19.382843],[0.000000,19.100000],[0.000000,3.400000],[0.117157,3.117157],[0.400000,3.000000],[12.800000,3.000000],[13.082843,3.117157]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
 spacing=29.200000;
 pcbwidth=13.200000;
 pcblength=19.500000;
@@ -209,7 +209,14 @@ module pyramid()
 
 module wall(d=0)
 { // The case wall
-    	translate([0,0,-casebase-d])pcbh(height+d*2,margin/2+d);
+	if(useredge)
+    		translate([0,0,-casebase-d])
+			intersection()
+			{
+				pcb(height+d*2,margin/2+d);
+				pcbh(height+d*2,margin/2+d);
+			}
+	else pcbh(height+d*2,margin/2+d);
 }
 
 module cutf()
