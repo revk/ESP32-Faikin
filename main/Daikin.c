@@ -1184,13 +1184,6 @@ void app_main()
       revk_web_config_start(webserver);
    }
 
-#ifdef	CONFIG_MDNS_MAX_INTERFACES
-   REVK_ERR_CHECK(mdns_init());
-   mdns_hostname_set(hostname);
-   mdns_instance_name_set("Daikin aircon control");
-   mdns_service_add(NULL, "_http", "_tcp", 80, NULL, 0);
-#endif
-
    while (1)
    {                            // Main loop
       {                         // Poke UART
