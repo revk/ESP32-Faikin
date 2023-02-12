@@ -16,3 +16,6 @@
 [submodule "AXL"]
 	path = AXL
 	url = https://github.com/revk/AXL
+[submodule "esp-protocols"]
+	path = esp-protocols
+	url = git@github.com:espressif/esp-protocols.git
