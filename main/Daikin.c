@@ -48,7 +48,7 @@ const char TAG[] = "Daikin";
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
 	u32(tcontrol,600)	\
-	u8(fanstep,1)		\
+	u8(fanstep,0)		\
 	u32(reporting,60)	\
 	io(tx,CONFIG_DAIKIN_TX)	\
 	io(rx,CONFIG_DAIKIN_RX)	\
@@ -882,7 +882,7 @@ static esp_err_t web_root(httpd_req_t * req)
    }
    addb("⏻", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
-   if (fanstep == 1)
+   if (fanstep == 1 || (!fanstep && s21))
       add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
@@ -934,7 +934,7 @@ static esp_err_t web_root(httpd_req_t * req)
                             "s('Set',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"  //
                             "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"    //
                             "s('Coil',(o.liquid+'℃'));"       //
-                            "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"    //
+                            "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"      //
                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"       //
                             "e('fan',o.fan);"   //
                             "temp=o.temp;"      //
@@ -1459,14 +1459,15 @@ void app_main()
                }
                if (daikin.power && !isnan(min) && !isnan(max))
                {
-                  if (a * 10 < t * 7 && fanstep && daikin.fan > 1 && daikin.fan <= 5)
-                     daikin_set_v(fan, daikin.fan - fanstep);   // Reduce fan
-                  if (!daikin.slave && a * 10 > t * 9 && fanstep && daikin.fan >= 1 && daikin.fan < 5)
-                     daikin_set_v(fan, daikin.fan + fanstep);   // Increase fan
+                  int step = (fanstep ? : s21 ? 2 : 1);
+                  if (a * 10 < t * 7 && step && daikin.fan > 1 && daikin.fan <= 5)
+                     daikin_set_v(fan, daikin.fan - step);      // Reduce fan
+                  if (!daikin.slave && a * 10 > t * 9 && step && daikin.fan >= 1 && daikin.fan < 5)
+                     daikin_set_v(fan, daikin.fan + step);      // Increase fan
                   if ((b * 2 > t || daikin.slave) && !a)
                   {             // Mode switch
                      daikin_set_e(mode, hot ? "C" : "H");       // Swap mode
-                     if (fanstep && daikin.fan > 1 && daikin.fan <= 5)
+                     if (step && daikin.fan > 1 && daikin.fan <= 5)
                         daikin_set_v(fan, 1);
                   }
                }
