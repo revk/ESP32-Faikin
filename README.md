@@ -2,6 +2,22 @@
 
 This is code to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
 
+# Set-up
+
+Appears as access point with simple web page to set up on local WiFI
+
+![IMG_2446](https://user-images.githubusercontent.com/996983/218394248-b409626b-2614-439d-95f4-71527c00aaa7.PNG)
+
+![IMG_2448](https://user-images.githubusercontent.com/996983/218394254-e03537f7-09a0-490d-aa38-b6964a5cd77f.PNG)
+
+# Operation
+
+Local interactive web control page using *hostname*.local, no app required, no external internet required.
+
+![IMG_2421](https://user-images.githubusercontent.com/996983/218394392-48b47be4-5989-474e-beab-734dd6ef83d9.PNG)
+
+# Design
+
 * KiCad PCB designs included
 * 3D printed case STL files
 * Documentation of reverse engineered protocol included
