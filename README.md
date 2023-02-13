@@ -1,6 +1,8 @@
 # ESP32-Daikin
 
-This is code to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
+Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. But their implementation of IoT (Internet of Things); remote control over the Internet -  leaves a lot to be desired. Their app is not well supported, and does not work well. If you are planning on integrating your air conditioners into something like an MQTT set up in your home or office, or simply want very basic web control / status for your units, this unit provides these features. It plugs in where the old Daikin WiFi module goes.
+
+This is code and PCB design to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
 
 # Set-up
 
