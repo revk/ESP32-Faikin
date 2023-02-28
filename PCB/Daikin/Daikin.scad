@@ -1,6 +1,6 @@
 // Generated case design for PCB/Daikin/Daikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-02-08 15:36:30
+// Generated 2023-02-14 10:56:44
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -20,34 +20,35 @@ pcbthickness=0.800000;
 nohull=false;
 hullcap=1.000000;
 hulledge=1.000000;
-useredge=true;
+useredge=false;
 
-module outline(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[12.800000,19.500000],[0.400000,19.500000],[0.117157,19.382843],[0.000000,19.100000],[0.000000,0.400000],[0.117157,0.117157],[0.400000,0.000000],[12.800000,0.000000],[13.082843,0.117157],[13.200000,0.400000],[13.200000,19.100000],[13.082843,19.382843]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
+module outline(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[13.200000,0.400000],[13.200000,22.600000],[13.082843,22.882843],[12.800000,23.000000],[0.400000,23.000000],[0.117157,22.882843],[0.000000,22.600000],[0.000000,0.400000],[0.117157,0.117157],[0.400000,0.000000],[12.800000,0.000000],[13.082843,0.117157]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
 
-module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[13.200000,3.400000],[13.200000,19.100000],[13.082843,19.382843],[12.800000,19.500000],[0.400000,19.500000],[0.117157,19.382843],[0.000000,19.100000],[0.000000,3.400000],[0.117157,3.117157],[0.400000,3.000000],[12.800000,3.000000],[13.082843,3.117157]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
+module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[13.200000,0.400000],[13.200000,22.600000],[13.082843,22.882843],[12.800000,23.000000],[0.400000,23.000000],[0.117157,22.882843],[0.000000,22.600000],[0.000000,0.400000],[0.117157,0.117157],[0.400000,0.000000],[12.800000,0.000000],[13.082843,0.117157]],paths=[[0,1,2,3,4,5,6,7,8,9,10,11]]);}
 spacing=29.200000;
 pcbwidth=13.200000;
-pcblength=19.500000;
+pcblength=23.000000;
 // Populated PCB
 module board(pushed=false,hulled=false){
-translate([6.600000,13.906750,0.800000])translate([0.000000,2.700000,0.000000])rotate([90.000000,-0.000000,-0.000000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
-translate([6.600000,6.600000,0.800000])translate([6.350000,0.000000,0.000000])rotate([-0.000000,-0.000000,-90.000000])m1(pushed,hulled); // RevK:JLC-PinHeader_1x04_P2.54mm_Right PinHeader_1x05_P2.54mm_Horizontal (back)
-translate([1.050000,12.950000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m2(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
-translate([10.000000,13.400000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([4.100000,9.350000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
-translate([10.850000,9.600000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-180.000000])m5(pushed,hulled); // RevK:SOT-323_SC-70 SOT-323_SC-70
-translate([4.170000,13.330000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])m6(pushed,hulled); // RevK:D_1206_ D_1206_3216Metric
-translate([8.550000,16.250000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
-translate([9.125000,18.600000,0.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([11.200000,13.400000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([12.400000,13.400000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([2.100000,9.850000,0.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([7.300000,12.950000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m2(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
-translate([11.825000,16.000000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])translate([0.000000,-0.100000,0.400000])rotate([-90.000000,-0.000000,-0.000000])m7(pushed,hulled); // RevK:MHS190RGBCT LED_0603_1608Metric
-translate([2.100000,8.600000,0.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
-translate([6.450000,16.500000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m8(pushed,hulled); // RevK:SOT-23-Thin-6-Reg SOT-23-6
-translate([2.550000,16.500000,0.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m9(pushed,hulled); // RevK:L_4x4_ TYA4020
-translate([11.600000,18.600000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([6.600000,17.406750,0.800000])translate([0.000000,2.700000,0.000000])rotate([90.000000,-0.000000,-0.000000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
+translate([6.600000,10.100000,0.800000])translate([5.080000,0.000000,0.000000])rotate([-0.000000,-0.000000,-90.000000])m1(pushed,hulled); // RevK:PinHeader_1x05_P2.54mm_Right PinHeader_1x05_P2.54mm_Horizontal (back)
+translate([1.050000,16.450000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m2(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
+translate([10.000000,16.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([4.150000,12.850000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
+translate([10.850000,12.600000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-180.000000])m5(pushed,hulled); // RevK:SOT-323_SC-70 SOT-323_SC-70
+translate([4.170000,16.830000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])m6(pushed,hulled); // RevK:D_1206_ D_1206_3216Metric
+translate([8.550000,19.750000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
+translate([9.125000,22.100000,0.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([11.200000,16.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([12.400000,16.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([2.200000,13.350000,0.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([7.300000,16.450000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m2(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
+translate([8.000000,11.800000,0.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
+translate([11.825000,19.500000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])translate([0.000000,-0.100000,0.400000])rotate([-90.000000,-0.000000,-0.000000])m7(pushed,hulled); // RevK:MHS190RGBCT LED_0603_1608Metric
+translate([2.150000,12.100000,0.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
+translate([6.450000,20.000000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m8(pushed,hulled); // RevK:SOT-23-Thin-6-Reg SOT-23-6
+translate([2.550000,20.000000,0.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m9(pushed,hulled); // RevK:L_4x4_ TYA4020
+translate([11.600000,22.100000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])m3(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
 }
 
 module b(cx,cy,z,w,l,h){translate([cx-w/2,cy-l/2,z])cube([w,l,h]);}
@@ -62,7 +63,7 @@ translate([-13.2/2,-16.6/2,0])
 }
 
 module m1(pushed=false,hulled=false)
-{ // RevK:JLC-PinHeader_1x04_P2.54mm_Right PinHeader_1x05_P2.54mm_Horizontal
+{ // RevK:PinHeader_1x05_P2.54mm_Right PinHeader_1x05_P2.54mm_Horizontal
 n=5;
 if(!hulled)for(x=[0:1:n-1])translate([-0.25,-x*2.54-0.25,-2.5])cube([0.5,0.5,3]); // Un-cropped pins
 for(x=[0:1:n-1])translate([0,-x*2.54,-0.81])cylinder(d=2,h=1); // Cropped pins / solder
@@ -209,14 +210,16 @@ module pyramid()
 
 module wall(d=0)
 { // The case wall
-	if(useredge)
-    		translate([0,0,-casebase-d])
+	translate([0,0,-casebase-d])
+	{
+		if(useredge)
 			intersection()
 			{
 				pcb(height+d*2,margin/2+d);
 				pcbh(height+d*2,margin/2+d);
 			}
-	else pcbh(height+d*2,margin/2+d);
+		else pcbh(height+d*2,margin/2+d);
+	}
 }
 
 module cutf()
