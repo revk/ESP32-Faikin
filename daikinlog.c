@@ -118,7 +118,7 @@ int main(int argc, const char *argv[])
                sql_safe_query_free(&sql, sql_printf("CREATE TABLE `%#S` (`tag` varchar(20) not null,`utc` datetime not null,primary key (`tag`,`utc`))", sqltable));
             // Leaving res as NULL is fine as sql_coln will return -1 for that...
          }
-         sql_string_t s = { };
+         sql_s_t s = {0};
          sql_sprintf(&s, "INSERT IGNORE INTO `%#S` SET `tag`=%#s,`utc`=%#U", sqltable, tag,time(0));
          int changed = 0;
          j_t j;
