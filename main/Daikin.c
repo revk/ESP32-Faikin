@@ -432,7 +432,6 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    len = uart_read_bytes(uart, &temp, 1, 100 / portTICK_PERIOD_MS);
    if (len != 1 || temp != ACK)
    {
-      daikin.talking = 0;
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
       jo_base16(j, "payload", payload, len);
@@ -441,6 +440,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
          jo_bool(j, "nak", 1);
       else
       {
+         daikin.talking = 0;
          jo_bool(j, "noack", 1);
          if (len)
             jo_stringf(j, "value", "%02X", temp);
