@@ -257,6 +257,8 @@ jo_t jo_comms_alloc(void)
 {
    jo_t j = jo_object_alloc();
    jo_bool(j, s21_set ? "s21" : "s21-try", s21);
+   if (!daikin.talking)
+      jo_string(j, "error", "Cannot send as not talking yet");
    return j;
 }
 
@@ -397,8 +399,6 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
 
 void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 {
-   if (!daikin.talking)
-      return;                   // Failed
    if (debug && len)
    {
       jo_t j = jo_comms_alloc();
@@ -407,6 +407,8 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       jo_stringn(j, "text", (char *) payload, len);
       revk_info("tx", &j);
    }
+   if (!daikin.talking)
+      return;                   // Failed
    uint8_t buf[256],
     temp;
    buf[0] = STX;
@@ -515,8 +517,6 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
 
 void daikin_command(uint8_t cmd, int len, uint8_t * payload)
 {                               // Send a command and get response
-   if (!daikin.talking)
-      return;                   // Failed
    if (debug && len)
    {
       jo_t j = jo_comms_alloc();
@@ -524,6 +524,8 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
       jo_base16(j, "payload", payload, len);
       revk_info("tx", &j);
    }
+   if (!daikin.talking)
+      return;                   // Failed
    uint8_t buf[256];
    buf[0] = 0x06;
    buf[1] = cmd;
