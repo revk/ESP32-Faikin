@@ -395,14 +395,17 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
 }
 
-void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
+void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
-   if (debug && len)
+   if (debug)
    {
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
-      jo_base16(j, "payload", payload, len);
-      jo_stringn(j, "text", (char *) payload, len);
+      if (txlen)
+      {
+         jo_base16(j, "payload", payload, txlen);
+         jo_stringn(j, "text", (char *) payload, txlen);
+      }
       revk_info(daikin.talking ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking)
@@ -412,37 +415,40 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    buf[0] = STX;
    buf[1] = cmd;
    buf[2] = cmd2;
-   if (len)
-      memcpy(buf + 3, payload, len);
+   if (txlen)
+      memcpy(buf + 3, payload, txlen);
    uint8_t c = 0;
-   for (int i = 1; i < 3 + len; i++)
+   for (int i = 1; i < 3 + txlen; i++)
       c += buf[i];
    if (c == ETX)
       c = ENQ;                  // Seems 03 sent as 05
-   buf[3 + len] = c;
-   buf[4 + len] = ETX;
+   buf[3 + txlen] = c;
+   buf[4 + txlen] = ETX;
    if (dump)
    {
       jo_t j = jo_comms_alloc();
-      jo_base16(j, "dump", buf, len + 5);
+      jo_base16(j, "dump", buf, txlen + 5);
       revk_info("tx", &j);
    }
-   uart_write_bytes(uart, buf, 5 + len);
+   uart_write_bytes(uart, buf, 5 + txlen);
    // Wait ACK
-   len = uart_read_bytes(uart, &temp, 1, 100 / portTICK_PERIOD_MS);
-   if (len != 1 || temp != ACK)
+   int rxlen = uart_read_bytes(uart, &temp, 1, 100 / portTICK_PERIOD_MS);
+   if (rxlen != 1 || temp != ACK)
    {
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%c%c", cmd, cmd2);
-      jo_base16(j, "payload", payload, len);
-      jo_stringn(j, "text", (char *) payload, len);
-      if (len == 1 && temp == NAK)
+      if (txlen)
+      {
+         jo_base16(j, "payload", payload, txlen);
+         jo_stringn(j, "text", (char *) payload, txlen);
+      }
+      if (rxlen == 1 && temp == NAK)
          jo_bool(j, "nak", 1);
       else
       {
          daikin.talking = 0;
          jo_bool(j, "noack", 1);
-         if (len)
+         if (rxlen)
             jo_stringf(j, "value", "%02X", temp);
       }
       revk_error("comms", &j);
@@ -452,8 +458,8 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       return;                   // No response expected
    while (1)
    {
-      len = uart_read_bytes(uart, buf, 1, 100 / portTICK_PERIOD_MS);
-      if (len != 1)
+      rxlen = uart_read_bytes(uart, buf, 1, 100 / portTICK_PERIOD_MS);
+      if (rxlen != 1)
       {
          daikin.talking = 0;
          jo_t j = jo_comms_alloc();
@@ -464,9 +470,9 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
       if (*buf == STX)
          break;
    }
-   while (len < sizeof(buf))
+   while (rxlen < sizeof(buf))
    {
-      if (uart_read_bytes(uart, buf + len, 1, 10 / portTICK_PERIOD_MS) != 1)
+      if (uart_read_bytes(uart, buf + rxlen, 1, 10 / portTICK_PERIOD_MS) != 1)
       {
          daikin.talking = 0;
          jo_t j = jo_comms_alloc();
@@ -474,8 +480,8 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
          revk_error("comms", &j);
          return;
       }
-      len++;
-      if (buf[len - 1] == ETX)
+      rxlen++;
+      if (buf[rxlen - 1] == ETX)
          break;
    }
    // Send ACK regardless, data is repeated, so will be sent again if we ignore due to checksum, for example.
@@ -484,24 +490,24 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
    if (dump)
    {
       jo_t j = jo_comms_alloc();
-      jo_base16(j, "dump", buf, len);
+      jo_base16(j, "dump", buf, rxlen);
       revk_info("rx", &j);
    }
    // Check checksum
    c = 0;
-   for (int i = 1; i < len - 2; i++)
+   for (int i = 1; i < rxlen - 2; i++)
       c += buf[i];
-   if (c != buf[len - 2] && (c != ACK || buf[len - 2] != ENQ))
+   if (c != buf[rxlen - 2] && (c != ACK || buf[rxlen - 2] != ENQ))
    {                            // Sees checksum of 03 actually sends as 05
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "badsum", "%02X", c);
-      jo_base16(j, "data", buf, len);
+      jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
       return;                   // Ignore - it'll get resent some time
    }
    if (buf[0] == STX)
       s21_set = 1;              // Good format
-   if (len < 5 || buf[0] != STX || buf[len - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
+   if (rxlen < 5 || buf[0] != STX || buf[rxlen - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
    {                            // Bad message
       daikin.talking = 0;       // Fail, restart comms
       jo_t j = jo_comms_alloc();
@@ -509,20 +515,20 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int len, char *payload)
          jo_bool(j, "badhead", 1);
       if (buf[1] != cmd + 1 || buf[2] != cmd2)
          jo_bool(j, "mismatch", 1);
-      jo_base16(j, "data", buf, len);
+      jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
       return;
    }
-   daikin_s21_response(buf[1], buf[2], len - 5, buf + 3);
+   daikin_s21_response(buf[1], buf[2], rxlen - 5, buf + 3);
 }
 
-void daikin_command(uint8_t cmd, int len, uint8_t * payload)
+void daikin_command(uint8_t cmd, int txlen, uint8_t * payload)
 {                               // Send a command and get response
-   if (debug && len)
+   if (debug && txlen)
    {
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "cmd", "%02X", cmd);
-      jo_base16(j, "payload", payload, len);
+      jo_base16(j, "payload", payload, txlen);
       revk_info(daikin.talking ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking)
@@ -530,25 +536,25 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    uint8_t buf[256];
    buf[0] = 0x06;
    buf[1] = cmd;
-   buf[2] = len + 6;
+   buf[2] = txlen + 6;
    buf[3] = 1;
    buf[4] = 0;
-   if (len)
-      memcpy(buf + 5, payload, len);
+   if (txlen)
+      memcpy(buf + 5, payload, txlen);
    uint8_t c = 0;
-   for (int i = 0; i < 5 + len; i++)
+   for (int i = 0; i < 5 + txlen; i++)
       c += buf[i];
-   buf[5 + len] = 0xFF - c;
+   buf[5 + txlen] = 0xFF - c;
    if (dump)
    {
       jo_t j = jo_comms_alloc();
-      jo_base16(j, "dump", buf, len + 6);
+      jo_base16(j, "dump", buf, txlen + 6);
       revk_info("tx", &j);
    }
-   uart_write_bytes(uart, buf, 6 + len);
+   uart_write_bytes(uart, buf, 6 + txlen);
    // Wait for reply
-   len = uart_read_bytes(uart, buf, sizeof(buf), 100 / portTICK_PERIOD_MS);
-   if (len <= 0)
+   int rxlen = uart_read_bytes(uart, buf, sizeof(buf), 100 / portTICK_PERIOD_MS);
+   if (rxlen <= 0)
    {
       daikin.talking = 0;
       jo_t j = jo_comms_alloc();
@@ -559,19 +565,19 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
    if (dump)
    {
       jo_t j = jo_comms_alloc();
-      jo_base16(j, "dump", buf, len);
+      jo_base16(j, "dump", buf, rxlen);
       revk_info("rx", &j);
    }
    // Check checksum
    c = 0;
-   for (int i = 0; i < len; i++)
+   for (int i = 0; i < rxlen; i++)
       c += buf[i];
    if (c != 0xFF)
    {
       daikin.talking = 0;
       jo_t j = jo_comms_alloc();
       jo_stringf(j, "badsum", "%02X", c);
-      jo_base16(j, "data", buf, len);
+      jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
       return;
    }
@@ -583,11 +589,11 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
       daikin.talking = 0;
       jo_t j = jo_comms_alloc();
       jo_bool(j, "fault", 1);
-      jo_base16(j, "data", buf, len);
+      jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
       return;
    }
-   if (len < 6 || buf[0] != 0x06 || buf[1] != cmd || buf[2] != len || buf[3] != 1)
+   if (rxlen < 6 || buf[0] != 0x06 || buf[1] != cmd || buf[2] != rxlen || buf[3] != 1)
    {                            // Basic checks
       daikin.talking = 0;
       jo_t j = jo_comms_alloc();
@@ -595,15 +601,15 @@ void daikin_command(uint8_t cmd, int len, uint8_t * payload)
          jo_bool(j, "badhead", 1);
       if (buf[1] != cmd)
          jo_bool(j, "mismatch", 1);
-      if (buf[2] != len || len < 6)
-         jo_bool(j, "badlen", 1);
+      if (buf[2] != rxlen || rxlen < 6)
+         jo_bool(j, "badrxlen", 1);
       if (buf[3] != 1)
          jo_bool(j, "badform", 1);
-      jo_base16(j, "data", buf, len);
+      jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
       return;
    }
-   daikin_response(cmd, len - 6, buf + 5);
+   daikin_response(cmd, rxlen - 6, buf + 5);
 }
 
 const char *daikin_control(jo_t j)
