@@ -395,7 +395,14 @@ void daikin_response(uint8_t cmd, int len, uint8_t * payload)
    }
 }
 
-void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
+enum {
+   S21_OK,
+   S21_NAK,
+   S21_NOACK,
+   S21_BAD,
+   S21_WAIT,
+};
+int daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
    if (debug)
    {
@@ -409,7 +416,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_info(daikin.talking ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking)
-      return;                   // Failed
+      return S21_WAIT;          // Failed
    uint8_t buf[256],
     temp;
    buf[0] = STX;
@@ -443,19 +450,20 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_stringn(j, "text", (char *) payload, txlen);
       }
       if (rxlen == 1 && temp == NAK)
-         jo_bool(j, "nak", 1);
-      else
       {
-         daikin.talking = 0;
-         jo_bool(j, "noack", 1);
-         if (rxlen)
-            jo_stringf(j, "value", "%02X", temp);
+         jo_bool(j, "nak", 1);
+         revk_error("comms", &j);
+         return S21_NAK;
       }
+      daikin.talking = 0;
+      jo_bool(j, "noack", 1);
+      if (rxlen)
+         jo_stringf(j, "value", "%02X", temp);
       revk_error("comms", &j);
-      return;
+      return S21_NOACK;
    }
    if (cmd == 'D')
-      return;                   // No response expected
+      return S21_OK;            // No response expected
    while (1)
    {
       rxlen = uart_read_bytes(uart, buf, 1, 100 / portTICK_PERIOD_MS);
@@ -465,7 +473,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_t j = jo_comms_alloc();
          jo_bool(j, "timeout", 1);
          revk_error("comms", &j);
-         return;
+         return S21_NOACK;
       }
       if (*buf == STX)
          break;
@@ -478,7 +486,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_t j = jo_comms_alloc();
          jo_bool(j, "timeout", 1);
          revk_error("comms", &j);
-         return;
+         return S21_NOACK;
       }
       rxlen++;
       if (buf[rxlen - 1] == ETX)
@@ -503,7 +511,7 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       jo_stringf(j, "badsum", "%02X", c);
       jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
-      return;                   // Ignore - it'll get resent some time
+      return S21_BAD;           // Ignore - it'll get resent some time
    }
    if (buf[0] == STX)
       s21_set = 1;              // Good format
@@ -517,9 +525,10 @@ void daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_bool(j, "mismatch", 1);
       jo_base16(j, "data", buf, rxlen);
       revk_error("comms", &j);
-      return;
+      return S21_BAD;
    }
    daikin_s21_response(buf[1], buf[2], rxlen - 5, buf + 3);
+   return S21_OK;
 }
 
 void daikin_command(uint8_t cmd, int txlen, uint8_t * payload)
@@ -1221,34 +1230,36 @@ void app_main()
          if (s21)
          {                      // Older S21
             char temp[5];
-            // These are what their wifi polls, we comment out the ones we don't care about
-            daikin_s21_command('F', '1', 0, NULL);
-            //daikin_s21_command('F', '2', 0, NULL);
-            //daikin_s21_command('F', '3', 0, NULL);
-            //daikin_s21_command('F', '4', 0, NULL);
-            daikin_s21_command('F', '5', 0, NULL);
-            daikin_s21_command('F', '6', 0, NULL);
-            daikin_s21_command('F', '7', 0, NULL);
-            //daikin_s21_command('F', '8', 0, NULL);
-            //daikin_s21_command('F', '9', 0, NULL);
-            //daikin_s21_command('F', 'B', 0, NULL);
-            //daikin_s21_command('F', 'G', 0, NULL);
-            //daikin_s21_command('F', 'K', 0, NULL);
-            //daikin_s21_command('F', 'M', 0, NULL);
-            //daikin_s21_command('F', 'N', 0, NULL);
-            //daikin_s21_command('F', 'P', 0, NULL);
-            //daikin_s21_command('F', 'Q', 0, NULL);
-            //daikin_s21_command('F', 'S', 0, NULL);
-            //daikin_s21_command('F', 'T', 0, NULL);
-            //daikin_s21_command('F', 'U', 2, "02");
-            //daikin_s21_command('F', 'U', 2, "04");
-            daikin_s21_command('R', 'H', 0, NULL);
-            //daikin_s21_command('R', 'N', 0, NULL); // May be a useful temp, needs working out
-            daikin_s21_command('R', 'I', 0, NULL);
-            daikin_s21_command('R', 'a', 0, NULL);
-            //daikin_s21_command('R', 'X', 0, NULL);
-            //daikin_s21_command('R', 'D', 0, NULL);
-            //daikin_s21_command('R', 'L', 0, NULL);
+            // These are what their wifi polls, we comment out the ones we don't care about, and we only try those that NAK a few times
+#define poll(a,b,c,d) static uint8_t a##b=10; if(a##b){int r=daikin_s21_command(*#a,*#b,c,d); if(r==S21_OK)a##b=100; else if(r==S21_NAK)a##b--;} if(!daikin.talking)a##b=10;
+            poll(F, 1, 0, NULL);
+            //poll(F, 2, 0, NULL);
+            //poll(F, 3, 0, NULL);
+            //poll(F, 4, 0, NULL);
+            poll(F, 5, 0, NULL);
+            poll(F, 6, 0, NULL);
+            poll(F, 7, 0, NULL);
+            //poll(F, 8, 0, NULL);
+            //poll(F, 9, 0, NULL);
+            //poll(F, B, 0, NULL);
+            //poll(F, G, 0, NULL);
+            //poll(F, K, 0, NULL);
+            //poll(F, M, 0, NULL);
+            //poll(F, N, 0, NULL);
+            //poll(F, P, 0, NULL);
+            //poll(F, Q, 0, NULL);
+            //poll(F, S, 0, NULL);
+            //poll(F, T, 0, NULL);
+            //poll(F, U, 2, "02");
+            //poll(F, U, 2, "04");
+            poll(R, H, 0, NULL);
+            //poll(R, N, 0, NULL); // May be a useful temp, needs working out
+            poll(R, I, 0, NULL);
+            poll(R, a, 0, NULL);
+            //poll(R, X, 0, NULL);
+            //poll(R, D, 0, NULL);
+            //poll(R, L, 0, NULL);
+#undef poll
             if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
             {                   // D1
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
