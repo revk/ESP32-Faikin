@@ -33,6 +33,7 @@ const char TAG[] = "Daikin";
 #define	settings		\
 	u8(webcontrol,2)	\
 	bl(debug)		\
+	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
 	u8(uart,1)		\
@@ -1230,35 +1231,38 @@ void app_main()
          if (s21)
          {                      // Older S21
             char temp[5];
-            // These are what their wifi polls, we comment out the ones we don't care about, and we only try those that NAK a few times
-#define poll(a,b,c,d) static uint8_t a##b=10; if(a##b){int r=daikin_s21_command(*#a,*#b,c,d); if(r==S21_OK)a##b=100; else if(r==S21_NAK)a##b--;} if(!daikin.talking)a##b=10;
-            poll(F, 1, 0, NULL);
-            //poll(F, 2, 0, NULL);
-            //poll(F, 3, 0, NULL);
-            //poll(F, 4, 0, NULL);
-            poll(F, 5, 0, NULL);
-            poll(F, 6, 0, NULL);
-            poll(F, 7, 0, NULL);
-            //poll(F, 8, 0, NULL);
-            //poll(F, 9, 0, NULL);
-            //poll(F, B, 0, NULL);
-            //poll(F, G, 0, NULL);
-            //poll(F, K, 0, NULL);
-            //poll(F, M, 0, NULL);
-            //poll(F, N, 0, NULL);
-            //poll(F, P, 0, NULL);
-            //poll(F, Q, 0, NULL);
-            //poll(F, S, 0, NULL);
-            //poll(F, T, 0, NULL);
-            //poll(F, U, 2, "02");
-            //poll(F, U, 2, "04");
-            poll(R, H, 0, NULL);
-            //poll(R, N, 0, NULL); // May be a useful temp, needs working out
-            poll(R, I, 0, NULL);
-            poll(R, a, 0, NULL);
-            //poll(R, X, 0, NULL);
-            //poll(R, D, 0, NULL);
-            //poll(R, L, 0, NULL);
+            // These are what their wifi polls
+#define poll(a,b,c,d) static uint8_t a##b##d=10; if(a##b##d){int r=daikin_s21_command(*#a,*#b,c,#d); if(r==S21_OK)a##b##d=100; else if(r==S21_NAK)a##b##d--;} if(!daikin.talking)a##b##d=10;
+            poll(F, 1, 0,);
+            poll(F, 5, 0,);
+            poll(F, 6, 0,);
+            poll(F, 7, 0,);
+            poll(R, H, 0,);
+            poll(R, I, 0,);
+            poll(R, a, 0,);
+            if (morepoll)
+            {                   // Additional polled values
+               poll(F, 2, 0,);
+               poll(F, 3, 0,);
+               poll(F, 4, 0,);
+               poll(F, 8, 0,);
+               poll(F, 9, 0,);
+               poll(F, B, 0,);
+               poll(F, G, 0,);
+               poll(F, K, 0,);
+               poll(F, M, 0,);
+               poll(F, N, 0,);
+               poll(F, P, 0,);
+               poll(F, Q, 0,);
+               poll(F, S, 0,);
+               poll(F, T, 0,);
+               poll(F, U, 2, 02);
+               poll(F, U, 2, 04);
+               poll(R, N, 0,);  // May be a useful temp, needs working out
+               poll(R, X, 0,);
+               poll(R, D, 0,);
+               poll(R, L, 0,);
+            }
 #undef poll
             if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
             {                   // D1
@@ -1266,7 +1270,7 @@ void app_main()
                temp[0] = daikin.power ? '1' : '0';
                temp[1] = ("64310002"[daikin.mode]);
                temp[2] = 0x40 + lroundf((daikin.temp - 18.0) * 2);
-               temp[3] = ("A34567Q"[daikin.fan]);
+               temp[3] = ("A34567B"[daikin.fan]);
                daikin_s21_command('D', '1', 4, temp);
                xSemaphoreGive(daikin.mutex);
             }
