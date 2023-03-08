@@ -452,8 +452,12 @@ int daikin_s21_command(uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       }
       if (rxlen == 1 && temp == NAK)
       {
-         jo_bool(j, "nak", 1);
-         revk_error("comms", &j);
+         if (debug)
+         {
+            jo_bool(j, "nak", 1);
+            revk_error("comms", &j);
+         } else
+            jo_free(&j);
          return S21_NAK;
       }
       daikin.talking = 0;
@@ -902,7 +906,7 @@ static esp_err_t web_root(httpd_req_t * req)
    addb("⏻", "power");
    add("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && s21))
-      add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
+      add("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "(Night)", "Q", NULL);
    else
       add("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addpm("Set", "temp");
