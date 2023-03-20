@@ -1092,37 +1092,27 @@ static void send_ha_config(void)
    if (!ha)
       return;
    char *topic;
-   if (asprintf(&topic, "homeassistant/sensor/%s/climate/config", revk_id) >= 0)
+   if (asprintf(&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = jo_object_alloc();
-      jo_string(j, "name", hostname);
       jo_stringf(j, "unique_id", "%s", revk_id);
-      jo_string(j, "icon", "mdi:coolant-temperature");
-
-      jo_object(j, "availability");
-      jo_string(j, "topic", revk_id);
-      jo_string(j, "value_template", "{{value.json.online}}");
-      jo_string(j, "payload_available", "true");
-      jo_string(j, "payload_not_available", "false");
+      jo_object(j, "dev");
+      jo_array(j,"ids");
+      jo_string(j, NULL, revk_id);
+      jo_close(j);
+      jo_string(j, "name", appname);
+      jo_string(j,"mdl","ESP32");
+      jo_string(j, "sw", revk_version);
+      jo_string(j, "mf", "RevK");
+      jo_stringf(j,"cu","http://%s.local/",hostname);
       jo_close(j);
 
-      jo_string(j, "current_temperature_topic", revk_id);
-      jo_string(j, "current_temperature_template", "{{value_json.temp}}");
-      jo_stringf(j, "temperature_command_topic", "command/%s/temp", hostname);
+      jo_string(j, "icon", "mdi:coolant-temperature");
+      jo_string(j, "name", hostname);
 
-      jo_string(j, "mode_state_topic", revk_id);
-      jo_string(j, "mode_state_template", "{{value_json.mode}}");
-      jo_stringf(j, "mode_command_topic", "command/%s/mode", hostname);
+      jo_string(j, "curr_temp_t", revk_id);
+      jo_string(j,"curr_temp_tpl","{{value_json.temp}}");
 
-      jo_string(j, "fan_state_topic", revk_id);
-      jo_string(j, "fan_state_template", "{{value_json.fan}}");
-      jo_stringf(j, "fan_command_topic", "command/%s/fan", hostname);
-
-      jo_object(j, "dev");
-      jo_string(j, "ids", revk_id);
-      jo_string(j, "name", appname);
-      jo_string(j, "manufacturer", "RevK");
-      jo_string(j, "version", revk_version);
       revk_mqtt_send(NULL, 1, topic, &j);
       free(topic);
    }
