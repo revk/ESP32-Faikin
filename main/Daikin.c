@@ -1397,6 +1397,27 @@ void app_main()
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
+               if (ha)
+               {                // Home assistant message
+                  jo_t j = jo_object_alloc();
+                  if (daikin.status_known & CONTROL_online)
+                     jo_bool(j, "online", daikin.online);
+                  if (daikin.status_known & CONTROL_inlet)
+                     jo_litf(j, "temp", "%.2f", daikin.inlet);
+                  else if (daikin.status_known & CONTROL_home)
+                     jo_litf(j, "temp", "%.2f", daikin.home);
+                  if (daikin.status_known & CONTROL_mode)
+                  {
+                     const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };        // FHCA456D
+                     jo_string(j, "mode", daikin.power ? modes[daikin.mode] : "off");
+                  }
+                  if (daikin.status_known & CONTROL_fan)
+                  {
+                     const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };   // A34567B
+                     jo_string(j, "fan", fans[daikin.fan]);
+                  }
+                  revk_mqtt_send_clients(revk_id, 0, NULL, &j, 1);
+               }
             }
          }
          // Stats
@@ -1645,18 +1666,6 @@ void app_main()
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
-                  if (ha)
-                  {             // Home assistant message
-                     jo_t j = jo_object_alloc();
-                     jo_bool(j, "online", daikin.online);
-                     if (daikin.countinlet)
-                        jo_litf(j, "temp", "%.2f", daikin.totalinlet / daikin.countinlet);
-                     const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };        // FHCA456D
-                     jo_string(j, "mode", daikin.power ? modes[daikin.mode] : "off");
-                     const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };   // A34567B
-                     jo_string(j, "fan", fans[daikin.fan]);
-                     revk_mqtt_send_clients(revk_id, 0, NULL, &j, 1);
-                  }
                   daikin.statscount = 0;
                }
             }
