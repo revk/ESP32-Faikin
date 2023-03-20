@@ -1092,17 +1092,37 @@ static void send_ha_config(void)
    if (!ha)
       return;
    char *topic;
-   if (asprintf(&topic, "homeassistant/sensor/%s/ip/config", hostname) >= 0)
+   if (asprintf(&topic, "homeassistant/sensor/%s/climate/config", revk_id) >= 0)
    {
       jo_t j = jo_object_alloc();
-      jo_string(j, "name", "IP");
-      jo_stringf(j, "unique_id", "%s/ip", revk_id);
-      jo_stringf(j, "state_topic", "state/%s", hostname);
-      jo_stringf(j, "json_attr_r", "state/%s", hostname);
-      jo_string(j, "value_template", "{{value_json.ipv4}}");
-      jo_string(j, "icon", "mdi:check-network");
+      jo_string(j, "name", hostname);
+      jo_stringf(j, "unique_id", "%s", revk_id);
+      jo_string(j, "icon", "mdi:coolant-temperature");
+
+      jo_object(j, "availability");
+      jo_string(j, "topic", revk_id);
+      jo_string(j, "value_template", "{{value.json.online}}");
+      jo_string(j, "payload_available", "true");
+      jo_string(j, "payload_not_available", "false");
+      jo_close(j);
+
+      jo_string(j, "current_temperature_topic", revk_id);
+      jo_string(j, "current_temperature_template", "{{value_json.temp}}");
+      jo_stringf(j, "temperature_command_topic", "command/%s/temp", hostname);
+
+      jo_string(j, "mode_state_topic", revk_id);
+      jo_string(j, "mode_state_template", "{{value_json.mode}}");
+      jo_stringf(j, "mode_command_topic", "command/%s/mode", hostname);
+
+      jo_string(j, "fan_state_topic", revk_id);
+      jo_string(j, "fan_state_template", "{{value_json.fan}}");
+      jo_stringf(j, "fan_command_topic", "command/%s/fan", hostname);
+
       jo_object(j, "dev");
       jo_string(j, "ids", revk_id);
+      jo_string(j, "name", appname);
+      jo_string(j, "manufacturer", "RevK");
+      jo_string(j, "version", revk_version);
       revk_mqtt_send(NULL, 1, topic, &j);
       free(topic);
    }
@@ -1625,6 +1645,18 @@ void app_main()
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
+                  if (ha)
+                  {             // Home assistant message
+                     jo_t j = jo_object_alloc();
+                     jo_bool(j, "online", daikin.online);
+                     if (daikin.countinlet)
+                        jo_litf(j, "temp", "%.2f", daikin.totalinlet / daikin.countinlet);
+                     const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };        // FHCA456D
+                     jo_string(j, "mode", daikin.power ? modes[daikin.mode] : "off");
+                     const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };   // A34567B
+                     jo_string(j, "fan", fans[daikin.fan]);
+                     revk_mqtt_send_clients(revk_id, 0, NULL, &j, 1);
+                  }
                   daikin.statscount = 0;
                }
             }
