@@ -36,6 +36,7 @@ const char TAG[] = "Daikin";
 	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
+	b(ha,1)			\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
@@ -1088,6 +1089,8 @@ static esp_err_t web_set_control_info(httpd_req_t * req)
 
 static void send_ha_config(void)
 {
+   if (!ha)
+      return;
    char *topic;
    if (asprintf(&topic, "homeassistant/sensor/%s/ip/config", hostname) >= 0)
    {
@@ -1099,7 +1102,7 @@ static void send_ha_config(void)
       jo_string(j, "value_template", "{{value_json.ipv4}}");
       jo_string(j, "icon", "mdi:check-network");
       jo_object(j, "dev");
-      jo_string(j,"ids",revk_id);
+      jo_string(j, "ids", revk_id);
       revk_mqtt_send(NULL, 1, topic, &j);
       free(topic);
    }
