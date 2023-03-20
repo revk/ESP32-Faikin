@@ -124,7 +124,8 @@ struct {
    uint8_t lastheat:1;          // Last heat mode
    uint8_t status_changed:1;    // Status has changed
    uint8_t mode_changed:1;      // Status or control has changed for enum or bool
-   uint8_t status_report:1;     // Status report
+   uint8_t status_report:1;     // Send status report
+   uint8_t ha_config:1;         // Send HA config
 } daikin = { };
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -668,7 +669,9 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.talking = 0;       // Disconnect and reconnect
       return "";
    }
-   if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
+   if (!strcmp(suffix, "connect"))
+      daikin.ha_config = daikin.status_report = 1;      // Report status on connect
+   if (!strcmp(suffix, "status"))
       daikin.status_report = 1; // Report status on connect
    if (!strcmp(suffix, "control"))
    {                            // Control, e.g. from environmental monitor
@@ -1083,6 +1086,25 @@ static esp_err_t web_set_control_info(httpd_req_t * req)
    return ESP_OK;
 }
 
+static void send_ha_config(void)
+{
+   char *topic;
+   if (asprintf(&topic, "homeassistant/sensor/%s/ip/config", hostname) >= 0)
+   {
+      jo_t j = jo_object_alloc();
+      jo_string(j, "name", "IP");
+      jo_stringf(j, "unique_id", "%s/ip", revk_id);
+      jo_stringf(j, "state_topic", "state/%s", hostname);
+      jo_stringf(j, "json_attr_r", "state/%s", hostname);
+      jo_string(j, "value_template", "{{value_json.ipv4}}");
+      jo_string(j, "icon", "mdi:check-network");
+      jo_object(j, "dev");
+      jo_string(j,"ids",revk_id);
+      revk_mqtt_send(NULL, 1, topic, &j);
+      free(topic);
+   }
+}
+
 // --------------------------------------------------------------------------------
 // Main
 void app_main()
@@ -1336,6 +1358,11 @@ void app_main()
             }
             daikin_command(0xCA, sizeof(ca), ca);
             daikin_command(0xCB, sizeof(cb), cb);
+         }
+         if (daikin.ha_config)
+         {
+            daikin.ha_config = 0;
+            send_ha_config();
          }
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
