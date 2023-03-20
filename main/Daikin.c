@@ -280,7 +280,7 @@ void daikin_s21_response(uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '1':
          set_val(online, 1);
          set_val(power, (payload[0] == '1') ? 1 : 0);
-         set_val(mode, "03721003"[payload[1] & 0x7] - '0');     // FHCA456D mapped to XADCHXF
+         set_val(mode, "30721003"[payload[1] & 0x7] - '0');     // FHCA456D mapped from AXDCHXF
          set_val(heat, daikin.mode == 1);       // Crude - TODO find if anything actually tells us this
          set_temp(temp, 18.0 + 0.5 * (payload[2] - '@'));
          if (payload[3] == 'A')
@@ -751,6 +751,25 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       jo_string(s, "fan", "5");
    if (!strcmp(suffix, "temp"))
       jo_lit(s, "temp", value);
+   // HA stuff
+   if (!strcmp(suffix, "mode"))
+   {
+      jo_bool(s, "power", *value == 'o' ? 0 : 1);
+      if (*value != 'o')
+         jo_stringf(s, "mode", "%c", toupper(*value));
+   }
+   if (!strcmp(suffix, "fan"))
+      jo_stringf(s, "fan", "%c", *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : toupper(*value));
+   if (!strcmp(suffix, "swing"))
+   {
+      jo_bool(s, "swingh", strchr(value, 'H') ? 1 : 0);
+      jo_bool(s, "swingv", strchr(value, 'V') ? 1 : 0);
+   }
+   if (!strcmp(suffix, "preset"))
+   {
+      jo_bool(s, "econo", *value == 'e');
+      jo_bool(s, "powerful", *value == 'b');
+   }
    jo_close(s);
    jo_rewind(s);
    if (jo_next(s) == JO_TAG)
@@ -1097,25 +1116,120 @@ static void send_ha_config(void)
       jo_t j = jo_object_alloc();
       jo_stringf(j, "unique_id", "%s", revk_id);
       jo_object(j, "dev");
-      jo_array(j,"ids");
+      jo_array(j, "ids");
       jo_string(j, NULL, revk_id);
       jo_close(j);
       jo_string(j, "name", appname);
-      jo_string(j,"mdl","ESP32");
+      jo_string(j, "mdl", "ESP32");
       jo_string(j, "sw", revk_version);
       jo_string(j, "mf", "RevK");
-      jo_stringf(j,"cu","http://%s.local/",hostname);
+      jo_stringf(j, "cu", "http://%s.local/", hostname);
       jo_close(j);
 
       jo_string(j, "icon", "mdi:coolant-temperature");
       jo_string(j, "name", hostname);
-
-      jo_string(j, "curr_temp_t", revk_id);
-      jo_string(j,"curr_temp_tpl","{{value_json.temp}}");
-
+#if 0                           // Cannot get this logic working
+      if (daikin.status_known & CONTROL_online)
+      {
+         jo_object(j, "avty");
+         jo_string(j, "t", revk_id);
+         jo_string(j, "val_tpl", "{{value_json.online}}");
+         jo_close(j);
+      }
+#endif
+      if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
+      {
+         jo_stringf(j, "temp_cmd_t", "command/%s/temp", hostname);
+         jo_string(j, "curr_temp_t", revk_id);
+         jo_string(j, "curr_temp_tpl", "{{value_json.temp}}");
+      }
+      if (daikin.status_known & CONTROL_mode)
+      {
+         jo_stringf(j, "mode_cmd_t", "command/%s/mode", hostname);
+         jo_string(j, "mode_stat_t", revk_id);
+         jo_string(j, "mode_stat_tpl", "{{value_json.mode}}");
+      }
+      if (daikin.status_known & CONTROL_fan)
+      {
+         jo_stringf(j, "fan_mode_cmd_t", "command/%s/fan", hostname);
+         jo_string(j, "fan_mode_stat_t", revk_id);
+         jo_string(j, "fan_mode_stat_tpl", "{{value_json.fan}}");
+         if (fanstep == 1 || (!fanstep && s21))
+         {
+            jo_array(j, "fan_modes");
+            jo_string(j, NULL, "auto");
+            jo_string(j, NULL, "1");
+            jo_string(j, NULL, "2");
+            jo_string(j, NULL, "3");
+            jo_string(j, NULL, "4");
+            jo_string(j, NULL, "5");
+            jo_close(j);
+         }
+      }
+      if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
+      {
+         jo_stringf(j, "swing_mode_cmd_t", "command/%s/swing", hostname);
+         jo_string(j, "swing_mode_stat_t", revk_id);
+         jo_string(j, "swing_mode_stat_tpl", "{{value_json.swing}}");
+         jo_array(j, "swing_modes");
+         jo_string(j, NULL, "off");
+         jo_string(j, NULL, "H");
+         jo_string(j, NULL, "V");
+         jo_string(j, NULL, "H+V");
+         jo_close(j);
+      }
+      if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
+      {
+         jo_stringf(j, "pr_mode_cmd_t", "command/%s/preset", hostname);
+         jo_string(j, "pr_mode_stat_t", revk_id);
+         jo_string(j, "pr_mode_val_tpl", "{{value_json.preset}}");
+         jo_array(j, "pr_modes");
+         if (daikin.status_known & CONTROL_econo)
+            jo_string(j, NULL, "eco");
+         if (daikin.status_known & CONTROL_powerful)
+            jo_string(j, NULL, "boost");
+         jo_string(j, NULL, "home");
+         jo_close(j);
+      }
       revk_mqtt_send(NULL, 1, topic, &j);
       free(topic);
    }
+   // TODO additional sensors (outside, liquid, etc)...
+}
+
+static void ha_status(void)
+{                               // Home assistant message
+   if (!ha)
+      return;
+   jo_t j = jo_object_alloc();
+   if (daikin.status_known & CONTROL_online)
+      jo_bool(j, "online", daikin.online);
+   if (daikin.status_known & CONTROL_inlet)
+      jo_litf(j, "temp", "%.2f", daikin.inlet);
+   else if (daikin.status_known & CONTROL_home)
+      jo_litf(j, "temp", "%.2f", daikin.home);
+   if (daikin.status_known & CONTROL_mode)
+   {
+      const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
+      jo_string(j, "mode", daikin.power ? modes[daikin.mode] : "off");
+   }
+   if (daikin.status_known & CONTROL_fan)
+   {
+      if (fanstep == 1 || (!fanstep && s21))
+      {
+         const char *fans[] = { "auto", "1", "2", "3", "4", "5", "auto" };      // A34567B
+         jo_string(j, "fan", fans[daikin.fan]);
+      } else
+      {
+         const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };       // A34567B
+         jo_string(j, "fan", fans[daikin.fan]);
+      }
+   }
+   if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
+      jo_string(j, "swing", daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
+   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
+      jo_string(j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : "home");        // Limited modes
+   revk_mqtt_send_clients(NULL, 0, revk_id, &j, 1);
 }
 
 // --------------------------------------------------------------------------------
@@ -1249,7 +1363,7 @@ void app_main()
          sleep(1);
          uart_flush(uart);      // Clean start
       }
-
+      daikin.ha_config = 1;
       daikin.talking = 1;
       if (!s21)
       {                         // Startup
@@ -1307,7 +1421,7 @@ void app_main()
             {                   // D1
                xSemaphoreTake(daikin.mutex, portMAX_DELAY);
                temp[0] = daikin.power ? '1' : '0';
-               temp[1] = ("64310002"[daikin.mode]);
+               temp[1] = ("64300002"[daikin.mode]);     // FHCA456D mapped to AXDCHXF
                temp[2] = 0x40 + lroundf((daikin.temp - 18.0) * 2);
                temp[3] = ("A34567B"[daikin.fan]);
                daikin_s21_command('D', '1', 4, temp);
@@ -1372,11 +1486,6 @@ void app_main()
             daikin_command(0xCA, sizeof(ca), ca);
             daikin_command(0xCB, sizeof(cb), cb);
          }
-         if (daikin.ha_config)
-         {
-            daikin.ha_config = 0;
-            send_ha_config();
-         }
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
             uint8_t send = ((debug || (livestatus && daikin.status_report) || daikin.mode_changed) ? 1 : 0);
@@ -1387,27 +1496,7 @@ void app_main()
             {
                jo_t j = daikin_status();
                revk_state("status", &j);
-               if (ha)
-               {                // Home assistant message
-                  jo_t j = jo_object_alloc();
-                  if (daikin.status_known & CONTROL_online)
-                     jo_bool(j, "online", daikin.online);
-                  if (daikin.status_known & CONTROL_inlet)
-                     jo_litf(j, "temp", "%.2f", daikin.inlet);
-                  else if (daikin.status_known & CONTROL_home)
-                     jo_litf(j, "temp", "%.2f", daikin.home);
-                  if (daikin.status_known & CONTROL_mode)
-                  {
-                     const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };        // FHCA456D
-                     jo_string(j, "mode", daikin.power ? modes[daikin.mode] : "off");
-                  }
-                  if (daikin.status_known & CONTROL_fan)
-                  {
-                     const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };   // A34567B
-                     jo_string(j, "fan", fans[daikin.fan]);
-                  }
-                  revk_mqtt_send_clients(revk_id, 0, NULL, &j, 1);
-               }
+               ha_status();
             }
          }
          // Stats
@@ -1657,8 +1746,15 @@ void app_main()
 #include "acextras.m"
                   revk_mqtt_send_clients("Daikin", 0, NULL, &j, 1);
                   daikin.statscount = 0;
+                  ha_status();
                }
             }
+         }
+         if (daikin.ha_config)
+         {                      // Put at end so we know what is supported
+            daikin.status_changed = 1;
+            daikin.ha_config = 0;
+            send_ha_config();
          }
       }
       while (daikin.talking);
