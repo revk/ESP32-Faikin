@@ -36,6 +36,7 @@ const char TAG[] = "Daikin";
 	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
+	b(ha,true)		\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
@@ -93,7 +94,6 @@ enum {                          // Number the control fields
 static httpd_handle_t webserver = NULL;
 static uint8_t s21 = 0;
 static uint8_t s21_set = 0;
-static uint8_t ha = 0;          // HA mode, 0=off, 1=on, 2=on and new so send config
 
 // The current aircon state and stats
 struct {
@@ -126,6 +126,7 @@ struct {
    uint8_t status_changed:1;    // Status has changed
    uint8_t mode_changed:1;      // Status or control has changed for enum or bool
    uint8_t status_report:1;     // Send status report
+   uint8_t ha_send:1;           // Send HA config
 } daikin = { };
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -660,13 +661,6 @@ const char *daikin_control(jo_t j)
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
    const char *ret = NULL;
-   if (prefix && target && !suffix && j && !strcmp(prefix, "homeassistant") && !strcmp(target, "status"))
-   {                            // Spot that HA is in use or not
-      if (!jo_strcmp(j, "online"))
-         ha = 2;                // Flag to send ha config
-      else
-         ha = 0;
-   }
    if (client || !prefix || target || strcmp(prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
@@ -676,14 +670,12 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       daikin.talking = 0;       // Disconnect and reconnect
       return "";
    }
-   if (!strcmp(suffix, "connect"))
+   if (!strcmp(suffix, "connect") || !strcmp(suffix, "status"))
    {
       daikin.status_report = 1; // Report status on connect
-      ha = 0;                   // Wait to hear about ha
-      lwmqtt_subscribe(revk_mqtt(0), "homeassistant/status");   // Find if ha in use or now
+      if (ha)
+         daikin.ha_send = 1;
    }
-   if (!strcmp(suffix, "status"))
-      daikin.status_report = 1; // Report status on connect
    if (!strcmp(suffix, "control"))
    {                            // Control, e.g. from environmental monitor
       float env = NAN;
@@ -1118,7 +1110,7 @@ static esp_err_t web_set_control_info(httpd_req_t * req)
 
 static void send_ha_config(void)
 {
-   ha = 1;                      // Flag we have has and has been sent
+   daikin.ha_send = 0;
    char *topic;
    jo_t make(const char *tag) {
       jo_t j = jo_object_alloc();
@@ -1134,13 +1126,14 @@ static void send_ha_config(void)
       jo_string(j, "mf", "RevK");
       jo_stringf(j, "cu", "http://%s.local/", hostname);
       jo_close(j);
+      jo_string(j, "icon", "mdi:coolant-temperature");
+      jo_string(j, "name", hostname);
       return j;
    }
    void addtemp(const char *tag) {
       if (asprintf(&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
          jo_t j = make(tag);
-         jo_string(j, "name",tag);
          jo_string(j, "dev_cla", "temperature");
          jo_string(j, "stat_t", revk_id);
          jo_string(j, "unit_of_meas", "°C");
@@ -1152,8 +1145,6 @@ static void send_ha_config(void)
    if (asprintf(&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make("");
-      jo_string(j, "icon", "mdi:coolant-temperature");
-      jo_string(j, "name", hostname);
       jo_stringf(j, "~", "command/%s", hostname);       // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
@@ -1787,7 +1778,7 @@ void app_main()
                }
             }
          }
-         if (ha > 1)
+         if (daikin.ha_send)
          {
             send_ha_config();
             ha_status();        // Update status now sent
