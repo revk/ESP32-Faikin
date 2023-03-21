@@ -36,7 +36,6 @@ const char TAG[] = "Daikin";
 	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
-	b(ha,1)			\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autoband,3)		\
@@ -94,6 +93,7 @@ enum {                          // Number the control fields
 static httpd_handle_t webserver = NULL;
 static uint8_t s21 = 0;
 static uint8_t s21_set = 0;
+static uint8_t ha = 0;          // HA mode, 0=off, 1=on, 2=on and new so send config
 
 // The current aircon state and stats
 struct {
@@ -126,7 +126,6 @@ struct {
    uint8_t status_changed:1;    // Status has changed
    uint8_t mode_changed:1;      // Status or control has changed for enum or bool
    uint8_t status_report:1;     // Send status report
-   uint8_t ha_config:1;         // Send HA config
 } daikin = { };
 
 const char *daikin_set_value(const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -661,6 +660,13 @@ const char *daikin_control(jo_t j)
 const char *app_callback(int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
    const char *ret = NULL;
+   if (prefix && target && !suffix && j && !strcmp(prefix, "homeassistant") && !strcmp(target, "status"))
+   {                            // Spot that HA is in use or not
+      if (!jo_strcmp(j, "online"))
+         ha = 2;                // Flag to send ha config
+      else
+         ha = 0;
+   }
    if (client || !prefix || target || strcmp(prefix, prefixcommand))
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
@@ -671,7 +677,11 @@ const char *app_callback(int client, const char *prefix, const char *target, con
       return "";
    }
    if (!strcmp(suffix, "connect"))
-      daikin.ha_config = daikin.status_report = 1;      // Report status on connect
+   {
+      daikin.status_report = 1; // Report status on connect
+      ha = 0;                   // Wait to hear about ha
+      lwmqtt_subscribe(revk_mqtt(0), "homeassistant/status");   // Find if ha in use or now
+   }
    if (!strcmp(suffix, "status"))
       daikin.status_report = 1; // Report status on connect
    if (!strcmp(suffix, "control"))
@@ -1108,27 +1118,43 @@ static esp_err_t web_set_control_info(httpd_req_t * req)
 
 static void send_ha_config(void)
 {
-   if (!ha)
-      return;
+   ha = 1;                      // Flag we have has and has been sent
    char *topic;
-   if (asprintf(&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
-   {
+   jo_t make(const char *tag) {
       jo_t j = jo_object_alloc();
-      jo_stringf(j, "unique_id", "%s", revk_id);
+      jo_stringf(j, "unique_id", "%s%s", revk_id, tag);
       jo_object(j, "dev");
       jo_array(j, "ids");
       jo_string(j, NULL, revk_id);
       jo_close(j);
       jo_string(j, "name", appname);
-      jo_string(j, "mdl", "ESP32");
+      if (*daikin.model)
+         jo_string(j, "mdl", daikin.model);
       jo_string(j, "sw", revk_version);
       jo_string(j, "mf", "RevK");
       jo_stringf(j, "cu", "http://%s.local/", hostname);
       jo_close(j);
-
+      return j;
+   }
+   void addtemp(const char *tag) {
+      if (asprintf(&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         jo_t j = make(tag);
+         jo_string(j, "name",tag);
+         jo_string(j, "dev_cla", "temperature");
+         jo_string(j, "stat_t", revk_id);
+         jo_string(j, "unit_of_meas", "°C");
+         jo_stringf(j, "val_tpl", "{{value_json.%s}}", tag);
+         revk_mqtt_send(NULL, 1, topic, &j);
+         free(topic);
+      }
+   }
+   if (asprintf(&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
+   {
+      jo_t j = make("");
       jo_string(j, "icon", "mdi:coolant-temperature");
       jo_string(j, "name", hostname);
-      jo_stringf(j,"~","command/%s",hostname); // Prefix for command
+      jo_stringf(j, "~", "command/%s", hostname);       // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
       {
@@ -1195,7 +1221,12 @@ static void send_ha_config(void)
       revk_mqtt_send(NULL, 1, topic, &j);
       free(topic);
    }
-   // TODO additional sensors (outside, liquid, etc)...
+   if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
+      addtemp("inlet");         // Both defined so we used home as temp, so lets add inlet here
+   if (daikin.status_known & CONTROL_outside)
+      addtemp("outside");
+   if (daikin.status_known & CONTROL_liquid)
+      addtemp("liquid");
 }
 
 static void ha_status(void)
@@ -1205,10 +1236,16 @@ static void ha_status(void)
    jo_t j = jo_object_alloc();
    if (daikin.status_known & CONTROL_online)
       jo_bool(j, "online", daikin.online);
-   if (daikin.status_known & CONTROL_inlet)
+   if (daikin.status_known & CONTROL_home)
+      jo_litf(j, "temp", "%.2f", daikin.home);  // We use home if present, else inlet
+   else if (daikin.status_known & CONTROL_inlet)
       jo_litf(j, "temp", "%.2f", daikin.inlet);
-   else if (daikin.status_known & CONTROL_home)
-      jo_litf(j, "temp", "%.2f", daikin.home);
+   if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
+      jo_litf(j, "inlet", "%.2f", daikin.inlet);        // Both so report inlet as well
+   if (daikin.status_known & CONTROL_outside)
+      jo_litf(j, "outside", "%.2f", daikin.outside);
+   if (daikin.status_known & CONTROL_liquid)
+      jo_litf(j, "liquid", "%.2f", daikin.liquid);
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
@@ -1364,7 +1401,6 @@ void app_main()
          sleep(1);
          uart_flush(uart);      // Clean start
       }
-      daikin.ha_config = 1;
       daikin.talking = 1;
       if (!s21)
       {                         // Startup
@@ -1751,11 +1787,10 @@ void app_main()
                }
             }
          }
-         if (daikin.ha_config)
-         {                      // Put at end so we know what is supported
-            daikin.status_changed = 1;
-            daikin.ha_config = 0;
+         if (ha > 1)
+         {
             send_ha_config();
+            ha_status();        // Update status now sent
          }
       }
       while (daikin.talking);
