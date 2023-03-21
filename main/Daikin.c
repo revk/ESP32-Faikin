@@ -1119,7 +1119,7 @@ static void send_ha_config(void)
       jo_array(j, "ids");
       jo_string(j, NULL, revk_id);
       jo_close(j);
-      jo_string(j, "name", appname);
+      jo_string(j, "name", hostname);
       if (*daikin.model)
          jo_string(j, "mdl", daikin.model);
       jo_string(j, "sw", revk_version);
@@ -1127,13 +1127,13 @@ static void send_ha_config(void)
       jo_stringf(j, "cu", "http://%s.local/", hostname);
       jo_close(j);
       jo_string(j, "icon", "mdi:coolant-temperature");
-      jo_string(j, "name", hostname);
       return j;
    }
    void addtemp(const char *tag) {
       if (asprintf(&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
          jo_t j = make(tag);
+         jo_string(j, "name", tag);
          jo_string(j, "dev_cla", "temperature");
          jo_string(j, "stat_t", revk_id);
          jo_string(j, "unit_of_meas", "°C");
@@ -1145,6 +1145,7 @@ static void send_ha_config(void)
    if (asprintf(&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make("");
+      jo_string(j, "name", appname);
       jo_stringf(j, "~", "command/%s", hostname);       // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
@@ -1407,6 +1408,8 @@ void app_main()
          daikin.online = daikin.talking;
          daikin.status_changed = 1;
       }
+      if (ha)
+         daikin.ha_send = 1;
       do
       {                         // Polling loop
          if (s21)
