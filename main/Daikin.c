@@ -1259,7 +1259,7 @@ static void ha_status(void)
       jo_string(j, "swing", daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string(j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : "home");        // Limited modes
-   revk_mqtt_send_clients(NULL, 0, revk_id, &j, 1);
+   revk_mqtt_send_clients(NULL, 1, revk_id, &j, 1);
 }
 
 // --------------------------------------------------------------------------------
