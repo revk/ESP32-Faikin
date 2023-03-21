@@ -1128,6 +1128,7 @@ static void send_ha_config(void)
 
       jo_string(j, "icon", "mdi:coolant-temperature");
       jo_string(j, "name", hostname);
+      jo_stringf(j,"~","command/%s",hostname); // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
       {
@@ -1139,19 +1140,19 @@ static void send_ha_config(void)
 #endif
       if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
       {
-         jo_stringf(j, "temp_cmd_t", "command/%s/temp", hostname);
+         jo_string(j, "temp_cmd_t", "~/temp");
          jo_string(j, "curr_temp_t", revk_id);
          jo_string(j, "curr_temp_tpl", "{{value_json.temp}}");
       }
       if (daikin.status_known & CONTROL_mode)
       {
-         jo_stringf(j, "mode_cmd_t", "command/%s/mode", hostname);
+         jo_string(j, "mode_cmd_t", "~/mode");
          jo_string(j, "mode_stat_t", revk_id);
          jo_string(j, "mode_stat_tpl", "{{value_json.mode}}");
       }
       if (daikin.status_known & CONTROL_fan)
       {
-         jo_stringf(j, "fan_mode_cmd_t", "command/%s/fan", hostname);
+         jo_string(j, "fan_mode_cmd_t", "~/fan");
          jo_string(j, "fan_mode_stat_t", revk_id);
          jo_string(j, "fan_mode_stat_tpl", "{{value_json.fan}}");
          if (fanstep == 1 || (!fanstep && s21))
@@ -1168,7 +1169,7 @@ static void send_ha_config(void)
       }
       if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
       {
-         jo_stringf(j, "swing_mode_cmd_t", "command/%s/swing", hostname);
+         jo_string(j, "swing_mode_cmd_t", "~/swing");
          jo_string(j, "swing_mode_stat_t", revk_id);
          jo_string(j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array(j, "swing_modes");
@@ -1180,7 +1181,7 @@ static void send_ha_config(void)
       }
       if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       {
-         jo_stringf(j, "pr_mode_cmd_t", "command/%s/preset", hostname);
+         jo_string(j, "pr_mode_cmd_t", "~/preset");
          jo_string(j, "pr_mode_stat_t", revk_id);
          jo_string(j, "pr_mode_val_tpl", "{{value_json.preset}}");
          jo_array(j, "pr_modes");
