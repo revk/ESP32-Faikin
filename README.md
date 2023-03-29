@@ -4,7 +4,11 @@ Everyone knows Daikin make some of the best air conditioners out there, mechanic
 
 This is code and PCB design to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
 
-Amazon: https://www.amazon.co.uk/dp/B0BTZ4F5FH
+<<<<<<< HEAD
+Buy on [Amazon](https://www.amazon.co.uk/dp/B0BTZ4F5FH)
+=======
+Amazon: https://www.amazon.co.uk/dp/B0BTZ4F5FH (currently UK only, as Amazon don't want to export)
+>>>>>>> fcb1afce0d8ea6bf49d86eb3927206e5a9fcb95b
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
 
@@ -33,15 +37,15 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 * Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone.
 * MQTT reporting and controls
 * Includes linux mysql/mariadb based logging and graphing tools
-* Works with https://github.com/revk/ESP32-EnvMon Environmental Monitor for finer control and status display
+* Works with [EnvMon](https://github.com/revk/ESP32-EnvMon) Environmental Monitor for finer control and status display
 * Automatically works out if S21 or alternative protocol used on ducted units
 * Backwards compatible `/aircon/get_control_info` and `/aircon/set_control_info` URLs (work in progress)
 
 # Building
 
-Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variables, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. https://github.com/revk/Shelly-Tasmotizer-PCB or similar, and of course the full ESP IDF environment.
+Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variables, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment.
 
-If you want to purchase an assembled PCB, see https://www.aa.net.uk/etc/circuit-boards/
+If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/)
 
 The wiring from the existing wifi modules fits directly (albeit only 4 pins used).
 
