@@ -24,6 +24,9 @@ Local interactive web control page using *hostname*.local, no app required, no e
 
 ![IMG_2421](https://user-images.githubusercontent.com/996983/218394392-48b47be4-5989-474e-beab-734dd6ef83d9.PNG)
 
+- [Setup](Manuals/Setup.md) Manual
+- [Advanced](Manuals/Advanced.md) Manual
+
 # Design
 
 * KiCad PCB designs included
