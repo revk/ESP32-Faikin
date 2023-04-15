@@ -767,9 +767,13 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       }
       xSemaphoreTake (daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime () + tcontrol;
-      daikin.mintarget = min;
-      daikin.maxtarget = max;
-      daikin.env = env;
+      if (!autor)
+      {
+         daikin.mintarget = min;
+         daikin.maxtarget = max;
+      }
+      if (!*autob)
+         daikin.env = env;
       daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -1020,7 +1024,7 @@ web_root (httpd_req_t * req)
    }
    httpd_resp_sendstr_chunk (req, "</table>");
 #ifdef ELA
-   httpd_resp_sendstr_chunk (req, "<hr><p>Automated controls</p><table>");
+   httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
    add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
    addt ("Target", "autot");
    if (ela)
@@ -1559,15 +1563,14 @@ app_main ()
       do
       {                         // Polling loop
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
-#ifdef ELS
+#ifdef ELA
          if (*autob)
-         {                      // Automatic external temperature logic
+         {                      // Automatic external temperature logic - only really useful if autor/autot set
             ela_expire (60);
-            if (!bletemp)
+            if (!bletemp || strcmp (bletemp->name, autob))
                for (ela_t * e = ela; e; e = e->next)
-                  if (!strcmp (e->name, autobbluecoint))
+                  if (!strcmp (e->name, autob))
                   {
-                     ESP_LOGI (TAG, "Found BLE %s", bluecoint);
                      bletemp = e;
                      break;
                   }
