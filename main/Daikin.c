@@ -46,6 +46,9 @@ static __attribute__((unused))
 	u8l(heatback,6)		\
 	u8l(switch10,5)		\
 	u8l(push10,1)		\
+	u8l(autot,0)		\
+	u8l(autor,0)		\
+	sl(autob)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
@@ -62,6 +65,7 @@ static __attribute__((unused))
 #define b(n,d) uint8_t n;
 #define bl(n) uint8_t n;
 #define s(n) char * n;
+#define sl(n) char * n;
 #define io(n,d)           uint8_t n;
 settings
 #undef io
@@ -72,6 +76,7 @@ settings
 #undef b
 #undef bl
 #undef s
+#undef sl
 #define PORT_INV 0x40
 #define port_mask(p) ((p)&63)
      enum
@@ -129,7 +134,7 @@ settings
         uint8_t mode_changed:1; // Status or control has changed for enum or bool
         uint8_t status_report:1;        // Send status report
         uint8_t ha_send:1;      // Send HA config
-     } daikin = { };
+     } daikin = { 0 };
 
      const char *daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
      {                          // Setting a value (uint8_t)
@@ -1298,6 +1303,7 @@ settings
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
 #define u8l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
 #define s(n) revk_register(#n,0,0,&n,NULL,0);
+#define sl(n) revk_register(#n,0,0,&n,NULL,SETTING_LIVE);
         settings
 #undef io
 #undef u32
@@ -1307,6 +1313,7 @@ settings
 #undef b
 #undef bl
 #undef s
+#undef sl
            revk_start ();
         void uart_setup (void)
         {
@@ -1432,6 +1439,10 @@ settings
               daikin.ha_send = 1;
            do
            {                    // Polling loop
+              if (autor)
+              {                 // Automatic setting of "external" controls, autot is temp(*10), autor is range(*10), autob is BLE name
+                 // TODO
+              }
               if (s21)
               {                 // Older S21
                  char temp[5];
@@ -1513,8 +1524,8 @@ settings
                  //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
                  daikin_command (0xBD, 0, NULL);
                  daikin_command (0xBE, 0, NULL);
-                 uint8_t ca[17] = { };
-                 uint8_t cb[2] = { };
+                 uint8_t ca[17] = { 0 };
+                 uint8_t cb[2] = { 0 };
                  if (daikin.control_changed)
                  {
                     xSemaphoreTake (daikin.mutex, portMAX_DELAY);
