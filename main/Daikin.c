@@ -1030,7 +1030,7 @@ web_root (httpd_req_t * req)
    if (ela)
    {
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td>");
-      httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',autob);\"><option value=\"\">--None--");
+      httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">--None--");
       char found = 0;
       for (ela_t * e = ela; e; e = e->next)
       {
@@ -1048,6 +1048,7 @@ web_root (httpd_req_t * req)
          {
             char temp[10];
             snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 10.0);
+         httpd_resp_sendstr_chunk (req, temp);
          }
       }
       if (!found && *autob)
