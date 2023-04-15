@@ -1568,12 +1568,16 @@ app_main ()
          {                      // Automatic external temperature logic - only really useful if autor/autot set
             ela_expire (60);
             if (!bletemp || strcmp (bletemp->name, autob))
+            {
+               bletemp = NULL;
+               ela_clean ();
                for (ela_t * e = ela; e; e = e->next)
                   if (!strcmp (e->name, autob))
                   {
                      bletemp = e;
                      break;
                   }
+            }
             if (bletemp && !bletemp->missing)
             {                   // Use temp
                daikin.env = bletemp->temp / 100.0;
