@@ -23,7 +23,7 @@ int main(int argc, const char *argv[])
    const char *mqtthostname = "localhost";
    const char *mqttusername = NULL;
    const char *mqttpassword = NULL;
-   const char *mqttprefix = "Daikin";
+   const char *mqttprefix = "Faikin";
    const char *mqttid = NULL;
    int interval = 60;
    int debug = 0;
