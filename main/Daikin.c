@@ -239,9 +239,8 @@ settings
            daikin.status_known |= flag;
            daikin.status_changed = 1;
         }
-        int range = (s21 ? 2 : 10);     // What is close enough
-        if (lroundf (*ptr * range) == lroundf (val * range))
-        {                       // No change
+        if (lroundf (*ptr * 10) == lroundf (val * 10))
+        {                       // No change (allow within 0.1C)
            if (daikin.control_changed & flag)
            {
               daikin.control_changed &= ~flag;
@@ -1762,6 +1761,8 @@ settings
                              set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                        }
                        // Limit settings to acceptable values
+                       if (s21)
+                          set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
                        if (set < 16)
                           set = 16;
                        if (set > 32)
