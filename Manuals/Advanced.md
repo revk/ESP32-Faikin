@@ -32,7 +32,8 @@ An external unit can set external *min*/*max* controls and reference temperature
 |-------|-------|
 |`coolover` `heatover`|When we want to turn on heating or cooling the temperature is set to the target, adjusted for the temperature the air-con unit is seeing. To encourage the air-con to actually apply the heating/cooling this has a number of degrees added (for heat) or reduced (for cool) as set by these settings.
 |`coolback` `heatback`|When we want to turn off the heating or cooling, we set a temperature that backs away from the target temperature by this many degrees.|
-|`autoband`|If to turn on/off automatically, this applies if not `0` and if the difference between *min* and *max* from external/automatic control is less than this many degrees, i.e. external control has set to a narrow range, and we are way outside that.|
+|`tsample`|Automation sampling time period (seconds), usually `900`|
+|`autoband`|If to turn on/off automatically, this applies if not `0`. Turns off if in band for two sample periods. Turns on if the difference between *min* and *max* from external/automatic control is less than `autoband` degrees and out of band for two sample period|
 |`switch10`|This is our own hysteresis - it applies to temp or min/max settings meaning we have to got this much extra beyond limits before considering switching heat/cool.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
 |`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
