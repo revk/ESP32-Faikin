@@ -24,15 +24,15 @@ There are a number of standard settings as per the library, including things lik
 |`ha`|`true` means work with Home Assistant via MQTT|
 |`reporting`|Interval for reporting state (seconds)|
 
-### External controls
+### External/automatic controls
 
-An external unit can set external *min*/*max* controls and reference temperature. This is planned to be made an internal feature in future.
+An external unit can set external *min*/*max* controls and reference temperature. This is planned to be made an internal feature for automatic control in future.
 
 |Setting|Meaning|
 |-------|-------|
 |`coolover` `heatover`|When we want to turn on heating or cooling the temperature is set to the target, adjusted for the temperature the air-con unit is seeing. To encourage the air-con to actually apply the heating/cooling this has a number of degrees added (for heat) or reduced (for cool) as set by these settings.
 |`coolback` `heatback`|When we want to turn off the heating or cooling, we set a temperature that backs away from the target temperature by this many degrees.|
-|`autoband`|If to turn on/off automatically, this applies if not `0` and if the difference between *min* and *max* from external control is less than this many degrees, i.e. external control has set to a narrow range, and we are way outside that.|
+|`autoband`|If to turn on/off automatically, this applies if not `0` and if the difference between *min* and *max* from external/automatic control is less than this many degrees, i.e. external control has set to a narrow range, and we are way outside that.|
 |`switch10`|This is our own hysteresis - it applies to temp or min/max settings meaning we have to got this much extra beyond limits before considering switching heat/cool.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
 |`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
@@ -75,12 +75,13 @@ The status are further fields, which you cannot change, and reported in the stat
 |`online`|Boolean, if the aircon is connected and online|
 |`heat`|Boolean, if in heating mode|
 |`slave`|Boolean, set if we are not master for heat/cool and hence cannot do requested mode|
+|`antifreeze`|Boolean, set if in antifreeze mode and hence not operating as normal|
 |`model`|Model name, if known|
 |`home`|Temperature at remote / measured|
 |`outside`|Outside temperature, if known|
 |`inlet`|Inlet temperature, if known|
 |`liquid`|Liquid coolant feed temperature, if known|
-|`control`|Boolean, if we are under external control|
+|`control`|Boolean, if we are under external/automatic control|
 
 The reporting data for logging contains the controls and status, but has arrays of min/ave/max for temperatures, min/max for target temp, and value between 0 and 1 for booleans when not all the same for the period. For enumerated codes (fan, mode) the data is a snapshot.
 
