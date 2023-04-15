@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := Daikin
+PROJECT_NAME := Faikin
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 
 ifeq ($(wildcard /bin/csh),)
@@ -37,9 +37,9 @@ tools:	$(TOOLS)
 
 issue:	set
 	# Assuming you are serving OTA from local apache
-	cp Daikin-S1.bin /var/www/
-	cp Daikin-S1-PICO.bin /var/www/
-	cp Daikin-S1-SOLO.bin /var/www/
+	cp Faikin-S1.bin /var/www/
+	cp Faikin-S1-PICO.bin /var/www/
+	cp Faikin-S1-SOLO.bin /var/www/
 
 set:    wroom solo pico
 
@@ -76,7 +76,7 @@ update:
 
 # Program the FTDI
 ftdi: ftdizap/ftdizap
-	./ftdizap/ftdizap --serial="RevK" --description="Daikin" --cbus2-mode=17 --self-powered=1
+	./ftdizap/ftdizap --serial="RevK" --description="Faikin" --cbus2-mode=17 --self-powered=1
 
 PCBCase/case: PCBCase/case.c
 	make -C PCBCase
@@ -114,8 +114,8 @@ daikingraph: daikingraph.c SQLlib/sqllib.o AXL/axl.o
 	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
 	echo "Made $@"
 
-stl: 	PCB/Daikin/Daikin.stl
+stl: 	PCB/Faikin/Faikin.stl
 
-PCB/Daikin/Daikin.scad: PCB/Daikin/Daikin.kicad_pcb PCBCase/case Makefile
+PCB/Faikin/Faikin.scad: PCB/Faikin/Faikin.kicad_pcb PCBCase/case Makefile
 	PCBCase/case -o $@ $< --edge=2 --base=3
 

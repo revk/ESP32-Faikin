@@ -3,5 +3,5 @@
 cmake_minimum_required(VERSION 3.5)
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
-project(Daikin)
-target_add_binary_data(Daikin.elf "main/apple-touch-icon.png" BINARY)
+project(Faikin)
+target_add_binary_data(Faikin.elf "main/apple-touch-icon.png" BINARY)
