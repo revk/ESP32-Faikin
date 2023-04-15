@@ -1,12 +1,12 @@
-menu "Daikin"
+menu "Faikin"
   
-        config DAIKIN_TX
+        config FAIKIN_TX
         string "GPIO for tx"
         default "26"
         help
                 GPIO for tx (prefix - to invert)
 
-        config DAIKIN_RX
+        config FAIKIN_RX
         string "GPIO for rx"
         default "-27"
         help

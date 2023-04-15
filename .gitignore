@@ -11,7 +11,7 @@ secure_boot_signing_key.pem
 build/*
 sdkconfig
 faikin
-daikinlog
-daikinlog.service
-daikingraph
+faikinlog
+faikinlog.service
+faikingraph
 dependencies.lock

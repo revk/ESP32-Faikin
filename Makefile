@@ -22,7 +22,7 @@ SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
 endif
 
 ifdef	SQLINC
-TOOLS := faikin daikinlog daikingraph
+TOOLS := faikin faikinlog faikingraph
 else
 $(warning mariadb/mysql not installed, needed for tools)
 endif
@@ -103,10 +103,10 @@ OPTS=-L/usr/local/ssl/lib ${SQLLIB} ${CCOPTS}
 faikin: faikin.c
 	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
 
-daikinlog: daikinlog.c SQLlib/sqllib.o AJL/ajl.o main/acextras.m main/acfields.m main/accontrols.m
+faikinlog: faikinlog.c SQLlib/sqllib.o AJL/ajl.o main/acextras.m main/acfields.m main/accontrols.m
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAJL AJL/ajl.o ${OPTS}
 
-daikingraph: daikingraph.c SQLlib/sqllib.o AXL/axl.o
+faikingraph: faikingraph.c SQLlib/sqllib.o AXL/axl.o
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAXL AXL/axl.o -lcurl ${OPTS}
 
 %.stl:	%.scad

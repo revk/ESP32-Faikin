@@ -19,7 +19,7 @@ int main(int argc, const char *argv[])
    const char *sqlusername = NULL;
    const char *sqlpassword = NULL;
    const char *sqlconffile = NULL;
-   const char *sqltable = "daikin";
+   const char *sqltable = "faikin";
    const char *mqtthostname = "localhost";
    const char *mqttusername = NULL;
    const char *mqttpassword = NULL;

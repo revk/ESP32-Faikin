@@ -1,7 +1,7 @@
-/* Daikin app */
+/* Faikin app */
 /* Copyright ©2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
 
-static const char TAG[] = "Daikin";
+static const char TAG[] = "Faikin";
 
 #include "revk.h"
 #include "esp_sleep.h"
@@ -56,8 +56,8 @@ static const char TAG[] = "Daikin";
 	u32(tcontrol,600)	\
 	u8(fanstep,0)		\
 	u32(reporting,60)	\
-	io(tx,CONFIG_DAIKIN_TX)	\
-	io(rx,CONFIG_DAIKIN_RX)	\
+	io(tx,CONFIG_FAIKIN_TX)	\
+	io(rx,CONFIG_FAIKIN_RX)	\
 
 #define u32(n,d) uint32_t n;
 #define s8(n,d) int8_t n;
@@ -1983,7 +1983,7 @@ app_main ()
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;}
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
-                  revk_mqtt_send_clients ("Daikin", 0, NULL, &j, 1);
+                  revk_mqtt_send_clients ("Faikin", 0, NULL, &j, 1);
                   daikin.statscount = 0;
                   ha_status ();
                }
