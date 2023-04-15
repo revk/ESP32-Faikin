@@ -35,7 +35,7 @@ all:	tools
 
 tools:	$(TOOLS)
 
-install:	set
+issue:	set
 	# Assuming you are serving OTA from local apache
 	cp Daikin-S1.bin /var/www/
 	cp Daikin-S1-PICO.bin /var/www/
