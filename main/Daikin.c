@@ -1662,7 +1662,7 @@ settings
                  int a = daikin.counta + daikin.counta2;        // Approaching
                  int b = daikin.countb + daikin.countb2;        // Beyond
                  int t = daikin.countt + daikin.countt2;        // Total (includes neither approaching or beyond, i.e. in range)
-                 //if (debug)
+                 if (debug)
                  {
                     jo_t j = jo_object_alloc ();
                     jo_int (j, "a", a);
