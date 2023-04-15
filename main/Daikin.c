@@ -1533,8 +1533,7 @@ app_main ()
    }
 
 #ifdef	ELA
-   if (*autob)
-      ela_run ();
+   ela_run ();
 #endif
    while (1)
    {                            // Main loop
