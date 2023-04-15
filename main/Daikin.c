@@ -46,7 +46,7 @@ static const char TAG[] = "Daikin";
 	u8l(heatback,6)		\
 	u8l(switch10,5)		\
 	u8l(push10,1)		\
-	u8l(autot,0)		\
+	u16l(autot,0)		\
 	u8l(autor,0)		\
 	sl(autob)		\
 	u32(tpredicts,30)	\
@@ -62,6 +62,7 @@ static const char TAG[] = "Daikin";
 #define s8(n,d) int8_t n;
 #define u8(n,d) uint8_t n;
 #define u8l(n,d) uint8_t n;
+#define u16l(n,d) uint16_t n;
 #define b(n,d) uint8_t n;
 #define bl(n) uint8_t n;
 #define s(n) char * n;
@@ -73,6 +74,7 @@ settings
 #undef s8
 #undef u8
 #undef u8l
+#undef u16l
 #undef b
 #undef bl
 #undef s
@@ -657,6 +659,7 @@ const char *
 daikin_control (jo_t j)
 {                               // Control settings as JSON
    jo_type_t t = jo_next (j);   // Start object
+   jo_t s = NULL;
    while (t == JO_TAG)
    {
       const char *err = NULL;
@@ -666,10 +669,22 @@ daikin_control (jo_t j)
       t = jo_next (j);
       jo_strncpy (j, val, sizeof (val));
 #define	b(name)		if(!strcmp(tag,#name)&&(t==JO_TRUE||t==JO_FALSE))err=daikin_set_v(name,t==JO_TRUE?1:0);
-#define	t(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_t(name,jo_read_float(j));
-#define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,jo_read_int(j));
+#define	t(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_t(name,strtof(val,NULL));
+#define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
+      if (!strcmp (tag, "autot"))
+      {                         // Stored settings
+         if (!s)
+            s = jo_object_alloc ();
+         jo_int (s, tag, lroundf (strtof (val, NULL) * 10.0));
+      }
+      if (!strcmp (tag, "autob") || !strcmp (tag, "autor"))
+      {                         // Stored settings
+         if (!s)
+            s = jo_object_alloc ();
+         jo_string (s, tag, val);
+      }
       if (err)
       {                         // Error report
          jo_t j = jo_object_alloc ();
@@ -679,6 +694,11 @@ daikin_control (jo_t j)
          return err;
       }
       t = jo_skip (j);
+   }
+   if (s)
+   {
+      revk_setting (s);
+      jo_free (&s);
    }
    return "";
 }
@@ -892,7 +912,7 @@ web_root (httpd_req_t * req)
    httpd_resp_sendstr_chunk (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
    {                            // Head (well, start of row)
-      httpd_resp_sendstr_chunk (req, "<tr><td>");
+      httpd_resp_sendstr_chunk (req, "<tr><td align=right>");
       httpd_resp_sendstr_chunk (req, tag);
       httpd_resp_sendstr_chunk (req, "</td>");
    }
@@ -940,55 +960,105 @@ web_root (httpd_req_t * req)
    }
    void addb (const char *tag, const char *field)
    {
-      addh (tag);
-      httpd_resp_sendstr_chunk (req, "<td><label class=switch><input type=checkbox id=");
+      httpd_resp_sendstr_chunk (req, "<td align=right>");
+      httpd_resp_sendstr_chunk (req, tag);
+      httpd_resp_sendstr_chunk (req, "</td><td><label class=switch><input type=checkbox id=");
       httpd_resp_sendstr_chunk (req, field);
       httpd_resp_sendstr_chunk (req, " onchange=\"w('");
       httpd_resp_sendstr_chunk (req, field);
       httpd_resp_sendstr_chunk (req, "',this.checked);\"><span class=slider></span></label></td>");
-      addf (tag);
-   }
-   void addpm (const char *tag, const char *field)
-   {
-      addh (tag);
-      void pm (const char *d)
-      {
-         httpd_resp_sendstr_chunk (req, "<td><label class=box><input type=checkbox onchange=\"if(this.checked)w('");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, "',");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, d);
-         httpd_resp_sendstr_chunk (req, "0.5);this.checked=false;\"><span class=button>");
-         httpd_resp_sendstr_chunk (req, d);
-         httpd_resp_sendstr_chunk (req, "</span></label></td>");
-      }
-      pm ("-");
-      pm ("+");
-      addf (tag);
    }
    void addhf (const char *tag)
    {
       addh (tag);
       addf (tag);
    }
+   void addt (const char *tag, const char *field)
+   {
+      addh (tag);
+      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range min=");
+      httpd_resp_sendstr_chunk (req, s21 ? "18" : "16");
+      httpd_resp_sendstr_chunk (req, " max=32 step=");
+      httpd_resp_sendstr_chunk (req, s21 ? "0.5" : "0.1");
+      httpd_resp_sendstr_chunk (req, " id=");
+      httpd_resp_sendstr_chunk (req, field);
+      httpd_resp_sendstr_chunk (req, " onchange=\"w('");
+      httpd_resp_sendstr_chunk (req, field);
+      httpd_resp_sendstr_chunk (req, "',+this.value);\"><span id=T");
+      httpd_resp_sendstr_chunk (req, field);
+      httpd_resp_sendstr_chunk (req, "></span></td>");
+      addf (tag);
+   }
+   httpd_resp_sendstr_chunk (req, "<tr>");
    addb ("⏻", "power");
+   httpd_resp_sendstr_chunk (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && s21))
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "(Night)", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addpm ("Set", "temp");
+   addt ("Set", "temp");
    addhf ("Temp");
    addhf ("Coil");
-   if (daikin.status_known & CONTROL_econo)
-      addb ("Eco", "econo");
-   if (daikin.status_known & CONTROL_powerful)
-      addb ("💪", "powerful");
-   if (daikin.status_known & CONTROL_swingv)
-      addb ("↕", "swingv");
-   if (daikin.status_known & CONTROL_swingh)
-      addb ("↔", "swingh");
-   httpd_resp_sendstr_chunk (req, "</table></form>");
+   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
+   {
+      httpd_resp_sendstr_chunk (req, "<tr>");
+      if (daikin.status_known & CONTROL_econo)
+         addb ("Eco", "econo");
+      if (daikin.status_known & CONTROL_powerful)
+         addb ("💪", "powerful");
+      httpd_resp_sendstr_chunk (req, "</tr>");
+   }
+   if (daikin.status_known & (CONTROL_swingv | CONTROL_powerful))
+   {
+      httpd_resp_sendstr_chunk (req, "<tr>");
+      if (daikin.status_known & CONTROL_swingv)
+         addb ("↕", "swingv");
+      if (daikin.status_known & CONTROL_swingh)
+         addb ("↔", "swingh");
+      httpd_resp_sendstr_chunk (req, "</tr>");
+   }
+   httpd_resp_sendstr_chunk (req, "</table>");
+#ifdef ELA
+   httpd_resp_sendstr_chunk (req, "<hr><p>Automated controls</p><table>");
+   add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
+   addt ("Target", "autot");
+   if (ela)
+   {
+      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td>");
+      httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',autob);\"><option value=\"\">--None--");
+      char found = 0;
+      for (ela_t * e = ela; e; e = e->next)
+      {
+         httpd_resp_sendstr_chunk (req, "<option value=\"");
+         httpd_resp_sendstr_chunk (req, e->name);
+         httpd_resp_sendstr_chunk (req, "\"");
+         if (*autob && !strcmp (autob, e->name))
+         {
+            httpd_resp_sendstr_chunk (req, " selected");
+            found = 1;
+         }
+         httpd_resp_sendstr_chunk (req, ">");
+         httpd_resp_sendstr_chunk (req, e->name);
+         if (!e->missing)
+         {
+            char temp[10];
+            snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 10.0);
+         }
+      }
+      if (!found && *autob)
+      {
+         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
+         httpd_resp_sendstr_chunk (req, autob);
+         httpd_resp_sendstr_chunk (req, "\">");
+         httpd_resp_sendstr_chunk (req, autob);
+         httpd_resp_sendstr_chunk (req, " (not seen)");
+      }
+      httpd_resp_sendstr_chunk (req, "</select></td></tr>");
+   }
+   httpd_resp_sendstr_chunk (req, "</table><hr>");
+#endif
+   httpd_resp_sendstr_chunk (req, "</form>");
    httpd_resp_sendstr_chunk (req,
                              "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
    httpd_resp_sendstr_chunk (req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
@@ -997,7 +1067,7 @@ web_root (httpd_req_t * req)
                              "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
    httpd_resp_sendstr_chunk (req, "</div>");
    if (webcontrol >= 2)
-      httpd_resp_sendstr_chunk (req, "<p><a href='wifi'>WiFi Setup</a></p>");
+      httpd_resp_sendstr_chunk (req, "<p><a href='wifi'>Settings</a></p>");
    httpd_resp_sendstr_chunk (req, "<script>"    //
                              "var ws=0;"        //
                              "var temp=0;"      //
@@ -1005,6 +1075,7 @@ web_root (httpd_req_t * req)
                              "function b(n,v){var d=g(n);if(d)d.checked=v;}"    //
                              "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"       //
                              "function s(n,v){var d=g(n);if(d)d.textContent=v;}"        //
+                             "function n(n,v){var d=g(n);if(d)d.value=v;}"      //
                              "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"       //
                              "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m))}"    //
                              "function c(){"    //
@@ -1024,8 +1095,13 @@ web_root (httpd_req_t * req)
                              "b('swingv',o.swingv);"    //
                              "b('econo',o.econo);"      //
                              "e('mode',o.mode);"        //
-                             "s('Set',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));" //
                              "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"   //
+                             "n('temp',o.temp);"        //
+                             "s('Ttemp',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
+                             "n('autot',o.autot);"      //
+                             "e('autor',o.autor);"      //
+                             "n('autob',o.autob);"      //
+                             "s('Tautot',(o.autot+'℃'));"     //
                              "s('Coil',(o.liquid+'℃'));"      //
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
@@ -1059,6 +1135,11 @@ web_status (httpd_req_t * req)
    esp_err_t status (void)
    {
       jo_t j = daikin_status ();
+#ifdef ELA
+      jo_string (j, "autob", autob);
+#endif
+      jo_int (j, "autor", autor);
+      jo_litf (j, "autot", "%.1f", autot / 10.0);
       wsend (&j);
       return ESP_OK;
    }
@@ -1335,6 +1416,7 @@ app_main ()
 #define s8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_SIGNED);
 #define u8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
 #define u8l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
+#define u16l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
 #define s(n) revk_register(#n,0,0,&n,NULL,0);
 #define sl(n) revk_register(#n,0,0,&n,NULL,SETTING_LIVE);
    settings
@@ -1343,6 +1425,7 @@ app_main ()
 #undef s8
 #undef u8
 #undef u8l
+#undef u16l
 #undef b
 #undef bl
 #undef s
@@ -1449,7 +1532,6 @@ app_main ()
    if (*autob)
       ela_run ();
 #endif
-
    while (1)
    {                            // Main loop
       {                         // Poke UART
@@ -1499,7 +1581,7 @@ app_main ()
 #endif
          if (autor && autot)
          {                      // Automatic setting of "external" controls, autot is temp(*10), autor is range(*10), autob is BLE name
-            daikin.controlvalid = uptime () + tcontrol;
+            daikin.controlvalid = uptime () + 10;
             daikin.mintarget = (autot - autor) / 10.0;
             daikin.maxtarget = (autot + autor) / 10.0;
          }
