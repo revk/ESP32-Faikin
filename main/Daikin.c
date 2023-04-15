@@ -1626,8 +1626,7 @@ settings
               }
               void samplestart (void)
               {                 // Start sampling for fan/switch controls
-                 daikin.counta = daikin.counta2 = daikin.countb = daikin.countb2 = daikin.countt = daikin.countt2 = 0;  // Reset sample counts
-                 daikin.sample = now;   // Start sample period
+                 daikin.sample = 0;     // Start sample period
               }
               void controlstart (void)
               {                 // Start controlling
@@ -1661,14 +1660,21 @@ settings
                  daikin.mintarget = NAN;
                  daikin.maxtarget = NAN;
               }
-              if (!isnan (min) && !isnan (max))
+              if (!isnan (min) && !isnan (max) && tsample)
               {                 // Monitoring and automation
+                 if (daikin.lastheat != hot)
+                 {              // If we change mode, start samples again
+                    daikin.lastheat = hot;
+                    samplestart ();
+                 }
                  daikin.countt++;       // Total
                  if ((hot && current < min) || (!hot && current > max))
                     daikin.counta++;    // Approaching temp
                  else if ((hot && current > max) || (!hot && current < min))
                     daikin.countb++;    // Beyond
-                 if (daikin.sample + tsample <= now)
+                 if (!daikin.sample)
+                    daikin.counta = daikin.counta2 = daikin.countb = daikin.countb2 = daikin.countt = daikin.countt2 = 0;       // Reset sample counts
+                 if (daikin.sample <= now)
                  {              // New sample, consider some changes
                     int t2 = daikin.countt2;
                     int a = daikin.counta + daikin.counta2;     // Approaching
@@ -1676,9 +1682,13 @@ settings
                     int t = daikin.countt + daikin.countt2;     // Total (includes neither approaching or beyond, i.e. in range)
                     jo_t j = jo_object_alloc ();
                     jo_bool (j, "hot", hot);
-                    jo_int (j, "approaching", a);
-                    jo_int (j, "beyond", b);
-                    jo_int (j, t2 ? "samples" : "partial-samples", t);
+                    if (t)
+                    {
+                       jo_int (j, "approaching", a);
+                       jo_int (j, "beyond", b);
+                       jo_int (j, t2 ? "samples" : "initial-samples", t);
+                    }
+                    jo_int (j, "period", tsample);
                     jo_litf (j, "temp", "%.2f", current);
                     jo_litf (j, "min", "%.2f", min);
                     jo_litf (j, "max", "%.2f", max);
@@ -1687,7 +1697,7 @@ settings
                     daikin.countb2 = daikin.countb;
                     daikin.countt2 = daikin.countt;
                     daikin.counta = daikin.countb = daikin.countt = 0;
-                    daikin.sample = now;
+                    daikin.sample = now + tsample;
                     if (t2)
                     {           // Power, mode, fan, automation
                        if (autoband)
@@ -1746,11 +1756,6 @@ settings
                     else
                     {           // Control
                        controlstart ();
-                       if (daikin.lastheat != hot)
-                       {        // If we change mode, start samples again
-                          daikin.lastheat = hot;
-                          samplestart ();
-                       }
                        // What the A/C is using as current temperature
                        float reference = NAN;
                        if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))
