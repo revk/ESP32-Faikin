@@ -1662,7 +1662,7 @@ settings
                  daikin.maxtarget = NAN;
               }
               if (!isnan (min) && !isnan (max))
-              {                 // Monitoring
+              {                 // Monitoring and automation
                  daikin.countt++;       // Total
                  if ((hot && current < min) || (!hot && current > max))
                     daikin.counta++;    // Approaching temp
@@ -1674,18 +1674,14 @@ settings
                     int a = daikin.counta + daikin.counta2;     // Approaching
                     int b = daikin.countb + daikin.countb2;     // Beyond
                     int t = daikin.countt + daikin.countt2;     // Total (includes neither approaching or beyond, i.e. in range)
-                    if (debug)
-                    {
-                       jo_t j = jo_object_alloc ();
-                       jo_int (j, "a", a);
-                       jo_int (j, "b", b);
-                       jo_int (j, "t", t);
-                       jo_int (j, "t2", t2);
-                       jo_litf (j, "current", "%.2f", current);
-                       jo_litf (j, "min", "%.2f", min);
-                       jo_litf (j, "max", "%.2f", max);
-                       revk_info ("sample", &j);
-                    }
+                    jo_t j = jo_object_alloc ();
+                    jo_bool (j, "hot", hot);
+                    jo_int (j, "approaching", a);
+                    jo_int (j, "beyond", b);
+                    jo_int (j, t2 ? "samples" : "partial-samples", t);
+                    jo_litf (j, "temp", "%.2f", current);
+                    jo_litf (j, "min", "%.2f", min);
+                    jo_litf (j, "max", "%.2f", max);
                     // Next sample
                     daikin.counta2 = daikin.counta;
                     daikin.countb2 = daikin.countb;
@@ -1693,29 +1689,43 @@ settings
                     daikin.counta = daikin.countb = daikin.countt = 0;
                     daikin.sample = now;
                     if (t2)
-                    {           // Decisions (if we have more than one sample and min/max are set)
-                       if (autoband && (int) (max - min) >= autoband)
-                       {        // Auto on/off logic
+                    {           // Power, mode, fan, automation
+                       if (autoband)
+                       {        // Auto on/off logic - Only if autoband set, and only turn on if tight band (<=autoband)
                           if (daikin.power && !a && !b)
+                          {
+                             jo_bool (j, "set-power", 0);
                              daikin_set_v (power, 0);   // Turn off as 100% in band for last two period
-                          else if (!daikin.power && (a == t || b == t))
+                          } else if (!daikin.power && (a == t || b == t) && lroundf (max - min) <= autoband)
+                          {
+                             jo_bool (j, "set-power", 1);
                              daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
+                          }
                        }
                        if (daikin.power)
                        {
                           int step = (fanstep ? : s21 ? 2 : 1);
-                          if (a * 10 < t * 7 && step && daikin.fan > 1 && daikin.fan <= 5)
-                             daikin_set_v (fan, daikin.fan - step);     // Reduce fan
-                          if (!daikin.slave && a * 10 > t * 9 && step && daikin.fan >= 1 && daikin.fan < 5)
-                             daikin_set_v (fan, daikin.fan + step);     // Increase fan
                           if ((b * 2 > t || daikin.slave) && !a)
                           {     // Mode switch
+                             jo_string (j, "set-mode", hot ? "C" : "H");
                              daikin_set_e (mode, hot ? "C" : "H");      // Swap mode
                              if (step && daikin.fan > 1 && daikin.fan <= 5)
+                             {
+                                jo_int (j, "set-fan", 1);
                                 daikin_set_v (fan, 1);
+                             }
+                          } else if (a * 10 < t * 7 && step && daikin.fan > 1 && daikin.fan <= 5)
+                          {
+                             jo_int (j, "set-fan", daikin.fan - step);
+                             daikin_set_v (fan, daikin.fan - step);     // Reduce fan
+                          } else if (!daikin.slave && a * 10 > t * 9 && step && daikin.fan >= 1 && daikin.fan < 5)
+                          {
+                             jo_int (j, "set-fan", daikin.fan + step);
+                             daikin_set_v (fan, daikin.fan + step);     // Increase fan
                           }
                        }
                     }
+                    revk_info ("automation", &j);
                  }
               }
               // Control
