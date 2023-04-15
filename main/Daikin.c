@@ -1029,7 +1029,7 @@ web_root (httpd_req_t * req)
    addt ("Target", "autot");
    if (ela)
    {
-      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td>");
+      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
       httpd_resp_sendstr_chunk (req,
                                 "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">--None--");
       char found = 0;
