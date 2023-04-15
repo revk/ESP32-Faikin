@@ -142,6 +142,7 @@ struct
    uint8_t mode_changed:1;      // Status or control has changed for enum or bool
    uint8_t status_report:1;     // Send status report
    uint8_t ha_send:1;           // Send HA config
+   uint8_t remote:1;            // Remote control via MQTT
 } daikin = { 0 };
 
 const char *
@@ -775,6 +776,7 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       }
       if (!*autob)
          daikin.env = env;
+      daikin.remote = 1;        // Mark that we have remote control so don't offer BLE/local automation - autor takes priority though still
       daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -1021,7 +1023,14 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "</tr>");
    }
    httpd_resp_sendstr_chunk (req, "</table>");
+   httpd_resp_sendstr_chunk (req, "<p id=offline style='display:none'><b>System is off line.</b></p>");
+   httpd_resp_sendstr_chunk (req,
+                             "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
+   httpd_resp_sendstr_chunk (req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
+   httpd_resp_sendstr_chunk (req,
+                             "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 #ifdef ELA
+   if (autor || *autob || !daikin.remote)
    {
       httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
@@ -1067,12 +1076,6 @@ web_root (httpd_req_t * req)
    }
 #endif
    httpd_resp_sendstr_chunk (req, "</form>");
-   httpd_resp_sendstr_chunk (req,
-                             "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
-   httpd_resp_sendstr_chunk (req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
-   httpd_resp_sendstr_chunk (req, "<p id=offline style='display:none'>System is off line.</p>");
-   httpd_resp_sendstr_chunk (req,
-                             "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
    httpd_resp_sendstr_chunk (req, "</div>");
    if (webcontrol >= 2)
       httpd_resp_sendstr_chunk (req, "<p><a href='wifi'>Settings</a></p>");
@@ -1813,6 +1816,7 @@ app_main ()
                daikin_set_t (temp, daikin.heat ? daikin.maxtarget : daikin.mintarget);
             daikin.mintarget = NAN;
             daikin.maxtarget = NAN;
+            daikin.remote = 0;
          }
          if (!isnan (current) && !isnan (min) && !isnan (max) && tsample)
          {                      // Monitoring and automation
