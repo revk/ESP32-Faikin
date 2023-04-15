@@ -1022,12 +1022,11 @@ web_root (httpd_req_t * req)
    }
    httpd_resp_sendstr_chunk (req, "</table>");
 #ifdef ELA
-   if (ble)
    {
       httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
       addt ("Target", "autot");
-      if (ela)
+      if (ela && ble)
       {
          httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
          httpd_resp_sendstr_chunk (req,
