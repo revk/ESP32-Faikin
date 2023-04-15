@@ -41,6 +41,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`fantime`|This is how long we wait before changing fan - i.e. if we are not able to reach target temperature in this time the fan is increased.|
 |`fanstep`|Usually worked out automatically, but this says if internally the fan settings are 1/3/5 (Low/medium/high) or 1/2/3/4/5. `2` for the 1/3/5 mode. `0` for automatic.|
 |`thermref`|A percentage, `0` means reference is `inlet` temperature, `100` means reference is `home` temperature.|
+|`ble`|Boolean, if set then enable BLE working for external BlueCoinT device|
 |`autor`|A range value in 0.1C, `0` means disable local automation, `5` means ±0.5C automated controls|
 |`autot`|When `autor` is not `0` this is the target, with `autor` setting the range|
 |`autob`|When set this is the name of a BlueCoinT temperature sensor to use as the reference temperature|

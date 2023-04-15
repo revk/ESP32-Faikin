@@ -36,6 +36,7 @@ static const char TAG[] = "Daikin";
 	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
+	b(ble,false)		\
 	b(ha,true)		\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
@@ -885,11 +886,7 @@ web_head (httpd_req_t * req, const char *title)
 static esp_err_t
 web_foot (httpd_req_t * req)
 {
-   httpd_resp_sendstr_chunk (req, "<hr><address>");
-   char temp[20];
-   snprintf (temp, sizeof (temp), "%012llX", revk_binid);
-   httpd_resp_sendstr_chunk (req, temp);
-   httpd_resp_sendstr_chunk (req, "</address></body></html>");
+   httpd_resp_sendstr_chunk (req, "</body></html>");
    httpd_resp_sendstr_chunk (req, NULL);
    return ESP_OK;
 }
@@ -1025,47 +1022,50 @@ web_root (httpd_req_t * req)
    }
    httpd_resp_sendstr_chunk (req, "</table>");
 #ifdef ELA
-   httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
-   add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
-   addt ("Target", "autot");
-   if (ela)
+   if (ble)
    {
-      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
-      httpd_resp_sendstr_chunk (req,
-                                "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">--None--");
-      char found = 0;
-      for (ela_t * e = ela; e; e = e->next)
+      httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
+      add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
+      addt ("Target", "autot");
+      if (ela)
       {
-         httpd_resp_sendstr_chunk (req, "<option value=\"");
-         httpd_resp_sendstr_chunk (req, e->name);
-         httpd_resp_sendstr_chunk (req, "\"");
-         if (*autob && !strcmp (autob, e->name))
+         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
+         httpd_resp_sendstr_chunk (req,
+                                   "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">--None--");
+         char found = 0;
+         for (ela_t * e = ela; e; e = e->next)
          {
-            httpd_resp_sendstr_chunk (req, " selected");
-            found = 1;
+            httpd_resp_sendstr_chunk (req, "<option value=\"");
+            httpd_resp_sendstr_chunk (req, e->name);
+            httpd_resp_sendstr_chunk (req, "\"");
+            if (*autob && !strcmp (autob, e->name))
+            {
+               httpd_resp_sendstr_chunk (req, " selected");
+               found = 1;
+            }
+            httpd_resp_sendstr_chunk (req, ">");
+            httpd_resp_sendstr_chunk (req, e->name);
+            if (!e->missing)
+            {
+               char temp[20];
+               snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 100.0);
+               httpd_resp_sendstr_chunk (req, temp);
+               snprintf (temp, sizeof (temp), " %ddB", e->rssi);
+               httpd_resp_sendstr_chunk (req, temp);
+            }
          }
-         httpd_resp_sendstr_chunk (req, ">");
-         httpd_resp_sendstr_chunk (req, e->name);
-         if (!e->missing)
+         if (!found && *autob)
          {
-            char temp[20];
-            snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 100.0);
-            httpd_resp_sendstr_chunk (req, temp);
-            snprintf (temp, sizeof (temp), " %ddB", e->rssi);
-            httpd_resp_sendstr_chunk (req, temp);
+            httpd_resp_sendstr_chunk (req, "<option selected value=\"");
+            httpd_resp_sendstr_chunk (req, autob);
+            httpd_resp_sendstr_chunk (req, "\">");
+            httpd_resp_sendstr_chunk (req, autob);
+            httpd_resp_sendstr_chunk (req, " (not seen)");
          }
+         httpd_resp_sendstr_chunk (req, "</select></td></tr>");
       }
-      if (!found && *autob)
-      {
-         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
-         httpd_resp_sendstr_chunk (req, autob);
-         httpd_resp_sendstr_chunk (req, "\">");
-         httpd_resp_sendstr_chunk (req, autob);
-         httpd_resp_sendstr_chunk (req, " (not seen)");
-      }
-      httpd_resp_sendstr_chunk (req, "</select></td></tr>");
+      httpd_resp_sendstr_chunk (req, "</table><hr>");
    }
-   httpd_resp_sendstr_chunk (req, "</table><hr>");
 #endif
    httpd_resp_sendstr_chunk (req, "</form>");
    httpd_resp_sendstr_chunk (req,
@@ -1145,7 +1145,8 @@ web_status (httpd_req_t * req)
    {
       jo_t j = daikin_status ();
 #ifdef ELA
-      jo_string (j, "autob", autob);
+      if (ble)
+         jo_string (j, "autob", autob);
 #endif
       jo_int (j, "autor", autor);
       jo_litf (j, "autot", "%.1f", autot / 10.0);
@@ -1538,7 +1539,8 @@ app_main ()
    }
 
 #ifdef	ELA
-   ela_run ();
+   if (ble)
+      ela_run ();
 #endif
    while (1)
    {                            // Main loop
@@ -1568,7 +1570,7 @@ app_main ()
       {                         // Polling loop
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
 #ifdef ELA
-         if (*autob)
+         if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
             ela_expire (60);
             if (!bletemp || strcmp (bletemp->name, autob))
