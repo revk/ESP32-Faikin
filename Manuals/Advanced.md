@@ -42,6 +42,8 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`fanstep`|Usually worked out automatically, but this says if internally the fan settings are 1/3/5 (Low/medium/high) or 1/2/3/4/5. `2` for the 1/3/5 mode. `0` for automatic.|
 |`thermref`|A percentage, `0` means reference is `inlet` temperature, `100` means reference is `home` temperature.|
 
+An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
+
 ### Special settings
 
 Some more advances settings which you are unlikely to need to ever change.
