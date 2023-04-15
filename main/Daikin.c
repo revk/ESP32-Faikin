@@ -1862,12 +1862,12 @@ app_main ()
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
-                     } else if (autoband && !a && !b)
+                     } else if (!autor && autoband && !a && !b)
                      {
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } else if (autoband && (a == t || b == t) && lroundf (max - min) <= autoband)
+                  } else if (!autor && autoband && (a == t || b == t) && lroundf (max - min) <= autoband)
                   {
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
