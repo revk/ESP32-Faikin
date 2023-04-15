@@ -1763,8 +1763,8 @@ settings
                        // Limit settings to acceptable values
                        if (s21)
                           set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
-                       if (set < 16)
-                          set = 16;
+                       if (set < (s21 ? 18 : 16))       // S21 has min 18C
+                          set = (s21 ? 18 : 16);
                        if (set > 32)
                           set = 32;
                        if (!isnan (reference))
