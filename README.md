@@ -1,14 +1,12 @@
 # ESP32-Daikin
 
-Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. But their implementation of IoT (Internet of Things); remote control over the Internet -  leaves a lot to be desired. Their app is not well supported, and does not work well. If you are planning on integrating your air conditioners into something like an MQTT set up in your home or office, or simply want very basic web control / status for your units, this unit provides these features. It plugs in where the old Daikin WiFi module goes.
+Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. But their implementation of IoT (Internet of Things); remote control over the Internet -  leaves a lot to be desired. Their app is not well supported, and does not work well. If you are planning on integrating your air conditioners into something like an MQTT set up in your home or office, or simply want very basic web control / status for your units, this unit provides these features. It plugs in where the old Daikin WiFi module goes. The code is being updated from time to time and now incldues Home Assistant integration.
 
 This is code and PCB design to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
 
-<<<<<<< HEAD
-Buy on [Amazon](https://www.amazon.co.uk/dp/B0BTZ4F5FH)
-=======
-Amazon: https://www.amazon.co.uk/dp/B0BTZ4F5FH (currently UK only, as Amazon don't want to export)
->>>>>>> fcb1afce0d8ea6bf49d86eb3927206e5a9fcb95b
+Buy on [Amazon](https://www.amazon.co.uk/dp/B0BTZ4F5FH) This is UK only as Amazon won't export it for some readon, but one customer had success using [Forward2Me](https://www.forward2me.com/) to order on Amazon and export.
+
+## Why I made this
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
 
@@ -25,6 +23,9 @@ Appears as access point with simple web page to set up on local WiFI
 Local interactive web control page using *hostname*.local, no app required, no external internet required.
 
 ![IMG_2421](https://user-images.githubusercontent.com/996983/218394392-48b47be4-5989-474e-beab-734dd6ef83d9.PNG)
+
+- [Setup](Manuals/Setup.md) Manual
+- [Advanced](Manuals/Advanced.md) Manual
 
 # Design
 
