@@ -35,6 +35,12 @@ all:	tools
 
 tools:	$(TOOLS)
 
+install:	set
+	# Assuming you are serving OTA from local apache
+	cp Daikin-S1.bin /var/www/
+	cp Daikin-S1-PICO.bin /var/www/
+	cp Daikin-S1-SOLO.bin /var/www/
+
 set:    wroom solo pico
 
 pico:
