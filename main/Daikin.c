@@ -1047,8 +1047,8 @@ web_root (httpd_req_t * req)
          httpd_resp_sendstr_chunk (req, e->name);
          if (!e->missing)
          {
-            char temp[10];
-            snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 10.0);
+            char temp[20];
+            snprintf (temp, sizeof (temp), " (%.1f℃)", e->temp / 100.0);
             httpd_resp_sendstr_chunk (req, temp);
             snprintf (temp, sizeof (temp), " %ddB", e->rssi);
             httpd_resp_sendstr_chunk (req, temp);
