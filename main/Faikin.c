@@ -1047,7 +1047,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addt ("Target", "autot");
-      if (ela && ble)
+      if (ble && (ela || *autob))
       {
          httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
          httpd_resp_sendstr_chunk (req,
@@ -1080,7 +1080,6 @@ web_root (httpd_req_t * req)
             httpd_resp_sendstr_chunk (req, autob);
             httpd_resp_sendstr_chunk (req, "\">");
             httpd_resp_sendstr_chunk (req, autob);
-            httpd_resp_sendstr_chunk (req, " (not seen)");
          }
          httpd_resp_sendstr_chunk (req, "</select></td></tr>");
       }
@@ -1104,7 +1103,7 @@ web_root (httpd_req_t * req)
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
-                             "ws.onerror=ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"        //
+                             "ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"   //
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
@@ -1491,6 +1490,13 @@ app_main ()
 
    // Web interface
    httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
+   config.enable_so_linger = true;      // These are a tad experimental - it seems BLE upsets TCP connect or web sockets in some way
+   config.linger_timeout = 1;
+   config.lru_purge_enable = true;
+   config.keep_alive_enable = true;
+   config.keep_alive_count = 10;
+   config.recv_wait_timeout = 60;
+   config.send_wait_timeout = 60;
    if (!httpd_start (&webserver, &config))
    {
       if (webcontrol)
