@@ -895,7 +895,7 @@ web_head (httpd_req_t * req, const char *title)
                              "span.slider:before{border-radius:50%;}"   //
                              "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"        //
                              "select{height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"     //
-                             "input.temp{width:200px;}" //
+                             "input.temp{width:300px;}" //
                              "</style><body><h1>");
    if (title)
       httpd_resp_sendstr_chunk (req, title);
