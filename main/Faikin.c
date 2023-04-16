@@ -1056,9 +1056,11 @@ web_root (httpd_req_t * req)
       add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addt ("Target", "autot");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
-      httpd_resp_sendstr_chunk (req,
-                                "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">");
-      httpd_resp_sendstr_chunk (req, ble ? "-- None --" : "-- Disabled --");
+      httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
+      if (!ble)
+         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- Disabled --");
+      else if (!*autob)
+         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
       char found = 0;
       if (!ble)
          httpd_resp_sendstr_chunk (req, "<option value=+>-- Enable BLE --");
@@ -1094,7 +1096,7 @@ web_root (httpd_req_t * req)
       if (ble)
          httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
       httpd_resp_sendstr_chunk (req, "</select>");
-      if (ble && uptime () < 60)
+      if (ble && (uptime () < 60 || !found))
          httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
       httpd_resp_sendstr_chunk (req, "</td></tr>");
       httpd_resp_sendstr_chunk (req, "</table><hr>");
@@ -1118,7 +1120,7 @@ web_root (httpd_req_t * req)
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
                              "ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"   //
-			     "ws.onerror=function(v){location.reload();};"	//
+                             "ws.onerror=function(v){location.reload();};"      //
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
