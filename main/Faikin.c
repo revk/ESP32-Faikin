@@ -685,7 +685,14 @@ daikin_control (jo_t j)
       {                         // Stored settings
          if (!s)
             s = jo_object_alloc ();
-         jo_string (s, tag, val);
+         if (!strcmp (val, "+"))
+            jo_bool (s, "ble", 1);      // Enable BLE (reboots)
+         else if (!strcmp (val, "-"))
+         {
+            jo_bool (s, "ble", 0);      // Disable BLE (reboots)
+            jo_string (s, tag, "");
+         } else
+            jo_string (s, tag, val);    // Set BLE value
       }
       if (err)
       {                         // Error report
@@ -882,7 +889,8 @@ web_head (httpd_req_t * req, const char *title)
                              "input:checked+.slider:before{-webkit-transform:translateX(30px);-ms-transform:translateX(30px);transform:translateX(30px);}"      //
                              "span.slider:before{border-radius:50%;}"   //
                              "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"        //
-                             "select{height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"       //
+                             "select{height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"     //
+                             "input.temp{width:200px;}" //
                              "</style><body><h1>");
    if (title)
       httpd_resp_sendstr_chunk (req, title);
@@ -991,7 +999,7 @@ web_root (httpd_req_t * req)
    void addt (const char *tag, const char *field)
    {
       addh (tag);
-      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range min=");
+      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp min=");
       httpd_resp_sendstr_chunk (req, s21 ? "18" : "16");
       httpd_resp_sendstr_chunk (req, " max=32 step=");
       httpd_resp_sendstr_chunk (req, s21 ? "0.5" : "0.1");
@@ -1047,12 +1055,14 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addt ("Target", "autot");
-      if (ble && (ela || *autob))
-      {
-         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
-         httpd_resp_sendstr_chunk (req,
-                                   "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">--None--");
-         char found = 0;
+      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
+      httpd_resp_sendstr_chunk (req,
+                                "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\"><option value=\"\">");
+      httpd_resp_sendstr_chunk (req, ble ? "-- None --" : "-- Disabled --");
+      char found = 0;
+      if (!ble)
+         httpd_resp_sendstr_chunk (req, "<option value=+>-- Enable BLE --");
+      else
          for (ela_t * e = ela; e; e = e->next)
          {
             httpd_resp_sendstr_chunk (req, "<option value=\"");
@@ -1074,15 +1084,16 @@ web_root (httpd_req_t * req)
                httpd_resp_sendstr_chunk (req, temp);
             }
          }
-         if (!found && *autob)
-         {
-            httpd_resp_sendstr_chunk (req, "<option selected value=\"");
-            httpd_resp_sendstr_chunk (req, autob);
-            httpd_resp_sendstr_chunk (req, "\">");
-            httpd_resp_sendstr_chunk (req, autob);
-         }
-         httpd_resp_sendstr_chunk (req, "</select></td></tr>");
+      if (!found && *autob)
+      {
+         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
+         httpd_resp_sendstr_chunk (req, autob);
+         httpd_resp_sendstr_chunk (req, "\">");
+         httpd_resp_sendstr_chunk (req, autob);
       }
+      if (ble)
+         httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
+      httpd_resp_sendstr_chunk (req, "</select></td></tr>");
       httpd_resp_sendstr_chunk (req, "</table><hr>");
    }
 #endif
@@ -1559,6 +1570,7 @@ app_main ()
    if (ble)
       ela_run ();
 #endif
+
    while (1)
    {                            // Main loop
       {                         // Poke UART
