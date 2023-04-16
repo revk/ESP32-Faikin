@@ -30,14 +30,13 @@ endif
 all:	tools
 	@echo Make: $(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
-	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
+	@cp --remove-destination build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
 	@echo Done: $(PROJECT_NAME)$(SUFFIX).bin
 
 tools:	$(TOOLS)
 
 issue:	set
-	# Assuming you are serving OTA from local apache
-	cp --remove-destination Faikin*.bin /var/www/ota/
+	cp --remove-destination Faikin*.bin release
 
 set:    wroom solo pico
 
