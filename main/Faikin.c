@@ -1118,6 +1118,7 @@ web_root (httpd_req_t * req)
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
                              "ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"   //
+			     "ws.onerror=function(v){location.reload();};"	//
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
