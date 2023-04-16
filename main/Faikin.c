@@ -47,6 +47,8 @@ static const char TAG[] = "Faikin";
 	u8l(heatback,6)		\
 	u8l(switch10,5)		\
 	u8l(push10,1)		\
+	u16l(auto0,0)		\
+	u16l(auto1,0)		\
 	u16l(autot,0)		\
 	u8l(autor,0)		\
 	sl(autob)		\
@@ -675,6 +677,15 @@ daikin_control (jo_t j)
 #define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
+      if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
+      {                         // Stored settings
+         if (strlen (val) >= 5)
+         {
+            if (!s)
+               s = jo_object_alloc ();
+            jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
+         }
+      }
       if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
       {                         // Stored settings
          if (!s)
@@ -850,7 +861,7 @@ daikin_status (void)
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    jo_t j = jo_object_alloc ();
 #define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
-#define t(name)         if(daikin.status_known&CONTROL_##name){if(daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
+#define t(name)         if(daikin.status_known&CONTROL_##name){if(isnan(daikin.name)||daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
 #define i(name)         if(daikin.status_known&CONTROL_##name)jo_int(j,#name,daikin.name);
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
@@ -867,6 +878,8 @@ daikin_status (void)
    {
       jo_litf (j, "autor", "%.1f", autor / 10.0);
       jo_litf (j, "autot", "%.1f", autot / 10.0);
+      jo_stringf (j, "auto0", "%02d:%02d", auto0 / 100, auto0 % 100);
+      jo_stringf (j, "auto1", "%02d:%02d", auto1 / 100, auto1 % 100);
    }
    xSemaphoreGive (daikin.mutex);
    return j;
@@ -896,6 +909,7 @@ web_head (httpd_req_t * req, const char *title)
                              "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"        //
                              "select{height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"     //
                              "input.temp{width:300px;}" //
+                             "input.time{height:34px;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"  //
                              "</style><body><h1>");
    if (title)
       httpd_resp_sendstr_chunk (req, title);
@@ -1001,7 +1015,7 @@ web_root (httpd_req_t * req)
       addh (tag);
       addf (tag);
    }
-   void addt (const char *tag, const char *field)
+   void addtemp (const char *tag, const char *field)
    {
       addh (tag);
       httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp min=");
@@ -1017,6 +1031,16 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "></span></td>");
       addf (tag);
    }
+   void addtime (const char *tag, const char *field)
+   {
+      httpd_resp_sendstr_chunk (req, "<td align=right>");
+      httpd_resp_sendstr_chunk (req, tag);
+      httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time id=");
+      httpd_resp_sendstr_chunk (req, field);
+      httpd_resp_sendstr_chunk (req, " onchange=\"w('");
+      httpd_resp_sendstr_chunk (req, field);
+      httpd_resp_sendstr_chunk (req, "',this.value);\"></td>");
+   }
    httpd_resp_sendstr_chunk (req, "<tr>");
    addb ("⏻", "power");
    httpd_resp_sendstr_chunk (req, "</tr>");
@@ -1025,7 +1049,7 @@ web_root (httpd_req_t * req)
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "(Night)", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addt ("Set", "temp");
+   addtemp ("Set", "temp");
    addhf ("Temp");
    addhf ("Coil");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
@@ -1059,7 +1083,11 @@ web_root (httpd_req_t * req)
    {
       httpd_resp_sendstr_chunk (req, "<div id=remote><hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
-      addt ("Target", "autot");
+      addtemp ("Target", "autot");
+      httpd_resp_sendstr_chunk (req, "<tr>");
+      addtime ("On", "auto1");
+      addtime ("Off", "auto0");
+      httpd_resp_sendstr_chunk (req, "<td colspan=2>Set 00:00 to disable</td></tr>");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
       httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
       if (!ble)
@@ -1137,12 +1165,14 @@ web_root (httpd_req_t * req)
                              "b('swingv',o.swingv);"    //
                              "b('econo',o.econo);"      //
                              "e('mode',o.mode);"        //
-                             "s('Temp',(o.home+'℃')+(o.env?' / '+o.env+'℃':''));"   //
+                             "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
                              "n('temp',o.temp);"        //
-                             "s('Ttemp',(o.temp+'℃').replace('.5','½')+(o.control?'✷':''));"       //
+                             "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
                              "n('autot',o.autot);"      //
                              "e('autor',o.autor);"      //
                              "n('autob',o.autob);"      //
+                             "n('auto0',o.auto0);"      //
+                             "n('auto1',o.auto1);"      //
                              "s('Tautot',(o.autot+'℃'));"     //
                              "s('Coil',(o.liquid+'℃'));"      //
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
@@ -1576,33 +1606,57 @@ app_main ()
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
 
+   if (!tx && !rx)
+   {                            // Dummy
+      daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode;
+      daikin.power = 1;
+      daikin.mode = 1;
+      daikin.temp = 20.0;
+   }
+
    while (1)
    {                            // Main loop
-      {                         // Poke UART
+      daikin.talking = 1;
+      if (tx || rx)
+      {
+         // Poke UART
          uart_setup ();
          sleep (1);
          uart_flush (uart);     // Clean start
-      }
-      daikin.talking = 1;
-      if (!s21)
-      {                         // Startup
-         daikin_command (0xAA, 1, (uint8_t[])
-                         {
-                         0x01}
-         );
-         daikin_command (0xBA, 0, NULL);
-         daikin_command (0xBB, 0, NULL);
-      }
-      if (s21_set && daikin.online != daikin.talking)
-      {
-         daikin.online = daikin.talking;
-         daikin.status_changed = 1;
-      }
+         if (!s21)
+         {                      // Startup
+            daikin_command (0xAA, 1, (uint8_t[])
+                            {
+                            0x01}
+            );
+            daikin_command (0xBA, 0, NULL);
+            daikin_command (0xBB, 0, NULL);
+         }
+         if (s21_set && daikin.online != daikin.talking)
+         {
+            daikin.online = daikin.talking;
+            daikin.status_changed = 1;
+         }
+      } else
+         daikin.control_changed = 0;    // Dummy
       if (ha)
          daikin.ha_send = 1;
       do
       {                         // Polling loop
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
+         if (auto0 || auto1)
+         {                      // Auto on/off
+            static int last = 0;
+            time_t now = time (0);
+            struct tm tm;
+            localtime_r (&now, &tm);
+            int hhmm = tm.tm_hour * 100 + tm.tm_min;
+            if (auto0 && last < auto0 && hhmm >= auto0)
+               daikin_set_v (power, 0);
+            if (auto1 && last < auto1 && hhmm >= auto1)
+               daikin_set_v (power, 1);
+            last = hhmm;
+         }
 #ifdef ELA
          if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
@@ -1632,110 +1686,113 @@ app_main ()
             daikin.mintarget = (autot - autor) / 10.0;
             daikin.maxtarget = (autot + autor) / 10.0;
          }
-         if (s21)
-         {                      // Older S21
-            char temp[5];
-            // These are what their wifi polls
+         if (tx || rx)
+         {
+            if (s21)
+            {                   // Older S21
+               char temp[5];
+               // These are what their wifi polls
 #define poll(a,b,c,d) static uint8_t a##b##d=10; if(a##b##d){int r=daikin_s21_command(*#a,*#b,c,#d); if(r==S21_OK)a##b##d=100; else if(r==S21_NAK)a##b##d--;} if(!daikin.talking)a##b##d=10;
-            poll (F, 1, 0,);
-            poll (F, 5, 0,);
-            poll (F, 6, 0,);
-            poll (F, 7, 0,);
-            poll (R, H, 0,);
-            poll (R, I, 0,);
-            poll (R, a, 0,);
-            if (morepoll)
-            {                   // Additional polled values
-               poll (F, 2, 0,);
-               poll (F, 3, 0,);
-               poll (F, 4, 0,);
-               poll (F, 8, 0,);
-               poll (F, 9, 0,);
-               poll (F, B, 0,);
-               poll (F, G, 0,);
-               poll (F, K, 0,);
-               poll (F, M, 0,);
-               poll (F, N, 0,);
-               poll (F, P, 0,);
-               poll (F, Q, 0,);
-               poll (F, S, 0,);
-               poll (F, T, 0,);
-               poll (F, U, 2, 02);
-               poll (F, U, 2, 04);
-               poll (R, N, 0,); // May be a useful temp, needs working out
-               poll (R, X, 0,);
-               poll (R, D, 0,);
-               poll (R, L, 0,);
-            }
+               poll (F, 1, 0,);
+               poll (F, 5, 0,);
+               poll (F, 6, 0,);
+               poll (F, 7, 0,);
+               poll (R, H, 0,);
+               poll (R, I, 0,);
+               poll (R, a, 0,);
+               if (morepoll)
+               {                // Additional polled values
+                  poll (F, 2, 0,);
+                  poll (F, 3, 0,);
+                  poll (F, 4, 0,);
+                  poll (F, 8, 0,);
+                  poll (F, 9, 0,);
+                  poll (F, B, 0,);
+                  poll (F, G, 0,);
+                  poll (F, K, 0,);
+                  poll (F, M, 0,);
+                  poll (F, N, 0,);
+                  poll (F, P, 0,);
+                  poll (F, Q, 0,);
+                  poll (F, S, 0,);
+                  poll (F, T, 0,);
+                  poll (F, U, 2, 02);
+                  poll (F, U, 2, 04);
+                  poll (R, N, 0,);      // May be a useful temp, needs working out
+                  poll (R, X, 0,);
+                  poll (R, D, 0,);
+                  poll (R, L, 0,);
+               }
 #undef poll
-            if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
-            {                   // D1
-               xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-               temp[0] = daikin.power ? '1' : '0';
-               temp[1] = ("64300002"[daikin.mode]);     // FHCA456D mapped to AXDCHXF
-               temp[2] = 0x40 + lroundf ((daikin.temp - 18.0) * 2);
-               temp[3] = ("A34567B"[daikin.fan]);
-               daikin_s21_command ('D', '1', 4, temp);
-               xSemaphoreGive (daikin.mutex);
+               if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
+               {                // D1
+                  xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+                  temp[0] = daikin.power ? '1' : '0';
+                  temp[1] = ("64300002"[daikin.mode]);  // FHCA456D mapped to AXDCHXF
+                  temp[2] = 0x40 + lroundf ((daikin.temp - 18.0) * 2);
+                  temp[3] = ("A34567B"[daikin.fan]);
+                  daikin_s21_command ('D', '1', 4, temp);
+                  xSemaphoreGive (daikin.mutex);
+               }
+               if (daikin.control_changed & (CONTROL_swingh | CONTROL_swingv))
+               {                // D5
+                  xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+                  temp[0] = '0' + (daikin.swingh ? 2 : 0) + (daikin.swingv ? 1 : 0) + (daikin.swingh && daikin.swingv ? 4 : 0);
+                  temp[1] = (daikin.swingh || daikin.swingv ? '?' : '0');
+                  temp[2] = '0';
+                  temp[3] = '0';
+                  daikin_s21_command ('D', '5', 4, temp);
+                  xSemaphoreGive (daikin.mutex);
+               }
+               if (daikin.control_changed & CONTROL_powerful)
+               {                // D6
+                  xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+                  temp[0] = '0' + (daikin.powerful ? 2 : 0);
+                  temp[1] = '0';
+                  temp[2] = '0';
+                  temp[3] = '0';
+                  daikin_s21_command ('D', '6', 4, temp);
+                  xSemaphoreGive (daikin.mutex);
+               }
+               if (daikin.control_changed & CONTROL_econo)
+               {                // D7
+                  xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+                  temp[0] = '0';
+                  temp[1] = '0' + (daikin.econo ? 2 : 0);
+                  temp[2] = '0';
+                  temp[3] = '0';
+                  daikin_s21_command ('D', '7', 4, temp);
+                  xSemaphoreGive (daikin.mutex);
+               }
+            } else
+            {                   // Newer protocol
+               //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
+               daikin_command (0xBD, 0, NULL);
+               daikin_command (0xBE, 0, NULL);
+               uint8_t ca[17] = { 0 };
+               uint8_t cb[2] = { 0 };
+               if (daikin.control_changed)
+               {
+                  xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+                  ca[0] = 2 + daikin.power;
+                  ca[1] = 0x10 + daikin.mode;
+                  if (daikin.mode >= 1 && daikin.mode <= 3)
+                  {             // Temp
+                     int t = lroundf (daikin.temp * 10);
+                     ca[3] = t / 10;
+                     ca[4] = 0x80 + (t % 10);
+                  } else
+                     daikin.control_changed &= ~CONTROL_temp;
+                  if (daikin.mode == 1 || daikin.mode == 2)
+                     cb[0] = daikin.mode;
+                  else
+                     cb[0] = 6;
+                  cb[1] = 0x80 + ((daikin.fan & 7) << 4);
+                  xSemaphoreGive (daikin.mutex);
+               }
+               daikin_command (0xCA, sizeof (ca), ca);
+               daikin_command (0xCB, sizeof (cb), cb);
             }
-            if (daikin.control_changed & (CONTROL_swingh | CONTROL_swingv))
-            {                   // D5
-               xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-               temp[0] = '0' + (daikin.swingh ? 2 : 0) + (daikin.swingv ? 1 : 0) + (daikin.swingh && daikin.swingv ? 4 : 0);
-               temp[1] = (daikin.swingh || daikin.swingv ? '?' : '0');
-               temp[2] = '0';
-               temp[3] = '0';
-               daikin_s21_command ('D', '5', 4, temp);
-               xSemaphoreGive (daikin.mutex);
-            }
-            if (daikin.control_changed & CONTROL_powerful)
-            {                   // D6
-               xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-               temp[0] = '0' + (daikin.powerful ? 2 : 0);
-               temp[1] = '0';
-               temp[2] = '0';
-               temp[3] = '0';
-               daikin_s21_command ('D', '6', 4, temp);
-               xSemaphoreGive (daikin.mutex);
-            }
-            if (daikin.control_changed & CONTROL_econo)
-            {                   // D7
-               xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-               temp[0] = '0';
-               temp[1] = '0' + (daikin.econo ? 2 : 0);
-               temp[2] = '0';
-               temp[3] = '0';
-               daikin_s21_command ('D', '7', 4, temp);
-               xSemaphoreGive (daikin.mutex);
-            }
-         } else
-         {                      // Newer protocol
-            //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
-            daikin_command (0xBD, 0, NULL);
-            daikin_command (0xBE, 0, NULL);
-            uint8_t ca[17] = { 0 };
-            uint8_t cb[2] = { 0 };
-            if (daikin.control_changed)
-            {
-               xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-               ca[0] = 2 + daikin.power;
-               ca[1] = 0x10 + daikin.mode;
-               if (daikin.mode >= 1 && daikin.mode <= 3)
-               {                // Temp
-                  int t = lroundf (daikin.temp * 10);
-                  ca[3] = t / 10;
-                  ca[4] = 0x80 + (t % 10);
-               } else
-                  daikin.control_changed &= ~CONTROL_temp;
-               if (daikin.mode == 1 || daikin.mode == 2)
-                  cb[0] = daikin.mode;
-               else
-                  cb[0] = 6;
-               cb[1] = 0x80 + ((daikin.fan & 7) << 4);
-               xSemaphoreGive (daikin.mutex);
-            }
-            daikin_command (0xCA, sizeof (ca), ca);
-            daikin_command (0xCB, sizeof (cb), cb);
          }
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {

@@ -47,6 +47,8 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`autor`|A range value in 0.1C, `0` means disable local automation, `5` means ±0.5C automated controls|
 |`autot`|When `autor` is not `0` this is the target, with `autor` setting the range|
 |`autob`|When set this is the name of a BlueCoinT temperature sensor to use as the reference temperature|
+|`auto0`|Numeric in format HHMM, time to automatically turn off (0000 means don't turn off)|
+|`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 
@@ -110,4 +112,6 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`econo`|Boolean|
 |`autor`|Range for automation, `0.0` means off - this sets the `autor` setting to 10 times this value|
 |`autot`|Target temp for automation, This sets the `autot` setting to 10 times this value|
-|`autob`|The name of the BLE device. This sets the `auotb` setting|
+|`autob`|The name of the BLE device. This sets the `autob` setting|
+|`auto0`|Time to turn off HH:MM, `00:00` is don't turn off. This sets the `auto0` setting|
+|`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
