@@ -1093,7 +1093,10 @@ web_root (httpd_req_t * req)
       }
       if (ble)
          httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
-      httpd_resp_sendstr_chunk (req, "</select></td></tr>");
+      httpd_resp_sendstr_chunk (req, "</select>");
+      if (ble && uptime () < 60)
+         httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
+      httpd_resp_sendstr_chunk (req, "</td></tr>");
       httpd_resp_sendstr_chunk (req, "</table><hr>");
    }
 #endif
