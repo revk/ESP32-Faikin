@@ -1119,8 +1119,8 @@ web_root (httpd_req_t * req)
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
-                             "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};"   //
-                             "ws.onerror=function(v){ws.close();};"      //
+                             "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};"      //
+                             "ws.onerror=function(v){ws.close();};"     //
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
@@ -1144,7 +1144,7 @@ web_root (httpd_req_t * req)
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
-                             "if(o.shutdown){reboot=true;s('shutdown',o.shutdown);h('shutdown',true);};"       //
+                             "if(o.shutdown){reboot=true;s('shutdown',o.shutdown);h('shutdown',true);};"        //
                              "};};c();" //
                              "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
                              "</script>");
@@ -1568,6 +1568,8 @@ app_main ()
 #ifdef	ELA
    if (ble)
       ela_run ();
+   else
+      esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
 
    while (1)
