@@ -892,7 +892,14 @@ web_head (httpd_req_t * req, const char *title)
 static esp_err_t
 web_foot (httpd_req_t * req)
 {
-   httpd_resp_sendstr_chunk (req, "</body></html>");
+   char temp[20];
+   httpd_resp_sendstr_chunk (req, "<hr><address>");
+   httpd_resp_sendstr_chunk (req, appname);
+   httpd_resp_sendstr_chunk (req, ": ");
+   httpd_resp_sendstr_chunk (req, revk_version);
+   httpd_resp_sendstr_chunk (req, " ");
+   httpd_resp_sendstr_chunk (req, revk_build_date (temp) ? : "?");
+   httpd_resp_sendstr_chunk (req, "</address></body></html>");
    httpd_resp_sendstr_chunk (req, NULL);
    return ESP_OK;
 }
@@ -1086,7 +1093,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<p><a href='wifi'>Settings</a></p>");
    httpd_resp_sendstr_chunk (req, "<script>"    //
                              "var ws=0;"        //
-                             "var reboot=0;"      //
+                             "var reboot=0;"    //
                              "function g(n){return document.getElementById(n);};"       //
                              "function b(n,v){var d=g(n);if(d)d.checked=v;}"    //
                              "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"       //
@@ -1097,8 +1104,7 @@ web_root (httpd_req_t * req)
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
-                             "ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"    //
-                             "ws.onerror=function(v){g('top').className='off';setTimeout(function() {c();},10000);};"   //
+                             "ws.onerror=ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"        //
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
@@ -1106,7 +1112,7 @@ web_root (httpd_req_t * req)
                              "h('control',o.control);"  //
                              "h('slave',o.slave);"      //
                              "h('antifreeze',o.antifreeze);"    //
-			     "h('shutdown',o.shutdown);" //
+                             "h('shutdown',o.shutdown);"        //
                              "b('powerful',o.powerful);"        //
                              "b('swingh',o.swingh);"    //
                              "b('swingv',o.swingv);"    //
@@ -1123,7 +1129,7 @@ web_root (httpd_req_t * req)
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
-			     "reboot=o.shutdown;" //
+                             "reboot=o.shutdown;"       //
                              "};};c();" //
                              "setInterval(function() {ws.send('');},1000);"     //
                              "</script>");
@@ -1152,8 +1158,9 @@ web_status (httpd_req_t * req)
    esp_err_t status (void)
    {
       jo_t j = daikin_status ();
-      int t=revk_shutting_down();
-      if(t)jo_int(j,"shutdown",t);
+      int t = revk_shutting_down ();
+      if (t)
+         jo_int (j, "shutdown", t);
       wsend (&j);
       return ESP_OK;
    }
