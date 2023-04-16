@@ -780,10 +780,10 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       {
          daikin.mintarget = min;
          daikin.maxtarget = max;
+         daikin.remote = 1;     // Mark that we have remote control so don't offer BLE/local automation - autor takes priority though still
       }
       if (!*autob)
          daikin.env = env;
-      daikin.remote = 1;        // Mark that we have remote control so don't offer BLE/local automation - autor takes priority though still
       daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -861,8 +861,13 @@ daikin_status (void)
    if (ble)
       jo_string (j, "autob", autob);
 #endif
-   jo_litf (j, "autor", "%.1f", autor / 10.0);
-   jo_litf (j, "autot", "%.1f", autot / 10.0);
+   if (daikin.remote)
+      jo_bool (j, "remote", 1);
+   else
+   {
+      jo_litf (j, "autor", "%.1f", autor / 10.0);
+      jo_litf (j, "autot", "%.1f", autot / 10.0);
+   }
    xSemaphoreGive (daikin.mutex);
    return j;
 }
@@ -1052,7 +1057,7 @@ web_root (httpd_req_t * req)
 #ifdef ELA
    if (autor || *autob || !daikin.remote)
    {
-      httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
+      httpd_resp_sendstr_chunk (req, "<div id=remote><hr><p>Automated local controls</p><table>");
       add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addt ("Target", "autot");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
@@ -1099,7 +1104,7 @@ web_root (httpd_req_t * req)
       if (ble && (uptime () < 60 || !found))
          httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
       httpd_resp_sendstr_chunk (req, "</td></tr>");
-      httpd_resp_sendstr_chunk (req, "</table><hr>");
+      httpd_resp_sendstr_chunk (req, "</table><hr></div>");
    }
 #endif
    httpd_resp_sendstr_chunk (req, "</form>");
@@ -1127,8 +1132,7 @@ web_root (httpd_req_t * req)
                              "h('offline',!o.online);"  //
                              "h('control',o.control);"  //
                              "h('slave',o.slave);"      //
-                             "h('antifreeze',o.antifreeze);"    //
-                             "b('powerful',o.powerful);"        //
+                             "h('remote',!o.remote);"   //
                              "b('swingh',o.swingh);"    //
                              "b('swingv',o.swingv);"    //
                              "b('econo',o.econo);"      //
