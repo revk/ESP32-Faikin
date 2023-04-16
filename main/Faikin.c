@@ -907,9 +907,9 @@ web_head (httpd_req_t * req, const char *title)
                              "input:checked+.slider:before{-webkit-transform:translateX(30px);-ms-transform:translateX(30px);transform:translateX(30px);}"      //
                              "span.slider:before{border-radius:50%;}"   //
                              "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"        //
-                             "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"     //
-                             "input.temp{min-width:300px;}" //
-                             "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"  //
+                             "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}" //
+                             "input.temp{min-width:300px;}"     //
+                             "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"      //
                              "</style><body><h1>");
    if (title)
       httpd_resp_sendstr_chunk (req, title);
@@ -1173,8 +1173,8 @@ web_root (httpd_req_t * req)
                              "n('autob',o.autob);"      //
                              "n('auto0',o.auto0);"      //
                              "n('auto1',o.auto1);"      //
-                             "s('Tautot',(o.autot+'℃'));"     //
-                             "s('Coil',(o.liquid+'℃'));"      //
+                             "s('Tautot',(o.autot?o.autot+'℃':''));"  //
+                             "s('Coil',(o.liquid?o.liquid+'℃':'---'));"       //
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
@@ -1650,12 +1650,13 @@ app_main ()
             time_t now = time (0);
             struct tm tm;
             localtime_r (&now, &tm);
-            int hhmm = tm.tm_hour * 100 + tm.tm_min;
+            int next = tm.tm_hour * 100 + tm.tm_min;
+            int hhmm = next ? : 2400;
             if (auto0 && last < auto0 && hhmm >= auto0)
                daikin_set_v (power, 0);
             if (auto1 && last < auto1 && hhmm >= auto1)
                daikin_set_v (power, 1);
-            last = hhmm;
+            last = next;
          }
 #ifdef ELA
          if (ble && *autob)
