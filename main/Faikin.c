@@ -1507,15 +1507,6 @@ app_main ()
 
    // Web interface
    httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
-#if 0
-   config.enable_so_linger = true;      // These are a tad experimental - it seems BLE upsets TCP connect or web sockets in some way
-   config.linger_timeout = 1;
-   config.lru_purge_enable = true;
-   config.keep_alive_enable = true;
-   config.keep_alive_count = 10;
-   config.recv_wait_timeout = 60;
-   config.send_wait_timeout = 60;
-#endif
    if (!httpd_start (&webserver, &config))
    {
       if (webcontrol)
