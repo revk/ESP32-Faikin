@@ -2,7 +2,7 @@
 *~
 *.swp
 .DS_Store
-*.bin
+Faikin*.bin
 *.old
 *.BAK
 */*.old
