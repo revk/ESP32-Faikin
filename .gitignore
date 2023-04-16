@@ -2,7 +2,6 @@
 *~
 *.swp
 .DS_Store
-build/*.bin
 *.bin
 *.old
 *.BAK
