@@ -675,13 +675,13 @@ daikin_control (jo_t j)
 #define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
-      if (!strcmp (tag, "autot"))
+      if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
       {                         // Stored settings
          if (!s)
             s = jo_object_alloc ();
          jo_int (s, tag, lroundf (strtof (val, NULL) * 10.0));
       }
-      if (!strcmp (tag, "autob") || !strcmp (tag, "autor"))
+      if (!strcmp (tag, "autob"))
       {                         // Stored settings
          if (!s)
             s = jo_object_alloc ();
@@ -851,7 +851,11 @@ daikin_status (void)
 #ifdef	ELA
    if (bletemp && !bletemp->missing)
       jo_string (j, "ble", bletemp->name);
+   if (ble)
+      jo_string (j, "autob", autob);
 #endif
+   jo_litf (j, "autor", "%.1f", autor / 10.0);
+   jo_litf (j, "autot", "%.1f", autot / 10.0);
    xSemaphoreGive (daikin.mutex);
    return j;
 }
@@ -1033,7 +1037,7 @@ web_root (httpd_req_t * req)
    if (autor || *autob || !daikin.remote)
    {
       httpd_resp_sendstr_chunk (req, "<hr><p>Automated local controls</p><table>");
-      add ("Auto", "autor", "Off", "0", "±½℃", "5", "±1℃", "10", "±2℃", "20", NULL);
+      add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addt ("Target", "autot");
       if (ela && ble)
       {
@@ -1146,12 +1150,6 @@ web_status (httpd_req_t * req)
    esp_err_t status (void)
    {
       jo_t j = daikin_status ();
-#ifdef ELA
-      if (ble)
-         jo_string (j, "autob", autob);
-#endif
-      jo_int (j, "autor", autor);
-      jo_litf (j, "autot", "%.1f", autot / 10.0);
       wsend (&j);
       return ESP_OK;
    }
@@ -1755,7 +1753,7 @@ app_main ()
             current = daikin.home;
          xSemaphoreGive (daikin.mutex);
          // Predict temp changes
-         if (tpredicts)
+         if (tpredicts && !isnan (current))
          {
             static uint32_t lasttime = 0;
             if (now / tpredicts != lasttime / tpredicts)
@@ -1769,7 +1767,7 @@ app_main ()
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
          // Apply hysteresis
-         if (daikin.control)
+         if (daikin.control && !isnan (min) && !isnan (max))
          {
             if (hot)
             {

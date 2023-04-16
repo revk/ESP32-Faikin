@@ -37,9 +37,7 @@ tools:	$(TOOLS)
 
 issue:	set
 	# Assuming you are serving OTA from local apache
-	cp Faikin-S1.bin /var/www/
-	cp Faikin-S1-PICO.bin /var/www/
-	cp Faikin-S1-SOLO.bin /var/www/
+	cp Faikin*.bin /var/www/ota/
 
 set:    wroom solo pico
 

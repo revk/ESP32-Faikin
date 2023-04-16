@@ -33,6 +33,8 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`coolover` `heatover`|When we want to turn on heating or cooling the temperature is set to the target, adjusted for the temperature the air-con unit is seeing. To encourage the air-con to actually apply the heating/cooling this has a number of degrees added (for heat) or reduced (for cool) as set by these settings.
 |`coolback` `heatback`|When we want to turn off the heating or cooling, we set a temperature that backs away from the target temperature by this many degrees.|
 |`tsample`|Automation sampling time period (seconds), usually `900`|
+|`tpredicts`|Sample time (seconds) for predictive adjustment|
+|`tprecictt`|Total prediction time (seconds) for predictive adjustment|
 |`autoband`|If to turn on/off automatically, this applies if not `0`. Turns off if in band for two sample periods. Turns on if the difference between *min* and *max* from external/automatic control is less than `autoband` degrees and out of band for two sample period|
 |`switch10`|This is our own hysteresis - it applies to temp or min/max settings meaning we have to got this much extra beyond limits before considering switching heat/cool.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
@@ -106,3 +108,6 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`swingv`|Boolean - vertical louvre swing|
 |`powerful`|Boolean|
 |`econo`|Boolean|
+|`autor`|Range for automation, `0.0` means off - this sets the `autor` setting to 10 times this value|
+|`autot`|Target temp for automation, This sets the `autot` setting to 10 times this value|
+|`autob`|The name of the BLE device. This sets the `auotb` setting|
