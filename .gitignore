@@ -2,7 +2,8 @@
 *~
 *.swp
 .DS_Store
-*/*.bin
+build/*.bin
+*.bin
 *.old
 *.BAK
 */*.old
@@ -15,4 +16,3 @@ faikinlog
 faikinlog.service
 faikingraph
 dependencies.lock
-*.bin
