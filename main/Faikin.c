@@ -1043,7 +1043,7 @@ web_root (httpd_req_t * req)
    }
    httpd_resp_sendstr_chunk (req, "</table>");
    httpd_resp_sendstr_chunk (req, "<p id=offline style='display:none'><b>System is off line.</b></p>");
-   httpd_resp_sendstr_chunk (req, "<p id=shutdown style='display:none'><b>System is rebooting.</b></p>");
+   httpd_resp_sendstr_chunk (req, "<p id=shutdown style='display:none;color:red;'></p>");
    httpd_resp_sendstr_chunk (req,
                              "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
    httpd_resp_sendstr_chunk (req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
@@ -1119,8 +1119,8 @@ web_root (httpd_req_t * req)
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
-                             "ws.onclose=function(v){g('top').className='off';if(reboot)location.reload();else setTimeout(function() {c();},1000);};"   //
-                             "ws.onerror=function(v){location.reload();};"      //
+                             "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};"   //
+                             "ws.onerror=function(v){ws.close();};"      //
                              "ws.onmessage=function(v){"        //
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
@@ -1128,7 +1128,6 @@ web_root (httpd_req_t * req)
                              "h('control',o.control);"  //
                              "h('slave',o.slave);"      //
                              "h('antifreeze',o.antifreeze);"    //
-                             "h('shutdown',o.shutdown);"        //
                              "b('powerful',o.powerful);"        //
                              "b('swingh',o.swingh);"    //
                              "b('swingv',o.swingv);"    //
@@ -1145,9 +1144,9 @@ web_root (httpd_req_t * req)
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
-                             "reboot=o.shutdown;"       //
+                             "if(o.shutdown){reboot=true;s('shutdown',o.shutdown);h('shutdown',true);};"       //
                              "};};c();" //
-                             "setInterval(function() {ws.send('');},1000);"     //
+                             "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
                              "</script>");
    return web_foot (req);
 }
@@ -1174,9 +1173,10 @@ web_status (httpd_req_t * req)
    esp_err_t status (void)
    {
       jo_t j = daikin_status ();
-      int t = revk_shutting_down ();
+      const char *reason;
+      int t = revk_shutting_down (&reason);
       if (t)
-         jo_int (j, "shutdown", t);
+         jo_string (j, "shutdown", reason);
       wsend (&j);
       return ESP_OK;
    }
@@ -1507,6 +1507,7 @@ app_main ()
 
    // Web interface
    httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
+#if 0
    config.enable_so_linger = true;      // These are a tad experimental - it seems BLE upsets TCP connect or web sockets in some way
    config.linger_timeout = 1;
    config.lru_purge_enable = true;
@@ -1514,6 +1515,7 @@ app_main ()
    config.keep_alive_count = 10;
    config.recv_wait_timeout = 60;
    config.send_wait_timeout = 60;
+#endif
    if (!httpd_start (&webserver, &config))
    {
       if (webcontrol)
@@ -1926,7 +1928,7 @@ app_main ()
             }
          }
          // Control
-         if (daikin.power && daikin.controlvalid && !revk_shutting_down ())
+         if (daikin.power && daikin.controlvalid && !revk_shutting_down (NULL))
          {                      // Local auto controls
             if (now > daikin.controlvalid)
             {                   // End of auto mode and no env data either
