@@ -35,8 +35,8 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`tsample`|Automation sampling time period (seconds), usually `900`|
 |`tpredicts`|Sample time (seconds) for predictive adjustment|
 |`tprecictt`|Total prediction time (seconds) for predictive adjustment|
-|`autoband`|If to turn on/off automatically, this applies if not `0`. Turns off if in band for two sample periods. Turns on if the difference between *min* and *max* from external/automatic control is less than `autoband` degrees and out of band for two sample period|
-|`switch10`|This is our own hysteresis - it applies to temp or min/max settings meaning we have to got this much extra beyond limits before considering switching heat/cool.|
+|`autoband`|If to turn on/off automatically, this applies if not `0`. See below for details.|
+|`switch10` `push10`|This is our own hysteresis - it applies to min/max settings to allow for overshoot on heating/cooling.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
 |`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
 |`autotime`|This is the time the auto command is considered valid after which we revert to simply setting auto mode on the aircon unit itself. You need to ensure the external control (environmental monitor) sends the auto command more often than this.|
@@ -49,6 +49,18 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`autob`|When set this is the name of a BlueCoinT temperature sensor to use as the reference temperature|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
+
+The automation works based on the current *min* and *max* target and *current* temperature. However, *min* and *max* are adjusted by `push10` and `switch10`. The *current* temperature is also adjusted based on `tpredict` settings. These show on the `automation` status report. These are then used to set a target tempurature on the aircon itself that is higher or lower than the unit thinks the current temperature is based on `coolover`/`heatover`, effectively turning it on/off.
+
+### Automatic on/off
+
+Every `tsample` seconds the relationship of the adjusted *min*, *max* and *current* are assessed to consider how much time was *approaching* the target band, in the target band, or *beyond* the target band. Two whole samples in a row are considered. Sampling is reset on change of power or mode.
+
+If `auto1` is set, the power on at start of that minute. If `auto0` is set, the power off at start of that minute.
+
+If `autoband` is set, and the last two sample periods are entirely outside the target band, and the current temperature is more than `autoband` degrees above or below the target band, then automatic power on.
+
+If `autoband` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
 
 ### Special settings
 
