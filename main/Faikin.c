@@ -51,6 +51,7 @@ static const char TAG[] = "Faikin";
 	u16l(auto1,0)		\
 	u16l(autot,0)		\
 	u8l(autor,0)		\
+	bl(autop)		\
 	sl(autob)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
@@ -686,6 +687,12 @@ daikin_control (jo_t j)
             jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
          }
       }
+      if (!strcmp (tag, "autop"))
+      {
+         if (!s)
+            s = jo_object_alloc ();
+         jo_bool (s, tag, *val == 't');
+      }
       if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
       {                         // Stored settings
          if (!s)
@@ -791,10 +798,11 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       {
          daikin.mintarget = min;
          daikin.maxtarget = max;
-         daikin.remote = 1;     // Mark that we have remote control so don't offer BLE/local automation - autor takes priority though still
       }
       if (!*autob)
          daikin.env = env;
+      if (!autor && !*autob)
+         daikin.remote = 1;     // Hides local automation settings
       daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -880,6 +888,7 @@ daikin_status (void)
       jo_litf (j, "autot", "%.1f", autot / 10.0);
       jo_stringf (j, "auto0", "%02d:%02d", auto0 / 100, auto0 % 100);
       jo_stringf (j, "auto1", "%02d:%02d", auto1 / 100, auto1 % 100);
+      jo_bool (j, "autop", autop);
    }
    xSemaphoreGive (daikin.mutex);
    return j;
@@ -1018,7 +1027,7 @@ web_root (httpd_req_t * req)
    void addtemp (const char *tag, const char *field)
    {
       addh (tag);
-      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp min=");
+      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp title=\"Set 00:00 to disable\" min=");
       httpd_resp_sendstr_chunk (req, s21 ? "18" : "16");
       httpd_resp_sendstr_chunk (req, " max=32 step=");
       httpd_resp_sendstr_chunk (req, s21 ? "0.5" : "0.1");
@@ -1087,7 +1096,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      httpd_resp_sendstr_chunk (req, "<td colspan=2>Set 00:00 to disable</td></tr>");
+      addb ("Auto", "autop");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
       httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
       if (!ble)
@@ -1168,6 +1177,7 @@ web_root (httpd_req_t * req)
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
                              "n('temp',o.temp);"        //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
+                             "b('autop',o.autop);"      //
                              "n('autot',o.autot);"      //
                              "e('autor',o.autor);"      //
                              "n('autob',o.autob);"      //
@@ -1178,7 +1188,7 @@ web_root (httpd_req_t * req)
                              "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
-                             "if(o.shutdown){reboot=true;s('shutdown',o.shutdown);h('shutdown',true);};"        //
+                             "if(o.shutdown){reboot=true;s('shutdown','Restarting: '+o.shutdown);h('shutdown',true);};" //
                              "};};c();" //
                              "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
                              "</script>");
@@ -1644,19 +1654,6 @@ app_main ()
       do
       {                         // Polling loop
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
-         if (auto0 || auto1)
-         {                      // Auto on/off
-            static int last = 0;
-            time_t now = time (0);
-            struct tm tm;
-            localtime_r (&now, &tm);
-            int hhmm = tm.tm_hour * 100 + tm.tm_min;
-            if (auto0 && last < auto0 && hhmm >= auto0)
-               daikin_set_v (power, 0);
-            if (auto1 && last < auto1 && hhmm >= auto1)
-               daikin_set_v (power, 1);
-            last = hhmm;
-         }
 #ifdef ELA
          if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
@@ -1905,7 +1902,24 @@ app_main ()
                daikin_set_t (temp, daikin.heat ? daikin.maxtarget : daikin.mintarget);
             daikin.mintarget = NAN;
             daikin.maxtarget = NAN;
-            daikin.remote = 0;
+         }
+         if (auto0 || auto1)
+         {                      // Auto on/off
+            static int last = 0;
+            time_t now = time (0);
+            struct tm tm;
+            localtime_r (&now, &tm);
+            int hhmm = tm.tm_hour * 100 + tm.tm_min;
+            if (auto0 && last < auto0 && hhmm >= auto0)
+               daikin_set_v (power, 0); // Auto off, simple
+            if (auto1 && last < auto1 && hhmm >= auto1)
+            {                   // Auto on - and consider mode change is not on Auto
+               daikin_set_v (power, 1);
+               if (daikin.mode != 3 && !isnan (current) && !isnan (min) && !isnan (max)
+                   && ((hot && current > max) || (!hot && current < min)))
+                  daikin_set_e (mode, hot ? "C" : "H"); // Swap mode
+            }
+            last = hhmm;
          }
          if (!isnan (current) && !isnan (min) && !isnan (max) && tsample)
          {                      // Monitoring and automation
@@ -1967,12 +1981,13 @@ app_main ()
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
-                     } else if (autoband && !a && !b)
+                     } else if ((autop || (daikin.remote && autoband)) && !a && !b)
                      {          // Auto off
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } else if (autoband && (a == t || b == t) && (current >= max + autoband || current <= min - autoband))
+                  } else if ((autop || (daikin.remote && autoband)) && (a == t || b == t)
+                             && (current >= max + autoband || current <= min - autoband))
                   {             // Auto on
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
@@ -1994,6 +2009,7 @@ app_main ()
                daikin.controlvalid = 0;
                daikin.status_known &= ~CONTROL_env;
                daikin.env = NAN;
+               daikin.remote = 0;
                controlstop ();
             } else
             {                   // Auto mode
