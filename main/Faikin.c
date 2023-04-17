@@ -1027,7 +1027,7 @@ web_root (httpd_req_t * req)
    void addtemp (const char *tag, const char *field)
    {
       addh (tag);
-      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp title=\"Set 00:00 to disable\" min=");
+      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp min=");
       httpd_resp_sendstr_chunk (req, s21 ? "18" : "16");
       httpd_resp_sendstr_chunk (req, " max=32 step=");
       httpd_resp_sendstr_chunk (req, s21 ? "0.5" : "0.1");
@@ -1044,7 +1044,7 @@ web_root (httpd_req_t * req)
    {
       httpd_resp_sendstr_chunk (req, "<td align=right>");
       httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time id=");
+      httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time title=\"Set 00:00 to disable\" id=");
       httpd_resp_sendstr_chunk (req, field);
       httpd_resp_sendstr_chunk (req, " onchange=\"w('");
       httpd_resp_sendstr_chunk (req, field);
