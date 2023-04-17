@@ -40,7 +40,7 @@ static const char TAG[] = "Faikin";
 	b(ha,true)		\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
-	u8l(autoband,3)		\
+	u8l(autoband,1)		\
 	u8l(coolover,6)		\
 	u8l(coolback,6)		\
 	u8l(heatover,6)		\
@@ -1650,13 +1650,12 @@ app_main ()
             time_t now = time (0);
             struct tm tm;
             localtime_r (&now, &tm);
-            int next = tm.tm_hour * 100 + tm.tm_min;
-            int hhmm = next ? : 2400;
+            int hhmm = tm.tm_hour * 100 + tm.tm_min;
             if (auto0 && last < auto0 && hhmm >= auto0)
                daikin_set_v (power, 0);
             if (auto1 && last < auto1 && hhmm >= auto1)
                daikin_set_v (power, 1);
-            last = next;
+            last = hhmm;
          }
 #ifdef ELA
          if (ble && *autob)
@@ -1859,7 +1858,7 @@ app_main ()
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
          // Apply hysteresis
-         if (daikin.control && !isnan (min) && !isnan (max))
+         if (daikin.control && daikin.power && !isnan (min) && !isnan (max))
          {
             if (hot)
             {
@@ -1968,15 +1967,20 @@ app_main ()
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
-                     } else if (!autor && autoband && !a && !b)
-                     {
+                     } else if (autoband && !a && !b)
+                     {          // Auto off
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } else if (!autor && autoband && (a == t || b == t) && lroundf (max - min) <= autoband)
-                  {
+                  } else if (autoband && (a == t || b == t) && (current >= max + autoband || current <= min - autoband))
+                  {             // Auto on
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
+                     if (b == t)
+                     {
+                        jo_string (j, "set-mode", hot ? "C" : "H");
+                        daikin_set_e (mode, hot ? "C" : "H");   // Swap mode
+                     }
                   }
                }
                revk_info ("automation", &j);
