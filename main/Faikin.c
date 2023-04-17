@@ -1956,12 +1956,6 @@ app_main ()
                jo_litf (j, "temp", "%.2f", current);
                jo_litf (j, "min", "%.2f", min);
                jo_litf (j, "max", "%.2f", max);
-               // Next sample
-               daikin.counta2 = daikin.counta;
-               daikin.countb2 = daikin.countb;
-               daikin.countt2 = daikin.countt;
-               daikin.counta = daikin.countb = daikin.countt = 0;
-               daikin.sample = now + tsample;
                if (t2)
                {                // Power, mode, fan, automation
                   if (daikin.power)
@@ -1989,7 +1983,8 @@ app_main ()
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } else if ((autop || (daikin.remote && autop10)) && (a == t || b == t)
+                  } else if ((autop || (daikin.remote && autop10))
+                             && (daikin.counta == daikin.countt || daikin.countb == daikin.countt)
                              && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0))
                   {             // Auto on
                      jo_bool (j, "set-power", 1);
@@ -2005,6 +2000,12 @@ app_main ()
                   revk_info ("automation", &j);
                else
                   jo_free (&j);
+               // Next sample
+               daikin.counta2 = daikin.counta;
+               daikin.countb2 = daikin.countb;
+               daikin.countt2 = daikin.countt;
+               daikin.counta = daikin.countb = daikin.countt = 0;
+               daikin.sample = now + tsample;
             }
          }
          // Control

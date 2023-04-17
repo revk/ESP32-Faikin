@@ -62,7 +62,7 @@ Every `tsample` seconds the relationship of the adjusted *min*, *max* and *curre
 
 If `auto1` is set, the power on at start of that minute. If `auto0` is set, the power off at start of that minute.
 
-If `autop` is set, and the last two sample periods are entirely outside the target band, and the current temperature is more than `autop10`/10 degrees above or below the target band, then automatic power on.
+If `autop` is set, and the last sample period is entirely outside the target band, and the current temperature is more than `autop10`/10 degrees above or below the target band, then automatic power on.
 
 If `autop` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
 
