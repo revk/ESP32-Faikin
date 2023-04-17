@@ -1923,7 +1923,7 @@ app_main ()
          }
          if (!isnan (current) && !isnan (min) && !isnan (max) && tsample)
          {                      // Monitoring and automation
-            if (daikin.lastheat != hot)
+            if (daikin.power && daikin.lastheat != hot)
             {                   // If we change mode, start samples again
                daikin.lastheat = hot;
                samplestart ();
