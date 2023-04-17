@@ -49,7 +49,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`auto0`|Numeric in format HHMM, time to automatically turn off (0000 means don't turn off)|
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 |`autop`|Boolean, if we automatically turn on/off power based on temperature|
-|`autoband`|Temperature offset for auto turn on with `autop`|
+|`autop10`|Temperature offset for auto turn on with `autop` x 10|
 
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
@@ -62,13 +62,13 @@ Every `tsample` seconds the relationship of the adjusted *min*, *max* and *curre
 
 If `auto1` is set, the power on at start of that minute. If `auto0` is set, the power off at start of that minute.
 
-If `autoband` is set, and the last two sample periods are entirely outside the target band, and the current temperature is more than `autoband` degrees above or below the target band, then automatic power on.
+If `autop` is set, and the last two sample periods are entirely outside the target band, and the current temperature is more than `autop10`/10 degrees above or below the target band, then automatic power on.
 
-If `autoband` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
+If `autop` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
 
 ### Remote
 
-The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autoband` is not `0`.
+The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autop10` is not `0`.
 
 ### Special settings
 
