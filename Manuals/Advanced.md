@@ -35,7 +35,6 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`tsample`|Automation sampling time period (seconds), usually `900`|
 |`tpredicts`|Sample time (seconds) for predictive adjustment|
 |`tprecictt`|Total prediction time (seconds) for predictive adjustment|
-|`autoband`|If to turn on/off automatically, this applies if not `0`. See below for details.|
 |`switch10` `push10`|This is our own hysteresis - it applies to min/max settings to allow for overshoot on heating/cooling.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
 |`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
@@ -49,6 +48,9 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`autob`|When set this is the name of a BlueCoinT temperature sensor to use as the reference temperature|
 |`auto0`|Numeric in format HHMM, time to automatically turn off (0000 means don't turn off)|
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
+|`autop`|Boolean, if we automatically turn on/off power based on temperature|
+|`autoband`|Temperature offset for auto turn on with `autop`|
+
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 
@@ -63,6 +65,10 @@ If `auto1` is set, the power on at start of that minute. If `auto0` is set, the 
 If `autoband` is set, and the last two sample periods are entirely outside the target band, and the current temperature is more than `autoband` degrees above or below the target band, then automatic power on.
 
 If `autoband` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
+
+### Remote
+
+The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autoband` is not `0`.
 
 ### Special settings
 
