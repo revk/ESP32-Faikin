@@ -1998,7 +1998,10 @@ app_main ()
                      }
                   }
                }
-               revk_info ("automation", &j);
+               if (t)
+                  revk_info ("automation", &j);
+               else
+                  jo_free (&j);
             }
          }
          // Control
