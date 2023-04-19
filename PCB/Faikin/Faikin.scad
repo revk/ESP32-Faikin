@@ -1,6 +1,6 @@
-// Generated case design for PCB/Daikin/Daikin.kicad_pcb
+// Generated case design for PCB/Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-03-31 11:10:15
+// Generated 2023-04-19 10:12:54
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -16,7 +16,7 @@ casetop=5.000000;
 casewall=3.000000;
 fit=0.000000;
 edge=2.000000;
-pcbthickness=0.800000;
+pcbthickness=1.600000;
 nohull=false;
 hullcap=1.000000;
 hulledge=1.000000;
@@ -30,7 +30,7 @@ pcbwidth=15.200000;
 pcblength=20.000000;
 // Populated PCB
 module board(pushed=false,hulled=false){
-translate([7.600000,14.406750,0.800000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
+translate([7.600000,14.406750,1.600000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
 // Missing J1.1 JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
 translate([2.050000,13.450000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m4(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
 translate([11.000000,13.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m7(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
