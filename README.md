@@ -14,15 +14,15 @@ The history is that, after years of using Daikin air-con in my old home, and usi
 
 Appears as access point with simple web page to set up on local WiFI
 
-![IMG_2446](https://user-images.githubusercontent.com/996983/218394248-b409626b-2614-439d-95f4-71527c00aaa7.PNG)
+![WiFi1](Manuals/WiFi1.png)
 
-![IMG_2448](https://user-images.githubusercontent.com/996983/218394254-e03537f7-09a0-490d-aa38-b6964a5cd77f.PNG)
+![WiFi2](Manuals/WiFi2.png)
 
 # Operation
 
 Local interactive web control page using *hostname*.local, no app required, no external internet required.
 
-![IMG_2421](https://user-images.githubusercontent.com/996983/218394392-48b47be4-5989-474e-beab-734dd6ef83d9.PNG)
+![WiFi3](Manuals/WiFi3.png)
 
 - [Setup](Manuals/Setup.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
