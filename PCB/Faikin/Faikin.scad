@@ -1,6 +1,6 @@
 // Generated case design for PCB/Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-04-19 13:35:24
+// Generated 2023-04-19 14:08:49
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -31,7 +31,7 @@ pcblength=20.000000;
 // Populated PCB
 module board(pushed=false,hulled=false){
 translate([7.600000,14.406750,1.600000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
-translate([12.600000,6.782500,1.600000])rotate([0,0,180.000000])m2(pushed,hulled,1); // Connector_JST:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
+translate([12.600000,6.782500,1.600000])rotate([0,0,180.000000])m2(pushed,hulled,5); // Connector_JST:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
 translate([2.050000,13.450000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m5(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
 translate([11.000000,13.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m8(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
 translate([5.150000,9.850000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])m11(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
@@ -65,8 +65,8 @@ translate([-13.2/2,-16.6/2+2.7,0])
 
 module m2(pushed=false,hulled=false,n=0)
 { // Connector_JST:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
-b(1.25-2.5*(n/2),5+3.6,0,2.5*n+2.5,6+10,4);
-b(1.25-2.5*(n/2),0,0,2.5*n+2.5,3.2,1.5);
+b(2.5*(n/2)-1.25,5+3.6,0,2.5*n+2.5,6+10,4);
+b(2.5*(n/2)-1.25,0,0,2.5*n+2.5,3.2,1.5);
 }
 
 module m5(pushed=false,hulled=false)
