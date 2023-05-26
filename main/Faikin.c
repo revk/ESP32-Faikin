@@ -1960,7 +1960,7 @@ app_main ()
                {                // Power, mode, fan, automation
                   if (daikin.power)
                   {
-                     int step = (fanstep ? : s21 ? 2 : 1);
+                     int step = (fanstep ? : s21 ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
                         jo_string (j, "set-mode", hot ? "C" : "H");
