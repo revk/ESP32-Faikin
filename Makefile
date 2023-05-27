@@ -37,6 +37,7 @@ tools:	$(TOOLS)
 
 issue:	
 	-git pull
+	-git submodule update --recursive
 	-git commit -a -m checkpoint
 	@make set
 	cp --remove-destination Faikin*.bin release
