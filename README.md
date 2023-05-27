@@ -4,7 +4,7 @@ Everyone knows Daikin make some of the best air conditioners out there, mechanic
 
 This is code and PCB design to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
 
-Buy on [Amazon](https://www.amazon.co.uk/dp/B0BTZ4F5FH) This is UK only as Amazon won't export it for some readon, but one customer had success using [Forward2Me](https://www.forward2me.com/) to order on Amazon and export.
+Buy on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) This is UK only as Amazon won't export it for some readon, but one customer had success using [Forward2Me](https://www.forward2me.com/) to order on Amazon and export.
 
 ## Why I made this
 
