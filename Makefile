@@ -73,6 +73,7 @@ menuconfig:
 pull:
 	git pull
 	git submodule update --recursive
+	-git commit -a -m "Library update"
 
 update:
 	git submodule update --init --recursive --remote
