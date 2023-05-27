@@ -41,6 +41,7 @@ issue:
 	@make set
 	cp --remove-destination Faikin*.bin release
 	git commit -a -m release
+	git push
 
 set:    wroom solo pico
 
