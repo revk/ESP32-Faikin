@@ -36,10 +36,11 @@ all:	tools
 tools:	$(TOOLS)
 
 issue:	
+	-git pull -m checkpoint
 	-git commit -a -m checkpoint
 	@make set
 	cp --remove-destination Faikin*.bin release
-	git commit -a -m checkpoint
+	git commit -a -m release
 
 set:    wroom solo pico
 
