@@ -36,7 +36,7 @@ all:	tools
 tools:	$(TOOLS)
 
 issue:	
-	-git pull -m checkpoint
+	-git pull
 	-git commit -a -m checkpoint
 	@make set
 	cp --remove-destination Faikin*.bin release
