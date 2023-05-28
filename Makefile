@@ -73,10 +73,10 @@ menuconfig:
 pull:
 	git pull
 	git submodule update --recursive
-	-git commit -a -m "Library update"
 
 update:
 	git submodule update --init --recursive --remote
+	-git commit -a -m "Library update"
 
 # Program the FTDI
 ftdi: ftdizap/ftdizap

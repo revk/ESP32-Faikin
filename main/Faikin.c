@@ -841,7 +841,8 @@ app_callback (int client, const char *prefix, const char *target, const char *su
          jo_stringf (s, "mode", "%c", toupper (*value));
    }
    if (!strcmp (suffix, "fan"))
-      jo_stringf (s, "fan", "%c", *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : toupper (*value));
+      jo_stringf (s, "fan", "%c",
+                  *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : *value == 'n' ? 'Q' : toupper (*value));
    if (!strcmp (suffix, "swing"))
    {
       jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
@@ -1395,6 +1396,7 @@ send_ha_config (void)
             jo_string (j, NULL, "3");
             jo_string (j, NULL, "4");
             jo_string (j, NULL, "5");
+            jo_string (j, NULL, "night");
             jo_close (j);
          }
       }
@@ -1461,11 +1463,11 @@ ha_status (void)
    {
       if (fanstep == 1 || (!fanstep && s21))
       {
-         const char *fans[] = { "auto", "1", "2", "3", "4", "5", "auto" };      // A34567B
+         const char *fans[] = { "auto", "1", "2", "3", "4", "5", "night" };     // A12345Q
          jo_string (j, "fan", fans[daikin.fan]);
       } else
       {
-         const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };       // A34567B
+         const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };       // A12345Q
          jo_string (j, "fan", fans[daikin.fan]);
       }
    }
