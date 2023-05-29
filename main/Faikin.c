@@ -294,10 +294,10 @@ jo_t s21debug = NULL;
 void
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
-   if (len == 4 && s21debug)
+   if (len > 1 && s21debug)
    {
       char tag[3] = { cmd, cmd2 };
-      jo_stringn (s21debug, tag, (char *) payload, 3);
+      jo_stringn (s21debug, tag, (char *) payload, len);
    }
    // Remember to add to polling if we add more handlers
    if (cmd == 'G' && len == 4)
@@ -309,10 +309,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val (mode, "30721003"[payload[1] & 0x7] - '0');    // FHCA456D mapped from AXDCHXF
          set_val (heat, daikin.mode == 1);      // Crude - TODO find if anything actually tells us this
          set_temp (temp, 18.0 + 0.5 * (payload[2] - '@'));
-         if (payload[3] == 'A')
+         if (payload[3] == 'A' && daikin.fan == 6)
+            set_val (fan, 6);   // Quiet (returns as auto)
+         else if (payload[3] == 'A')
             set_val (fan, 0);   // Auto
-         else if (payload[3] == 'B')
-            set_val (fan, 6);   // Quiet
          else
             set_val (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
          break;
@@ -326,6 +326,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '7':
          set_val (econo, payload[1] == '2' ? 1 : 0);
          break;
+         // Check 'G'
       }
    if (cmd == 'S' && len == 4)
    {
@@ -344,7 +345,21 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          case 'I':             // Guess
             set_temp (liquid, t);
             break;
+	 case 'N': // ?
+	    break;
+	 case 'X': // ?
+	    break;
          }
+   }
+   if (cmd == 'S' && len == 3)
+   {
+      int v = (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
+      switch (cmd2)
+      {
+      case 'L':                // Fan
+         set_int (fanrpm, v * 10);
+         break;
+      }
    }
 }
 
@@ -1692,20 +1707,22 @@ app_main ()
                // These are what their wifi polls
 #define poll(a,b,c,d) static uint8_t a##b##d=10; if(a##b##d){int r=daikin_s21_command(*#a,*#b,c,#d); if(r==S21_OK)a##b##d=100; else if(r==S21_NAK)a##b##d--;} if(!daikin.talking)a##b##d=10;
                poll (F, 1, 0,);
-               poll (F, 5, 0,);
-               poll (F, 6, 0,);
-               poll (F, 7, 0,);
-               poll (R, H, 0,);
-               poll (R, I, 0,);
-               poll (R, a, 0,);
                if (debug)
-               {                // Additional polled values
+               {
                   poll (F, 2, 0,);
                   poll (F, 3, 0,);
                   poll (F, 4, 0,);
+               }
+               poll (F, 5, 0,);
+               poll (F, 6, 0,);
+               poll (F, 7, 0,);
+               if (debug)
+               {
                   poll (F, 8, 0,);
                   poll (F, 9, 0,);
+                  poll (F, A, 0,); // 
                   poll (F, B, 0,);
+                  poll (F, C, 0,); //
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                   poll (F, M, 0,);
@@ -1714,12 +1731,18 @@ app_main ()
                   poll (F, Q, 0,);
                   poll (F, S, 0,);
                   poll (F, T, 0,);
-                  poll (F, U, 2, 02);
-                  poll (F, U, 2, 04);
-                  poll (R, N, 0,);      // May be a useful temp, needs working out
+                  //poll (F, U, 2, 02);
+                  //poll (F, U, 2, 04);
+               }
+               poll (R, H, 0,);
+               poll (R, I, 0,);
+               poll (R, a, 0,);
+               poll (R, L, 0,); // Fan speed
+               if (debug)
+               { 
+                  poll (R, N, 0,);
                   poll (R, X, 0,);
                   poll (R, D, 0,);
-                  poll (R, L, 0,);
                }
 #undef poll
                if (debug)
@@ -1729,7 +1752,10 @@ app_main ()
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   temp[0] = daikin.power ? '1' : '0';
                   temp[1] = ("64300002"[daikin.mode]);  // FHCA456D mapped to AXDCHXF
-                  temp[2] = 0x40 + lroundf ((daikin.temp - 18.0) * 2);
+                  if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
+                     temp[2] = 0x40 + lroundf ((daikin.temp - 18.0) * 2);
+                  else
+                     temp[2] = '@';     // No temp in other modes
                   temp[3] = ("A34567B"[daikin.fan]);
                   daikin_s21_command ('D', '1', 4, temp);
                   xSemaphoreGive (daikin.mutex);
