@@ -33,7 +33,6 @@ static const char TAG[] = "Faikin";
 #define	settings		\
 	u8(webcontrol,2)	\
 	bl(debug)		\
-	bl(morepoll)		\
 	bl(dump)		\
 	bl(livestatus)		\
 	b(ble,false)		\
@@ -1689,7 +1688,7 @@ app_main ()
             {                   // Older S21
                char temp[5];
                if (debug)
-                  s21debug = jo_comms_alloc ();
+                  s21debug = jo_object_alloc ();
                // These are what their wifi polls
 #define poll(a,b,c,d) static uint8_t a##b##d=10; if(a##b##d){int r=daikin_s21_command(*#a,*#b,c,#d); if(r==S21_OK)a##b##d=100; else if(r==S21_NAK)a##b##d--;} if(!daikin.talking)a##b##d=10;
                poll (F, 1, 0,);
@@ -1699,7 +1698,7 @@ app_main ()
                poll (R, H, 0,);
                poll (R, I, 0,);
                poll (R, a, 0,);
-               if (morepoll)
+               if (debug)
                {                // Additional polled values
                   poll (F, 2, 0,);
                   poll (F, 3, 0,);
