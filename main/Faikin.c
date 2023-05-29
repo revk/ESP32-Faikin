@@ -290,16 +290,15 @@ jo_comms_alloc (void)
    return j;
 }
 
+jo_t s21debug = NULL;
+
 void
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
-   if (debug && len)
+   if (len == 4 && s21debug)
    {
-      jo_t j = jo_comms_alloc ();
-      jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      jo_base16 (j, "payload", payload, len);
-      jo_stringn (j, "text", (char *) payload, len);
-      revk_info ("rx", &j);
+      char tag[3] = { cmd, cmd2 };
+      jo_stringn (s21debug, tag, (char*)payload, 3);
    }
    // Remember to add to polling if we add more handlers
    if (cmd == 'G' && len == 4)
@@ -393,7 +392,7 @@ daikin_response (uint8_t cmd, int len, uint8_t * payload)
          set_temp (liquid, t);
       if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0) && t < 100)
          set_temp (temp, t);
-#if 1
+#if 0
       if (debug)
       {
          jo_t j = jo_object_alloc ();   // Debug dump
@@ -435,10 +434,11 @@ enum
    S21_BAD,
    S21_WAIT,
 };
+
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
-   if (debug)
+   if (debug && txlen && !dump)
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
@@ -1688,6 +1688,8 @@ app_main ()
             if (s21)
             {                   // Older S21
                char temp[5];
+               if (debug)
+                  s21debug = jo_comms_alloc ();
                // These are what their wifi polls
 #define poll(a,b,c,d) static uint8_t a##b##d=10; if(a##b##d){int r=daikin_s21_command(*#a,*#b,c,#d); if(r==S21_OK)a##b##d=100; else if(r==S21_NAK)a##b##d--;} if(!daikin.talking)a##b##d=10;
                poll (F, 1, 0,);
@@ -1721,6 +1723,8 @@ app_main ()
                   poll (R, L, 0,);
                }
 #undef poll
+               if (debug)
+                  revk_info ("s21", &s21debug);
                if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
                {                // D1
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
