@@ -437,7 +437,7 @@ enum
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
-   if (debug && txlen > 1 && !dump)
+   if (debug && txlen > 2 && !dump)
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
