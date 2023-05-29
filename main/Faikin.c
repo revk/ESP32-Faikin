@@ -1720,9 +1720,9 @@ app_main ()
                {
                   poll (F, 8, 0,);
                   poll (F, 9, 0,);
-                  poll (F, A, 0,); // 
+                  poll (F, A, 0,); 
                   poll (F, B, 0,);
-                  poll (F, C, 0,); //
+                  poll (F, C, 0,);
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                   poll (F, M, 0,);
