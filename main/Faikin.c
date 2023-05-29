@@ -297,7 +297,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
    if (len == 4 && s21debug)
    {
       char tag[3] = { cmd, cmd2 };
-      jo_stringn (s21debug, tag, (char*)payload, 3);
+      jo_stringn (s21debug, tag, (char *) payload, 3);
    }
    // Remember to add to polling if we add more handlers
    if (cmd == 'G' && len == 4)
@@ -437,7 +437,7 @@ enum
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
-   if (debug && txlen && !dump)
+   if (debug && txlen > 1 && !dump)
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
