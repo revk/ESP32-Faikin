@@ -345,10 +345,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          case 'I':             // Guess
             set_temp (liquid, t);
             break;
-	 case 'N': // ?
-	    break;
-	 case 'X': // ?
-	    break;
+         case 'N':             // ?
+            break;
+         case 'X':             // ?
+            break;
          }
    }
    if (cmd == 'S' && len == 3)
@@ -1384,6 +1384,8 @@ send_ha_config (void)
          jo_close (j);
       }
 #endif
+      jo_string (j, "temp_stat_t", revk_id);
+      jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
       if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
       {
          jo_string (j, "temp_cmd_t", "~/temp");
@@ -1458,6 +1460,8 @@ ha_status (void)
    jo_t j = jo_object_alloc ();
    if (daikin.status_known & CONTROL_online)
       jo_bool (j, "online", daikin.online);
+   if (daikin.status_known & CONTROL_temp)
+      jo_litf (j, "target", "%.2f", daikin.temp);
    if (daikin.status_known & CONTROL_home)
       jo_litf (j, "temp", "%.2f", daikin.home); // We use home if present, else inlet
    else if (daikin.status_known & CONTROL_inlet)
@@ -1720,7 +1724,7 @@ app_main ()
                {
                   poll (F, 8, 0,);
                   poll (F, 9, 0,);
-                  poll (F, A, 0,); 
+                  poll (F, A, 0,);
                   poll (F, B, 0,);
                   poll (F, C, 0,);
                   poll (F, G, 0,);
@@ -1739,7 +1743,7 @@ app_main ()
                poll (R, a, 0,);
                poll (R, L, 0,); // Fan speed
                if (debug)
-               { 
+               {
                   poll (R, N, 0,);
                   poll (R, X, 0,);
                   poll (R, D, 0,);
