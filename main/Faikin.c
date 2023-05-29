@@ -308,7 +308,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val (power, (payload[0] == '1') ? 1 : 0);
          set_val (mode, "30721003"[payload[1] & 0x7] - '0');    // FHCA456D mapped from AXDCHXF
          set_val (heat, daikin.mode == 1);      // Crude - TODO find if anything actually tells us this
-         set_temp (temp, 18.0 + 0.5 * (payload[2] - '@'));
+         if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
+            set_temp (temp, 18.0 + 0.5 * (payload[2] - '@'));
+         else if (!isnan (daikin.temp))
+            set_temp (temp, daikin.temp);       // Does not have temp in other modes
          if (payload[3] == 'A' && daikin.fan == 6)
             set_val (fan, 6);   // Quiet (returns as auto)
          else if (payload[3] == 'A')
@@ -1834,8 +1837,8 @@ app_main ()
             {
                jo_t j = daikin_status ();
                revk_state ("status", &j);
-               ha_status ();
             }
+            ha_status ();
          }
          // Stats
 #define b(name)         if(daikin.name)daikin.total##name++;
