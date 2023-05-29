@@ -1387,11 +1387,11 @@ send_ha_config (void)
          jo_close (j);
       }
 #endif
+      jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", revk_id);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
       if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
       {
-         jo_string (j, "temp_cmd_t", "~/temp");
          jo_string (j, "curr_temp_t", revk_id);
          jo_string (j, "curr_temp_tpl", "{{value_json.temp}}");
       }
