@@ -825,50 +825,55 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       return ret ? : "";
    }
    jo_t s = jo_object_alloc ();
-   char value[20] = "";
-   jo_strncpy (j, value, sizeof (value));
    // Crude commands - setting one thing
-   if (!strcmp (suffix, "on"))
-      jo_bool (s, "power", 1);
-   if (!strcmp (suffix, "off"))
-      jo_bool (s, "power", 0);
-   if (!strcmp (suffix, "auto"))
-      jo_string (s, "mode", "A");
-   if (!strcmp (suffix, "heat"))
-      jo_string (s, "mode", "H");
-   if (!strcmp (suffix, "cool"))
-      jo_string (s, "mode", "C");
-   if (!strcmp (suffix, "dry"))
-      jo_string (s, "mode", "D");
-   if (!strcmp (suffix, "fan"))
-      jo_string (s, "mode", "F");
-   if (!strcmp (suffix, "low"))
-      jo_string (s, "fan", "1");
-   if (!strcmp (suffix, "medium"))
-      jo_string (s, "fan", "3");
-   if (!strcmp (suffix, "high"))
-      jo_string (s, "fan", "5");
-   if (!strcmp (suffix, "temp"))
-      jo_lit (s, "temp", value);
-   // HA stuff
-   if (!strcmp (suffix, "mode"))
+   if (!j)
    {
-      jo_bool (s, "power", *value == 'o' ? 0 : 1);
-      if (*value != 'o')
-         jo_stringf (s, "mode", "%c", toupper (*value));
-   }
-   if (!strcmp (suffix, "fan"))
-      jo_stringf (s, "fan", "%c",
-                  *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : *value == 'n' ? 'Q' : toupper (*value));
-   if (!strcmp (suffix, "swing"))
+      if (!strcmp (suffix, "on"))
+         jo_bool (s, "power", 1);
+      if (!strcmp (suffix, "off"))
+         jo_bool (s, "power", 0);
+      if (!strcmp (suffix, "auto"))
+         jo_string (s, "mode", "A");
+      if (!strcmp (suffix, "heat"))
+         jo_string (s, "mode", "H");
+      if (!strcmp (suffix, "cool"))
+         jo_string (s, "mode", "C");
+      if (!strcmp (suffix, "dry"))
+         jo_string (s, "mode", "D");
+      if (!strcmp (suffix, "fan"))
+         jo_string (s, "mode", "F");
+      if (!strcmp (suffix, "low"))
+         jo_string (s, "fan", "1");
+      if (!strcmp (suffix, "medium"))
+         jo_string (s, "fan", "3");
+      if (!strcmp (suffix, "high"))
+         jo_string (s, "fan", "5");
+   } else
    {
-      jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
-      jo_bool (s, "swingv", strchr (value, 'V') ? 1 : 0);
-   }
-   if (!strcmp (suffix, "preset"))
-   {
-      jo_bool (s, "econo", *value == 'e');
-      jo_bool (s, "powerful", *value == 'b');
+      char value[20] = "";
+      jo_strncpy (j, value, sizeof (value));
+      if (!strcmp (suffix, "temp"))
+         jo_lit (s, "temp", value);
+      // HA stuff
+      if (!strcmp (suffix, "mode"))
+      {
+         jo_bool (s, "power", *value == 'o' ? 0 : 1);
+         if (*value != 'o')
+            jo_stringf (s, "mode", "%c", toupper (*value));
+      }
+      if (!strcmp (suffix, "fan"))
+         jo_stringf (s, "fan", "%c",
+                     *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : *value == 'n' ? 'Q' : toupper (*value));
+      if (!strcmp (suffix, "swing"))
+      {
+         jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
+         jo_bool (s, "swingv", strchr (value, 'V') ? 1 : 0);
+      }
+      if (!strcmp (suffix, "preset"))
+      {
+         jo_bool (s, "econo", *value == 'e');
+         jo_bool (s, "powerful", *value == 'b');
+      }
    }
    jo_close (s);
    jo_rewind (s);
