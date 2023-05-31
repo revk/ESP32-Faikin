@@ -8,13 +8,23 @@ The *Faikin* is a small circuit board that can replace the common Daikin air-con
 
 ## Installation
 
-<img src="Install1.jpg" width=20% align=right>The module plugs in to the existing lead used for Daikin WiFi modules. If you do not have a lead you will need one.
+<img src="Install1.jpg" width=20% align=right>The latest boards have the 5 pin connector to match the plug for the official Daikin WiFi modules. Simply plug in.
 
-The plug on the lead has five positions, but only four wires, these are connected as shown.
-
-Later modules have a five pin socket matching the plug.
+However, you do need a lead, and Daikin charge a lot for these. Typically it will be an S21 lead. However customers have reported simple header wires (i.e. wires with sockets on each wire intended to go on 0.1" pitch headers) work just as well. You need to locate the GND, Power, Tx, and Rx pins on the S21 connector and connect appropriately as marked on the PCB. The board is designed to handle 4V to 40V power, and the air-con typically provides 12V.
 
 A 3D prinabale case design is included on GitHub.
+
+## LED
+
+There is an LED on the module. It is possible to disable it with a setting, e.g. `setting/GuestAC {"blink":[0,0,0]}`. Otherwise it blinks a colour.
+
+|Colour|Meaning|
+|----|-----|
+|Red|Heating|
+|Blue|Cooling|
+|Yellow|Power off|
+|Magenta|Off line|
+|White|s/w update|
 
 ## WiFi set up
 
