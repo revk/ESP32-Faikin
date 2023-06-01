@@ -2108,7 +2108,7 @@
     (property "Reference" "C1" (at 39.37 22.0812 90)
       (effects (font (size 1.27 1.27)))
     )
-    (property "Value" "10nF" (at 39.37 24.6181 90)
+    (property "Value" "1uF" (at 39.37 24.6181 90)
       (effects (font (size 1.27 1.27)))
     )
     (property "Footprint" "RevK:C_0603" (at 43.18 26.9748 0)
