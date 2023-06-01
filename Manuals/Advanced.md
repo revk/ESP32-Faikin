@@ -21,8 +21,9 @@ There are a number of standard settings as per the library, including things lik
 |Setting|Meaning|
 |-------|-------|
 |`webcontrol`|`0` means no web access, `1` means just aircon settings not WiFI, etc. `2` means all controls|
-|`ha`|`true` means work with Home Assistant via MQTT|
+|`ha`|`true` (default) means work with Home Assistant via MQTT|
 |`reporting`|Interval for reporting state (seconds)|
+|`dark`|If set, LED to be off unless something non normal happening|
 
 ### External/automatic controls
 
@@ -50,7 +51,6 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 |`autop`|Boolean, if we automatically turn on/off power based on temperature|
 |`autop10`|Temperature offset for auto turn on with `autop` x 10|
-
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 

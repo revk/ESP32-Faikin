@@ -20,11 +20,17 @@ There is an LED on the module. It is possible to disable it with a setting, e.g.
 
 |Colour|Meaning|
 |----|-----|
-|Red|Heating|
-|Blue|Cooling|
-|Yellow|Power off|
-|Magenta|Off line|
-|White|s/w update|
+|Red|Heating (heat or auto mode), unless `dark` set|
+|Blue|Cooling (cool or auto mode), unless `dark` set|
+|None|Power off|
+|Magenta|Daikin is off line|
+|Red/Blue|Loopback test|
+|White|Rebooting|
+|White/Red|No wifi config|
+|White/Blue|AP+sta mode|
+|White/Cyan|AP mode|
+|White/Magenta|No wifi on|
+|White/Yellow|Link down|
 
 ## WiFi set up
 
