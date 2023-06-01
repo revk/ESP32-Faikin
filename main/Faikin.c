@@ -35,6 +35,7 @@ static const char TAG[] = "Faikin";
 	bl(debug)		\
 	bl(dump)		\
 	bl(livestatus)		\
+	b(dark,false)		\
 	b(ble,false)		\
 	b(ha,true)		\
 	u8(uart,1)		\
@@ -105,8 +106,9 @@ settings
 
 // Globals
 static httpd_handle_t webserver = NULL;
-static uint8_t s21 = 0;
-static uint8_t s21_set = 0;
+static uint8_t s21 = 0;         // Currently using S21 mode
+static uint8_t s21_set = 0;     // S21 is confirmed
+static uint8_t loopback = 0;    // Loopback detected
 #ifdef ELA
 static ela_t *bletemp = NULL;
 #endif
@@ -1870,7 +1872,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, !daikin.online ? "M" : !daikin.power ? "Y" : daikin.heat ? "R" : "B");
+         revk_blink (0, 0, loopback ? "RB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");        // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
