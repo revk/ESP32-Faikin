@@ -107,7 +107,7 @@ settings
 // Globals
 static httpd_handle_t webserver = NULL;
 static uint8_t s21 = 0;         // Currently using S21 mode
-static uint8_t s21_set = 0;     // S21 is confirmed
+static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 #ifdef ELA
 static ela_t *bletemp = NULL;
@@ -287,7 +287,7 @@ jo_t
 jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_bool (j, s21_set ? "s21" : "s21-try", s21);
+   jo_bool (j, protocol_set ? "s21" : "s21-try", s21);
    return j;
 }
 
@@ -379,14 +379,16 @@ daikin_response (uint8_t cmd, int len, uint8_t * payload)
       revk_info ("rx", &j);
    }
    if (cmd == 0xAA && len >= 1)
-   {
+   {                            // Initialisation response
       if (!*payload)
          daikin.talking = 0;    // Not ready
+      return;
    }
    if (cmd == 0xBA && len >= 20)
    {
       strncpy (daikin.model, (char *) payload, sizeof (daikin.model));
       daikin.status_changed = 1;
+      return;
    }
    if (cmd == 0xCA && len >= 7)
    {                            // Main status settings
@@ -396,9 +398,11 @@ daikin_response (uint8_t cmd, int len, uint8_t * payload)
       set_val (heat, payload[2] == 1);
       set_val (slave, payload[9]);
       set_val (fan, (payload[6] >> 4) & 7);
+      return;
    }
    if (cmd == 0xCB && len >= 2)
    {                            // We get all this from CA
+      return;
    }
    if (cmd == 0xBD && len >= 29)
    {                            // Looks like temperatures - we assume 0000 is not set
@@ -424,6 +428,7 @@ daikin_response (uint8_t cmd, int len, uint8_t * payload)
          revk_info ("temps", &j);
       }
 #endif
+      return;
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Status/flags?
@@ -442,6 +447,7 @@ daikin_response (uint8_t cmd, int len, uint8_t * payload)
       jo_base16 (j, "be", payload, len);
       revk_info ("rx", &j);
 #endif
+      return;
    }
 }
 
@@ -571,7 +577,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return S21_BAD;           // Ignore - it'll get resent some time
    }
    if (buf[0] == STX)
-      s21_set = 1;              // Good format
+      protocol_set = 1;         // Good format
    if (rxlen < 5 || buf[0] != STX || buf[rxlen - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
    {                            // Bad message
       daikin.talking = 0;       // Fail, restart comms
@@ -648,8 +654,6 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
       revk_error ("comms", &j);
       return;
    }
-   if (buf[0] == 0x06)
-      s21_set = 1;              // Good message format
    // Process response
    if (buf[1] == 0xFF)
    {                            // Error report
@@ -676,6 +680,18 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
       revk_error ("comms", &j);
       return;
    }
+   if (!buf[4])
+   {                            // Tx sends 00 here, rx is 06
+      daikin.talking = 0;
+      loopback = 1;
+      jo_t j = jo_comms_alloc ();
+      jo_bool (j, "loopback", 1);
+      revk_error ("comms", &j);
+      return;
+   }
+   loopback = 0;
+   if (buf[0] == 0x06)
+      protocol_set = 1;         // Good message format
    daikin_response (cmd, rxlen - 6, buf + 5);
 }
 
@@ -1543,7 +1559,7 @@ app_main ()
    void uart_setup (void)
    {
       esp_err_t err = 0;
-      if (!s21_set)
+      if (!protocol_set && (s21 || !loopback))
          s21 = 1 - s21;         // Flip
       ESP_LOGI (TAG, "Starting UART%s", s21 ? " S21" : "");
       uart_config_t uart_config = {
@@ -1670,7 +1686,7 @@ app_main ()
             daikin_command (0xBA, 0, NULL);
             daikin_command (0xBB, 0, NULL);
          }
-         if (s21_set && daikin.online != daikin.talking)
+         if (protocol_set && daikin.online != daikin.talking)
          {
             daikin.online = daikin.talking;
             daikin.status_changed = 1;
@@ -1872,7 +1888,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, loopback ? "RB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");        // FHCA456D
+         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");        // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);

@@ -24,13 +24,15 @@ There is an LED on the module. It is possible to disable it with a setting, e.g.
 |Blue|Cooling (cool or auto mode), unless `dark` set|
 |None|Power off|
 |Magenta|Daikin is off line|
-|Red/Blue|Loopback test|
+|Red/Green/Blue|Loopback test|
 |White|Rebooting|
 |White/Red|No wifi config|
 |White/Blue|AP+sta mode|
 |White/Cyan|AP mode|
 |White/Magenta|No wifi on|
 |White/Yellow|Link down|
+
+Note that the loopback is useful for testing, a simple link from Tx to Rx will set loopback and flash LED in a repeating sequence red, green, blue, testing the Tx, Rx, and LED are all working as expected.
 
 ## WiFi set up
 
