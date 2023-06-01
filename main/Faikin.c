@@ -1556,6 +1556,7 @@ app_main ()
 #undef s
 #undef sl
       revk_start ();
+   revk_blink (0, 0, "");
    void uart_setup (void)
    {
       esp_err_t err = 0;
@@ -1888,7 +1889,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");        // FHCA456D
+         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");       // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
