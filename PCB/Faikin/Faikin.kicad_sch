@@ -1211,7 +1211,6 @@
     )
   )
 
-
   (junction (at 135.89 40.64) (diameter 0) (color 0 0 0 0)
     (uuid 1f258f58-74c9-4467-8162-a3ac3d57700f)
   )
@@ -1540,9 +1539,6 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "LCSC Part #" "C290195" (at 141.605 45.085 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "JLCPCB Rotation Offset" "0" (at 166.37 45.085 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 86031efc-9251-4c96-a57a-1071e02d784a))
