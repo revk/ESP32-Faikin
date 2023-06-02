@@ -1,5 +1,5 @@
 ﻿Designator,Footprint,Quantity,Value,LCSC Part #
-C1,C_0603,1,10nF,
+C1,C_0603,1,1uF,
 C2,C_0603_,1,100nF,C30926
 C3,C_0805_,1,2.2uF,C19110
 C4,C_0805_,1,10uF,C17024
