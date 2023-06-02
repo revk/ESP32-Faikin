@@ -576,6 +576,16 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_error ("comms", &j);
       return S21_BAD;           // Ignore - it'll get resent some time
    }
+   if (rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
+   {                            // Loop back
+      daikin.talking = 0;
+      loopback = 1;
+      jo_t j = jo_comms_alloc ();
+      jo_bool (j, "loopback", 1);
+      revk_error ("comms", &j);
+      return S21_OK;
+   }
+   loopback = 0;
    if (buf[0] == STX)
       protocol_set = 1;         // Good format
    if (rxlen < 5 || buf[0] != STX || buf[rxlen - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
@@ -1560,7 +1570,7 @@ app_main ()
    void uart_setup (void)
    {
       esp_err_t err = 0;
-      if (!protocol_set && (s21 || !loopback))
+      if (!protocol_set)
          s21 = 1 - s21;         // Flip
       ESP_LOGI (TAG, "Starting UART%s", s21 ? " S21" : "");
       uart_config_t uart_config = {
