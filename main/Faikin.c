@@ -950,7 +950,7 @@ daikin_status (void)
 static void
 web_head (httpd_req_t * req, const char *title)
 {
-   httpd_resp_set_type (req, "text/html; charset=utf-8");
+   httpd_resp_set_type (req, "text/html;charset=utf-8");
    httpd_resp_sendstr_chunk (req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
    httpd_resp_sendstr_chunk (req, "<html><head><title>");
    if (title)
