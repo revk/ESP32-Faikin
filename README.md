@@ -6,6 +6,8 @@ This is code and PCB design to run on an ESP32 module and connect to a Daikin ai
 
 Buy on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) This is UK only as Amazon won't export it for some reason, but one customer had success using [Forward2Me](https://www.forward2me.com/) to order on Amazon and export.
 
+<img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
+
 ## Why I made this
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
@@ -51,5 +53,3 @@ Git clone this `--recursive` to get all the submodules, and it should build with
 If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
 The 5 pin plug from the Daiking WiFi wiring fits directly.
-
-<img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
