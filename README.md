@@ -50,6 +50,6 @@ Git clone this `--recursive` to get all the submodules, and it should build with
 
 If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
-The wiring from the existing wifi modules fits directly (albeit only 4 pins used).
+The 5 pin plug from the Daiking WiFi wiring fits directly.
 
-![Module](Manuals/Install1.jpg)
+<img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
