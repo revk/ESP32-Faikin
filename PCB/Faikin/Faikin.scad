@@ -1,6 +1,6 @@
 // Generated case design for PCB/Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-04-19 14:08:49
+// Generated 2023-06-05 16:14:09
 // title:	Daikin ESP32-PICO-MINI Module
 // date:	${DATE}
 // rev:	1
@@ -22,16 +22,16 @@ hullcap=1.000000;
 hulledge=1.000000;
 useredge=false;
 
-module outline(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[0.000000,8.300000],[1.000000,20.000000],[14.200000,20.000000],[15.200000,8.300000],[15.200000,0.000000],[0.000000,0.000000]],paths=[[0,1,2,3,4,5]]);}
+module outline(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[0.000000,8.400000],[1.000000,20.000000],[14.200000,20.000000],[15.200000,8.400000],[15.200000,0.000000],[0.000000,0.000000]],paths=[[0,1,2,3,4,5]]);}
 
-module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[0.000000,8.300000],[1.000000,20.000000],[14.200000,20.000000],[15.200000,8.300000],[15.200000,0.000000],[0.000000,0.000000]],paths=[[0,1,2,3,4,5]]);}
+module pcb(h=pcbthickness,r=0){linear_extrude(height=h)offset(r=r)polygon(points=[[0.000000,8.400000],[1.000000,20.000000],[14.200000,20.000000],[15.200000,8.400000],[15.200000,0.000000],[0.000000,0.000000]],paths=[[0,1,2,3,4,5]]);}
 spacing=31.200000;
 pcbwidth=15.200000;
 pcblength=20.000000;
 // Populated PCB
 module board(pushed=false,hulled=false){
 translate([7.600000,14.406750,1.600000])m0(pushed,hulled); // RevK:ESP32-PICO-MINI-02 ESP32-PICO-MINI-02 (back)
-translate([12.600000,6.782500,1.600000])rotate([0,0,180.000000])m2(pushed,hulled,5); // Connector_JST:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
+translate([12.600000,6.782500,1.600000])rotate([0,0,180.000000])m2(pushed,hulled,5); // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
 translate([2.050000,13.450000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m5(pushed,hulled); // RevK:C_0805_ C_0805_2012Metric
 translate([11.000000,13.900000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m8(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
 translate([5.150000,9.850000,0.000000])rotate([0,0,90.000000])rotate([180,0,0])m11(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
@@ -50,7 +50,7 @@ translate([3.150000,9.100000,0.000000])rotate([180,0,0])m11(pushed,hulled); // R
 translate([7.450000,17.000000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m21(pushed,hulled); // RevK:SOT-23-Thin-6-Reg SOT-23-6
 translate([3.550000,17.000000,0.000000])rotate([180,0,0])rotate([-0.000000,-0.000000,-90.000000])m24(pushed,hulled); // RevK:L_4x4_ TYA4020
 translate([12.600000,19.100000,0.000000])rotate([0,0,180.000000])rotate([180,0,0])m8(pushed,hulled); // RevK:R_0603 R_0603_1608Metric
-translate([0.900000,6.600000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])m11(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
+translate([3.850000,4.950000,0.000000])rotate([180,0,0])m11(pushed,hulled); // RevK:C_0603 C_0603_1608Metric
 }
 
 module b(cx,cy,z,w,l,h){translate([cx-w/2,cy-l/2,z])cube([w,l,h]);}
@@ -64,7 +64,7 @@ translate([-13.2/2,-16.6/2+2.7,0])
 }
 
 module m2(pushed=false,hulled=false,n=0)
-{ // Connector_JST:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
+{ // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
 b(2.5*(n/2)-1.25,5+3.6,0,2.5*n+2.5,6+10,4);
 b(2.5*(n/2)-1.25,0,0,2.5*n+2.5,3.2,1.5);
 }
