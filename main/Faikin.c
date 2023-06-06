@@ -1976,8 +1976,8 @@ app_main ()
             daikin.mintarget = NAN;
             daikin.maxtarget = NAN;
          }
-         if (auto0 || auto1)
-         {                      // Auto on/off
+         if ((auto0 || auto1) && (auto0 != auto1))
+         {                      // Auto on/off, 00:00 is not considered valid, use 00:01. Also setting same on and off is not considered valid
             static int last = 0;
             time_t now = time (0);
             struct tm tm;
