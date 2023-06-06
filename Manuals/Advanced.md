@@ -24,6 +24,8 @@ There are a number of standard settings as per the library, including things lik
 |`ha`|`true` (default) means work with Home Assistant via MQTT|
 |`reporting`|Interval for reporting state (seconds)|
 |`dark`|If set, LED to be off unless something non normal happening|
+|`tmin`|Min temperature|
+|`tmax`|Max temperature|
 
 ### External/automatic controls
 

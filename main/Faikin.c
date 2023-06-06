@@ -53,6 +53,8 @@ static const char TAG[] = "Faikin";
 	u8l(autor,0)		\
 	bl(autop)		\
 	sl(autob)		\
+	u8(tmin,16)		\
+	u8(tmax,32)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
@@ -311,7 +313,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val (mode, "30721003"[payload[1] & 0x7] - '0');    // FHCA456D mapped from AXDCHXF
          set_val (heat, daikin.mode == 1);      // Crude - TODO find if anything actually tells us this
          if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
-            set_temp (temp, 18.0 + 0.5 * (payload[2] - '@'));
+            set_temp (temp, 18.0 + 0.5 * (signed) (payload[2] - '@'));
          else if (!isnan (daikin.temp))
             set_temp (temp, daikin.temp);       // Does not have temp in other modes
          if (payload[3] == 'A' && daikin.fan == 6)
@@ -1078,17 +1080,10 @@ web_root (httpd_req_t * req)
    void addtemp (const char *tag, const char *field)
    {
       addh (tag);
-      httpd_resp_sendstr_chunk (req, "<td colspan=5><input type=range class=temp min=");
-      httpd_resp_sendstr_chunk (req, s21 ? "18" : "16");
-      httpd_resp_sendstr_chunk (req, " max=32 step=");
-      httpd_resp_sendstr_chunk (req, s21 ? "0.5" : "0.1");
-      httpd_resp_sendstr_chunk (req, " id=");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, " onchange=\"w('");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, "',+this.value);\"><span id=T");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, "></span></td>");
+      char temp[300];
+      sprintf (temp,
+               "<td colspan=5><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
+               tmin, tmax, s21 ? "0.5" : "0.1", field, field, field);
       addf (tag);
    }
    void addtime (const char *tag, const char *field)
@@ -1420,6 +1415,8 @@ send_ha_config (void)
          jo_close (j);
       }
 #endif
+      jo_int (j, "min_temp", tmin);
+      jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", revk_id);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
@@ -2134,10 +2131,10 @@ app_main ()
                   // Limit settings to acceptable values
                   if (s21)
                      set = roundf (set * 2.0) / 2.0;    // S21 only does 0.5C steps
-                  if (set < (s21 ? 18 : 16))    // S21 has min 18C
-                     set = (s21 ? 18 : 16);
-                  if (set > 32)
-                     set = 32;
+                  if (set < tmin)
+                     set = tmin;
+                  if (set > tmax)
+                     set = tmax;
                   if (!isnan (reference))
                      daikin_set_t (temp, set);  // Apply temperature setting
                }
