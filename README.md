@@ -27,6 +27,7 @@ Local interactive web control page using *hostname*.local, no app required, no e
 ![WiFi3](Manuals/WiFi3.png)
 
 - [Setup](Manuals/Setup.md) Manual
+- [Controls](Manuals/Controls.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
 
 # Design
@@ -51,9 +52,3 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variables, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment.
 
 If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
-
-<<<<<<< HEAD
-![Module](Manuals/Install1.jpg)
-=======
-The 5 pin plug from the Daiking WiFi wiring fits directly.
->>>>>>> e2149097789b9cecff7a606178cfd34fcac5c532

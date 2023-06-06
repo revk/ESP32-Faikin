@@ -50,7 +50,7 @@ On an iPhone this should automatically open a web page. On other devices you may
 
 ![WiFi](WiFi3.png)
 
-Enter details and press **Set**.
+Enter details and press **Set**. Setting a *Hostname* is a good idea so you can name your air-con. For HomeAssistant you will probably need an MQTT username and password. If not in the UK, please look up the *timezone* string needed in the link provided.
 
 ### Hostname
 
