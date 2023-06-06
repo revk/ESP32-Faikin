@@ -1138,12 +1138,12 @@ web_root (httpd_req_t * req)
    if (autor || *autob || !daikin.remote)
    {
       httpd_resp_sendstr_chunk (req, "<div id=remote><hr><p>Automated local controls</p><table>");
-      add ("Auto", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
+      add ("Track", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addtemp ("Target", "autot");
       httpd_resp_sendstr_chunk (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      addb ("Auto", "autop");
+      addb ("Auto⏻", "autop");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
       httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
       if (!ble)
