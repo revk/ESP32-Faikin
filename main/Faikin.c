@@ -1010,7 +1010,7 @@ web_root (httpd_req_t * req)
    // webcontrol=2 means all
    if (revk_link_down () && webcontrol >= 2)
       return revk_web_config (req);     // Direct to web set up
-   web_head (req, *hostname ? hostname : appname);
+   web_head (req, hostname == revk_id ? appname : hostname);
    httpd_resp_sendstr_chunk (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
    {                            // Head (well, start of row)
