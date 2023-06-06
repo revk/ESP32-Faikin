@@ -25,3 +25,7 @@ The "Target" is the target temperature. You will see the "Set" in the main contr
 The "On"/"Off" times can be set. If not `00:00` (midnight) then they cause the air-con to turn on, or off, at the time specified. Note, you may need to ensure the correct timezone in *settings*. Each is disabled by setting `00:00` (midnight) or setting both to the same time.
 
 The "Auto⏻" control enables automatic *on*/*off* based on temperature. If well outside target range and off, it turns on. When inside range for a time when on, it turns off.
+
+## BLE
+
+The *Target* uses the air-con's own temperature sensor normally, but if you have a BlueCoinT BLE sensor you can select that as an external reference. This allows the room to be controlled based on a sensor that may be by your bed or where your sit.
