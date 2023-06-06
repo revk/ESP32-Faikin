@@ -1084,6 +1084,7 @@ web_root (httpd_req_t * req)
       sprintf (temp,
                "<td colspan=5><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
                tmin, tmax, s21 ? "0.5" : "0.1", field, field, field);
+      httpd_resp_sendstr_chunk (req, temp);
       addf (tag);
    }
    void addtime (const char *tag, const char *field)
