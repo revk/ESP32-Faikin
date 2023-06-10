@@ -203,6 +203,7 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
    daikin.control_changed |= flag;
+   daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
    return NULL;
 }
@@ -277,6 +278,8 @@ set_float (const char *name, float *ptr, uint64_t flag, float val)
    {                            // Changed (and not something we are trying to set)
       *ptr = val;
       daikin.status_changed = 1;
+      if (flag == CONTROL_temp)
+         daikin.mode_changed = 1;
    }
    xSemaphoreGive (daikin.mutex);
 }
