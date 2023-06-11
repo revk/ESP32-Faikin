@@ -1,12 +1,12 @@
 # ESP32-Faikin
 
-Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. But their implementation of IoT (Internet of Things); remote control over the Internet -  leaves a lot to be desired. Their app is not well supported, and does not work well. If you are planning on integrating your air conditioners into something like an MQTT set up in your home or office, or simply want very basic web control / status for your units, this unit provides these features. It plugs in where the old Daikin WiFi module goes. The code is being updated from time to time and now incldues Home Assistant integration.
+Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. Sadly their WiFi control modules are not so good, especially the latest models which are all cloud based, require an internet connection to even work, and are slow.
+
+This code provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
 Wiki: [List of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) **Please update this with your model**
 
-This is code and PCB design to run on an ESP32 module and connect to a Daikin aircon unit in place of a BRP069B41, BRP069C41, or similar modules.
-
-Buy on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) This is UK only as Amazon won't export it for some reason, but one customer had success using [Forward2Me](https://www.forward2me.com/) to order on Amazon and export.
+PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
 <img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
 
@@ -16,7 +16,7 @@ The history is that, after years of using Daikin air-con in my old home, and usi
 
 # Set-up
 
-Appears as access point with simple web page to set up on local WiFI
+Appears as access point with simple web page to set up on local WiFI. On iPhone the setup page auto-loads.
 
 ![WiFi1](Manuals/WiFi1.png)
 
@@ -34,7 +34,7 @@ Local interactive web control page using *hostname*.local, no app required, no e
 
 # Design
 
-* KiCad PCB designs included
+* KiCad PCB designs included, with JLCPCB production files.
 * 3D printed case STL files
 * Documentation of reverse engineered protocol included
 
@@ -51,6 +51,6 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 
 # Building
 
-Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variables, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment.
+Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variations, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment.
 
 If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
