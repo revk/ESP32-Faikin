@@ -15,3 +15,4 @@ faikinlog
 faikinlog.service
 faikingraph
 dependencies.lock
+managed_components

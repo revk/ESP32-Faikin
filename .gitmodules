@@ -16,9 +16,6 @@
 [submodule "AXL"]
 	path = AXL
 	url = https://github.com/revk/AXL
-[submodule "esp-protocols"]
-	path = esp-protocols
-	url = https://github.com/espressif/esp-protocols
 [submodule "ESP32-BlueCoinT"]
 	path = ESP32-BlueCoinT
 	url = https://github.com/revk/ESP32-BlueCoinT
