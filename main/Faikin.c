@@ -504,7 +504,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    uart_write_bytes (uart, buf, 5 + txlen);
    // Wait ACK
    int rxlen = uart_read_bytes (uart, &temp, 1, 100 / portTICK_PERIOD_MS);
-   if (rxlen != 1 || (temp != ACK&&temp!=STX))
+   if (rxlen != 1 || (temp != ACK && temp != STX))
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
@@ -530,26 +530,26 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_error ("comms", &j);
       return S21_NOACK;
    }
-   if(temp==STX)
-	   *buf=temp;
+   if (temp == STX)
+      *buf = temp;
    else
    {
-   if (cmd == 'D')
-      return S21_OK;            // No response expected
-   while (1)
-   {
-      rxlen = uart_read_bytes (uart, buf, 1, 100 / portTICK_PERIOD_MS);
-      if (rxlen != 1)
+      if (cmd == 'D')
+         return S21_OK;         // No response expected
+      while (1)
       {
-         daikin.talking = 0;
-         jo_t j = jo_comms_alloc ();
-         jo_bool (j, "timeout", 1);
-         revk_error ("comms", &j);
-         return S21_NOACK;
+         rxlen = uart_read_bytes (uart, buf, 1, 100 / portTICK_PERIOD_MS);
+         if (rxlen != 1)
+         {
+            daikin.talking = 0;
+            jo_t j = jo_comms_alloc ();
+            jo_bool (j, "timeout", 1);
+            revk_error ("comms", &j);
+            return S21_NOACK;
+         }
+         if (*buf == STX)
+            break;
       }
-      if (*buf == STX)
-         break;
-   }
    }
    while (rxlen < sizeof (buf))
    {
@@ -565,7 +565,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       if (buf[rxlen - 1] == ETX)
          break;
    }
-   ESP_LOG_BUFFER_HEX(TAG,buf,rxlen);// TODO 
+   ESP_LOG_BUFFER_HEX (TAG, buf, rxlen);        // TODO 
    // Send ACK regardless, data is repeated, so will be sent again if we ignore due to checksum, for example.
    temp = ACK;
    uart_write_bytes (uart, &temp, 1);
@@ -590,10 +590,11 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    if (rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
    {                            // Loop back
       daikin.talking = 0;
-      if(!loopback)
-      {ESP_LOGE(TAG,"Loopback");
-      loopback = 1;
-      revk_blink(0,0,"RGB");
+      if (!loopback)
+      {
+         ESP_LOGE (TAG, "Loopback");
+         loopback = 1;
+         revk_blink (0, 0, "RGB");
       }
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "loopback", 1);
@@ -708,10 +709,11 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
    if (!buf[4])
    {                            // Tx sends 00 here, rx is 06
       daikin.talking = 0;
-      if(!loopback)
-      {ESP_LOGE(TAG,"Loopback");
-      loopback = 1;
-      revk_blink(0,0,"RGB");
+      if (!loopback)
+      {
+         ESP_LOGE (TAG, "Loopback");
+         loopback = 1;
+         revk_blink (0, 0, "RGB");
       }
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "loopback", 1);
@@ -1696,7 +1698,7 @@ app_main ()
 
    while (1)
    {                            // Main loop
-         revk_blink (0, 0, loopback ? "RGB" :"");
+      revk_blink (0, 0, loopback ? "RGB" : "");
       daikin.talking = 1;
       if (tx || rx)
       {
