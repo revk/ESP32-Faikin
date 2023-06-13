@@ -1561,7 +1561,7 @@ app_main ()
 #include "acextras.m"
    revk_boot (&app_callback);
 #define str(x) #x
-#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD);
+#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #define b(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_BOOLEAN);
 #define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
