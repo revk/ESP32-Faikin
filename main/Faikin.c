@@ -1106,16 +1106,6 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, temp);
       addf (tag);
    }
-   void addtime (const char *tag, const char *field)
-   {
-      httpd_resp_sendstr_chunk (req, "<td align=right>");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time title=\"Set 00:00 to disable\" id=");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, " onchange=\"w('");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, "',this.value);\"></td>");
-   }
    httpd_resp_sendstr_chunk (req, "<tr>");
    addb ("⏻", "power");
    httpd_resp_sendstr_chunk (req, "</tr>");
@@ -1156,6 +1146,16 @@ web_root (httpd_req_t * req)
 #ifdef ELA
    if (autor || *autob || !daikin.remote)
    {
+      void addtime (const char *tag, const char *field)
+      {
+         httpd_resp_sendstr_chunk (req, "<td align=right>");
+         httpd_resp_sendstr_chunk (req, tag);
+         httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time title=\"Set 00:00 to disable\" id=");
+         httpd_resp_sendstr_chunk (req, field);
+         httpd_resp_sendstr_chunk (req, " onchange=\"w('");
+         httpd_resp_sendstr_chunk (req, field);
+         httpd_resp_sendstr_chunk (req, "',this.value);\"></td>");
+      }
       httpd_resp_sendstr_chunk (req, "<div id=remote><hr><p>Automated local controls</p><table>");
       add ("Track", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addtemp ("Target", "autot");
@@ -1259,6 +1259,51 @@ web_root (httpd_req_t * req)
    return web_foot (req);
 }
 
+static const char * get_query(httpd_req_t * req, char *buf, size_t buf_len)
+{
+   if (httpd_req_get_url_query_len (req) && 
+       !httpd_req_get_url_query_str (req, buf, buf_len))
+      return NULL;
+   else
+      return "Required arguments missing";
+}
+
+static void simple_response(httpd_req_t * req, const char * err)
+{
+   httpd_resp_set_type (req, "text/plain");
+
+   if (err) {
+      char resp[1000];
+
+      // This "ret" value is reported by my BRP on malformed request
+      // Error text after 'adv' is my addition; assuming 'advisory'
+      snprintf (resp, sizeof(resp), "ret=PARAM NG,adv=%s", err);
+      httpd_resp_sendstr (req, resp);
+   } else {
+      httpd_resp_sendstr (req, "ret=OK,adv=");
+   }
+}
+
+// Macros with error collection for HTTP
+#define	daikin_set_v_e(err,name,value) {      \
+   const char * e = daikin_set_v(name, value); \
+   if (e) err = e;                             \
+}
+#define	daikin_set_i_e(err,name,value) {      \
+	const char * e = daikin_set_i(name, value); \
+   if (e) err = e;                             \
+}
+#define	daikin_set_e_e(err,name,value) {      \
+   const char *e = daikin_set_e(name, value);  \
+   if (e) err = e;                             \
+}
+#define	daikin_set_t_e(err,name,value) {      \
+   const char * e = daikin_set_t(name, value); \
+   if (e) err = e;                             \
+}
+
+// Our own JSON-based control interface starts here
+
 static esp_err_t
 web_status (httpd_req_t * req)
 {                               // Web socket status report
@@ -1318,6 +1363,39 @@ web_status (httpd_req_t * req)
    return status ();
 }
 
+// The following handlers provide web-based control potocol, compatible
+// with original Daikin BRP series online controllers.
+
+static esp_err_t
+web_get_basic_info (httpd_req_t * req)
+{
+   // Full string from my BRP module:
+   // ret=OK,type=aircon,reg=eu,dst=0,ver=3_3_9,pow=0,err=0,location=0,name=%4c%69%76%69%6e%67%20%72%6f%6f%6d,
+   // icon=2,method=home only,port=30050,id=,pw=,lpw_flag=0,adp_kind=2,pv=2,cpv=2,cpv_minor=00,led=1,en_setzone=1,
+   // mac=<my_mac>,adp_mode=run,en_hol=0,ssid1=<my_ssid>,radio1=-60,grp_name=,en_grp=0
+   httpd_resp_set_type (req, "text/plain");
+   char resp[1000],
+    *o = resp;
+
+   // Report something. In fact OpenHAB only uses this URL for discovery,
+   // and only checks for ret=OK.
+   o += sprintf (o, "ret=OK,type=aircon,reg=eu");
+   o += sprintf (o, ",mac=%02X%02X%02X%02X%02X%02X", revk_mac[0], revk_mac[1], revk_mac[2],
+                                                     revk_mac[3], revk_mac[4], revk_mac[5]);
+   o += sprintf (o, ",ssid1=%s", revk_wifi());
+
+   httpd_resp_sendstr (req, resp);
+   return ESP_OK;
+}
+
+static char brp_mode()
+{
+    // Mapped from FHCA456D. Verified against original BRP069A41 controller,
+    // which uses 7 for 'Auto'. This may vary across different controller
+    // versions, see a comment in web_set_control_info()
+    return "64370002"[daikin.mode];
+}
+
 static esp_err_t
 web_get_control_info (httpd_req_t * req)
 {
@@ -1327,7 +1405,7 @@ web_get_control_info (httpd_req_t * req)
    o += sprintf (o, "ret=OK");
    o += sprintf (o, ",pow=%d", daikin.power);
    if (daikin.mode <= 7)
-      o += sprintf (o, ",mode=%c", "64310002"[daikin.mode]);    // Mapped from FHCA456D
+      o += sprintf (o, ",mode=%c", brp_mode());
    o += sprintf (o, ",adv=%s", daikin.powerful ? "2" : "");
    o += sprintf (o, ",stemp=%.1f", daikin.temp);
    o += sprintf (o, ",shum=0");
@@ -1339,7 +1417,7 @@ web_get_control_info (httpd_req_t * req)
          o += sprintf (o, ",dh%d=0", i);
    o += sprintf (o, "dhh=0");
    if (daikin.mode <= 7)
-      o += sprintf (o, ",b_mode=%c", "64310002"[daikin.mode]);  // Mapped from FHCA456D
+      o += sprintf (o, ",b_mode=%c", brp_mode());
    o += sprintf (o, ",b_stemp=%.1f", daikin.temp);
    o += sprintf (o, ",b_shum=0");
    o += sprintf (o, ",alert=255");
@@ -1363,24 +1441,161 @@ web_get_control_info (httpd_req_t * req)
 static esp_err_t
 web_set_control_info (httpd_req_t * req)
 {
-   if (httpd_req_get_url_query_len (req))
-   {
-      char query[1000],
-        value[10];
-      if (!httpd_req_get_url_query_str (req, query, sizeof (query)))
-      {                         // Assumes sane values sent mostly, and no error checking
-         if (!httpd_query_key_value (query, "pow", value, sizeof (value)) && *value)
-            daikin_set_v (power, *value == '1');
-         if (!httpd_query_key_value (query, "mode", value, sizeof (value)) && *value && *value >= '1' && *value <= '7')
-            daikin_set_v (mode, "03721003"[*value - '0']);
-         if (!httpd_query_key_value (query, "stemp", value, sizeof (value)) && *value)
-            daikin_set_t (temp, strtof (value, NULL));
-         if (!httpd_query_key_value (query, "f_rate", value, sizeof (value)) && *value)
-            daikin_set_v (fan, *value == 'A' ? 0 : *value == 'B' ? 6 : *value - '0');
+   char query[1000];
+   const char * err = get_query(req, query, sizeof(query));
+
+   if (!err)
+   {      
+      char value[10];
+
+      if (!httpd_query_key_value (query, "pow", value, sizeof (value)) && *value)
+         daikin_set_v_e(err, power, *value == '1');
+      if (!httpd_query_key_value (query, "mode", value, sizeof (value)) && *value) {
+         // Orifinal Faikin-ESP32 code uses 1 for 'Auto` mode
+         // OpenHAB uses value of 0
+         // My original Daikin BRP069A41 controller reports 7. I tried writing '1' there,
+         // it starts replying back with this value, but there's no way to see what
+         // the AC does. Probably nothing.
+         // Here we promote all three values as 'Auto'. Just in case.
+         static int8_t modes[] = {3, 3, 7, 2, 1, -1, 0, 3}; // AADCH-FA
+         int8_t setval = (*value >= '0' && *value <= '7') ? modes[*value - '0'] : -1;
+
+         if (setval == -1)
+            err = "Invalid mode value";
+         else
+            daikin_set_v_e (err, mode, setval);
+      }
+      if (!httpd_query_key_value (query, "stemp", value, sizeof (value)) && *value)
+         daikin_set_t_e (err, temp, strtof (value, NULL));
+      if (!httpd_query_key_value (query, "f_rate", value, sizeof (value)) && *value) {
+         int8_t setval;
+
+         if (*value == 'A')
+            setval = 0;
+         else if (*value == 'B')
+            setval = 6;
+         else if (*value >= '3' && *value <= '7')
+            setval = *value - '2';
+         else
+            setval = -1;
+         if (setval == -1)
+            err = "Invalid f_rate value";
+         else
+            daikin_set_v_e (err, fan, setval);
       }
    }
+
+   simple_response(req, err);
+   return ESP_OK;
+}
+
+static esp_err_t
+web_get_sensor_info (httpd_req_t * req)
+{
+   // ret=OK,htemp=23.0,hhum=-,otemp=17.0,err=0,cmpfreq=0
    httpd_resp_set_type (req, "text/plain");
-   httpd_resp_sendstr (req, "ret=OK,adv=");
+   char resp[1000],
+    *o = resp;
+
+   o += sprintf (o, "ret=OK");
+   o += sprintf (o, ",temp="); // Indoor temperature
+   if (daikin.status_known & CONTROL_home)
+      o += sprintf (o, "%.2f", daikin.home);
+   else
+      *o++ = '-';
+   o += sprintf (o, ",hhum=-"); // Indoor humidity, not supported (yet)
+   o += sprintf (o, ",otemp="); // Outdoor temperature
+   if (daikin.status_known & CONTROL_outside)
+      o += sprintf (o, "%.2f", daikin.outside);
+   else
+      *o++ = '-';
+   o += sprintf (o, ",cmpfreq=-"); // Compressor frequency, not supported (yet)
+
+   httpd_resp_sendstr (req, resp);
+   return ESP_OK;
+}
+
+static esp_err_t
+web_register_terminal (httpd_req_t * req)
+{
+   // This is called with "?key=<security_key>" parameter if any other URL
+   // responds with 403. It's supposed that we remember our client and enable access.
+   // We don't support authentication currently, so let's just return OK
+   // However, it could be a nice idea to have in future
+   httpd_resp_set_type (req, "text/plain");
+   char resp[1000],
+    *o = resp;
+
+   o += sprintf (o, "ret=OK");
+
+   httpd_resp_sendstr (req, resp);
+   return ESP_OK;
+}
+
+static esp_err_t
+web_get_year_power (httpd_req_t * req)
+{
+   // ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
+   httpd_resp_set_type (req, "text/plain");
+   char resp[1000],
+    *o = resp;
+
+   // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
+   // For now let's just prevent errors in OpenHAB and return an empty OK response
+   // Note all zeroes from my BRP
+   o += sprintf (o, "ret=OK");
+
+   httpd_resp_sendstr (req, resp);
+   return ESP_OK;
+}
+
+static esp_err_t
+web_get_week_power (httpd_req_t * req)
+{
+   // ret=OK,s_dayw=2,week_heat=0/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
+   httpd_resp_set_type (req, "text/plain");
+   char resp[1000],
+    *o = resp;
+
+   // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
+   // For now let's just prevent errors in OpenHAB and return an empty OK response
+   // Note all zeroes from my BRP
+   o += sprintf (o, "ret=OK");
+
+   httpd_resp_sendstr (req, resp);
+   return ESP_OK;
+}
+
+static esp_err_t
+web_set_special_mode (httpd_req_t * req)
+{
+   char query[200];
+   const char *err = get_query(req, query, sizeof(query));
+
+   if (!err)
+   {
+      char mode[6], value[2];
+
+      if (!httpd_query_key_value (query, "spmode_kind", mode, sizeof (mode)) &&
+          !httpd_query_key_value (query, "set_spmode", value, sizeof (value)))
+      {
+         if (!strcmp(mode, "12")) {
+            err = daikin_set_v (econo, *value == '1');
+         } else if (!strcmp(mode, "2")) {
+            err = daikin_set_v (powerful, *value == '1');
+         } else {
+            err = "Unsupported spmode_kind value";
+         }
+
+         // The following other modes are known from OpenHAB sources:
+         // STREAMER "13"
+         // POWERFUL_STREAMER "2/13"
+         // ECO_STREAMER "12/13"
+         // Don't know what to do with them and my AC doesn't support them
+      }
+   }
+
+   simple_response(req, err);
    return ESP_OK;
 }
 
@@ -1549,6 +1764,37 @@ ha_status (void)
    revk_mqtt_send_clients (NULL, 1, revk_id, &j, 1);
 }
 
+static void register_uri(const httpd_uri_t* uri_struct)
+{
+   esp_err_t res = httpd_register_uri_handler (webserver, uri_struct);
+   if (res != ESP_OK) {
+       ESP_LOGE (TAG, "Failed to register %s, error code %d", uri_struct->uri, res);
+   }
+}
+
+static void register_get_uri(const char *uri, esp_err_t (*handler)(httpd_req_t *r))
+{
+   httpd_uri_t uri_struct = {
+      .uri = uri,
+      .method = HTTP_GET,
+      .handler = handler,
+   };
+
+   register_uri(&uri_struct);
+}
+
+static void register_ws_uri(const char *uri, esp_err_t (*handler)(httpd_req_t *r))
+{
+   httpd_uri_t uri_struct = {
+      .uri = uri,
+      .method = HTTP_GET,
+      .handler = handler,
+      .is_websocket = true,
+   };
+
+   register_uri(&uri_struct);
+}
+
 // --------------------------------------------------------------------------------
 // Main
 void
@@ -1623,60 +1869,30 @@ app_main ()
 
    // Web interface
    httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
+
+   // When updating the code below, make sure this is enough
+   // Note that we're also adding revk's web config handlers
+   config.max_uri_handlers = 14;
+
    if (!httpd_start (&webserver, &config))
    {
       if (webcontrol)
       {
-         {
-            httpd_uri_t uri = {
-               .uri = "/",
-               .method = HTTP_GET,
-               .handler = web_root,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
-         }
-         {
-            httpd_uri_t uri = {
-               .uri = "/apple-touch-icon.png",
-               .method = HTTP_GET,
-               .handler = web_icon,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
-         }
+         register_get_uri("/", web_root);
+         register_get_uri("/apple-touch-icon.png", web_icon);
          if (webcontrol >= 2)
          {
-            httpd_uri_t uri = {
-               .uri = "/wifi",
-               .method = HTTP_GET,
-               .handler = revk_web_config,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
+            register_get_uri("/wifi", revk_web_config);
          }
-         {
-            httpd_uri_t uri = {
-               .uri = "/status",
-               .method = HTTP_GET,
-               .handler = web_status,
-               .is_websocket = true,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
-         }
-         {
-            httpd_uri_t uri = {
-               .uri = "/aircon/get_control_info",
-               .method = HTTP_GET,
-               .handler = web_get_control_info,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
-         }
-         {
-            httpd_uri_t uri = {
-               .uri = "/aircon/set_control_info",
-               .method = HTTP_GET,
-               .handler = web_set_control_info,
-            };
-            REVK_ERR_CHECK (httpd_register_uri_handler (webserver, &uri));
-         }
+		 register_ws_uri("/status", web_status);
+         register_get_uri("/common/basic_info", web_get_basic_info);
+         register_get_uri("/aircon/get_control_info", web_get_control_info);
+         register_get_uri("/aircon/set_control_info", web_set_control_info);
+         register_get_uri("/aircon/get_sensor_info", web_get_sensor_info);
+         register_get_uri("/common/register_terminal", web_register_terminal);
+         register_get_uri("/aircon/get_year_power_ex", web_get_year_power);
+         register_get_uri("/aircon/get_week_power_ex", web_get_week_power);
+         register_get_uri("/aircon/set_special_mode", web_set_special_mode);
       }
       revk_web_config_start (webserver);
    }
@@ -1689,8 +1905,10 @@ app_main ()
 #endif
 
    if (!tx && !rx)
-   {                            // Dummy
-      daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode;
+   {
+      // Mock for interface development and testing
+      daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode |
+                             CONTROL_econo | CONTROL_powerful;
       daikin.power = 1;
       daikin.mode = 1;
       daikin.temp = 20.0;
@@ -1720,8 +1938,11 @@ app_main ()
             daikin.online = daikin.talking;
             daikin.status_changed = 1;
          }
-      } else
-         daikin.control_changed = 0;    // Dummy
+      } else {
+         // Mock configuration for interface testing
+         s21 = 1;
+         daikin.control_changed = 0;
+      }
       if (ha)
          daikin.ha_send = 1;
       do
