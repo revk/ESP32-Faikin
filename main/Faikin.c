@@ -461,6 +461,9 @@ enum
    S21_WAIT,
 };
 
+// Timeout value for serial port read
+#define READ_TIMEOUT (500 / portTICK_PERIOD_MS)
+
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
@@ -493,7 +496,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    }
    uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
    // Wait ACK
-   int rxlen = uart_read_bytes (uart, &temp, 1, 100 / portTICK_PERIOD_MS);
+   int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
    if (rxlen != 1 || (temp != ACK && temp != STX))
    {
       // Got something else
@@ -531,7 +534,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          return S21_OK;         // No response expected
       while (1)
       {
-         rxlen = uart_read_bytes (uart, buf, 1, 100 / portTICK_PERIOD_MS);
+         rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
          if (rxlen != 1)
          {
             daikin.talking = 0;
@@ -547,7 +550,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    // Receive the rest of response till ETX
    while (rxlen < sizeof (buf))
    {
-      if (uart_read_bytes (uart, buf + rxlen, 1, 10 / portTICK_PERIOD_MS) != 1)
+      if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
       {
          daikin.talking = 0;
          jo_t j = jo_comms_alloc ();
@@ -649,7 +652,7 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
    }
    uart_write_bytes (uart, buf, 6 + txlen);
    // Wait for reply
-   int rxlen = uart_read_bytes (uart, buf, sizeof (buf), 100 / portTICK_PERIOD_MS);
+   int rxlen = uart_read_bytes (uart, buf, sizeof (buf), READ_TIMEOUT);
    if (rxlen <= 0)
    {
       daikin.talking = 0;
