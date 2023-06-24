@@ -1237,6 +1237,7 @@ web_root (httpd_req_t * req)
                              "b('swingh',o.swingh);"    //
                              "b('swingv',o.swingv);"    //
                              "b('econo',o.econo);"      //
+                             "b('powerful',o.powerful);"
                              "e('mode',o.mode);"        //
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
                              "n('temp',o.temp);"        //
