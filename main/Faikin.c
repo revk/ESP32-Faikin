@@ -1498,7 +1498,7 @@ web_get_sensor_info (httpd_req_t * req)
     *o = resp;
 
    o += sprintf (o, "ret=OK");
-   o += sprintf (o, ",temp="); // Indoor temperature
+   o += sprintf (o, ",htemp="); // Indoor temperature
    if (daikin.status_known & CONTROL_home)
       o += sprintf (o, "%.2f", daikin.home);
    else
@@ -1509,6 +1509,7 @@ web_get_sensor_info (httpd_req_t * req)
       o += sprintf (o, "%.2f", daikin.outside);
    else
       *o++ = '-';
+   o += sprintf (o, ",err=0");     // Just for completeness
    o += sprintf (o, ",cmpfreq=-"); // Compressor frequency, not supported (yet)
 
    httpd_resp_sendstr (req, resp);
