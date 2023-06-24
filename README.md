@@ -8,7 +8,7 @@ Wiki: [List of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List
 
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
-<img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
+<img src=Manuals/Board1.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
 
 ## Why I made this
 
