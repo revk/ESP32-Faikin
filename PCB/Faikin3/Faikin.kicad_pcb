@@ -1515,7 +1515,7 @@
 
   (footprint "MountingHole:MountingHole_2mm" (layer "F.Cu")
     (tstamp e57f6379-04f0-48c5-8ead-322b3e8d6317)
-    (at 106 40)
+    (at 105 40)
     (descr "Mounting Hole 2mm, no annular")
     (tags "mounting hole 2mm no annular")
     (property "Sheetfile" "Faikin.kicad_sch")
