@@ -4853,6 +4853,14 @@
   )
 
   (gr_line (start 100 74.5) (end 170 74.5)
+    (stroke (width 0.1) (type default)) (layer "B.SilkS") (tstamp 964e59c3-d8f7-4b26-bce5-8ba77ce5f98d))
+  (gr_line (start 100 54.5) (end 170 54.5)
+    (stroke (width 0.1) (type default)) (layer "B.SilkS") (tstamp d94ef856-4e5d-4df9-9653-6f28f6029be5))
+  (gr_line (start 100 74.5) (end 170 74.5)
+    (stroke (width 0.1) (type default)) (layer "F.SilkS") (tstamp b138041b-f230-4a89-a4b3-370d48c5cdbf))
+  (gr_line (start 100 54.5) (end 170 54.5)
+    (stroke (width 0.1) (type default)) (layer "F.SilkS") (tstamp ba2bb65d-4439-4dbb-895d-b1874212450b))
+  (gr_line (start 100 74.5) (end 170 74.5)
     (stroke (width 0.1) (type default)) (layer "Eco1.User") (tstamp 24e0a79f-24b9-4dd0-9282-7ac588eebc3f))
   (gr_line (start 100 54.5) (end 170 54.5)
     (stroke (width 0.1) (type default)) (layer "Eco1.User") (tstamp fd47efe9-e8c6-4a69-93ec-e25659a9e1cb))
@@ -5755,7 +5763,7 @@
   )
   (gr_text "B" (at 160 65) (layer "B.SilkS") (tstamp 841449c3-d321-4003-8140-e791baf431b1)
     (effects (font (face "AJK") (size 10 10) (thickness 0.15)) (justify mirror))
-    (render_cache "B" -0
+    (render_cache "B" 0
       (polygon
         (pts
           (xy 160.085045 57.89621)          (xy 160.203712 57.898972)          (xy 160.321808 57.903575)          (xy 160.43933 57.91002)
@@ -6281,7 +6289,7 @@
   )
   (gr_text "faikin.revk.uk" (at 136 95) (layer "B.SilkS") (tstamp bbd0900b-22d3-43ae-b118-204b4a415527)
     (effects (font (face "xkcd Script") (size 3 3) (thickness 0.15)) (justify mirror))
-    (render_cache "faikin.revk.uk" -0
+    (render_cache "faikin.revk.uk" 0
       (polygon
         (pts
           (xy 147.306733 93.352187)          (xy 147.279041 93.340767)          (xy 147.275226 93.340464)          (xy 147.244772 93.33846)
@@ -8156,7 +8164,7 @@
   )
   (gr_text "This is an assembled printed circuit board.\nThis is a component, with no case or leads.\nSnap off any extra blank panels.\nUse this part for your own projects as you wish.\n\nMade in China for Andrews & Arnold Ltd." (at 151 92) (layer "B.SilkS") (tstamp fc87e236-7378-4b56-98b0-c51139ee5918)
     (effects (font (face "Raleway") (size 1.2 1.2) (thickness 0.15)) (justify left bottom mirror))
-    (render_cache "This is an assembled printed circuit board.\nThis is a component, with no case or leads.\nSnap off any extra blank panels.\nUse this part for your own projects as you wish.\n\nMade in China for Andrews & Arnold Ltd." -0
+    (render_cache "This is an assembled printed circuit board.\nThis is a component, with no case or leads.\nSnap off any extra blank panels.\nUse this part for your own projects as you wish.\n\nMade in China for Andrews & Arnold Ltd." 0
       (polygon
         (pts
           (xy 149.998799 80.622182)          (xy 150.426127 80.622182)          (xy 150.426127 81.716)          (xy 150.544242 81.716)
