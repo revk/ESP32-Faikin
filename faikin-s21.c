@@ -132,6 +132,7 @@ main(int argc, const char *argv[])
 	  {"fan", 0, POPT_ARG_INT, &fan, 0, "Fan", "0 = auto, 1-5 = set speed, 6 = quiet"},
 	  {"temp", 0, POPT_ARG_FLOAT, &temp, 0, "Temp", "C"},
 	  {"comp", 0, POPT_ARG_INT, &comp, 0, "Comp", "1=H,2=C"},
+	  {"powerful", 0, POPT_ARG_NONE, &powerful, 0, "Debug"},
 	  {"dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump"},
 	  POPT_AUTOHELP {}
    };
