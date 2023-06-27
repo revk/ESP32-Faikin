@@ -107,6 +107,9 @@ OPTS=-L/usr/local/ssl/lib ${SQLLIB} ${CCOPTS}
 faikin: faikin.c
 	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
 
+faikin-s21: faikin-s21.c main/daikin_s21.h main/faikin_enums.h
+	gcc -O0 -g -o $@ $< -lpopt ${INCLUDES} ${LIBS}
+
 faikinlog: faikinlog.c SQLlib/sqllib.o AJL/ajl.o main/acextras.m main/acfields.m main/accontrols.m
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAJL AJL/ajl.o ${OPTS}
 

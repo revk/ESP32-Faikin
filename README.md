@@ -2,13 +2,15 @@
 
 Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. Sadly their WiFi control modules are not so good, especially the latest models which are all cloud based, require an internet connection to even work, and are slow.
 
-This code provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
+This code/module provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
 Wiki: [List of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) **Please update this with your model**
 
+This is all ESP32 based, but there is also an [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
+
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
-<img src=Manuals/Board.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
+<img src=Manuals/Board1.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
 
 ## Why I made this
 
@@ -42,15 +44,17 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 
 * Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone.
 * MQTT reporting and controls
-* Works with Home Assistant over MQTT
+* Works with Home Assistant over MQTT - note Home Assistant can work with HomeKit
 * Includes linux mysql/mariadb based logging and graphing tools
 * Works with [EnvMon](https://github.com/revk/ESP32-EnvMon) Environmental Monitor for finer control and status display
 * or, works with BlueCoinT BLE temperature sensor as a remote reference in an auto mode
-* Automatically works out if S21 or X50 protocol (used on bigger/ducted units0
-* Backwards compatible `/aircon/get_control_info` and `/aircon/set_control_info` URLs
+* Automatically works out if S21 or X50 protocol (used on bigger/ducted units)
+* Backwards compatible direct `/aircon/...` URLs
 
 # Building
 
-Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variations, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build with then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. You will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment.
+Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variations, but this hardware is the `make pico` version. The `make` actually runs the normal `idf.py` to build which then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. If flashing yourself, you will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment. The modules on Amazon come pre-loaded and can upgrade over the air.
+
+The code is normally set up to automatically upgrade software, checking roughtly once a week. You can change this in settings via MQTT.
 
 If you want to purchase an assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
