@@ -1137,6 +1137,7 @@ web_root (httpd_req_t * req)
    }
    httpd_resp_sendstr_chunk (req, "</table>");
    httpd_resp_sendstr_chunk (req, "<p id=offline style='display:none'><b>System is off line.</b></p>");
+   httpd_resp_sendstr_chunk (req, "<p id=loopback style='display:none'><b>System is in loopback test.</b></p>");
    httpd_resp_sendstr_chunk (req, "<p id=shutdown style='display:none;color:red;'></p>");
    httpd_resp_sendstr_chunk (req,
                              "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
@@ -1231,6 +1232,7 @@ web_root (httpd_req_t * req)
                              "o=JSON.parse(v.data);"    //
                              "b('power',o.power);"      //
                              "h('offline',!o.online);"  //
+                             "h('loopback',o.loopback);"  //
                              "h('control',o.control);"  //
                              "h('slave',o.slave);"      //
                              "h('remote',!o.remote);"   //
@@ -1728,7 +1730,9 @@ ha_status (void)
    if (!ha)
       return;
    jo_t j = jo_object_alloc ();
-   if (daikin.status_known & CONTROL_online)
+   if(loopback)
+      jo_bool (j, "loopback",1);
+   else if (daikin.status_known & CONTROL_online)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_temp)
       jo_litf (j, "target", "%.2f", daikin.temp);
