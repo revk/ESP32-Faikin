@@ -16,6 +16,12 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
 
+## How to get one
+
+As mentioned, on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) - but not available to export everywhere. Forwarding companies are an option.
+
+But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You would also need somethign to program them, such as my [Tasmotiser](https://github.com/revk/Tasmotizer-PCB) board.
+
 # Set-up
 
 Appears as access point with simple web page to set up on local WiFI. On iPhone the setup page auto-loads.
