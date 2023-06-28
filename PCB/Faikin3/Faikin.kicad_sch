@@ -2136,7 +2136,7 @@
   )
 
   (symbol (lib_id "RevK:VCUT") (at 262.255 177.8 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 78559d57-a078-4932-9282-a74b173c5f8d)
     (property "Reference" "V2" (at 262.255 176.53 0)
       (effects (font (size 1.27 1.27)) hide)
@@ -2148,6 +2148,9 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (at 262.255 177.8 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Sim.Enable" "0" (at 262.255 177.8 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (instances
@@ -2441,7 +2444,7 @@
   )
 
   (symbol (lib_id "RevK:VCUT") (at 262.255 171.45 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 920ad08e-0f22-4df1-8717-54f7772bc805)
     (property "Reference" "V1" (at 262.255 170.18 0)
       (effects (font (size 1.27 1.27)) hide)
@@ -2453,6 +2456,9 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "" (at 262.255 171.45 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Sim.Enable" "0" (at 262.255 171.45 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (instances
