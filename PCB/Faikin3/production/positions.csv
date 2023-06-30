@@ -1,6 +1,7 @@
 ﻿Designator,Mid X,Mid Y,Rotation,Layer
 C1,38.3,40.45,0.0,bottom
 C10,33.3,43.7125,90.0,bottom
+C2,38.4,42.2,270.0,bottom
 C5,36.6,46.6,0.0,bottom
 C6,35.2,39.7,270.0,bottom
 C7,32.0,39.7,270.0,bottom
@@ -8,7 +9,7 @@ C8,32.6,46.2125,180.0,bottom
 C9,32.6,41.2125,0.0,bottom
 D2,39.9,47.1,180.0,bottom
 J1,35.0,35.7825,180.0,bottom
-J2,35.0,30.9,0.0,bottom
+J2,35.0,30.45,0.0,bottom
 L2,35.9,43.7125,90.0,bottom
 PCB1,35.0,35.0,0.0,top
 Q1,33.6,39.0,180.0,bottom
