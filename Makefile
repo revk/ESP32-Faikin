@@ -123,9 +123,9 @@ faikingraph: faikingraph.c SQLlib/sqllib.o AXL/axl.o
 
 stl: 	PCB/Faikin/Faikin.stl PCB/Faikin3/Faikin.stl
 
-PCB/Faikin/Faikin.scad: PCB/Faikin/Faikin.kicad_pcb PCBCase/case Makefile
+PCB/Faikin/Faikin.scad: PCB/Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
 	PCBCase/case -o $@ $< --edge=2 --base=3
 
-PCB/Faikin3/Faikin.scad: PCB/Faikin3/Faikin.kicad_pcb PCBCase/case Makefile
+PCB/Faikin3/Faikin.scad: PCB/Faikin3/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
 	PCBCase/case -o $@ $< --edge=2 --base=3
 
