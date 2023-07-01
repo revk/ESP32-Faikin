@@ -1,6 +1,6 @@
 // Generated case design for PCB/Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-07-01 07:57:41
+// Generated 2023-07-01 08:01:08
 // title:	Daikin ESP32-PICO-MINI Module
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd

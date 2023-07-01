@@ -127,5 +127,5 @@ PCB/Faikin/Faikin.scad: PCB/Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCas
 	PCBCase/case -o $@ $< --edge=2 --base=3
 
 PCB/Faikin3/Faikin.scad: PCB/Faikin3/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --base=3
+	PCBCase/case -o $@ $< --edge=2 --top=3 --panel
 
