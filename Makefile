@@ -24,7 +24,7 @@ endif
 ifdef	SQLINC
 TOOLS := faikin faikinlog faikingraph
 else
-$(warning mariadb/mysql not installed, needed for tools)
+$(warning Warning - mariadb/mysql not installed, needed if you want to build tools)
 endif
 
 all:	tools
@@ -44,10 +44,14 @@ issue:
 	git commit -a -m release
 	git push
 
-set:    wroom solo pico
+set:    wroom1 wroom solo pico
 
 pico:
 	components/ESP32-RevK/setbuildsuffix -S1-PICO
+	@make
+
+wroom1:
+	components/ESP32-RevK/setbuildsuffix -S1-V1
 	@make
 
 wroom:
