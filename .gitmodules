@@ -1,3 +1,6 @@
 [submodule "PCB/PCBCase"]
 	path = PCB/PCBCase
 	url = https://github.com/revk/PCBCase
+[submodule "Tools/SQLlib"]
+	path = Tools/SQLlib
+	url = https://github.com/revk/SQLlib
