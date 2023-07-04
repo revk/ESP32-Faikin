@@ -1,0 +1,169 @@
+<h1>Adrian's XML library</h1>
+<p>AXL is a library allowing the encoding and decoding of XML documents, scanning them and manipulating them in C code.</p>
+<h2>Overview of XML</h2>
+<p>XML is not really described in too much detail here. XML documents are plain text using markup, similar to HTML. The syntax is deliberately very strict, and constructing XML is much better done with a library than just trying to make suitable output directly. Specific characters have special meaning specifically &amp;, &lt; and &gt; but otherwise XML normally allows all UTF-8 characters.</p>
+<p>An XML document is used to create a structured object. The object has a name/type, may have named attributes and will then contain a number of other objects or possibly text. AXL makes a few basic assumptions, such as ignoring whitespace only content of objects, and not mixing objects and content. AXL also ignores comments. This is consistent with most messaging protocols but does not fit with creating HTML for example.</p>
+<p>An object is of the form &lt;name&gt; at the start and &lt;/name&gt; at the end, or possibly &lt;name/&gt; if it has no content. Attributes are included between the &lt; and &gt; as name="value" pairs, e.g. &lt;name attr1="value 1" attr2="value2"/&gt;. Attribute names are unique and the order normally does not matter. Objects inside and object are included between the &lt;name&gt; and &lt;/name&gt;. If the object has a text content it is between the &lt;name&gt; and &lt;/name&gt; as text.</p>
+<p>An XML document starts <tt>&lt;?xml version="1.0" encoding="utf-8"?&gt;</tt> and can in theory have different version or character coding, but this is not recommended. There is then one <i>object</i> that follows which is the <i>root</i> object.</p>
+<h2>Representing XML as C data objects.</h2>
+<p>The basic principle is that the XML document is represented in C. You can read a document in to a program, work on in (reading and changing), and write it out. The key C structure used is <tt>xml_tree_t</tt> which is the top level tree. Type names ending <tt>_t</tt>. The tree contains a root and other objects of the type <tt>xml_element_t</tt>, and elements contain attributes of the type <tt>xml_attribute_t</tt>.</p>
+<h2>Usage style</h2>
+<p>There are a number of details functions available, and some have different variants for simpler or more complex use (e.g. using namespaces). In addition there are some simpler high level functions <tt>xml_get</tt>, <tt>xml_find</tt> and <tt>xml_add</tt>. These can often be <tt>#define</tt>d to be something simple like G or X for much more compact code.</p>
+<p>The simple functions make use of am <i>XPath</i> style where a string is used to specify a path of objects wither absolute or relative, like a filename, using <tt>/</tt> between the parts. Using these is slightly less efficient but makes for much more readable and maintainable code that is less likely to crash.</p>
+<h2>Simple example</h2>
+<p>A simple example of using AXL scanning objects in an XML object and extracting attributes and fields and performing SQL updates (see <a href="sqllib.html">sqllib</a>).</p>
+<pre>
+ // xml_element_t doc is already defined at this point
+ xml_element_t line=NULL;
+ while((line=xml_element_next_by_name(doc,line,"Line")))	// scan each &lt;Line&gt; within doc
+ {
+  char *id=xml_get(line,"@id");	// get id
+  if(!id || !*id) continue;	// no id, skip
+  if(!xml_element_next(line,NULL))
+  {	// No sub elements, so empty, delete object
+   sql_safe_query_free(&amp;sql,sql_printf("DELETE FROM Table WHERE ID=%#s",id));	// delete it
+   continue;
+  }
+  sql_safe_query_free(&amp;sql,sql_printf("REPLACE INTO Table (id,job,docname) VALUES (%#s,%#s,%#s)",id,xml_get(line,"Job"),xml_get(line,"DocName")));
+ }
+</pre>
+
+<h2>Function descriptions</h2>
+<dl>
+<dt>xml_element_t <b>xml_tree_root</b>(xml_tree_t tree)</dt>
+<dd>Find the root of the tree</dd>
+<dt>char *<b>xml_tree_encoding</b>(xml_tree_t tree)</dt>
+<dd>Report encoding of tree (normally utf-8)</dd>
+<dt>xml_namespace_t <b>xml_element_namespace</b>(xml_element_t element)</dt>
+<dd>Report namespace of an element.</dd>
+<dt>char *<b>xml_element_name</b>(xml_element_t element)</dt>
+<dd>Report name of an element.</dd>
+<dt>char *<b>xml_element_content</b>(xml_element_t element)</dt>
+<dd>Report content of an element.</dd>
+<dt>xml_element_t <b>xml_element_parent</b>(xml_element_t element)</dt>
+<dd>Report parent of an elements, NULL if root.</dd>
+<dt>xml_namespace_t <b>xml_attribute_namespace</b>(xml_attribute_t attribute)</dt>
+<dd>Report namespace of an attribute.</dd>
+<dt>char *<b>xml_attribute_name</b>(xml_attribute_t attribute)</dt>
+<dd>Report name of an attribute.</dd>
+<dt>char *<b>xml_attribute_content</b>(xml_attribute_t attribute)</dt>
+<dd>Report content of an attribute.</dd>
+<dt>xml_element_t <b>xml_attribute_parent</b>(xml_attribute_t attribute)</dt>
+<dd>Report element of an attributes</dd>
+<dt>char *<b>xml_pi_name</b>(xml_pi_t pi)</dt>
+<dd>Report name of a PI</dd>
+<dt>char *<b>xml_pi_content</b>(xml_pi_t pi)</dt>
+<dd>Report content of a PI</dd>
+<dt>xml_element_t <b>xml_element_by_name</b>(xml_element_t element,const char* name)</dt>
+<dd>Find first element in an element with matching name</dd>
+<dt>xml_element_t <b>xml_element_by_name_ns</b>(xml_element_t element,xml_namespace_t namespace,const char* name)</dt>
+<dd>As above, but checking specific namespace</dd>
+<dt>xml_attribute_t <b>xml_attribute_by_name</b>(xml_element_t element,const char* name)</dt>
+<dd>Find an attribute of an element by name</dd>
+<dt>xml_attribute_t <b>xml_attribute_by_name_ns</b>(xml_element_t element,xml_namespace_t namespace,const char* name)</dt>
+<dd>As above, but checking specific namespace</dd>
+<dt>xml_element_t <b>xml_element_next</b>(xml_element_t parent,xml_element_t prev)</dt>
+<dd>Get next element in the parent, after the <i>prev</i> element. <i>prev</i> being NULL returns first element in parent.</dt>
+<dt>xml_element_t <b>xml_element_next_by_name</b>(xml_element_t parent,xml_element_t prev,const char *name)</dt>
+<dd>Get next element in the parent with specified <i>name</i>, after the <i>prev</i> element. <i>prev</i> being NULL returns first element in parent.</dd>
+<dt>xml_element_t <b>xml_element_next_by_name_ns</b>(xml_element_t parent,xml_element_t prev,xml_namespace_t namespace,const char *name)</dt>
+<dd>As above, but checking specific namespace</dd>
+<dt>xml_attribute_t <b>xml_attribute_next</b>(xml_element_t e,xml_attribute_t prev)</dt>
+<dd>Find next attribute in an element after <i>prev</i>. <i>prev</i> being NULL returns first attribute.</dd>
+<dt>xml_element_t <b>xml_element_add_ns</b>(xml_element_t parent,xml_namespace_t namespace,const char* name)</dt>
+<dd>As above, but checking specific namespace</dd>
+<dt>xml_element_t <b>xml_element_add</b>(xml_element_t parent,const char* name)</dt>
+<dd>Add an element to parent, at end of child object list, with specified name. Return the added element.</dd>
+<dt>xml_element_t <b>xml_element_add_ns</b>(xml_element_t parent,xml_namespace_t namespace,const char* name)</dt>
+<dd>As above, but setting specific namespace on new element</dd>
+<dt>void <b>xml_element_attach</b>(xml_element_t parent, xml_element_t element)</dt>
+<dd>Remove element <i>element</i> from its tree and attach under element <i>parent</i>, merging namespaces, etc. if trees are different.</dd>
+<dt>xml_attribute_t <b>xml_attribute_printf_ns</b>(xml_element_t e,xml_namespace_t namespace,const char* name,const char* format,...)</dt>
+<dd>fprintf that is written to an attribute value with namespace</dd>
+<dt>xml_attribute_t <b>xml_attribute_set</b>(xml_element_t e,const char* name,const char* content)</dt>
+<dd>Set an attribute content. Specifying content as NULL deletes the attribute if it exists.</dd>
+<dt>xml_attribute_t <b>xml_attribute_set_ns</b>(xml_element_t e,xml_namespace_t namespace,const char* name,const char* content)</dt>
+<dd>As above, but setting specific namespace on attribute</dd>
+<dt>void <b>xml_attribute_delete </b>(xml_attribute_t a)</dt>
+<dd>Explicit delete of an attribute from its parent element</dd>
+<dt>void <b>xml_pi_delete</b>(xml_pi_t p)</dt>
+<dd>Delete a PI from the parent tree</dd>
+<dt>void <b>xml_element_delete</b>(xml_element_t e)</dt>
+<dd>Delete an element and its children from its parent</dd>
+<dt>void <b>xml_element_explode</b>(xml_element_t e)</dt>
+<dd>Delete an element but put its children in its place</dd>
+<dt>void <b>xml_element_set_name</b>(xml_element_t e,const char *name)</dt>
+<dd>Change the name of an element</dd>
+<dt>void <b>xml_element_set_namespace</b>(xml_element_t e,xml_namespace_t ns)</dt>
+<dd>Change the namespace of an element</dd>
+<dt>void <b>xml_element_set_content</b>(xml_element_t e,const char *content)</dt>
+<dd>Change the content of an element</dd>
+<dt>void <b>xml_element_printf_content</b>(xml_element_t e,const char *format,...)</dt>
+<dd>fprintf to the content of an element</dd>
+<dt>xml_tree_t <b>xml_tree_new</b>(void)</dt>
+<dd>Create a new empty tree</dd>
+<dt>xml_element_t <b>xml_tree_add_root</b>(xml_tree_t tree,const char* name)</dt>
+<dd>Add the root element to a tree of specified name and return that root</dd>
+<dt>xml_element_t <b>xml_tree_add_root_ns</b>(xml_tree_t tree,xml_namespace_t namespace,const char* name)</dt>
+<dd>As above, but setting specific namespace on the root element</dd>
+<dt>xml_namespace_t <b>xml_namespace</b>(xml_tree_t t,const char *tag,const char *namespace)</dt>
+<dd>Create and tag a namespace in a tree. The <i>tag</i> can be null if you do not wish to specific a short name for it. On output one will be created.</dd>
+<dt>void <b>xml_tree_delete</b>(xml_tree_t t)</dt>
+<dd>Delete a tree, all PI, all elements and all resources are freed. Call when you have finished with a tree.</dd>
+<dt>void <b>xml_element_write</b>(FILE *fp,xml_tree_t t,xml_element_t e)</dt>
+<dd>Write an element to a FILE as text.</dd>
+<dt>void <b>xml_tree_write</b>(FILE *fp,xml_tree_t t)</dt>
+<dd>Write a whole tree to a FILE as text.</dd>
+<dt>xml_tree_t <b>xml_tree_parse</b>(const char *xml)</dt>
+<dd>Read a tree from XML in memory (NULL terminated)</dd>
+<dt>xml_tree_t <b>xml_tree_read</b>(FILE *fp)</dt>
+<dd>Read a tree from a FILE</dd>
+<dt>xml_tree_t <b>xml_tree_read_file</b>(const char *filename)</dt>
+<dd>Read a tree from a filename</dd>
+<dt>xml_pi_t <b>xml_pi_next</b>(xml_tree_t parent,xml_pi_t prev)</dt>
+<dd>Return next PI in a tree after <i>prev</i>. <i>prev</i> being NULL means first PI</dd>
+<dt>xml_pi_t <b>xml_pi_add</b>(xml_tree_t t,const char* name,const char* content)</dt>
+<dd>Add a PI to a tree</dd>
+<dt>void <b>xml_quoted</b>(FILE *,const char *);
+<dd>Write an XML quoted string to a FILE.</dd>
+<dt>const char *<b>xml_boolean</b>(v)</dt>
+<dd>Return string "true" or "false" depending on v (non zero is true) - typically used to set a string value for an attribute or content.</dd>
+<dt>const char *<b>xml_number</b>(long long v)</dt>
+<dd>Return string holding the decimal of the value v - typically used to set a string value for an attribute or content.</dd>
+<dt>const char *<b>xml_number22</b>(char *t,time_t v)</dt>
+<dd>As above, but t is a string with space for 21 characters and a NULL termination in to which the value is written. t is returned.</dd>
+<dt>const char *<b>xml_datetime</b>(time_t v)</dt>
+<dd>Return string holding the datetime in XML XSD UTC (Z suffix) of the value v - typically used to set a string value for an attribute or content.</dd>
+<dt>const char *<b>xml_date22</b>(char *t,time_t v)</dt>
+<dd>As above, but t is a string with space for 21 characters and a NULL termination in to which the value is written. t is returned.</dd>
+<dt>const char *<b>xml_date</b>(time_t v)</dt>
+<dd>Return string holding the date in XML XSD UTC of the value v - typically used to set a string value for an attribute or content.</dd>
+<dt>const char *<b>xml_date11</b>(char *t,time_t v)</dt>
+<dd>As above, but t is a string with space for 10 characters and a NULL termination in to which the value is written. t is returned.</dd>
+</dl>
+<h2>PI handling</h2>
+<p>A tree can hold <i>processing instructions</i>. These have a <i>name</i> and <i>value</i> and are included after the &lt;?xml...&gt; and before the object. Functions exists to check, change and add these to a tree.</p>
+<h2>Namespace handling</h2>
+<p>All of the above functions that have an <tt>_ns</tt> version take an <tt>xml_namespace_t</tt> type <i>namespace</i> parameter.</p>
+<p>In an XML document, each element or attribute can have a name space. This is normally expressed using a short prefix, like <tt>x:</tt> in front of the name of the element or attribute.</p>
+<p>The short prefix maps to a full name space URI using the <tt>xmlns</tt> attribute that can appear on any element. AXL generates XML with all namespaces defined only on the root element but can parse XML with namespaces at any levels. Output will only include name spaces that are used, and any for which a prefix is not defined will have a short prefix created and used. One namespace may be un-prefixed in the output.</p>
+<p>To find a namespace use the <tt>xml_namespace</tt> function on the tree. This can also specify a prefix that you want to use which acts as a hint when producing output. It finds any existing name space or adds a new one if not found. Having obtained a name space reference you can use it in the <tt>_ns</tt> versions of functions.</p>
+<p>Remember the short prefix does not matter - the full URI is what makes a name space</p>
+<h2>xml_find</h2>
+<p>The main functions are fairly verbose and operate on the low level types a step at a time. <tt>xml_element_t xml_find (xml_element_t e, const char *path)</tt> finds an element that may be absolute or relative to the element specified by using a path.</p>
+<p>The path is a string, and if it starts / then it is absolute, else relative. It simply has the elements at each level by name separated by / characters like a file pathname. It even allows <tt>../</tt> in the path to go up a level.</p>
+<p>Each element can have a prefix using the namespace prefix defined. This means the prefix has to match. Using <tt>:</tt> as a prefix on its own is valid to mean must be top level unprefixed namespace. Without any <tt>:</tt> then any namespace matches.</p>
+<p>Importantly this generates no errors if any level is missing. It returns NULL. If the path exists, then the final element is returned as an element.</p>
+<p>At present each step finds the first instance of the matching name, but in future xpath style <tt>[n]</tt> suffixes may be allowed.</p>
+<h2>xml_get</h2>
+<p>This is very similar to <tt>xml_find</tt> except the value returned is the content of the final element. It also allows the final part of the path to be <tt>@name</tt> indicating that the content of a specific attribute is to be returned. Again, there is no error if not found, just NULL return.</p>
+<p>The attribute can similarly use a namespace prefix if required, after the <tt>@</tt></p>
+<h2>xml_add</h2>
+<p>This is possibly one of the most flexible functions as it allows creation of objects, attributes and setting their content.</p>
+<p><tt>xml_element_t xml_add (xml_element_t e, const char *path, const char *value)</tt> takes a path in the same was as <tt>xml_get</tt>. It creates elements as it goes, if they do not exist. If any element is prefixed <tt>+</tt> then it is created even if it does already exist. The last part can be an element, in which case the content is set to the specified value. If the last part is an attribute, e.g. <tt>@name</tt> then the attribute content is set to the specified value. The final element is returned.</p>
+<p>It is also possible at any stage to have <tt>@name=value</tt> in the path, which means at that point the attribute specified is set to the value. The range of characters in the value is limited (e.g. cannot include / for a start). This can then allow a whole path of objects, some of which may have one of more attributes set to fixed values, and then the final element having a value set, all in one command.</p>
+<p>In additional to <tt>+</tt>, the name can also have other prefixes: <tt>*</tt> to mark as JSON which is not an array; <tt>-</tt> to mark as JSON that is not quoted.</p>
+<p>Not that the value can be NULL which does not set any content, but creates all of the elements. This can be used as a simple way to create a whole tree of elements in one go.</p>
+<h2>xml_addf</h2>
+<p>This works in the same way as xml_add, but uses formatted output.</p>
+

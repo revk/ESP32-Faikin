@@ -1,0 +1,5 @@
+source "/home/adrian/ESP32/5.0.2/components/bootloader/Kconfig.projbuild"
+source "/home/adrian/ESP32/5.0.2/components/esp_app_format/Kconfig.projbuild"
+source "/home/adrian/ESP32/5.0.2/components/esp_rom/Kconfig.projbuild"
+source "/home/adrian/ESP32/5.0.2/components/esptool_py/Kconfig.projbuild"
+source "/home/adrian/ESP32/5.0.2/components/partition_table/Kconfig.projbuild"

@@ -1,0 +1,1016 @@
+240400989191297
+RevK
+AA
+
+
+0
+1
+0
+RevK
+AJK
+
+
+0
+0
+0
+RevK
+AJK-Silk
+
+
+0
+0
+0
+RevK
+Battery-Holder-2032
+https://www.mouser.co.uk/datasheet/2/238/LNNC_S_A0002913840_1-2550745.pdf
+BR2016 CR2016 DL2016 BR2020 CL2020 BR2025 CR2025 DL2025 DR2032 CR2032 DL2032
+0
+3
+2
+RevK
+C_0402
+
+
+0
+2
+2
+RevK
+C_0603
+Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+RevK
+C_0603_
+
+
+0
+0
+0
+RevK
+C_0805
+
+
+0
+2
+2
+RevK
+C_0805_
+
+
+0
+0
+0
+RevK
+Connector-MilliGrid-2x2
+
+
+0
+4
+4
+RevK
+Crystal-3.2x2.5
+
+
+0
+4
+4
+RevK
+Cx2_0603
+Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+capacitor
+0
+4
+2
+RevK
+D24V5F3
+
+
+0
+4
+4
+RevK
+D24V5F3-SMD-Like
+
+
+0
+4
+4
+RevK
+DC
+
+
+0
+2
+2
+RevK
+D_1206
+Diode SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+diode
+0
+2
+2
+RevK
+D_1206_
+
+
+0
+0
+0
+RevK
+DateCode
+
+
+0
+114
+0
+RevK
+ESE13
+
+
+0
+4
+2
+RevK
+ESE58
+
+
+0
+4
+2
+RevK
+ESP32-PICO-MINI-02
+
+
+0
+61
+53
+RevK
+ESP32-WROOM-32
+Single 2.4 GHz Wi-Fi and Bluetooth combo chip https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf
+Single 2.4 GHz Wi-Fi and Bluetooth combo  chip
+0
+55
+39
+RevK
+Hidden
+
+
+0
+0
+0
+RevK
+Hole-2.5mm
+
+
+0
+1
+0
+RevK
+ISO7380-M3-NoPad
+Mounting Hole 3.2mm, no annular, M3, ISO7380
+mounting hole 3.2mm no annular m3 iso7380
+0
+0
+0
+RevK
+ISO7380-M3-Pad
+Mounting Hole 3.2mm, no annular, M3, ISO7380
+mounting hole 3.2mm no annular m3 iso7380
+0
+5
+1
+RevK
+JLC-SOT-363_SC-70-6
+SOT-363, SC-70-6
+SOT-363 SC-70-6
+0
+6
+6
+RevK
+L86-M33
+
+
+0
+13
+12
+RevK
+L96-M33
+GPS module
+
+0
+31
+31
+RevK
+LED-RGB-1.6x1.6
+
+
+0
+4
+4
+RevK
+LED_1206_Rev_Square
+
+
+0
+2
+2
+RevK
+LED_D3.0mm_and_SMD
+LED, diameter 3.0mm, 2 pins
+LED diameter 3.0mm 2 pins
+0
+4
+2
+RevK
+LED_Reverse
+LED, diameter 3.0mm, 2 pins
+LED diameter 3.0mm 2 pins
+0
+4
+2
+RevK
+LTV-356T
+
+
+0
+4
+4
+RevK
+L_4x4_
+
+
+0
+0
+0
+RevK
+L_1008_
+Inductor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 80, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+inductor
+0
+0
+0
+RevK
+L_1206_1008
+Inductor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 80, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+inductor
+0
+4
+2
+RevK
+L_1206_3216Metric
+Inductor SMD 1206 (3216 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 80, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+inductor
+0
+2
+2
+RevK
+L_1210_
+Inductor SMD 1210 (3225 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: http://www.tortai-tech.com/upload/download/2011102023233369053.pdf), generated with kicad-footprint-generator
+inductor
+0
+0
+0
+RevK
+L_TYA4020
+
+
+0
+2
+2
+RevK
+MHS190RGBCT
+
+
+0
+4
+4
+RevK
+Molex_MiniSPOX_H2RA
+https://www.mouser.co.uk/datasheet/2/276/3/0022057025_PCB_HEADERS-2872381.pdf
+connector Molex SPOX horizontal
+0
+2
+2
+RevK
+Molex_MiniSPOX_H3RA
+https://www.mouser.co.uk/datasheet/2/276/0022057035_PCB_HEADERS-158546.pdf
+connector Molex SPOX horizontal
+0
+3
+3
+RevK
+Molex_MiniSPOX_H4RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+4
+4
+RevK
+Molex_MiniSPOX_H4V
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+4
+4
+RevK
+Molex_MiniSPOX_H5RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+5
+5
+RevK
+Molex_MiniSPOX_H6RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+6
+6
+RevK
+Molex_MiniSPOX_H7RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+7
+7
+RevK
+Molex_MiniSPOX_H8RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+8
+8
+RevK
+Molex_MiniSPOX_H9RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+9
+9
+RevK
+Molex_MiniSPOX_H10RA
+Molex SPOX Connector System, 5268-05A, 5 Pins per row (https://www.molex.com/pdm_docs/sd/022057045_sd.pdf), generated with kicad-footprint-generator
+connector Molex SPOX horizontal
+0
+10
+10
+RevK
+OLED1.5-RGB
+
+
+0
+7
+7
+RevK
+PCB-Join
+
+
+0
+6
+0
+RevK
+PN532-Antenna4
+
+
+0
+11
+3
+RevK
+PN532-Antenna5
+
+
+0
+12
+3
+RevK
+PN532-Antenna6
+
+
+0
+14
+3
+RevK
+PN532-RF-Test
+
+
+0
+2
+2
+RevK
+PTSM-HH-2-RA
+
+
+0
+2
+2
+RevK
+PTSM-HH-3-RA
+
+
+0
+3
+3
+RevK
+PTSM-HH-3-RA-W
+
+
+0
+3
+3
+RevK
+PTSM-HH-4-RA
+
+
+0
+4
+4
+RevK
+PTSM-HH-5-RA
+
+
+0
+5
+5
+RevK
+PTSM-HH-5-RA-P
+
+
+0
+5
+5
+RevK
+PTSM-HH-5-RA-P-SMD
+
+
+0
+7
+5
+RevK
+PTSM-HH-6-RA
+
+
+0
+6
+6
+RevK
+PTSM-HH-7-RA
+
+
+0
+7
+7
+RevK
+PTSM-HH-8-RA
+
+
+0
+8
+8
+RevK
+PTSM-HH1-2-RA
+
+
+0
+2
+2
+RevK
+PTSM-HH1-3-RA
+
+
+0
+3
+3
+RevK
+PTSM-HH1-4-RA
+
+
+0
+4
+4
+RevK
+PTSM-HH1-5-RA
+
+
+0
+5
+5
+RevK
+PTSM-HH1-6-RA
+
+
+0
+6
+6
+RevK
+PTSM-HH1-7-RA
+
+
+0
+7
+7
+RevK
+PTSM-HH1-8-RA
+
+
+0
+8
+8
+RevK
+Pad_0603_Bridged
+SMD Solder Jumper, 1x1.5mm Pads, 0.3mm gap, bridged with 2 copper strips
+net tie solder jumper bridged
+0
+2
+2
+RevK
+Pad_0603_Open
+SMD Solder Jumper, 1x1.5mm Pads, 0.3mm gap, bridged with 2 copper strips
+net tie solder jumper bridged
+0
+2
+2
+RevK
+Pad_1206_0805_Bridged
+SMD Solder Jumper, 1x1.5mm Pads, 0.3mm gap, bridged with 2 copper strips
+net tie solder jumper bridged
+0
+4
+2
+RevK
+Pad_1206_0805_Open
+SMD Solder Jumper, 1x1.5mm Pads, 0.3mm gap, bridged with 2 copper strips
+net tie solder jumper bridged
+0
+4
+2
+RevK
+Paste
+
+
+0
+373
+0
+RevK
+PasteDaikin
+
+
+0
+74
+0
+RevK
+PasteDate
+
+
+0
+114
+0
+RevK
+PasteEnvMon2
+
+
+0
+96
+0
+RevK
+PastePN532Round
+
+
+0
+149
+0
+RevK
+PastePN532Square
+
+
+0
+158
+0
+RevK
+PasteTasmotizer
+
+
+0
+118
+0
+RevK
+PasteUSBA
+
+
+0
+69
+0
+RevK
+PinHeader_1x02_P2.54mm_Vertical
+Through hole straight pin header, 1x02, 2.54mm pitch, single row
+Through hole pin header THT 1x02 2.54mm single row
+0
+2
+2
+RevK
+PinHeader_1x02_P2.54mm_Vertical_SMD_Pin1Left
+surface-mounted straight pin header, 1x02, 2.54mm pitch, single row, style 1 (pin 1 left)
+Surface mounted pin header SMD 1x02 2.54mm single row style1 pin1 left
+0
+2
+2
+RevK
+PinHeader_1x02_P2.54mm_Vertical_SMD_Pin1Right
+surface-mounted straight pin header, 1x02, 2.54mm pitch, single row, style 2 (pin 1 right)
+Surface mounted pin header SMD 1x02 2.54mm single row style2 pin1 right
+0
+2
+2
+RevK
+PinHeader_1x04_P2.54mm_Left
+Through hole angled pin header, 1x04, 2.54mm pitch, 6mm pin length, single row
+Through hole angled pin header THT 1x04 2.54mm single row
+0
+4
+4
+RevK
+PinHeader_1x04_P2.54mm_Right
+Through hole angled pin header, 1x04, 2.54mm pitch, 6mm pin length, single row
+Through hole angled pin header THT 1x04 2.54mm single row
+0
+4
+4
+RevK
+PinHeader_1x04_P2.54mm_Vertical
+Through hole straight pin header, 1x04, 2.54mm pitch, single row
+Through hole pin header THT 1x04 2.54mm single row
+0
+4
+4
+RevK
+PinHeader_1x04_P2.54mm_Vertical_SMD_Pin1Left
+surface-mounted straight pin header, 1x04, 2.54mm pitch, single row, style 1 (pin 1 left)
+Surface mounted pin header SMD 1x04 2.54mm single row style1 pin1 left
+0
+4
+4
+RevK
+PinHeader_1x04_P2.54mm_Vertical_SMD_Pin1Right
+surface-mounted straight pin header, 1x04, 2.54mm pitch, single row, style 2 (pin 1 right)
+Surface mounted pin header SMD 1x04 2.54mm single row style2 pin1 right
+0
+4
+4
+RevK
+PinHeader_1x05_P1.27mm_Vertical
+Through hole straight pin header, 1x05, 1.27mm pitch, single row
+Through hole pin header THT 1x05 1.27mm single row
+0
+5
+5
+RevK
+PinHeader_1x05_P2.54mm_Right
+Through hole angled pin header, 1x05, 2.54mm pitch, 6mm pin length, single row
+Through hole angled pin header THT 1x05 2.54mm single row
+0
+5
+5
+RevK
+PinHeader_1x05_P2.54mm_Vertical_SMD_Pin1Left
+surface-mounted straight pin header, 1x05, 2.54mm pitch, single row, style 1 (pin 1 left)
+Surface mounted pin header SMD 1x05 2.54mm single row style1 pin1 left
+0
+5
+5
+RevK
+PinHeader_1x05_P2.54mm_Vertical_SMD_Pin1Right
+surface-mounted straight pin header, 1x05, 2.54mm pitch, single row, style 2 (pin 1 right)
+Surface mounted pin header SMD 1x05 2.54mm single row style2 pin1 right
+0
+5
+5
+RevK
+PinHeader_1x06_P1.27mm_Vertical
+Through hole straight pin header, 1x06, 1.27mm pitch, single row
+Through hole pin header THT 1x06 1.27mm single row
+0
+6
+6
+RevK
+PinHeader_1x07_P1.27mm_Vertical
+Through hole straight pin header, 1x07, 1.27mm pitch, single row
+Through hole pin header THT 1x07 1.27mm single row
+0
+7
+7
+RevK
+QFN-20-1EP_4x4mm_P0.5mm_EP2.5x2.5mm
+QFN, 20 Pin (http://ww1.microchip.com/downloads/en/PackagingSpec/00000049BQ.pdf#page=274), generated with kicad-footprint-generator ipc_noLead_generator.py
+QFN NoLead
+0
+25
+21
+RevK
+QFN-40-1EP_6x6mm_P0.5mm_EP4.6x4.6mm
+QFN, 40 Pin (http://ww1.microchip.com/downloads/en/PackagingSpec/00000049BQ.pdf#page=295), generated with kicad-footprint-generator ipc_noLead_generator.py
+QFN NoLead
+0
+49
+41
+RevK
+QR-AA
+
+
+0
+75
+0
+RevK
+QR-ASR33
+
+
+0
+75
+0
+RevK
+QR-DAIKIN
+
+
+0
+77
+0
+RevK
+QR-ENVMON
+
+
+0
+78
+0
+RevK
+QR-GENERIC
+
+
+0
+84
+0
+RevK
+QR-GFX
+
+
+0
+74
+0
+RevK
+QR-GPS
+
+
+0
+78
+0
+RevK
+QR-HA
+
+
+0
+78
+0
+RevK
+QR-PN532
+
+
+0
+73
+0
+RevK
+QR-RELAY10
+
+
+0
+79
+0
+RevK
+QR-SS
+
+
+0
+80
+0
+RevK
+QR-Tas
+
+
+0
+76
+0
+RevK
+R_0402
+
+
+0
+2
+2
+RevK
+R_0603
+Capacitor SMD 0603 (1608 Metric), square (rectangular) end terminal, IPC_7351 nominal, (Body size source: IPC-SM-782 page 76, https://www.pcb-3d.com/wordpress/wp-content/uploads/ipc-sm-782a_amendment_1_and_2.pdf), generated with kicad-footprint-generator
+capacitor
+0
+2
+2
+RevK
+R_0603_
+
+
+0
+0
+0
+RevK
+R_0805_
+
+
+0
+0
+0
+RevK
+R_1206_
+
+
+0
+0
+0
+RevK
+Round
+Through hole angled pin header, 1x01, 2.54mm pitch, 6mm pin length, single row
+Through hole angled pin header THT 1x01 2.54mm single row
+0
+1
+1
+RevK
+SCD30
+CO2, humidity, and temperature sensor{return}CO2, humidity, and temperature sensor{return}
+
+0
+9
+7
+RevK
+SCD30-4pin
+CO2, humidity, and temperature sensor{return}CO2, humidity, and temperature sensor{return}
+
+0
+6
+4
+RevK
+SCD41
+
+
+0
+24
+21
+RevK
+SOT-23-Thin-6-Fixed
+LMR16006 based regulator 3.3V/5V
+
+0
+30
+6
+RevK
+SOT-23-Thin-6-Reg
+LMR16006 based fixed regulator
+
+0
+29
+7
+RevK
+SOT-323_SC-70
+SOT-323, SC-70
+SOT-323 SC-70
+0
+3
+3
+RevK
+SOT-363_SC-70-6
+SOT-363, SC-70-6
+SOT-363 SC-70-6
+0
+6
+6
+RevK
+SOT-457
+
+
+0
+6
+6
+RevK
+STP_156120xx7530
+
+
+0
+3
+2
+RevK
+SW_PUSH_6mm_PTH
+https://www.omron.com/ecb/products/pdf/en-b3f.pdf
+tact sw push 6mm
+0
+4
+2
+RevK
+SW_PUSH_6mm_PTH_SMD
+https://www.omron.com/ecb/products/pdf/en-b3f.pdf
+tact sw push 6mm
+0
+12
+2
+RevK
+SW_PUSH_6mm_SMD
+C&K Components SPST SMD PTS645 Series 6mm Tact Switch
+SPST Button Switch
+0
+4
+2
+RevK
+Shelly
+
+
+0
+5
+5
+RevK
+SolderJumper-2_P1.3mm_Bridged2Bar_RoundedPad1.0x1.5mm
+SMD Solder Jumper, 1x1.5mm, rounded Pads, 0.3mm gap, bridged with 2 copper strips
+net tie solder jumper bridged
+0
+2
+2
+RevK
+SolderJumper3
+SMD Solder 3-pad Jumper, 1x1.5mm rounded Pads, 0.3mm gap, pads 1-2 Bridged2Bar with 2 copper strip, labeled with numbers
+net tie solder jumper bridged
+0
+3
+3
+RevK
+Special-SOP-4-3.7x4.55
+
+
+0
+4
+4
+RevK
+Square
+Through hole angled pin header, 1x01, 2.54mm pitch, 6mm pin length, single row
+Through hole angled pin header THT 1x01 2.54mm single row
+0
+1
+1
+RevK
+TYA4020
+
+
+0
+2
+2
+RevK
+TestPad
+
+
+0
+1
+1
+RevK
+USB-A-PCB
+
+
+0
+4
+4
+RevK
+USC16-TR
+USB Type C CMT R/A PCB  Mount Socket 16pin Power+Data
+USB-C
+0
+33
+17
+RevK
+USC16-TR-Round
+USB Type C CMT R/A PCB  Mount Socket 16pin Power+Data
+USB-C
+0
+35
+17
+RevK
+USV-5
+
+
+0
+5
+5
+RevK
+VEML3235SL
+
+
+0
+4
+4
+RevK
+VEML3235SL-RA
+
+
+0
+4
+4

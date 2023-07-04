@@ -1,0 +1,14 @@
+#!/bin/csh -fe
+foreach f (`git status --porcelain=1 | cut -c4-`)
+	if("$f:e" == c || "$f:e" == h) then
+		setenv H `sha1sum "$f"`
+		indent "$f"
+		if("$H" != `sha1sum "$f"`) setenv CHANGED
+	endif
+end
+if($?CHANGED) then
+	echo "Indent has changed things, try again"
+	exit 1
+endif
+make
+./sd.test

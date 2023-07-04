@@ -1,0 +1,354 @@
+menu "RevK"
+
+	config REVK_APPNAME
+	string "Override app name"
+	default ""
+	help
+		Default app name to use
+
+	config REVK_PREFIXAPP
+        bool "MQTT uses appname as a prefix"
+        default y
+        help
+		The MQTT strings have prefix (e.g. command) then appname then the hostname. The appname can be turned off
+
+	config REVK_BLINK
+        string "Blink GPIOs"
+        default ""
+        help
+		One or more (space separated) LED GPIOs
+
+	config REVK_WIFI
+	bool "Manage WiFi client"
+	default y
+        help
+		Manage client WiFi
+
+	config REVK_MESH
+        bool "Mesh WiFi mode"
+        default n
+	depends on !REVK_WIFI
+        help
+		Enable WiFi Mesh operation
+
+	config REVK_MESHRESET
+	int "Reset if we are offline too long"
+	default 3600
+	depends on REVK_MESH
+	help
+		Number of seconds for mesh root with no IP before reset
+
+	config REVK_MESHID
+        string "Mesh ID (6 byte hex)"
+        default ""
+	depends on REVK_MESH
+        help
+		Mesh network ID (12 characters hex)
+
+	config REVK_MESHPASS
+        string "Mesh network passphrase"
+        default ""
+	depends on REVK_MESH
+        help
+		Mesh network passphrase
+
+	config REVK_MESHWIDTH
+        int "Mesh network connections per node"
+        default 10
+	depends on REVK_MESH
+        help
+		Mesh network connections per node
+
+	config REVK_MESHDEPTH
+        int "Mesh network max depth"
+        default 10
+	depends on REVK_MESH
+        help
+		Mesh network connections max depth
+
+	config REVK_MESHMAX
+        int "Mesh max capacity"
+        default 100
+	depends on REVK_MESH
+        help
+		Total nodes allowed
+
+	config REVK_MESHLR
+        bool "Mesh LR mode"
+        default n
+	depends on REVK_MESH
+        help
+		Run mesh in LR mode
+
+	config REVK_WIFISSID
+	string "Default WiFi SSID"
+	default "IoT"
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi SSID
+
+	config REVK_WIFIPASS
+	string "Default WiFi passphrase"
+	default "security"
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi passphrase
+
+	config REVK_WIFIBSSID
+	string "Default WiFi BSSID (6 bytes)"
+	default ""
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi BSSID (hex 12 characters)
+
+	config REVK_WIFICHAN
+	int "WiFi channel"
+	default 0
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset WiFi channel
+
+	config REVK_WIFIIP
+	string "Default WiFi Static IP"
+	default ""
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi client static IP / CIDR
+
+	config REVK_WIFIGW
+	string "Default WiFi Static gateway"
+	default ""
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi client static gateway
+
+	config REVK_WIFIDNS
+	string "Default WiFi DNS"
+	default ""
+	depends on REVK_WIFI || REVK_MESH
+	help
+		This defines the factory reset default WiFi client DNS
+
+	config REVK_WIFIRESET
+	int "Reset if we are offline too long"
+	default 3600
+	depends on REVK_WIFI || REVK_MESH
+	help
+		Number of seconds off line before we completely reset
+
+	config REVK_WIFIPS
+        bool "WiFi power save"
+        default n
+	depends on REVK_WIFI || REVK_MESH
+        help
+		Set WiFi power save mode
+
+	config REVK_WIFIMAXPS
+        bool "WiFi max power save"
+        default n
+	depends on REVK_WIFIPS
+        help
+		Set WiFi to maximum power save mode
+
+	config REVK_APGPIO
+        string "AP mode GPIO"
+        default ""
+	depends on REVK_WIFI
+        help
+		GPIO to force AP mode
+
+	config REVK_APSSID
+        string "Access point SSID"
+        default ""
+	depends on REVK_WIFI
+        help
+		SSID for access point mode
+
+	config REVK_APPASS
+        string "Access point passphrase"
+        default ""
+	depends on REVK_WIFI
+        help
+		Passphrase for access point mode
+
+	config REVK_APMAX
+	int "Max AP connections"
+	default 10
+	depends on REVK_WIFI
+	help
+		Max concurrent AP connections
+
+	config REVK_APIP
+        string "Access point IP"
+        default "10.0.0.1/24"
+	depends on REVK_WIFI
+        help
+		IP allocation for access point mode
+
+	config REVK_APLR
+        bool "Access point LR mode"
+        default n
+	depends on REVK_WIFI
+        help
+		Run access point in LR mode
+
+	config REVK_APHIDE
+        bool "Access point hidden SSID"
+        default n
+	depends on REVK_WIFI
+        help
+		Run AP in hidden SSID mode
+
+	config REVK_MQTT
+	bool "Manage MQTT client"
+	default y
+        help
+		Manage client MQTT
+
+	config REVK_MQTTHOST
+	string "Default MQTT host"
+	default "mqtt.iot"
+	depends on REVK_MQTT
+	help
+		This defines the factory reset default MQTT host
+
+	config REVK_MQTTUSER
+	string "Default MQTT username"
+	default ""
+	depends on REVK_MQTT
+	help
+		This defines the factory reset MQTT username
+
+	config REVK_MQTTPASS
+	string "Default MQTT password"
+	default ""
+	depends on REVK_MQTT
+	help
+		This defines the factory reset MQTT password
+
+	config REVK_MQTTCERT
+	string "Default MQTT certificate"
+	default ""
+	depends on REVK_MQTT
+	help
+		This defines the factory reset MQTT certificate
+
+	config REVK_MQTTPORT
+	int "Default MQTT port"
+	default 0
+	depends on REVK_MQTT
+	help
+		This defines the factory reset MQTT port (0 for standard)
+
+	config REVK_MQTTSIZE
+	int "Default MQTT packet size"
+	default 2048
+	depends on REVK_MQTT
+	help
+		This defines the factory reset MQTT packet size
+
+	config REVK_OTAHOST
+	string "Default OTA host"
+	default "ota.iot"
+	help
+		This defines the factory reset default OTA host (https)
+
+	config REVK_OTAAUTO
+	int "Default auto upgrade check (days)"
+	default 7
+	help
+		Number of days between checks for auto upgrade (0 for don't auto upgrade)
+
+	config REVK_OTACERT
+	string "Default OTA certificate"
+	default ""
+	help
+		This defines the factory reset default OTA certificate
+
+	config REVK_NTPHOST
+	string "Default NTP host"
+	default "pool.ntp.org"
+	help
+		This defines the factory reset default NTP host
+
+	config REVK_TZ
+	string "Default TZ (timezone)"
+	default "GMT+0BST,M3.5.0,M10.5.0"
+	help
+		This defines the TZ (timezone) control
+
+	config REVK_APMODE
+        bool "Enable AP when not connected to WiFi, or on button, etc"
+        default y
+	depends on REVK_WIFI
+        help
+		Enable Access point mode
+
+	config REVK_APDNS
+        bool "Enable dummy DNS in AP mode"
+        default y
+	depends on REVK_APMODE
+        help
+		Enable dummy DNS returning our IP to allow splash screen
+
+	config REVK_APCONFIG
+        bool "Enable web page to set basic settings when APMODE active"
+        default y
+	depends on REVK_APMODE
+        help
+		Enable web page for basic settings when in AP MODE
+
+	config REVK_APPORT
+	int "Default AP mode port"
+	depends on REVK_APCONFIG
+	default 0
+	help
+		The TCP port for web setup page in AP mode
+
+	config REVK_APWAIT
+	int "Default AP mode delay"
+	depends on REVK_APMODE
+	default 10
+	help
+		Default time for starting AP mode
+
+	config REVK_APTIME
+	int "Default AP active time"
+	depends on REVK_APMODE
+	default 600
+	help
+		Default time for AP mode
+
+	config REVK_PARTITION_CHECK
+        bool "Check and update partition table"
+	depends on SPI_FLASH_DANGEROUS_WRITE_ALLOWED
+        default n
+        help
+		Enable automatic checking of partition table, and update if necessary
+
+	config REVK_LOCK_CPU1
+        bool "Lock tasks to CPU1"
+        default y
+        help
+		Lock user tasks to CPU 1
+
+	config REVK_SHORT_ID
+        bool "Make a short ID"
+        default n
+        help
+		Make a short (6 hex chars) ID rather than full MAC
+
+	config REVK_BUILD_SUFFIX
+	string "Build suffix"
+	default ""
+	help
+		Don't set this manually - it is normally set by Makefile (buildsuffix script)
+
+	config REVK_PICO
+        bool "ESP32-PICO"
+        default n
+        help
+		If this is built for ESP32-PICO
+
+
+endmenu

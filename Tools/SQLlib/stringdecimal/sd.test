@@ -1,0 +1,188 @@
+#!/bin/bash -e
+
+# Testing basic parsing
+./sd --pass='1' --	'1' '+1' '01' '001' '1.' '1.0' '1.000' '100e-2' '0.01e2' '1,000e-3'
+./sd --fail='Missing/unknown operator at ,23' 	'1,23'
+./sd --fail='Missing/unknown operator at ,234' --no-comma '1,234'
+./sd --pass='-1' --	'-1' '-1.0' '-10e-1'
+./sd --pass='0.23' 	'0.23' '0.23000' '0.0023e2'
+./sd --fail='Missing operand at [end]' '1+'
+./sd --fail='Unclosed bracket at [end]' '(1'
+./sd --fail='Missing/unknown operator at )' '(1))'
+./sd --fail='Number too long at 1e100' --max=100 '1e100'
+./sd --fail='Number too long at [unknown]' --max=100 '1/1e99'
+./sd --pass='1000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000' --max=100 '1e99'
+./sd --fail='Missing operand at ½' --no-frac '½'
+./sd --fail='Missing/unknown operator at ½' '1.12½'
+./sd --fail='Missing/unknown operator at k' --no-si '1k'
+./sd --fail='Missing/unknown operator at Ki' --no-ieee '1Ki'
+./sd --fail='Missing operand at [end]' ''
+./sd --fail='Missing operand at ⅟' '⅟'
+
+# Specials
+./sd --pass='12.34' '1⒉34'					# point
+./sd --pass='1234567890' '➊➋➌➍➎➏➐➑➒🄌' '➀➁➂➃➄➅➆➇➈🄋' '🄂23🄅56🄈890' '₁₂₃₄₅₆₇₈₉₀' '¹²³⁴⁵⁶⁷⁸⁹⁰'		# special and comma
+./sd --pass='∞' '∞'
+./sd --pass='∞' '10/0'
+./sd --pass='-∞' -- '-10/0'
+./sd --pass='1/0' --format=/ '∞'
+
+# Suffixes
+./sd --pass='1000' '1k'
+./sd --pass='1024' '1Ki'
+./sd --pass='1536' '1½Ki'
+./sd --pass='512' '½Ki'
+./sd --pass='0' '0k'
+./sd --pass='123M' --format=S --places=2 123456789
+./sd --pass='8.10n' --format=S --places=2 1/123456789
+./sd --pass='100Q' --format=S --places=2 1e32
+./sd --pass='100000Q' --format=S --places=2 1e35
+./sd --pass='10.0q' --format=S --places=2 1e-29
+./sd --pass='0.0100q' --format=S --places=2 1e-32
+./sd --pass='1023' --format=I --places=3 1023
+./sd --pass='1.000Ki' --format=I --places=3 1024
+./sd --pass='2.000Mi' --format=I --places=3 2Mi-1
+./sd --pass='1.999Mi' --format=I --places=3 --round=T 2Mi-1
+
+# Fractions
+./sd --pass='0.5' '½'
+./sd --pass='3/2' --format='/' '1½'
+./sd --pass='1/100' --format='/' '⅟100'
+./sd --pass='½' --format=% '1/2'
+./sd --pass='1⅔' --format=% '5/3'
+./sd --pass='⅘' --format=% '4/5'
+./sd --pass='-1⅑' --format=% -- '-10/9'
+./sd --pass='0.222' --format=% --places=3 '2/9'
+./sd --pass='½' --format=% '4/8'
+
+# Basic maths
+./sd --pass='7' '1+2*3' '1+(-2*-3)'
+./sd --pass='9' '(1+2)*3'
+./sd --pass='3' '1+2'
+./sd --pass='-1' '1-2'
+./sd --pass='0.143' '1/7'
+./sd --pass='1' '10%3'
+./sd --pass='-2' '10%-3'
+./sd --pass='-1' -- '-10%-3'
+./sd --pass='2' -- '-10%3'
+./sd --pass='5/30' --format=/ '10.5%(1/3)'
+
+# Formatting
+./sd --pass='1234' '1234'					# simple
+./sd --pass='1,234' --comma '1234'				# comma
+./sd --pass='123' --comma '123'
+./sd --pass='123.0123' --comma '123.0123'
+./sd --pass='0.0123' --comma '.0123'
+./sd --pass='12' --comma '12'
+./sd --pass='1' --comma '1'
+./sd --pass='1.234e+3' --format='e' --places=3 '1234'		# exponent / scientific
+./sd --pass='🄂23🄅56🄈89🄀12' --comma --combined '1234567890.12'
+./sd --pass='1.234e+3' --format='e' --places=-1 '1234'
+./sd --pass='6.170e+2' --format='e' --places=3 '1234/2'
+./sd --pass='6.17e+2' --format='e' --places=-1 '1234/2'
+./sd --pass='2.000e+0' --format='e' --places=3 '1.9995'
+./sd --pass='1.999e+0' --format='e' --places=3 '1.9994'
+./sd --pass='1.000e+0' --format='e' --places=3 '1.9999/2'
+./sd --pass='9.999e-1' --format='e' --places=3 '1.99989/2'
+./sd --pass='1.20' --format='*' '1.00+0.2'			# input places
+./sd --pass='0.0143' --format='-' --places=-3 '1/70' # guess places
+./sd --pass='0.01234' --format='-' --places=-3 '0.01234'
+./sd --pass='1.23' --format='=' --places=2 '12345/10000'	# exact
+./sd --pass='0.00' --format='=' --places=2 '0.004'
+./sd --pass='0.01' --format='=' --places=2 '0.006'
+./sd --pass='0.0' --format='=' --places=1 '0'
+./sd --pass='150' --format='=' --places=0 '150'
+./sd --pass='150' --format='=' --places=-1 '150'
+./sd --pass='200' --format='=' --places=-2 '150'
+./sd --pass='0000' --format='=' --places=-3 '150'
+./sd --pass='00000' --format='=' --places=-4 '150'
+./sd --pass='0.2' --format='-' --places=4 '1/5'			# divide limit no padding
+./sd --pass='0.3333' --format='-' --places=4 '1/3'
+./sd --pass='0.6667' --format='-' --places=4 '2/3'
+./sd --pass='1' --format='/' '50/50'				# Rational
+./sd --pass='2/10' --format='/' '0.2'
+./sd --pass='2/10' --format='/' '.2'
+./sd --pass='1/0' -f/ 1/0
+
+# Rounding
+./sd --pass='1' --round='T' --format='=' '1.0' '1.1' '1.4999' '1.5' '1.999'		# Truncate
+./sd --pass='-1' --round='T' --format='=' -- '-1.0' '-1.1' '-1.4999' '-1.5' '-1.999'
+./sd --pass='1' --round='U' --format='=' '1.0'						# Away from zero
+./sd --pass='2' --round='U' --format='=' '1.1' '1.4999' '1.5' '1.999'
+./sd --pass='-1' --round='U' --format='=' -- '-1.0'
+./sd --pass='-2' --round='U' --format='=' -- '-1.1' '-1.4999' '-1.5' '-1.999'
+./sd --pass='1' --round='D' --format='=' '1.0' '1.1' '1.4999' '1.5' '1.999'		# Towards from zero
+./sd --pass='-1' --round='D' --format='=' -- '-1.0' '-1.1' '-1.4999' '-1.5' '-1.999'
+./sd --pass='1' --round='F' --format='=' '1.0' '1.1' '1.4999' '1.5' '1.999'		# Floor - towards negative
+./sd --pass='-1' --round='F' --format='=' -- '-1.0'
+./sd --pass='-2' --round='F' --format='=' -- '-1.1' '-1.4999' '-1.5' '-1.999'
+./sd --pass='1' --round='C' --format='=' '1.0'						# Ceiling - towards positive
+./sd --pass='2' --round='C' --format='=' '1.1' '1.4999' '1.5' '1.999'
+./sd --pass='-1' --round='C' --format='=' -- '-1.0' '-1.1' '-1.4999' '-1.5' '-1.999'
+./sd --pass='1' --round='R' --format='=' '1.0' '1.1' '1.4999'				# Away from zero if 0.5 or more
+./sd --pass='2' --round='R' --format='=' '1.5' '1.999'
+./sd --pass='3' --round='R' --format='=' '2.5' '2.999'
+./sd --pass='-1' --round='R' --format='=' -- '-1.0' '-1.1' '-1.4999'
+./sd --pass='-2' --round='R' --format='=' -- '-1.5' '-1.999'
+./sd --pass='-3' --round='R' --format='=' -- '-2.5' '-2.999'
+./sd --pass='1' --round='B' --format='=' '1.0' '1.1' '1.4999'				# Bankers rounding
+./sd --pass='2' --round='B' --format='=' '1.5' '1.999' '2.5'
+./sd --pass='3' --round='B' --format='=' '2.50000001' '2.999'
+./sd --pass='-1' --round='B' --format='=' -- '-1.0' '-1.1' '-1.4999'
+./sd --pass='-2' --round='B' --format='=' -- '-1.5' '-1.999' '-2.5'
+./sd --pass='-3' --round='B' --format='=' -- '-2.5000001' '-2.999'
+
+# Operations
+./sd --pass='340282366920938463463374607431768211456' '2¹²⁸'
+./sd --pass='340282366920938463463374607431768211456' '2^128'
+./sd --pass='340282366920938463463374607431768211456' -- '-2^128'
+./sd --pass='-170141183460469231731687303715884105728' -- '-2^127'
+./sd --pass='0.00000000000000000000000000000000000000293873587705571876992184134305561419454666389193021880377187926569604314863681793212890625' '0.5^128'
+./sd --pass='0.143' '1/7'
+./sd --pass='-0.143' -- '-1/7'
+./sd --pass='-0.143' '1/-7'
+./sd --pass='0.143' -- '-1/-7'
+./sd --pass='31558149.7789324' '366.2564*86164.091'
+./sd --pass='-31558149.7789324' -- '-366.2564*86164.091'
+./sd --pass='-31558149.7789324' -- '366.2564*-86164.091'
+./sd --pass='31558149.7789324' -- '-366.2564*-86164.091'
+./sd --pass='3' '5-2'
+./sd --pass='-3' '2-5'
+./sd --pass='-7' -- '-2-5'
+./sd --pass='3' -- '-2--5'
+./sd --pass='1' '1/7*7'
+./sd --pass='1' '3>=2'
+./sd --pass='1' '2>=2'
+./sd --pass='0' '1>=2'
+./sd --pass='0' -- '-3>=-2'
+./sd --pass='1' -- '-2>=-2'
+./sd --pass='1' -- '-1>=-2'
+./sd --pass='0' '1.9999>=2'
+./sd --pass='1' '1/3>=1/4'
+./sd --pass='0' '3<=2'
+./sd --pass='1' '2<=2'
+./sd --pass='1' '1.9999<=2'
+./sd --pass='0' '1/3<=1/4'
+./sd --pass='1' '2/3==44/66'
+./sd --pass='1' '2/3!=45/66'
+./sd --pass='0' '2/3!=44/66'
+./sd --pass='0' '2/3==45/66'
+./sd --pass='0' '0&&0'
+./sd --pass='0' '0&&1'
+./sd --pass='0' '1&&0'
+./sd --pass='1' '1&&1'
+./sd --pass='0' '0||0'
+./sd --pass='1' '0||1'
+./sd --pass='1' '1||0'
+./sd --pass='1' '1||1'
+./sd --pass='1' '0||1&&1'
+./sd --pass='0' '0||0&&1'
+./sd --pass='1' '1||0&&1'
+./sd --pass='1' '1||1&&0'
+./sd --pass='0' '(1||1)&&0'
+./sd --pass='0' '!1'
+./sd --pass='1' '!0'
+./sd --pass='2' '1?2:3'
+./sd --pass='3' '0?2:3'
+./sd --pass='3' '1+|-1*2|'
+

@@ -1,0 +1,92 @@
+#!/bin/csh -f
+if("$1" == "") then
+	echo "Specify suffix"
+	exit 1
+endif
+setenv BUILDSUFFIX "$1"
+shift
+setenv SDKCONFIG "sdkconfig"
+if("$1" != "") setenv SDKCONFIG "$1"
+
+if(! -e "$SDKCONFIG") then
+	echo "Missing $SDKCONFIG"
+	exit 0
+endif
+
+# We don't seem to have any SoC variations with 8266
+grep -q CONFIG_IDF_TARGET_ESP8266=y "$SDKCONFIG"
+if(! $status) then
+    echo setbuildsuffix is not supported on ESP8266
+	exit 255
+endif
+
+set add=()
+set rem=()
+set part=""
+
+if("$BUILDSUFFIX" =~ *-PICO*) then
+	set add=($add CONFIG_ESP32_SPIRAM_SUPPORT CONFIG_ESPTOOLPY_FLASHSIZE_8MB CONFIG_SPIRAM CONFIG_REVK_PICO)
+	set rem=($rem CONFIG_ESPTOOLPY_FLASHSIZE_4MB CONFIG_FREERTOS_UNICORE)
+	set part="components/ESP32-RevK/partitions_8m.csv"
+else if("$BUILDSUFFIX" =~ *-SOLO*) then
+	set add=($add CONFIG_ESPTOOLPY_FLASHSIZE_4MB CONFIG_FREERTOS_UNICORE)
+	set rem=($rem CONFIG_ESP32_SPIRAM_SUPPORT CONFIG_ESPTOOLPY_FLASHSIZE_8MB CONFIG_SPIRAM CONFIG_REVK_PICO)
+	set part="components/ESP32-RevK/partitions_4m.csv"
+else
+	set add=($add CONFIG_ESPTOOLPY_FLASHSIZE_4MB)
+	set rem=($rem CONFIG_ESP32_SPIRAM_SUPPORT CONFIG_ESPTOOLPY_FLASHSIZE_8MB CONFIG_FREERTOS_UNICORE CONFIG_SPIRAM CONFIG_REVK_PICO)
+	set part="components/ESP32-RevK/partitions_4m.csv"
+endif
+
+if("$BUILDSUFFIX" =~ *-V3*) then
+	set add=($add CONFIG_ESP32_REV_MIN_3)
+	set rem=($rem CONFIG_ESP32_REV_MIN_2 CONFIG_ESP32_REV_MIN_1 CONFIG_ESP32_REV_MIN_0 CONFIG_ESP32_REV_MIN_1_1 CONFIG_ESP32_REV_MIN_3_1)
+else if("$BUILDSUFFIX" =~ *-V2*) then
+	set add=($add CONFIG_ESP32_REV_MIN_2)
+	set rem=($rem CONFIG_ESP32_REV_MIN_3 CONFIG_ESP32_REV_MIN_1 CONFIG_ESP32_REV_MIN_0 CONFIG_ESP32_REV_MIN_1_1 CONFIG_ESP32_REV_MIN_3_1)
+else if("$BUILDSUFFIX" =~ *-V1*) then
+	set add=($add CONFIG_ESP32_REV_MIN_1)
+	set rem=($rem CONFIG_ESP32_REV_MIN_3 CONFIG_ESP32_REV_MIN_2 CONFIG_ESP32_REV_MIN_0 CONFIG_ESP32_REV_MIN_1_1 CONFIG_ESP32_REV_MIN_3_1)
+else if("$BUILDSUFFIX" =~ *-V0*) then
+	set add=($add CONFIG_ESP32_REV_MIN_0)
+	set rem=($rem CONFIG_ESP32_REV_MIN_3 CONFIG_ESP32_REV_MIN_2 CONFIG_ESP32_REV_MIN_1 CONFIG_ESP32_REV_MIN_1_1 CONFIG_ESP32_REV_MIN_3_1)
+else 	# Default is V3
+	set add=($add CONFIG_ESP32_REV_MIN_3)
+	set rem=($rem CONFIG_ESP32_REV_MIN_2 CONFIG_ESP32_REV_MIN_1 CONFIG_ESP32_REV_MIN_0 CONFIG_ESP32_REV_MIN_1_1 CONFIG_ESP32_REV_MIN_3_1)
+endif
+
+set bs=(`grep _BUILD_SUFFIX_ sdkconfig | sed 's/.*\(CONFIG_[A-Z0-9_]*_BUILD_SUFFIX_[A-Z0-9]*\).*/\1/'`)
+foreach c ($bs)
+	echo -n "$BUILDSUFFIX" | grep -q -- "-"`echo -n "$c" | sed 's/CONFIG_.*_BUILD_SUFFIX_\(.*\)/\1/'`
+	if(! $status) then
+		set add=($add $c)
+	else
+		set rem=($rem $c)
+	endif
+end
+
+rm -f "$SDKCONFIG".new
+foreach c ($add)
+	grep -q "^# $c is not set" "$SDKCONFIG"
+	if(! $status) then
+		sed "s/^# $c is not set/$c=y/" "$SDKCONFIG" > "$SDKCONFIG.new"
+		mv -f "$SDKCONFIG".new "$SDKCONFIG"
+	endif
+end
+foreach c ($rem)
+	grep -q "^$c=y" "$SDKCONFIG"
+	if(! $status) then
+		sed "s/^$c=y/# $c is not set/" "$SDKCONFIG" > "$SDKCONFIG.new"
+		mv -f "$SDKCONFIG".new "$SDKCONFIG"
+	endif
+end
+if($part != "") then
+	foreach t (CONFIG_PARTITION_TABLE_CUSTOM_FILENAME CONFIG_PARTITION_TABLE_FILENAME)
+		grep -q "^$t="'"'"$part"'"' "$SDKCONFIG"
+        	if($status) then
+			sed "s:^$t.*:$t="'"'"$part"'"'":" "$SDKCONFIG" > "$SDKCONFIG.new"
+                	mv -f "$SDKCONFIG".new "$SDKCONFIG"
+		endif
+	end
+endif
+

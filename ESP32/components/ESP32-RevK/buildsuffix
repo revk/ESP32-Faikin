@@ -1,0 +1,72 @@
+#!/bin/csh -f
+
+setenv	SUFFIX	""
+
+setenv SDKCONFIG "sdkconfig"
+if("$1" != "") setenv SDKCONFIG "$1"
+
+if(! -e "$SDKCONFIG") then
+        echo "Missing $SDKCONFIG"
+        exit 0
+endif
+
+# processor/SDK family
+set esp8266=0
+grep -q CONFIG_IDF_TARGET_ESP8266=y "$SDKCONFIG"
+if (! $status) set esp8266=1
+
+# Force build date/time
+set app_desc="${IDF_PATH}/components/esp_app_format/esp_app_desc.c"
+if($esp8266) set app_desc="${IDF_PATH}/components/app_update/esp_app_desc.c"
+touch $app_desc
+
+# processor type
+grep -q CONFIG_IDF_TARGET_ESP32=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-S1"
+grep -q CONFIG_IDF_TARGET_ESP32S2=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-S2"
+grep -q CONFIG_IDF_TARGET_ESP32S3=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-S3"
+grep -q CONFIG_IDF_TARGET_ESPC3=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-C3"
+grep -q CONFIG_IDF_TARGET_ESPH2=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-H2"
+
+if($esp8266) 	then
+	setenv	SUFFIX	"$SUFFIX-8266"
+else
+	# ESP32 Single core
+	grep -q CONFIG_FREERTOS_UNICORE=y "$SDKCONFIG"
+	if(! $status) 	setenv	SUFFIX	"$SUFFIX-SOLO"
+endif
+
+# Specific processor (ESP32-PICO)
+grep -q CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y "$SDKCONFIG"
+if(! $status) then
+	grep -q CONFIG_ESP32_SPIRAM_SUPPORT=y "$SDKCONFIG"
+	if(! $status) 	setenv	SUFFIX	"$SUFFIX-PICO"
+endif
+
+# Min rev build (default now V3)
+#grep -q CONFIG_ESP32_REV_MIN_3=y "$SDKCONFIG"
+#if(! $status) 	setenv	SUFFIX	"$SUFFIX-V3"
+grep -q CONFIG_ESP32_REV_MIN_2=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-V2"
+grep -q CONFIG_ESP32_REV_MIN_1=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-V1"
+grep -q CONFIG_ESP32_REV_MIN_0=y "$SDKCONFIG"
+if(! $status) 	setenv	SUFFIX	"$SUFFIX-V0"
+
+set bs=(`grep _BUILD_SUFFIX_ sdkconfig | sed 's/.*\(CONFIG_[A-Z0-9_]*_BUILD_SUFFIX_[A-Z0-9]*\).*/\1/'`)
+foreach c ($bs)
+	grep -q "$c=y" "$SDKCONFIG"
+	if(! $status)	setenv	SUFFIX	"$SUFFIX-"`echo -n "$c" | sed 's/CONFIG_.*_BUILD_SUFFIX_\(.*\)/\1/'`
+end
+
+grep -q '^CONFIG_REVK_BUILD_SUFFIX="'"$SUFFIX"'"$' "$SDKCONFIG"
+if($status) then
+	sed -e 's/^CONFIG_REVK_BUILD_SUFFIX=.*$/CONFIG_REVK_BUILD_SUFFIX="'"$SUFFIX"'"/' "$SDKCONFIG" > "$SDKCONFIG.new"
+	mv -f "$SDKCONFIG.new" "$SDKCONFIG"
+endif
+
+echo -n "$SUFFIX"

@@ -1,0 +1,25 @@
+{
+    "project_name":       "bootloader",
+    "project_path":       "/home/adrian/ESP32/5.0.2/components/bootloader/subproject",
+    "build_dir":          "/projects/github/ESP32-Faikin/ESP32/build/bootloader",
+    "config_file":        "/projects/github/ESP32-Faikin/ESP32/sdkconfig",
+    "config_defaults":    "",
+    "bootloader_elf":     "",
+    "app_elf":            "bootloader.elf",
+    "app_bin":            "bootloader.bin",
+    "git_revision":       "v5.0.2",
+    "target":             "esp32",
+    "rev":                "3",
+    "min_rev":            "300",
+    "max_rev":            "399",
+    "phy_data_partition": "",
+    "monitor_baud" :      "115200",
+    "monitor_toolprefix": "xtensa-esp32-elf-",
+    "config_environment" : {
+        "COMPONENT_KCONFIGS" : "/home/adrian/ESP32/5.0.2/components/efuse/Kconfig;/home/adrian/ESP32/5.0.2/components/esp_common/Kconfig;/home/adrian/ESP32/5.0.2/components/esp_hw_support/Kconfig;/home/adrian/ESP32/5.0.2/components/esp_system/Kconfig;/home/adrian/ESP32/5.0.2/components/freertos/Kconfig;/home/adrian/ESP32/5.0.2/components/hal/Kconfig;/home/adrian/ESP32/5.0.2/components/log/Kconfig;/home/adrian/ESP32/5.0.2/components/newlib/Kconfig;/home/adrian/ESP32/5.0.2/components/soc/Kconfig;/home/adrian/ESP32/5.0.2/components/spi_flash/Kconfig",
+        "COMPONENT_KCONFIGS_PROJBUILD" : "/home/adrian/ESP32/5.0.2/components/bootloader/Kconfig.projbuild;/home/adrian/ESP32/5.0.2/components/esp_app_format/Kconfig.projbuild;/home/adrian/ESP32/5.0.2/components/esp_rom/Kconfig.projbuild;/home/adrian/ESP32/5.0.2/components/esptool_py/Kconfig.projbuild;/home/adrian/ESP32/5.0.2/components/partition_table/Kconfig.projbuild"
+    },
+    "build_components" : [ "bootloader", "bootloader_support", "efuse", "esp_app_format", "esp_common", "esp_hw_support", "esp_rom", "esp_system", "esptool_py", "freertos", "hal", "log", "main", "micro-ecc", "newlib", "partition_table", "soc", "spi_flash", "xtensa", "" ],
+    "build_component_paths" : [ "/home/adrian/ESP32/5.0.2/components/bootloader", "/home/adrian/ESP32/5.0.2/components/bootloader_support", "/home/adrian/ESP32/5.0.2/components/efuse", "/home/adrian/ESP32/5.0.2/components/esp_app_format", "/home/adrian/ESP32/5.0.2/components/esp_common", "/home/adrian/ESP32/5.0.2/components/esp_hw_support", "/home/adrian/ESP32/5.0.2/components/esp_rom", "/home/adrian/ESP32/5.0.2/components/esp_system", "/home/adrian/ESP32/5.0.2/components/esptool_py", "/home/adrian/ESP32/5.0.2/components/freertos", "/home/adrian/ESP32/5.0.2/components/hal", "/home/adrian/ESP32/5.0.2/components/log", "/home/adrian/ESP32/5.0.2/components/bootloader/subproject/main", "/home/adrian/ESP32/5.0.2/components/bootloader/subproject/components/micro-ecc", "/home/adrian/ESP32/5.0.2/components/newlib", "/home/adrian/ESP32/5.0.2/components/partition_table", "/home/adrian/ESP32/5.0.2/components/soc", "/home/adrian/ESP32/5.0.2/components/spi_flash", "/home/adrian/ESP32/5.0.2/components/xtensa", "" ],
+    "debug_prefix_map_gdbinit": ""
+}

@@ -1,0 +1,3 @@
+[submodule "components/ESP32-RevK"]
+	path = components/ESP32-RevK
+	url = git@github.com:revk/ESP32-RevK.git
