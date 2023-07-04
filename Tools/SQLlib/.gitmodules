@@ -1,3 +1,0 @@
-[submodule "stringdecimal"]
-	path = stringdecimal
-	url = https://github.com/revk/stringdecimal.git
