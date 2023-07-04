@@ -4,3 +4,9 @@
 [submodule "Tools/SQLlib"]
 	path = Tools/SQLlib
 	url = https://github.com/revk/SQLlib
+[submodule "Tools/AJL"]
+	path = Tools/AJL
+	url = https://github.com/revk/AJL
+[submodule "Tools/AXL"]
+	path = Tools/AXL
+	url = https://github.com/revk/AXL
