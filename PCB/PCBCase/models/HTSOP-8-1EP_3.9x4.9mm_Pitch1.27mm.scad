@@ -1,1 +1,0 @@
-SOIC-8_3.9x4.9mm_P1.27mm.scad
