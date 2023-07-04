@@ -52,3 +52,10 @@ faikinlog: faikinlog.c SQLlib/sqllib.o AJL/ajl.o ../ESP32/main/acextras.m ../ESP
 
 faikingraph: faikingraph.c SQLlib/sqllib.o AXL/axl.o
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAXL AXL/axl.o -lcurl ${INCLUDES} ${OPTS}
+pull:
+	git pull
+	git submodule update --recursive
+
+update:
+	git submodule update --init --recursive --remote
+	-git commit -a -m "Library update"
