@@ -1,0 +1,8 @@
+build
+*~
+*.old
+secure_boot_signing_key.pem
+sdkconfig
+dependencies.lock
+managed_components
+*.bin
