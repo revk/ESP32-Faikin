@@ -742,7 +742,7 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
       return;
    }
    loopback = 0;
-   if (buf[0] == 0x06 && protocol_set)
+   if (buf[0] == 0x06 && !protocol_set)
       protocol_found ();
    daikin_response (cmd, rxlen - 6, buf + 5);
 }
@@ -960,7 +960,7 @@ jo_t
 daikin_status (void)
 {
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-   jo_t j = jo_object_alloc ();
+   jo_t j = jo_comms_alloc ();
 #define b(name)         if(daikin.status_known&CONTROL_##name)jo_bool(j,#name,daikin.name);
 #define t(name)         if(daikin.status_known&CONTROL_##name){if(isnan(daikin.name)||daikin.name>=100)jo_null(j,#name);else jo_litf(j,#name,"%.1f",daikin.name);}
 #define i(name)         if(daikin.status_known&CONTROL_##name)jo_int(j,#name,daikin.name);
@@ -2443,7 +2443,7 @@ app_main ()
             }
          } else
             controlstop ();
-         if (reporting && !revk_link_down ())
+         if (reporting && !revk_link_down () && protocol_set)
          {                      // Environment logging
             time_t clock = time (0);
             static time_t last = 0;
@@ -2452,7 +2452,7 @@ app_main ()
                last = clock;
                if (daikin.statscount)
                {
-                  jo_t j = jo_object_alloc ();
+                  jo_t j = jo_comms_alloc ();
                   {             // Timestamp
                      struct tm tm;
                      gmtime_r (&clock, &tm);
