@@ -1914,7 +1914,9 @@ app_main ()
          revk_error ("uart", &j);
          return;
       }
-      usleep (100000);
+      sleep (1);
+      uint8_t temp;
+      while (uart_read_bytes (uart, &temp, 1, READ_TIMEOUT) > 0);
    }
 
    // Web interface
@@ -1971,8 +1973,6 @@ app_main ()
       {
          // Poke UART
          uart_setup ();
-         sleep (1);
-         uart_flush (uart);     // Clean start
          if (!(proto & PROTO_S21))
          {                      // Startup
             daikin_command (0xAA, 1, (uint8_t[])
@@ -2477,7 +2477,7 @@ app_main ()
                }
             }
          }
-         if (daikin.ha_send)
+         if (daikin.ha_send && protocol_set)
          {
             send_ha_config ();
             ha_status ();       // Update status now sent
