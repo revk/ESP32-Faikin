@@ -21,7 +21,7 @@ issue:
 	-git submodule update --recursive
 	-git commit -a -m checkpoint
 	@make set
-	cp --remove-destination Faikin*.bin release
+	cp $(PROJECT_NAME)*.bin release
 	git commit -a -m release
 	git push
 
