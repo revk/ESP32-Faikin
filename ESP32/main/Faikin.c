@@ -556,6 +556,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          if (rxlen != 1)
          {
             daikin.talking = 0;
+            loopback = 0;
             jo_t j = jo_comms_alloc ();
             jo_bool (j, "timeout", 1);
             revk_error ("comms", &j);
@@ -571,6 +572,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
       {
          daikin.talking = 0;
+         loopback = 0;
          jo_t j = jo_comms_alloc ();
          jo_bool (j, "timeout", 1);
          revk_error ("comms", &j);
@@ -674,6 +676,7 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
    if (rxlen <= 0)
    {
       daikin.talking = 0;
+      loopback = 0;
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "timeout", 1);
       revk_error ("comms", &j);
@@ -1958,7 +1961,7 @@ app_main ()
       daikin.temp = 20.0;
    }
 
-   proto = protocol - 1; // Starts one advanced
+   proto = protocol - 1;        // Starts one advanced
 
    while (1)
    {                            // Main loop
