@@ -2103,7 +2103,7 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "JLCPCB Rotation Offset" "90" (at 123.825 80.645 0)
-      (effects (font (size 1.27 1.27)))
+      (effects (font (size 1.27 1.27)) hide)
     )
     (pin "1" (uuid 73161249-687e-4f6f-a378-c8473fafe8ae))
     (pin "2" (uuid ed164a85-3121-403e-8924-bb56652fd6e7))
