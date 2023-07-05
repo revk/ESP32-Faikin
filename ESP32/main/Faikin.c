@@ -1958,7 +1958,7 @@ app_main ()
       daikin.temp = 20.0;
    }
 
-   proto = protocol;
+   proto = protocol - 1; // Starts one advanced
 
    while (1)
    {                            // Main loop
