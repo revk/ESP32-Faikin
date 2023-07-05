@@ -10,3 +10,6 @@
 [submodule "Tools/AXL"]
 	path = Tools/AXL
 	url = https://github.com/revk/AXL
+[submodule "ESP32/components/ESP32-RevK"]
+	path = ESP32/components/ESP32-RevK
+	url = https://github.com/revk/ESP32-RevK
