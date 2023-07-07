@@ -336,7 +336,14 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '7':                // 'G7' - "eco" mode
          set_val (econo, payload[1] == '2' ? 1 : 0);
          break;
-         // Check 'G'
+      case '9':
+         if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
+            set_temp (temp, s21_decode_target_temp (payload[2]));
+         else if (!isnan (daikin.temp))
+            set_temp (temp, daikin.temp);       // Does not have temp in other modes
+         set_temp (outside, s21_decode_target_temp (payload[3]));
+         break;
+
       }
    if (cmd == 'S' && len == 4)
    {
@@ -2036,7 +2043,7 @@ app_main ()
                   s21debug = jo_object_alloc ();
                // These are what their wifi polls
 #define poll(a,b,c,d)                         \
-   static uint8_t a##b##d=10;                 \
+   static uint8_t a##b##d=2;                  \
    if(a##b##d){                               \
       int r=daikin_s21_command(*#a,*#b,c,#d); \
       if (r==S21_OK)                          \
@@ -2045,7 +2052,7 @@ app_main ()
          a##b##d--;                           \
    }                                          \
    if(!daikin.talking)                        \
-      a##b##d=10;
+      a##b##d=2;
                poll (F, 1, 0,);
                if (debug)
                {
@@ -2057,9 +2064,12 @@ app_main ()
                poll (F, 6, 0,);
                poll (F, 7, 0,);
                if (debug)
-               {
+	       {
                   poll (F, 8, 0,);
-                  poll (F, 9, 0,);
+	       }
+               poll (F, 9, 0,);
+               if (debug)
+               {
                   poll (F, A, 0,);
                   poll (F, B, 0,);
                   poll (F, C, 0,);
