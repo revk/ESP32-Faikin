@@ -2092,7 +2092,7 @@ app_main ()
                   poll (R, X, 0,);
                   poll (R, D, 0,);
                }
-               if (RH == 100 && RI == 100)
+               if (RH == 100 && Ra == 100)
                   F9 = 0;       // Don't use F9
 #undef poll
                if (debug)
