@@ -6,6 +6,8 @@ This code/module provides local control via web interface, MQTT, and HomeAssista
 
 Wiki: [List of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) **Please update this with your model**
 
+**SUPPORT** please start a discussion here and I can help.
+
 This is all ESP32 based, but there is also an [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
 
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
