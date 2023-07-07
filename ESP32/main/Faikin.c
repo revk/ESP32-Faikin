@@ -338,10 +338,11 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          break;
       case '9':
          if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
-            set_temp (temp, s21_decode_target_temp (payload[2]));
+            set_temp (home, s21_decode_target_temp (payload[2]));
          else if (!isnan (daikin.temp))
-            set_temp (temp, daikin.temp);       // Does not have temp in other modes
-         set_temp (outside, s21_decode_target_temp (payload[3]));
+            set_temp (home, daikin.temp);       // Does not have temp in other modes
+         if (payload[3] != 0xFF)
+            set_temp (outside, s21_decode_target_temp (payload[3]));
          break;
 
       }
@@ -2064,9 +2065,9 @@ app_main ()
                poll (F, 6, 0,);
                poll (F, 7, 0,);
                if (debug)
-	       {
+               {
                   poll (F, 8, 0,);
-	       }
+               }
                poll (F, 9, 0,);
                if (debug)
                {
