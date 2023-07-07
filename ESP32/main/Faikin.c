@@ -103,7 +103,8 @@ settings
 
 #define	PROTO_S21	1
 #define	PROTO_TXINVERT	2
-const char *protoname[] = { "X50", "S21", "X50¬Tx", "S21¬Tx" };
+#define	PROTO_RXINVERT	4
+const char *protoname[] = { "X50", "S21", "X50¬Tx", "S21¬Tx", "X50¬Rx", "S21¬Rx", "X50¬Rx¬Tx", "S21¬Rx¬Tx" };
 
 // Globals
 static httpd_handle_t webserver = NULL;
@@ -291,14 +292,23 @@ jo_t
 jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_string (j, protocol_set ? "protocol" : "test", protoname[proto]);
+   jo_string (j, "protocol", loopback ? "loopback" : protoname[proto]);
    return j;
 }
 
 jo_t s21debug = NULL;
 
+enum
+{
+   S21_OK,
+   S21_NAK,
+   S21_NOACK,
+   S21_BAD,
+   S21_WAIT,
+};
+
 // Decode S21 response payload
-void
+int
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
    if (len > 1 && s21debug)
@@ -337,12 +347,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_val (econo, payload[1] == '2' ? 1 : 0);
          break;
       case '9':
-         if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
-            set_temp (home, s21_decode_target_temp (payload[2]));
-         else if (!isnan (daikin.temp))
-            set_temp (home, daikin.temp);       // Does not have temp in other modes
-         if (payload[3] != 0xFF)
-            set_temp (outside, s21_decode_target_temp (payload[3]));
+         set_temp (home, (float) ((signed) payload[0] - 0x80) / 2);
+         set_temp (outside, (float) ((signed) payload[1] - 0x80) / 2);
          break;
 
       }
@@ -379,6 +385,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          break;
       }
    }
+   return S21_OK;
 }
 
 void
@@ -476,15 +483,6 @@ protocol_found (void)
       jo_free (&j);
    }
 }
-
-enum
-{
-   S21_OK,
-   S21_NAK,
-   S21_NOACK,
-   S21_BAD,
-   S21_WAIT,
-};
 
 // Timeout value for serial port read
 #define READ_TIMEOUT (500 / portTICK_PERIOD_MS)
@@ -644,8 +642,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_error ("comms", &j);
       return S21_BAD;
    }
-   daikin_s21_response (buf[1], buf[2], rxlen - 5, buf + 3);
-   return S21_OK;
+   return daikin_s21_response (buf[1], buf[2], rxlen - 5, buf + 3);
 }
 
 void
@@ -1902,7 +1899,7 @@ app_main ()
       if (!err)
       {
          uint8_t i = 0;
-         if (rx & PORT_INV)
+         if (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
             i |= UART_SIGNAL_RXD_INV;
          if (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
             i |= UART_SIGNAL_TXD_INV;
@@ -2095,6 +2092,8 @@ app_main ()
                   poll (R, X, 0,);
                   poll (R, D, 0,);
                }
+               if (RH == 100 && RI == 100)
+                  F9 = 0;       // Don't use F9
 #undef poll
                if (debug)
                   revk_info ("s21", &s21debug);
