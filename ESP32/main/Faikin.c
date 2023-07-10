@@ -1945,6 +1945,7 @@ app_main ()
 
    if (!httpd_start (&webserver, &config))
    {
+      revk_web_config_start (webserver);
       if (webcontrol)
       {
          register_get_uri ("/", web_root);
@@ -1962,7 +1963,6 @@ app_main ()
          register_get_uri ("/aircon/get_week_power_ex", web_get_week_power);
          register_get_uri ("/aircon/set_special_mode", web_set_special_mode);
       }
-      revk_web_config_start (webserver);
    }
 
 #ifdef	ELA
