@@ -1941,7 +1941,7 @@ app_main ()
 
    // When updating the code below, make sure this is enough
    // Note that we're also adding revk's web config handlers
-   config.max_uri_handlers = 14;
+   config.max_uri_handlers = 16;
 
    if (!httpd_start (&webserver, &config))
    {
