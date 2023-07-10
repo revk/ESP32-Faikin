@@ -997,12 +997,8 @@ daikin_status (void)
 static void
 web_head (httpd_req_t * req, const char *title)
 {
-   httpd_resp_set_type (req, "text/html;charset=utf-8");
-   httpd_resp_sendstr_chunk (req, "<meta name='viewport' content='width=device-width, initial-scale=1'>");
-   httpd_resp_sendstr_chunk (req, "<html><head><title>");
-   if (title)
-      httpd_resp_sendstr_chunk (req, title);
-   httpd_resp_sendstr_chunk (req, "</title></head><style>"      //
+   revk_web_head (req, title);
+   httpd_resp_sendstr_chunk (req, "<style>"     //
                              "body{font-family:sans-serif;background:#8cf;}"    //
                              ".on{opacity:1;transition:1s;}"    // 
                              ".off{opacity:0;transition:1s;}"   // 
@@ -1021,21 +1017,6 @@ web_head (httpd_req_t * req, const char *title)
    if (title)
       httpd_resp_sendstr_chunk (req, title);
    httpd_resp_sendstr_chunk (req, "</h1>");
-}
-
-static esp_err_t
-web_foot (httpd_req_t * req)
-{
-   char temp[20];
-   httpd_resp_sendstr_chunk (req, "<hr><address>");
-   httpd_resp_sendstr_chunk (req, appname);
-   httpd_resp_sendstr_chunk (req, ": ");
-   httpd_resp_sendstr_chunk (req, revk_version);
-   httpd_resp_sendstr_chunk (req, " ");
-   httpd_resp_sendstr_chunk (req, revk_build_date (temp) ? : "?");
-   httpd_resp_sendstr_chunk (req, "</address></body></html>");
-   httpd_resp_sendstr_chunk (req, NULL);
-   return ESP_OK;
 }
 
 static esp_err_t
