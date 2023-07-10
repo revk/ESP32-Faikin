@@ -1056,7 +1056,7 @@ web_root (httpd_req_t * req)
    // webcontrol=1 means user settings, not wifi settings
    // webcontrol=2 means all
    if (revk_link_down () && webcontrol >= 2)
-      return revk_web_config (req);     // Direct to web set up
+      return revk_web_settings (req);   // Direct to web set up
    web_head (req, hostname == revk_id ? appname : hostname);
    httpd_resp_sendstr_chunk (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
@@ -1237,8 +1237,6 @@ web_root (httpd_req_t * req)
 #endif
    httpd_resp_sendstr_chunk (req, "</form>");
    httpd_resp_sendstr_chunk (req, "</div>");
-   if (webcontrol >= 2)
-      httpd_resp_sendstr_chunk (req, "<p><a href='wifi'>Settings</a></p>");
    httpd_resp_sendstr_chunk (req, "<script>"    //
                              "var ws=0;"        //
                              "var reboot=0;"    //
@@ -1284,7 +1282,7 @@ web_root (httpd_req_t * req)
                              "};};c();" //
                              "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
                              "</script>");
-   return web_foot (req);
+   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0);
 }
 
 static const char *
@@ -1935,23 +1933,21 @@ app_main ()
       uint8_t temp;
       while (uart_read_bytes (uart, &temp, 1, READ_TIMEOUT) > 0);
    }
-
-   // Web interface
-   httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
-
-   // When updating the code below, make sure this is enough
-   // Note that we're also adding revk's web config handlers
-   config.max_uri_handlers = 16;
-
-   if (!httpd_start (&webserver, &config))
+   if (webcontrol)
    {
-      revk_web_config_start (webserver);
-      if (webcontrol)
+      // Web interface
+      httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
+
+      // When updating the code below, make sure this is enough
+      // Note that we're also 4 adding revk's web config handlers
+      config.max_uri_handlers = 16;
+
+      if (!httpd_start (&webserver, &config))
       {
+         if (webcontrol >= 2)
+            revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
          register_get_uri ("/apple-touch-icon.png", web_icon);
-         if (webcontrol >= 2)
-            register_get_uri ("/wifi", revk_web_config);
          register_ws_uri ("/status", web_status);
          register_get_uri ("/common/basic_info", web_get_basic_info);
          register_get_uri ("/aircon/get_model_info", web_get_model_info);
@@ -1962,9 +1958,9 @@ app_main ()
          register_get_uri ("/aircon/get_year_power_ex", web_get_year_power);
          register_get_uri ("/aircon/get_week_power_ex", web_get_week_power);
          register_get_uri ("/aircon/set_special_mode", web_set_special_mode);
+         // When adding, update config.max_uri_handlers
       }
    }
-
 #ifdef	ELA
    if (ble)
       ela_run ();
