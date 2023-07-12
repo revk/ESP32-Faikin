@@ -98,7 +98,11 @@ Some more advances settings which you are unlikely to need to ever change.
 
 ## Status
 
-The status are further fields, which you cannot change, and reported in the status MQTT JSON. This is the snapshot status.
+Regular status messages are sent.
+
+- `state/` topic indicate current state, and are reported periodically and on some state changes.
+- `Faikin/` topic are sent, typically every minute, and intended for the `faikinlog` command to store in a database. 
+- `*MAC*/` topic are sent for HomeAssistant if enabled, and are reported periodically and on some state changes.
 
 |Attribute|Meaning|
 |---------|-------|
@@ -113,7 +117,7 @@ The status are further fields, which you cannot change, and reported in the stat
 |`liquid`|Liquid coolant feed temperature, if known|
 |`control`|Boolean, if we are under external/automatic control|
 
-The reporting data for logging contains the controls and status, but has arrays of min/ave/max for temperatures, min/max for target temp, and value between 0 and 1 for booleans when not all the same for the period. For enumerated codes (fan, mode) the data is a snapshot.
+The `faikinglog` reports the last periods for values. For each value, if it is the same for the whole period it is reported as is. If not, then for numeric is reported as an array of *min*, *ave*, *max*. For an enumerated type it is the current value. For a Boolean, it is a value `0.0` to `1.0` indicating how much it was `true` in the period.
 
 ## Aircon control
 
