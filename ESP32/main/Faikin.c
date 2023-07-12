@@ -2079,6 +2079,7 @@ app_main ()
                poll (R, I, 0,);
                poll (R, a, 0,);
                poll (R, L, 0,); // Fan speed
+               poll (R, d, 0,); // Compressor
                if (debug)
                {
                   poll (R, N, 0,);
