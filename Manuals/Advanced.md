@@ -104,6 +104,8 @@ Regular status messages are sent.
 - `Faikin/` topic are sent, typically every minute, and intended for the `faikinlog` command to store in a database. 
 - `*MAC*/` topic are sent for HomeAssistant if enabled, and are reported periodically and on some state changes.
 
+The setting `livestatus` causes the `state/` topic on any change.
+
 |Attribute|Meaning|
 |---------|-------|
 |`online`|Boolean, if the aircon is connected and online|
