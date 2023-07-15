@@ -19,5 +19,5 @@ When ordering, you need the `gerber.zip`, `bom.csv`, and `position.csv` files.
 ### Assembly
 
 - PCBA Type: Standard
-- Assembly Side: Both Sides
+- Assembly Side: Top Side
 - Tooling holes: Added by Customer
