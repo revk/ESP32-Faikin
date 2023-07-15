@@ -914,7 +914,7 @@
     (descr "SOT-363, SC-70-6")
     (tags "SOT-363 SC-70-6")
     (property "JLCPCB Rotation Offset" "-90")
-    (property "LCSC Part #" "C193381")
+    (property "LCSC Part #" "C2912548")
     (property "Sheetfile" "Faikin.kicad_sch")
     (property "Sheetname" "")
     (property "ki_description" "60 V, 320 mA dual N-channel Trench MOSFET")
