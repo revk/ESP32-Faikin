@@ -16,7 +16,7 @@ The *hostname* you picked is used for these messages. The format for commands an
 
 ## Settings
 
-There are a number of standard settings as per the library, including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikin module are as follows.
+There are a number of standard settings as per the [RevK library](https://github.com/revk/ESP32-RevK), including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikin module are as follows.
 
 |Setting|Meaning|
 |-------|-------|
@@ -26,6 +26,13 @@ There are a number of standard settings as per the library, including things lik
 |`dark`|If set, LED to be off unless something non normal happening|
 |`tmin`|Min temperature|
 |`tmax`|Max temperature|
+
+It is worth noting that the library includes settings to control over the air updates. By default the Faikin module does automatic updates.
+
+|Setting|Meaning|
+|-------|-------|
+|`otahost`|The host from which to fetch updates|
+|`otaauto`|If not `0` then this is how many days between checks for an automatic update (done over night, or and hour or two after restart)|
 
 ### External/automatic controls
 

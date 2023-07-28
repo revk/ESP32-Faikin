@@ -2960,7 +2960,7 @@
     (property "Datasheet" "~" (at 166.37 88.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "LCSC Part #" "C225427" (at 166.37 88.9 0)
+    (property "LCSC Part #" "C265103" (at 166.37 88.9 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "JLCPCB Position Offset" "5,0" (at 166.37 88.9 0)

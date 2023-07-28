@@ -1813,7 +1813,7 @@
     (descr "JST EH series connector, S5B-EH (http://www.jst-mfg.com/product/pdf/eng/eEH.pdf), generated with kicad-footprint-generator")
     (tags "connector JST EH horizontal")
     (property "JLCPCB Position Offset" "5,0")
-    (property "LCSC Part #" "C225427")
+    (property "LCSC Part #" "C265103")
     (property "Sheetfile" "Faikin.kicad_sch")
     (property "Sheetname" "")
     (property "ki_description" "Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)")
