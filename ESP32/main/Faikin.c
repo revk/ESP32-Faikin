@@ -384,7 +384,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_int (fanrpm, v * 10);
          break;
       case 'd':                // Compressor
-         set_int (comp, v);
+         set_int (comp, v * 10);
          break;
       }
    }
