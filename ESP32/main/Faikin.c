@@ -1792,6 +1792,10 @@ ha_status (void)
       jo_litf (j, "outside", "%.2f", daikin.outside);
    if (daikin.status_known & CONTROL_liquid)
       jo_litf (j, "liquid", "%.2f", daikin.liquid);
+   if (daikin.status_known & CONTROL_comp)
+      jo_int (j, "comp", daikin.comp);
+   if (daikin.status_known & CONTROL_fan)
+      jo_int (j, "fan", daikin.fan);
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
