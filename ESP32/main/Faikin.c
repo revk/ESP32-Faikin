@@ -1117,7 +1117,7 @@ web_root (httpd_req_t * req)
       addf (tag);
    }
    httpd_resp_sendstr_chunk (req, "<tr>");
-   addb ("⏻", "power");
+   addb ("0/1", "power");
    httpd_resp_sendstr_chunk (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
@@ -1173,7 +1173,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      addb ("Auto⏻", "autop");
+      addb ("Auto 0/1", "autop");
       httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
       httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
       if (!ble)
@@ -1259,7 +1259,7 @@ web_root (httpd_req_t * req)
                              "n('auto1',o.auto1);"      //
                              "s('Tautot',(o.autot?o.autot+'℃':''));"  //
                              "s('Coil',(o.liquid?o.liquid+'℃':'---'));"       //
-                             "s('⏻',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
+                             "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
                              "if(o.shutdown){reboot=true;s('shutdown','Restarting: '+o.shutdown);h('shutdown',true);};" //
