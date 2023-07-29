@@ -384,7 +384,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          set_int (fanrpm, v * 10);
          break;
       case 'd':                // Compressor
-         set_int (comp, v * 10);
+         set_int (comp, v);
          break;
       }
    }
@@ -1668,6 +1668,20 @@ send_ha_config (void)
          free (topic);
       }
    }
+   void addfreq (const char *tag)
+   {
+      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         jo_t j = make (tag);
+         jo_string (j, "name", tag);
+         jo_string (j, "dev_cla", "frequency");
+         jo_string (j, "stat_t", revk_id);
+         jo_string (j, "unit_of_meas", "rpm");
+         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+         revk_mqtt_send (NULL, 1, topic, &j);
+         free (topic);
+      }
+   }
    if (asprintf (&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make ("");
@@ -1750,6 +1764,10 @@ send_ha_config (void)
       addtemp ("outside");
    if (daikin.status_known & CONTROL_liquid)
       addtemp ("liquid");
+   if (daikin.status_known & CONTROL_comp)
+      addfreq ("comp");
+   if (daikin.status_known & CONTROL_fanrpm)
+      addfreq ("fan");
 }
 
 static void
