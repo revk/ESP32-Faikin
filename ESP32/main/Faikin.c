@@ -1765,7 +1765,7 @@ send_ha_config (void)
    if (daikin.status_known & CONTROL_liquid)
       addtemp ("liquid");
    if (daikin.status_known & CONTROL_comp)
-      addfreq ("comprpm");
+      addfreq ("comp");
    if (daikin.status_known & CONTROL_fanrpm)
       addfreq ("fanrpm");
 }
@@ -1793,9 +1793,9 @@ ha_status (void)
    if (daikin.status_known & CONTROL_liquid)
       jo_litf (j, "liquid", "%.2f", daikin.liquid);
    if (daikin.status_known & CONTROL_comp)
-      jo_int (j, "comprpm", daikin.comp);
-   if (daikin.status_known & CONTROL_fan)
-      jo_int (j, "fanrpm", daikin.fan);
+      jo_int (j, "comp", daikin.comp);
+   if (daikin.status_known & CONTROL_fanrpm)
+      jo_int (j, "fanrpm", daikin.fanrpm);
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
