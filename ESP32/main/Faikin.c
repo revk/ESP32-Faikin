@@ -1678,7 +1678,6 @@ send_ha_config (void)
          jo_string (j, "stat_t", revk_id);
          jo_string (j, "unit_of_meas", unit);
          jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-         jo_string (j, "icon", "mdi:sine-wave");
          revk_mqtt_send (NULL, 1, topic, &j);
          free (topic);
       }
