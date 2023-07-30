@@ -1636,7 +1636,7 @@ send_ha_config (void)
 {
    daikin.ha_send = 0;
    char *topic;
-   jo_t make (const char *tag)
+   jo_t make (const char *tag, const char *icon)
    {
       jo_t j = jo_object_alloc ();
       jo_stringf (j, "unique_id", "%s%s", revk_id, tag);
@@ -1651,14 +1651,14 @@ send_ha_config (void)
       jo_string (j, "mf", "RevK");
       jo_stringf (j, "cu", "http://%s.local/", hostname);
       jo_close (j);
-      jo_string (j, "icon", "mdi:coolant-temperature");
+      jo_string (j, "icon", icon);
       return j;
    }
-   void addtemp (const char *tag)
+   void addtemp (const char *tag, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag);
+         jo_t j = make (tag, icon);
          jo_string (j, "name", tag);
          jo_string (j, "dev_cla", "temperature");
          jo_string (j, "stat_t", revk_id);
@@ -1668,11 +1668,11 @@ send_ha_config (void)
          free (topic);
       }
    }
-   void addfreq (const char *tag, const char *unit)
+   void addfreq (const char *tag, const char *unit, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag);
+         jo_t j = make (tag, icon);
          jo_string (j, "name", tag);
          jo_string (j, "dev_cla", "frequency");
          jo_string (j, "stat_t", revk_id);
@@ -1684,7 +1684,7 @@ send_ha_config (void)
    }
    if (asprintf (&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
-      jo_t j = make ("");
+      jo_t j = make ("", "mdi:thermostat");
       jo_string (j, "name", hostname);
       jo_stringf (j, "~", "command/%s", hostname);      // Prefix for command
 #if 0                           // Cannot get this logic working
@@ -1759,15 +1759,15 @@ send_ha_config (void)
       free (topic);
    }
    if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
-      addtemp ("inlet");        // Both defined so we used home as temp, so lets add inlet here
+      addtemp ("inlet", "mdi:thermometer");     // Both defined so we used home as temp, so lets add inlet here
    if (daikin.status_known & CONTROL_outside)
-      addtemp ("outside");
+      addtemp ("outside", "mdi:thermometer");
    if (daikin.status_known & CONTROL_liquid)
-      addtemp ("liquid");
+      addtemp ("liquid", "mdi:coolant-temperature");
    if (daikin.status_known & CONTROL_comp)
-      addfreq ("comp", "Hz");
+      addfreq ("comp", "Hz", "mdi:sine-wave");
    if (daikin.status_known & CONTROL_fanrpm)
-      addfreq ("fanrpm", "rpm");
+      addfreq ("fanrpm", "rpm", "mdi:fan");
 }
 
 static void
