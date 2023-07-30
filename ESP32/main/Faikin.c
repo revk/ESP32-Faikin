@@ -1678,6 +1678,7 @@ send_ha_config (void)
          jo_string (j, "stat_t", revk_id);
          jo_string (j, "unit_of_meas", unit);
          jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+         jo_string (j, "icon", "mdi:sine-wave");
          revk_mqtt_send (NULL, 1, topic, &j);
          free (topic);
       }
@@ -1765,7 +1766,7 @@ send_ha_config (void)
    if (daikin.status_known & CONTROL_liquid)
       addtemp ("liquid");
    if (daikin.status_known & CONTROL_comp)
-      addfreq ("comp", "hertz");
+      addfreq ("comp", "Hz");
    if (daikin.status_known & CONTROL_fanrpm)
       addfreq ("fanrpm", "rpm");
 }
