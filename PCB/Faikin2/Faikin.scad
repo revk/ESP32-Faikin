@@ -1,6 +1,6 @@
 // Generated case design for Faikin2/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-08-02 18:17:09
+// Generated 2023-08-02 18:23:05
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -45,11 +45,11 @@ translate([17.300000,2.200000,0.800000])rotate([0,0,180.000000])m2(pushed,hulled
 translate([16.600000,1.200000,0.800000])m12(pushed,hulled); // RevK:C_0402 C_0402_1005Metric (back)
 translate([23.700000,10.200000,0.800000])m2(pushed,hulled); // RevK:R_0402 R_0402_1005Metric (back)
 translate([23.700000,7.700000,0.800000])m2(pushed,hulled); // RevK:R_0402 R_0402_1005Metric (back)
-// Missing U4.1 ESP32-S3-MINI-1
+translate([7.700000,7.700000,0.800000])rotate([0,0,90.000000])m19(pushed,hulled); // RevK:ESP32-S3-MINI-1 ESP32-S3-MINI-1 (back)
 translate([20.100000,4.700000,0.800000])rotate([0,0,-90.000000])m5(pushed,hulled); // RevK:C_0603_ C_0603_1608Metric (back)
-translate([26.200000,12.700000,0.800000])rotate([0,0,-90.000000])m23(pushed,hulled,5); // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
+translate([26.200000,12.700000,0.800000])rotate([0,0,-90.000000])m22(pushed,hulled,5); // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal (back)
 translate([19.600000,8.700000,0.800000])rotate([0,0,180.000000])m12(pushed,hulled); // RevK:C_0402 C_0402_1005Metric (back)
-translate([22.700000,4.700000,0.800000])rotate([0,0,-90.000000])rotate([-0.000000,-0.000000,-90.000000])m26(pushed,hulled); // RevK:L_4x4_ TYA4020 (back)
+translate([22.700000,4.700000,0.800000])rotate([0,0,-90.000000])rotate([-0.000000,-0.000000,-90.000000])m25(pushed,hulled); // RevK:L_4x4_ TYA4020 (back)
 translate([16.500000,13.700000,0.800000])rotate([0,0,180.000000])m2(pushed,hulled); // RevK:R_0402 R_0402_1005Metric (back)
 translate([19.400000,7.200000,0.800000])rotate([0,0,180.000000])m5(pushed,hulled); // RevK:C_0603_ C_0603_1608Metric (back)
 translate([16.200000,4.700000,0.800000])rotate([0,0,-90.000000])m2(pushed,hulled); // RevK:R_0402 R_0402_1005Metric (back)
@@ -95,14 +95,23 @@ b(0,0,0,3.05,3.05,0.5);
 b(0,0,0,1.45,3.05,1.1);
 }
 
-module m23(pushed=false,hulled=false,n=0)
+module m19(pushed=false,hulled=false)
+{ // RevK:ESP32-S3-MINI-1 ESP32-S3-MINI-1
+translate([-15.4/2,-16.6/2+2.7,0])
+{
+	if(!hulled)cube([15.4,20.5,0.8]);
+	translate([0.7,0.5,0])cube([14,13.55,2.4]);
+}
+}
+
+module m22(pushed=false,hulled=false,n=0)
 { // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
 b(2.5*(n/2)-1.25,5+3.6,0,2.5*n+2.5,6+10,4);
 b(2.5*(n/2)-1.25,0,0,2.5*n+2.5,3.2,1.5);
 if(!hulled)for(a=[0:1:n-1])translate([2.5*a,0,-3])cylinder(d1=0.5,d2=2.5,h=3,$fn=12);
 }
 
-module m26(pushed=false,hulled=false)
+module m25(pushed=false,hulled=false)
 { // RevK:L_4x4_ TYA4020
 b(0,0,0,4,4,3);
 }
