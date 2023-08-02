@@ -11,7 +11,7 @@ Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
 	PCBCase/case -o $@ $< --edge=2 --top=3 --pcb=2
 
 Faikin2/Faikin.scad: Faikin2/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=4 --base=1 --pcb=2
+	PCBCase/case -o $@ $< --edge=2 --top=4 --base=2 --pcb=2
 
 PCBCase/case: PCBCase/case.c
 	make -C PCBCase

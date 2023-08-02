@@ -1,6 +1,6 @@
 // Generated case design for Faikin2/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2023-08-02 11:10:07
+// Generated 2023-08-02 11:12:56
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -10,7 +10,7 @@
 margin=0.500000;
 overlap=2.000000;
 lip=0.000000;
-casebase=1.000000;
+casebase=2.000000;
 casetop=4.000000;
 casewall=3.000000;
 fit=0.000000;
@@ -108,7 +108,7 @@ module m21(pushed=false,hulled=false,n=0)
 { // RevK:JST_EH_S5B-EH_1x05_P2.50mm_Horizontal JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
 b(2.5*(n/2)-1.25,5+3.6,0,2.5*n+2.5,6+10,4);
 b(2.5*(n/2)-1.25,0,0,2.5*n+2.5,3.2,1.5);
-for(a=[0:1:n-1])translate([2.5*a,0,-3.2])cylinder(d1=1,d2=2,h=2.21,$fn=4);
+for(a=[0:1:n-1])translate([2.5*a,0,-3.2])cylinder(d1=1,d2=2,h=2.21,$fn=8);
 }
 
 module m24(pushed=false,hulled=false)
