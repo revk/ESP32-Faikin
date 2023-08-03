@@ -522,6 +522,8 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, txlen + S21_MIN_PKT_LEN);
+      char c[3] = { cmd, cmd2 };
+      jo_stringn (j, c, payload, txlen);
       revk_info ("tx", &j);
    }
    uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
@@ -604,6 +606,8 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, rxlen);
+      char c[3] = { buf[1], buf[2] };
+      jo_stringn (j, c, (char *) buf + 3, rxlen - 5);
       revk_info ("rx", &j);
    }
    // Check checksum
@@ -829,6 +833,7 @@ daikin_control (jo_t j)
 }
 
 // --------------------------------------------------------------------------------
+char debugsend[10] = "";
 const char *
 app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
@@ -847,6 +852,11 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       daikin.status_report = 1; // Report status on connect
       if (ha)
          daikin.ha_send = 1;
+   }
+   if (!strcmp (suffix, "send") && jo_here (j) == JO_STRING)
+   {
+      jo_strncpy (j, debugsend, sizeof (debugsend));
+      return "";
    }
    if (!strcmp (suffix, "control"))
    {                            // Control, e.g. from environmental monitor
@@ -2116,6 +2126,16 @@ app_main ()
                }
                if (RH == 100 && Ra == 100)
                   F9 = 0;       // Don't use F9
+               if (*debugsend)
+               {
+                  if (!dump)
+                     dump = 2;  // Debug anyway
+                  if (debugsend[1])
+                     daikin_s21_command (debugsend[0], debugsend[1], strlen (debugsend + 2), debugsend + 2);
+                  *debugsend = 0;
+                  if (dump == 2)
+                     dump = 0;
+               }
 #undef poll
                if (debug)
                   revk_info ("s21", &s21debug);

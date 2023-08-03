@@ -102,6 +102,7 @@ Some more advances settings which you are unlikely to need to ever change.
 |`temp`|Set target temp (argument is temp)|
 |`status`|Force a status report to be sent|
 |`control`|JSON payload with aircon controls, see below|
+|`send`|Force sending S21 message, e.g. `D62000`|
 
 ## Status
 
