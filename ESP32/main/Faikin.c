@@ -336,6 +336,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          else
             set_val (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
          break;
+      case '3':                // Seems to be an alternative to G6
+         set_val (powerful, payload[3] == '2' ? 1 : 0);
+         break;
       case '5':                // 'G5' - swing status
          set_val (swingv, (payload[0] & 1) ? 1 : 0);
          set_val (swingh, (payload[0] & 2) ? 1 : 0);
@@ -2070,7 +2073,10 @@ app_main ()
                if (debug)
                {
                   poll (F, 2, 0,);
-                  poll (F, 3, 0,);
+               }
+               poll (F, 3, 0,);
+               if (debug)
+               {
                   poll (F, 4, 0,);
                }
                poll (F, 5, 0,);
@@ -2139,11 +2145,22 @@ app_main ()
                if (daikin.control_changed & CONTROL_powerful)
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  temp[0] = '0' + (daikin.powerful ? 2 : 0);
-                  temp[1] = '0';
-                  temp[2] = '0';
-                  temp[3] = '0';
-                  daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
+                  if (F3)
+                  {             // F3 or F6 depends on model
+                     temp[0] = '0';
+                     temp[1] = '0';
+                     temp[2] = '0';
+                     temp[3] = '0' + (daikin.powerful ? 2 : 0);
+                     daikin_s21_command ('D', '3', S21_PAYLOAD_LEN, temp);
+                  }
+                  if (F6)
+                  {
+                     temp[0] = '0' + (daikin.powerful ? 2 : 0);
+                     temp[1] = '0';
+                     temp[2] = '0';
+                     temp[3] = '0';
+                     daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
+                  }
                   xSemaphoreGive (daikin.mutex);
                }
                if (daikin.control_changed & CONTROL_econo)
