@@ -1698,7 +1698,8 @@ send_ha_config (void)
    if (asprintf (&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make ("", "mdi:thermostat");
-      jo_string (j, "name", hostname);
+      //jo_string (j, "name", hostname);
+      jo_null(j,"name");
       jo_stringf (j, "~", "command/%s", hostname);      // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
