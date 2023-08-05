@@ -12,7 +12,7 @@ This is all ESP32 based, but there is also an [ESP8266 port](https://github.com/
 
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
-<img src=Manuals/Board1.jpg width=33%><img src=Manuals/Board2.jpg width=33%><img src=Manuals/Cased.jpg width=33%>
+<img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
 ## Why I made this
 
