@@ -1699,7 +1699,7 @@ send_ha_config (void)
    {
       jo_t j = make ("", "mdi:thermostat");
       //jo_string (j, "name", hostname);
-      jo_null(j,"name");
+      //jo_null(j,"name");
       jo_stringf (j, "~", "command/%s", hostname);      // Prefix for command
 #if 0                           // Cannot get this logic working
       if (daikin.status_known & CONTROL_online)
