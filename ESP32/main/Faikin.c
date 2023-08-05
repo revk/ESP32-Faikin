@@ -1453,7 +1453,7 @@ web_get_control_info (httpd_req_t * req)
    for (int i = 1; i <= 7; i++)
       if (i != 6)
          o += sprintf (o, ",dh%d=0", i);
-   o += sprintf (o, "dhh=0");
+   o += sprintf (o, ",dhh=0");
    if (daikin.mode <= 7)
       o += sprintf (o, ",b_mode=%c", brp_mode ());
    o += sprintf (o, ",b_stemp=%.1f", daikin.temp);
@@ -1469,7 +1469,7 @@ web_get_control_info (httpd_req_t * req)
    for (int i = 1; i <= 7; i++)
       if (i != 6)
          o += sprintf (o, ",dfd%d=0", i);
-   o += sprintf (o, ",dmdh=0");
+   o += sprintf (o, ",dfdh=0");
    o += sprintf (o, ",dmnd_run=0");
    o += sprintf (o, ",en_demand=0");
    httpd_resp_sendstr (req, resp);
