@@ -2189,7 +2189,7 @@
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "AJK" (at 250.825 174.625 0)
-      (effects (font (size 1.27 1.27)) (justify left))
+      (effects (font (size 1.27 1.27)) (justify left) hide)
     )
     (property "Footprint" "RevK:AJK" (at 250.19 177.165 0)
       (effects (font (size 1.27 1.27)) hide)
