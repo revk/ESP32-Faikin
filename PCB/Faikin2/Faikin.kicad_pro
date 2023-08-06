@@ -142,7 +142,7 @@
           "td_on_pad_in_zone": false,
           "td_onpadsmd": true,
           "td_onroundshapesonly": false,
-          "td_ontrackend": false,
+          "td_ontrackend": true,
           "td_onviapad": true
         }
       ],
