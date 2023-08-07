@@ -25,7 +25,11 @@ issue:
 	git commit -a -m release
 	git push
 
-set:    wroom1 wroom solo pico
+set:    wroom1 wroom solo pico s3
+
+s3:
+	components/ESP32-RevK/setbuildsuffix -S3-MINI-N4-R2
+	@make
 
 pico:
 	components/ESP32-RevK/setbuildsuffix -S1-PICO
