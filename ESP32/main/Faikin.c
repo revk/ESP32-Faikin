@@ -25,6 +25,19 @@ static const char TAG[] = "Faikin";
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
 // Settings (RevK library used by MQTT setting command)
+
+#ifdef	CONFIG_IDF_TARGET_ESP32S3
+#define	gpio			\
+	io(tx,-47)		\
+	io(rx,-21)		\
+
+#else
+#define	gpio			\
+	io(tx,-26)		\
+	io(rx,-27)		\
+
+#endif
+
 #define	settings		\
 	u8(webcontrol,2)	\
 	u8(protocol,0)		\
@@ -57,8 +70,7 @@ static const char TAG[] = "Faikin";
 	u32(tcontrol,600)	\
 	u8(fanstep,0)		\
 	u32(reporting,60)	\
-	io(tx,CONFIG_FAIKIN_TX)	\
-	io(rx,CONFIG_FAIKIN_RX)	\
+	gpio			\
 
 #define u32(n,d) uint32_t n;
 #define s8(n,d) int8_t n;
