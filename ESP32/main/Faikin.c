@@ -30,11 +30,13 @@ static const char TAG[] = "Faikin";
 #define	gpio			\
 	io(tx,-47)		\
 	io(rx,-21)		\
+	led(blink,3,-34 -33 -48)\
 
 #else
 #define	gpio			\
 	io(tx,-26)		\
 	io(rx,-27)		\
+	led(blink,3,-8 -19 -7)\
 
 #endif
 
@@ -81,9 +83,15 @@ static const char TAG[] = "Faikin";
 #define bl(n) uint8_t n;
 #define s(n) char * n;
 #define sl(n) char * n;
-#define io(n,d)           uint8_t n;
+#define io(n,d)           uint16_t n;
+#ifdef  CONFIG_REVK_BLINK
+#define led(n,a,d)      extern uint16_t n[a];
+#else
+#define led(n,a,d)      uint16_t n[a];
+#endif
 settings
 #undef io
+#undef led
 #undef u32
 #undef s8
 #undef u8
@@ -93,8 +101,8 @@ settings
 #undef bl
 #undef s
 #undef sl
-#define PORT_INV 0x40
-#define port_mask(p) ((p)&63)
+#define PORT_INV 0x4000
+#define port_mask(p) ((p)&0x3FFF)
    enum
 {                               // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
@@ -1894,6 +1902,11 @@ app_main ()
    revk_boot (&app_callback);
 #define str(x) #x
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#ifndef CONFIG_REVK_BLINK
+#define led(n,a,d)      revk_register(#n,a,sizeof(*n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
+#else
+#define	led(n,a,d)
+#endif
 #define b(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_BOOLEAN);
 #define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
 #define u32(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
@@ -1904,6 +1917,7 @@ app_main ()
 #define s(n) revk_register(#n,0,0,&n,NULL,0);
 #define sl(n) revk_register(#n,0,0,&n,NULL,SETTING_LIVE);
    settings
+#undef led
 #undef io
 #undef u32
 #undef s8
