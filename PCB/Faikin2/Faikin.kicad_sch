@@ -1512,15 +1512,15 @@
         (text "CI\nCO\nCB\nRH\nRL\nRE\nLO" (at 12.065 6.985 0)
           (effects (font (size 1.185 1.185)) (justify right top))
         )
-        (pin no_connect line (at 5.715 0 0) (length 2.54)
+        (pin no_connect line (at 5.715 0 0) (length 2.54) hide
           (name "" (effects (font (size 1.27 1.27))))
           (number "1" (effects (font (size 1.27 1.27))))
         )
-        (pin power_in line (at 0 -9.525 90) (length 2.54)
+        (pin power_in line (at 0 -9.525 90) (length 2.54) hide
           (name "GND" (effects (font (size 1.27 1.27))))
           (number "2" (effects (font (size 1.27 1.27))))
         )
-        (pin no_connect line (at 5.715 1.905 0) (length 2.54)
+        (pin no_connect line (at 5.715 1.905 0) (length 2.54) hide
           (name "" (effects (font (size 1.27 1.27))))
           (number "3" (effects (font (size 1.27 1.27))))
         )
@@ -1532,7 +1532,7 @@
           (name "VIN" (effects (font (size 1.27 1.27))))
           (number "5" (effects (font (size 1.27 1.27))))
         )
-        (pin no_connect line (at 5.715 -1.905 0) (length 2.54)
+        (pin no_connect line (at 5.715 -1.905 0) (length 2.54) hide
           (name "" (effects (font (size 1.27 1.27))))
           (number "6" (effects (font (size 1.27 1.27))))
         )
