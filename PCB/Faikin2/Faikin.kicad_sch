@@ -1031,83 +1031,6 @@
         )
       )
     )
-    (symbol "RevK:Barcode" (pin_names (offset 1.016)) (in_bom no) (on_board yes)
-      (property "Reference" "U" (at 0 -3.175 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Value" "Barcode" (at 0 -5.08 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Footprint" "" (at -0.635 -0.635 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Datasheet" "" (at -0.635 -0.635 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (property "Note" "Non part, PCB printed" (at 0 5.715 0)
-        (effects (font (size 1.27 1.27)) hide)
-      )
-      (symbol "Barcode_0_1"
-        (polyline
-          (pts
-            (xy -0.635 1.905)
-            (xy -0.635 -1.905)
-          )
-          (stroke (width 0) (type default))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 0 1.905)
-            (xy 0 -1.905)
-          )
-          (stroke (width 0) (type default))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 1.27 1.905)
-            (xy 1.27 -1.905)
-          )
-          (stroke (width 0) (type default))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 1.905 1.905)
-            (xy 1.905 -1.905)
-          )
-          (stroke (width 0) (type default))
-          (fill (type none))
-        )
-      )
-      (symbol "Barcode_1_1"
-        (polyline
-          (pts
-            (xy -1.905 1.905)
-            (xy -1.905 -1.905)
-          )
-          (stroke (width 0.5) (type default))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy -1.27 1.905)
-            (xy -1.27 -1.905)
-          )
-          (stroke (width 0.5) (type default))
-          (fill (type none))
-        )
-        (polyline
-          (pts
-            (xy 0.635 1.905)
-            (xy 0.635 -1.905)
-          )
-          (stroke (width 0.5) (type default))
-          (fill (type none))
-        )
-      )
-    )
     (symbol "RevK:ESP32-S3-MINI-1-N4R2" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
       (property "Reference" "U" (at 0 27.94 0)
         (effects (font (size 1.27 1.27)) (justify bottom))
@@ -3573,33 +3496,6 @@
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
           (reference "#PWR04") (unit 1)
-        )
-      )
-    )
-  )
-
-  (symbol (lib_id "RevK:Barcode") (at 273.05 174.625 0) (unit 1)
-    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
-    (uuid f19bba35-005c-49b3-b66a-7f0d911d7e90)
-    (property "Reference" "U2" (at 273.05 177.8 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Value" "Barcode" (at 273.05 179.705 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Footprint" "RevK:EAN-5060634238151" (at 272.415 175.26 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Datasheet" "" (at 272.415 175.26 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Note" "Non part, PCB printed" (at 273.05 168.91 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (instances
-      (project "Faikin"
-        (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
-          (reference "U2") (unit 1)
         )
       )
     )
