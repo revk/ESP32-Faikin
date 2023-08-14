@@ -101,8 +101,8 @@ settings
 #undef bl
 #undef s
 #undef sl
-#define PORT_INV 0x4000
-#define port_mask(p) ((p)&0x3FFF)
+#define PORT_INV 0x40
+#define port_mask(p) ((p)&0x3F)
    enum
 {                               // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
