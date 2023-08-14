@@ -83,11 +83,11 @@ static const char TAG[] = "Faikin";
 #define bl(n) uint8_t n;
 #define s(n) char * n;
 #define sl(n) char * n;
-#define io(n,d)           uint16_t n;
+#define io(n,d)           uint8_t n;
 #ifdef  CONFIG_REVK_BLINK
-#define led(n,a,d)      extern uint16_t n[a];
+#define led(n,a,d)      extern uint8_t n[a];
 #else
-#define led(n,a,d)      uint16_t n[a];
+#define led(n,a,d)      uint8_t n[a];
 #endif
 settings
 #undef io
