@@ -1969,7 +1969,8 @@ app_main ()
       uart_config_t uart_config = {
          .baud_rate = (proto & PROTO_S21) ? 2400 : 9600,
          .data_bits = UART_DATA_8_BITS,
-         .parity = UART_PARITY_EVEN,
+         //.parity = UART_PARITY_EVEN,
+         .parity = UART_PARITY_DISABLE,
          .stop_bits = (proto & PROTO_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
          .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
          .source_clk = UART_SCLK_DEFAULT,
