@@ -1965,6 +1965,9 @@ app_main ()
          if (proto >= sizeof (protoname) / sizeof (*protoname))
             proto = 0;
       }
+
+      revk_error ("uart_setup", NULL);
+
       ESP_LOGI (TAG, "Trying %s", protoname[proto]);
       uart_config_t uart_config = {
          .baud_rate = (proto & PROTO_S21) ? 2400 : 9600,
@@ -2001,9 +2004,11 @@ app_main ()
          revk_error ("uart", &j);
          return;
       }
+      revk_error ("uartok", NULL);
       sleep (1);
       uint8_t temp;
       while (uart_read_bytes (uart, &temp, 1, READ_TIMEOUT) > 0);
+      revk_error ("flushed", NULL);
    }
    if (webcontrol)
    {
@@ -2049,7 +2054,7 @@ app_main ()
    proto = protocol - 1;        // Starts one advanced
    while (1)
    {                            // Main loop
-      revk_blink (0, 0, loopback ? "RGB" : "");
+      revk_blink (0, 0, loopback ? "RGB" : NULL);
       daikin.talking = 1;
       if (tx || rx)
       {
@@ -2077,8 +2082,10 @@ app_main ()
       }
       if (ha)
          daikin.ha_send = 1;
+      revk_error ("mainloop", NULL);
       do
       {                         // Polling loop
+         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");       // FHCA456D
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
 #ifdef ELA
          if (ble && *autob)
@@ -2310,7 +2317,6 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");       // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
