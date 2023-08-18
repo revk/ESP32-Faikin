@@ -1889,6 +1889,15 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
    register_uri (&uri_struct);
 }
 
+void revk_web_extra(httpd_req_t*req)
+{
+httpd_resp_sendstr_chunk(req,"<tr><td>Home Assistant</td><td><label for=ha0><input type=radio value=0 id=ha0 name=ha");
+if(!ha)httpd_resp_sendstr_chunk(req," checked");
+httpd_resp_sendstr_chunk(req,">Off</label> <label for=ha1><input type=radio value=1 id=ha1 name=ha");
+if(ha)httpd_resp_sendstr_chunk(req," checked");
+httpd_resp_sendstr_chunk(req,">On<label></td></tr>");
+}
+
 // --------------------------------------------------------------------------------
 // Main
 void
