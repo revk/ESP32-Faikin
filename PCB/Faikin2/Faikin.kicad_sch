@@ -1909,6 +1909,13 @@
       (effects (font (size 1.27 1.27)) (justify right) hide)
     )
   )
+  (global_label "DC" (shape input) (at 78.74 24.765 90) (fields_autoplaced)
+    (effects (font (size 1.27 1.27)) (justify left))
+    (uuid 369e3b66-a747-4020-aadd-33b8b22b82fb)
+    (property "Intersheetrefs" "${INTERSHEET_REFS}" (at 78.74 19.894 90)
+      (effects (font (size 1.27 1.27)) (justify left) hide)
+    )
+  )
   (global_label "G" (shape input) (at 79.375 63.5 0) (fields_autoplaced)
     (effects (font (size 1.27 1.27)) (justify left))
     (uuid 4ce1e03c-caf4-4681-ab55-4bc17e47f1f5)
@@ -2742,6 +2749,37 @@
     )
   )
 
+  (symbol (lib_id "Device:C") (at 78.74 28.575 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid 870c0b20-46bc-4609-9d37-f1d1fc0b47fa)
+    (property "Reference" "C2" (at 81.661 27.551 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Value" "22uF" (at 81.661 29.599 0)
+      (effects (font (size 1.27 1.27)) (justify left))
+    )
+    (property "Footprint" "RevK:C_0402" (at 79.7052 32.385 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "~" (at 78.74 28.575 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 85b8154b-f36f-4f1c-8b63-d9cd940bdbce))
+    (pin "2" (uuid 6bfe7fca-69e2-4cbb-ba9d-ae07d3d159e3))
+    (instances
+      (project "USBA"
+        (path "/2d210a96-f81f-42a9-8bf4-1b43c11086f3"
+          (reference "C2") (unit 1)
+        )
+      )
+      (project "Faikin"
+        (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+          (reference "C1") (unit 1)
+        )
+      )
+    )
+  )
+
   (symbol (lib_id "Device:R") (at 117.475 92.075 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no)
     (uuid 8994badd-6279-4a47-85d6-3ac8cd105855)
@@ -3252,6 +3290,36 @@
       (project "Reference"
         (path "/825c70b0-4860-42b7-97dc-86bfa46e06fd"
           (reference "R7") (unit 1)
+        )
+      )
+    )
+  )
+
+  (symbol (lib_id "power:GND") (at 78.74 32.385 0) (unit 1)
+    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (uuid ca794b5f-4f3f-4c6b-bffc-b386f1446e9b)
+    (property "Reference" "#PWR013" (at 78.74 38.735 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Value" "GND" (at 78.74 36.8284 0)
+      (effects (font (size 1.27 1.27)))
+    )
+    (property "Footprint" "" (at 78.74 32.385 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Datasheet" "" (at 78.74 32.385 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (pin "1" (uuid 7b5bc4a4-d8cc-47e9-9b8c-be514838f6f8))
+    (instances
+      (project "USBA"
+        (path "/2d210a96-f81f-42a9-8bf4-1b43c11086f3"
+          (reference "#PWR013") (unit 1)
+        )
+      )
+      (project "Faikin"
+        (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+          (reference "#PWR018") (unit 1)
         )
       )
     )
