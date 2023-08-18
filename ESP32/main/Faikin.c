@@ -1896,6 +1896,48 @@ if(!ha)httpd_resp_sendstr_chunk(req," checked");
 httpd_resp_sendstr_chunk(req,">Off</label> <label for=ha1><input type=radio value=1 id=ha1 name=ha");
 if(ha)httpd_resp_sendstr_chunk(req," checked");
 httpd_resp_sendstr_chunk(req,">On<label></td></tr>");
+     httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
+      httpd_resp_sendstr_chunk (req, "<select name=autob>");
+      if (!ble)
+         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- Disabled --");
+      else if (!*autob)
+         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
+      char found = 0;
+      if (!ble)
+         httpd_resp_sendstr_chunk (req, "<option value=+>-- Enable BLE --");
+      else
+         for (ela_t * e = ela; e; e = e->next)
+         {
+            httpd_resp_sendstr_chunk (req, "<option value=\"");
+            httpd_resp_sendstr_chunk (req, e->name);
+            httpd_resp_sendstr_chunk (req, "\"");
+            if (*autob && !strcmp (autob, e->name))
+            {
+               httpd_resp_sendstr_chunk (req, " selected");
+               found = 1;
+            }
+            httpd_resp_sendstr_chunk (req, ">");
+            httpd_resp_sendstr_chunk (req, e->name);
+            if (!e->missing && e->rssi)
+            {
+               char temp[20];
+               snprintf (temp, sizeof (temp), " %ddB", e->rssi);
+               httpd_resp_sendstr_chunk (req, temp);
+            }
+         }
+      if (!found && *autob)
+      {
+         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
+         httpd_resp_sendstr_chunk (req, autob);
+         httpd_resp_sendstr_chunk (req, "\">");
+         httpd_resp_sendstr_chunk (req, autob);
+      }
+      if (ble)
+         httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
+      httpd_resp_sendstr_chunk (req, "</select>");
+      if (ble && (uptime () < 60 || !found))
+         httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
+      httpd_resp_sendstr_chunk (req, "</td></tr>");
 }
 
 // --------------------------------------------------------------------------------
