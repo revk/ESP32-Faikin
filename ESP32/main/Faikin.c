@@ -825,14 +825,7 @@ daikin_control (jo_t j)
       {                         // Stored settings
          if (!s)
             s = jo_object_alloc ();
-         if (!strcmp (val, "+"))
-            jo_bool (s, "ble", 1);      // Enable BLE (reboots)
-         else if (!strcmp (val, "-"))
-         {
-            jo_bool (s, "ble", 0);      // Disable BLE (reboots)
-            jo_string (s, tag, "");
-         } else
-            jo_string (s, tag, val);    // Set BLE value
+         jo_string (s, tag, val);       // Set BLE value
       }
       if (err)
       {                         // Error report
@@ -1207,16 +1200,13 @@ web_root (httpd_req_t * req)
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
       addb ("Auto 0/1", "autop");
-      httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
-      httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
-      if (!ble)
-         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- Disabled --");
-      else if (!*autob)
-         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
-      char found = 0;
-      if (!ble)
-         httpd_resp_sendstr_chunk (req, "<option value=+>-- Enable BLE --");
-      else
+      if (ble)
+      {
+         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
+         httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
+         if (!*autob)
+            httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
+         char found = 0;
          for (ela_t * e = ela; e; e = e->next)
          {
             httpd_resp_sendstr_chunk (req, "<option value=\"");
@@ -1236,19 +1226,18 @@ web_root (httpd_req_t * req)
                httpd_resp_sendstr_chunk (req, temp);
             }
          }
-      if (!found && *autob)
-      {
-         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
-         httpd_resp_sendstr_chunk (req, autob);
-         httpd_resp_sendstr_chunk (req, "\">");
-         httpd_resp_sendstr_chunk (req, autob);
+         if (!found && *autob)
+         {
+            httpd_resp_sendstr_chunk (req, "<option selected value=\"");
+            httpd_resp_sendstr_chunk (req, autob);
+            httpd_resp_sendstr_chunk (req, "\">");
+            httpd_resp_sendstr_chunk (req, autob);
+         }
+         httpd_resp_sendstr_chunk (req, "</select>");
+         if (ble && (uptime () < 60 || !found))
+            httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
+         httpd_resp_sendstr_chunk (req, "</td></tr>");
       }
-      if (ble)
-         httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
-      httpd_resp_sendstr_chunk (req, "</select>");
-      if (ble && (uptime () < 60 || !found))
-         httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
-      httpd_resp_sendstr_chunk (req, "</td></tr>");
       httpd_resp_sendstr_chunk (req, "</table><hr></div>");
    }
 #endif
@@ -1889,55 +1878,41 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
    register_uri (&uri_struct);
 }
 
-void revk_web_extra(httpd_req_t*req)
+void
+revk_web_extra (httpd_req_t * req)
 {
-httpd_resp_sendstr_chunk(req,"<tr><td>Home Assistant</td><td><label for=ha0><input type=radio value=0 id=ha0 name=ha");
-if(!ha)httpd_resp_sendstr_chunk(req," checked");
-httpd_resp_sendstr_chunk(req,">Off</label> <label for=ha1><input type=radio value=1 id=ha1 name=ha");
-if(ha)httpd_resp_sendstr_chunk(req," checked");
-httpd_resp_sendstr_chunk(req,">On<label></td></tr>");
-     httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
-      httpd_resp_sendstr_chunk (req, "<select name=autob>");
-      if (!ble)
-         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- Disabled --");
-      else if (!*autob)
-         httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
-      char found = 0;
-      if (!ble)
-         httpd_resp_sendstr_chunk (req, "<option value=+>-- Enable BLE --");
-      else
-         for (ela_t * e = ela; e; e = e->next)
-         {
-            httpd_resp_sendstr_chunk (req, "<option value=\"");
-            httpd_resp_sendstr_chunk (req, e->name);
-            httpd_resp_sendstr_chunk (req, "\"");
-            if (*autob && !strcmp (autob, e->name))
-            {
-               httpd_resp_sendstr_chunk (req, " selected");
-               found = 1;
-            }
-            httpd_resp_sendstr_chunk (req, ">");
-            httpd_resp_sendstr_chunk (req, e->name);
-            if (!e->missing && e->rssi)
-            {
-               char temp[20];
-               snprintf (temp, sizeof (temp), " %ddB", e->rssi);
-               httpd_resp_sendstr_chunk (req, temp);
-            }
-         }
-      if (!found && *autob)
+   void b (const char *tag, const char *field, int value, const char *desc)
+   {
+      httpd_resp_sendstr_chunk (req, "<tr><td>");
+      httpd_resp_sendstr_chunk (req, tag);
+      httpd_resp_sendstr_chunk (req, "</td><td>");
+      void io (const char *v, const char *t)
       {
-         httpd_resp_sendstr_chunk (req, "<option selected value=\"");
-         httpd_resp_sendstr_chunk (req, autob);
-         httpd_resp_sendstr_chunk (req, "\">");
-         httpd_resp_sendstr_chunk (req, autob);
+         httpd_resp_sendstr_chunk (req, "<label for=");
+         httpd_resp_sendstr_chunk (req, field);
+         httpd_resp_sendstr_chunk (req, v);
+         httpd_resp_sendstr_chunk (req, "><input type=radio value=");
+         httpd_resp_sendstr_chunk (req, v);
+         httpd_resp_sendstr_chunk (req, " id=");
+         httpd_resp_sendstr_chunk (req, field);
+         httpd_resp_sendstr_chunk (req, v);
+         httpd_resp_sendstr_chunk (req, " name=");
+         httpd_resp_sendstr_chunk (req, field);
+         if (value == atoi (v))
+            httpd_resp_sendstr_chunk (req, " checked");
+         httpd_resp_sendstr_chunk (req, ">");
+         httpd_resp_sendstr_chunk (req, t);
+         httpd_resp_sendstr_chunk (req, "</label> ");
       }
-      if (ble)
-         httpd_resp_sendstr_chunk (req, "<option value=->-- Disable BLE --");
-      httpd_resp_sendstr_chunk (req, "</select>");
-      if (ble && (uptime () < 60 || !found))
-         httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
-      httpd_resp_sendstr_chunk (req, "</td></tr>");
+      io ("0", "Off");
+      io ("1", "On");
+      if (desc)
+         httpd_resp_sendstr_chunk (req, desc);
+      httpd_resp_sendstr_chunk (req, "</tr>");
+   }
+   b ("Home Assistant", "ha", ha, "(announces HA config via MQTT");
+   b ("BLE BluecoinT", "ble", ble, "(remote BLE temperature sensor)");
+   b ("Dark mode", "dark", dark, "(Dark mode means on-board LED is normally switched off)");
 }
 
 // --------------------------------------------------------------------------------
@@ -2034,11 +2009,9 @@ app_main ()
    {
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
-
       // When updating the code below, make sure this is enough
       // Note that we're also 4 adding revk's web config handlers
       config.max_uri_handlers = 16;
-
       if (!httpd_start (&webserver, &config))
       {
          if (webcontrol >= 2)
@@ -2064,7 +2037,6 @@ app_main ()
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
-
    if (!tx && !rx)
    {
       // Mock for interface development and testing
@@ -2075,7 +2047,6 @@ app_main ()
    }
 
    proto = protocol - 1;        // Starts one advanced
-
    while (1)
    {                            // Main loop
       revk_blink (0, 0, loopback ? "RGB" : "");
@@ -2495,9 +2466,10 @@ app_main ()
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } else if ((autop || (daikin.remote && autop10))
-                             && (daikin.counta == daikin.countt || daikin.countb == daikin.countt)
-                             && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0))
+                  } else
+                     if ((autop || (daikin.remote && autop10))
+                         && (daikin.counta == daikin.countt || daikin.countb == daikin.countt)
+                         && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0))
                   {             // Auto on
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
