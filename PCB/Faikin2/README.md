@@ -12,8 +12,6 @@ When ordering, you need the `gerber.zip`, `bom.csv`, and `position.csv` files.
 
 ### PCB
 
-- PCB Thickness: 1.0
-- PCB Color: Black
 - Order Number: Specify location
 
 ### Assembly
