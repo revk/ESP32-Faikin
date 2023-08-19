@@ -1920,6 +1920,15 @@ revk_web_extra (httpd_req_t * req)
 void
 app_main ()
 {
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+   {                            // All unused input pins pull down
+      gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
+      for (uint8_t p = 0; p <= 48; p++)
+         if (gpio_ok (p) & 2)
+            c.pin_bit_mask |= (1 << p);
+      gpio_config (&c);
+   }
+#endif
    daikin.mutex = xSemaphoreCreateMutex ();
    daikin.status_known = CONTROL_online;
 #define	t(name)	daikin.name=NAN;
@@ -1956,15 +1965,6 @@ app_main ()
 #undef sl
       revk_start ();
    revk_blink (0, 0, "");
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-   {                            // All unused input pins pull down
-      gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
-      for (uint8_t p = 0; p <= 48; p++)
-         if (gpio_ok (p) & 2)
-            c.pin_bit_mask |= (1 << p);
-      gpio_config (&c);
-   }
-#endif
    void uart_setup (void)
    {
       esp_err_t err = 0;
