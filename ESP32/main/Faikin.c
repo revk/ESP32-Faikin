@@ -1925,7 +1925,7 @@ app_main ()
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
       for (uint8_t p = 0; p <= 48; p++)
          if (gpio_ok (p) & 2)
-            c.pin_bit_mask |= (1 << p);
+            c.pin_bit_mask |= (1LL << p);
       gpio_config (&c);
    }
 #endif
