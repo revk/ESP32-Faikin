@@ -349,7 +349,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_temp (temp, s21_decode_target_temp (payload[2]));
          else if (!isnan (daikin.temp))
             set_temp (temp, daikin.temp);       // Does not have temp in other modes
-         if (payload[3] == 'A' && daikin.fan == 6)
+         if (payload[3] == 'A' && !daikin.fanrpm && daikin.fan == 6)
             set_val (fan, 6);   // Quiet (returns as auto)
          else if (payload[3] == 'A')
             set_val (fan, (daikin.fanrpm && daikin.fanrpm < 700) ? 6 : 0);      // Auto/Quiet guess - low fan can happen for other reasons...
