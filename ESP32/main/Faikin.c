@@ -349,10 +349,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_temp (temp, s21_decode_target_temp (payload[2]));
          else if (!isnan (daikin.temp))
             set_temp (temp, daikin.temp);       // Does not have temp in other modes
-         if (payload[3] == 'A' && !daikin.fanrpm && daikin.fan == 6)
-            set_val (fan, 6);   // Quiet (returns as auto)
+         if (payload[3] == 'A' && (!daikin.fanrpm || !daikin.power) && daikin.fan == 6)
+            set_val (fan, 6);   // Quiet mode set (it returns as auto, so we assume it set to quiet if not powered on or no fanrpm)
          else if (payload[3] == 'A')
-            set_val (fan, (daikin.fanrpm && daikin.fanrpm < 700) ? 6 : 0);      // Auto/Quiet guess - low fan can happen for other reasons...
+            set_val (fan, (daikin.fanrpm && daikin.power && daikin.fanrpm < 750) ? 6 : 0);      // Auto/Quiet guess - low fan can happen for other reasons...
          else
             set_val (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
          break;
