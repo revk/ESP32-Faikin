@@ -49,6 +49,7 @@ static const char TAG[] = "Faikin";
 	b(dark,false)		\
 	b(ble,false)		\
 	b(ha,true)		\
+	b(fanq,false)		\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autop10,5)		\
@@ -352,8 +353,11 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          if (payload[3] == 'A' && daikin.fan == 6)
             set_val (fan, 6);   // Quiet (returns as auto)
          else if (payload[3] == 'A')
+         {
             set_val (fan, 0);   // Auto
-         else
+            if (fanq)
+               daikin_set_e (mode, "Q");        // Force quiet mode
+         } else
             set_val (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
          break;
       case '3':                // Seems to be an alternative to G6
@@ -1147,8 +1151,12 @@ web_root (httpd_req_t * req)
    httpd_resp_sendstr_chunk (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
-      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "(Night)", "Q", NULL);
-   else
+   {
+      if (fanq)
+         add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night/Auto", "Q", NULL);
+      else
+         add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "(Night)", "Q", NULL);
+   } else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addtemp ("Set", "temp");
    addhf ("Temp");
@@ -1743,7 +1751,8 @@ send_ha_config (void)
          if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
          {
             jo_array (j, "fan_modes");
-            jo_string (j, NULL, "auto");
+            if (!fanq)
+               jo_string (j, NULL, "auto");
             jo_string (j, NULL, "1");
             jo_string (j, NULL, "2");
             jo_string (j, NULL, "3");
@@ -1913,6 +1922,7 @@ revk_web_extra (httpd_req_t * req)
    b ("Home Assistant", "ha", ha, "(announces HA config via MQTT");
    b ("BLE BluecoinT", "ble", ble, "(remote BLE temperature sensor)");
    b ("Dark mode", "dark", dark, "(Dark mode means on-board LED is normally switched off)");
+   b ("Fan quiet", "fanq", fanq, "Force quiet/night mode instead of auto mode for fan");
 }
 
 // --------------------------------------------------------------------------------
