@@ -2543,7 +2543,7 @@
     (property "Value" "22uF" (at 70.231 29.599 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
-    (property "Footprint" "RevK:C_0402" (at 68.2752 32.385 0)
+    (property "Footprint" "RevK:C_0603" (at 68.2752 32.385 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Datasheet" "~" (at 67.31 28.575 0)
