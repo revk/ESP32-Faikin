@@ -1906,13 +1906,12 @@ revk_web_extra (httpd_req_t * req)
       }
       io ("0", "Off");
       io ("1", "On");
-      if (desc)
+      if (desc && *desc)
       {
-         httpd_resp_sendstr_chunk (req, "<i>");
+         httpd_resp_sendstr_chunk (req, "</td><td>");
          httpd_resp_sendstr_chunk (req, desc);
-         httpd_resp_sendstr_chunk (req, "</i>");
       }
-      httpd_resp_sendstr_chunk (req, "</tr>");
+      httpd_resp_sendstr_chunk (req, "</td></tr>");
    }
    b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
    b ("BLE BluecoinT", "ble", ble, "Remote BLE temperature sensor");
