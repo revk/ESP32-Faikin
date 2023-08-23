@@ -1907,7 +1907,11 @@ revk_web_extra (httpd_req_t * req)
       io ("0", "Off");
       io ("1", "On");
       if (desc)
+      {
+         httpd_resp_sendstr_chunk (req, "<i>");
          httpd_resp_sendstr_chunk (req, desc);
+         httpd_resp_sendstr_chunk (req, "</i>");
+      }
       httpd_resp_sendstr_chunk (req, "</tr>");
    }
    b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
