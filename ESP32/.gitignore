@@ -2,6 +2,7 @@ build
 *~
 *.old
 secure_boot_signing_key.pem
+secure_boot_signing_key_rsa.pem
 sdkconfig
 dependencies.lock
 managed_components
