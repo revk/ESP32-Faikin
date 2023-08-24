@@ -2317,7 +2317,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 260.985 172.72 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 3929ce7f-c526-4c5a-8ed1-af911a0338a0)
     (property "Reference" "Z1" (at 262.3312 172.72 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -2504,7 +2504,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 259.08 173.355 90) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 6fb0c6ad-72c5-4ea1-acfc-98e6c2cdcdcb)
     (property "Reference" "Z6" (at 259.08 172.0088 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -2879,7 +2879,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 263.525 172.72 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8432fe21-0b39-40c5-891b-863c29a750a4)
     (property "Reference" "Z2" (at 264.8712 172.72 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -2910,7 +2910,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 265.43 175.895 90) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8434b652-481a-4673-8a99-fc0193c91379)
     (property "Reference" "Z8" (at 265.43 174.5488 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -2941,7 +2941,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 259.08 175.895 90) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 8eef6509-d527-4392-a8ae-e205839d2c2e)
     (property "Reference" "Z5" (at 259.08 174.5488 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -3029,7 +3029,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 263.525 176.53 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9b2921e3-53ba-4f84-9a50-6182aff1b0e7)
     (property "Reference" "Z4" (at 264.8712 176.53 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -3060,7 +3060,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 265.43 173.355 90) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 9df92ff7-5084-41a3-b70e-329fa8420bcd)
     (property "Reference" "Z7" (at 265.43 172.0088 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
@@ -3307,7 +3307,7 @@
   )
 
   (symbol (lib_name "Hidden_1") (lib_id "RevK:Hidden") (at 260.985 176.53 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid b437d743-307c-4a3b-a320-ca6b755619de)
     (property "Reference" "Z3" (at 262.3312 176.53 0)
       (effects (font (size 1.27 1.27)) (justify left) hide)
