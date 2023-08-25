@@ -28,9 +28,9 @@ static const char TAG[] = "Faikin";
 
 #ifdef	CONFIG_IDF_TARGET_ESP32S3
 #define	gpio			\
-	io(tx,-47)		\
-	io(rx,-21)		\
-	led(blink,3,-34 -33 -48)\
+	io(tx,-48)		\
+	io(rx,-34)		\
+	led(blink,3,-47 -21 -33)\
 
 #else
 #define	gpio			\
