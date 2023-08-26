@@ -1532,6 +1532,12 @@ web_set_control_info (httpd_req_t * req)
          else
             daikin_set_v_e (err, fan, setval);
       }
+      if (!httpd_query_key_value (query, "f_dir", value, sizeof (value)) && *value) {
+         // *value is a bitfield, expressed as a single ASCII digit '0' - '3'
+         // Since '0' is 0x30, we don't bother, bit checks work as they should
+         daikin_set_v_e (err, swingv, *value & 1);
+         daikin_set_v_e (err, swingh, !!(*value & 2));
+      }
    }
 
    simple_response (req, err);
