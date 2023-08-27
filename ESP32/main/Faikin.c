@@ -1532,7 +1532,8 @@ web_set_control_info (httpd_req_t * req)
          else
             daikin_set_v_e (err, fan, setval);
       }
-      if (!httpd_query_key_value (query, "f_dir", value, sizeof (value)) && *value) {
+      if (!httpd_query_key_value (query, "f_dir", value, sizeof (value)) && *value)
+      {
          // *value is a bitfield, expressed as a single ASCII digit '0' - '3'
          // Since '0' is 0x30, we don't bother, bit checks work as they should
          daikin_set_v_e (err, swingv, *value & 1);
@@ -1727,6 +1728,7 @@ send_ha_config (void)
 #endif
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
+      jo_string (j, "temp_unit", "C");
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", revk_id);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
