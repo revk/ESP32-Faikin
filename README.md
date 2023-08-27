@@ -14,6 +14,12 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
+## Cabling
+
+There have been various discussions on this - Daikin appear to have a *standard* connector that is `S21`. They seem to have this in models that even have build in WiFi modules (see image). You need a JST-EH 5 way connector for `S21`. However the module can also be wired to units that have an `X50A` connector, with slightly different cabling. The discussions have various comments on this, but please do ask.
+
+![251828896-0d572c0d-d937-43cf-9d39-6c7f4d853075](https://github.com/revk/ESP32-Faikin/assets/996983/45a4cb59-da3f-47ab-9d0b-f99bdbcca763)
+
 ## Why I made this
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
