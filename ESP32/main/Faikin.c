@@ -220,6 +220,8 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
 {                               // Setting a value (float)
    if (*ptr == value)
       return NULL;              // No change
+   if (proto & PROTO_S21)
+      value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
    daikin.control_changed |= flag;
