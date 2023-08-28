@@ -1240,7 +1240,7 @@ web_root (httpd_req_t * req)
             httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
          httpd_resp_sendstr_chunk (req, "</td></tr>");
       }
-      httpd_resp_sendstr_chunk (req, "</table><hr></div>");
+      httpd_resp_sendstr_chunk (req, "</table></div>");
    }
 #endif
    httpd_resp_sendstr_chunk (req, "</form>");
