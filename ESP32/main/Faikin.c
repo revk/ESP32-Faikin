@@ -1139,7 +1139,7 @@ web_root (httpd_req_t * req)
       addh (tag);
       char temp[300];
       sprintf (temp,
-               "<td colspan=5><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
+               "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
                tmin, tmax, (proto & PROTO_S21) ? "0.5" : "0.1", field, field, field);
       httpd_resp_sendstr_chunk (req, temp);
       addf (tag);
@@ -1204,7 +1204,7 @@ web_root (httpd_req_t * req)
       addb ("Auto 0/1", "autop");
       if (ble)
       {
-         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=5>");
+         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=6>");
          httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
          if (!*autob)
             httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
