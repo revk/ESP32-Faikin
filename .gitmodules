@@ -13,3 +13,6 @@
 [submodule "ESP32/components/ESP32-RevK"]
 	path = ESP32/components/ESP32-RevK
 	url = https://github.com/revk/ESP32-RevK
+[submodule "ESP32/ESP32-BlueCoinT"]
+	path = ESP32/ESP32-BlueCoinT
+	url = https://github.com/revk/ESP32-BlueCoinT
