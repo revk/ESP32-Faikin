@@ -1924,7 +1924,7 @@ revk_web_extra (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "</td></tr>");
    }
    b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
-   b ("BLE BluecoinT", "ble", ble, "Remote BLE temperature sensor");
+   b ("BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    b ("Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
 }
 
