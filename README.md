@@ -60,12 +60,14 @@ Local interactive web control page using *hostname*.local, no app required, no e
 
 Basically, Daikin have gone all cloudy with the latest WiFi controllers. This module is designed to provide an alternative.
 
+<img src="Manuals/MiSensor.jpg" align=right width="25%">
+
 * Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone.
 * MQTT reporting and controls
 * Works with Home Assistant over MQTT - note Home Assistant can work with HomeKit
 * Includes linux mysql/mariadb based logging and graphing tools
 * Works with [EnvMon](https://github.com/revk/ESP32-EnvMon) Environmental Monitor for finer control and status display
-* or, works with BlueCoinT BLE temperature sensor as a remote reference in an auto mode
+* or, works with BlueCoinT and Telink BLE temperature sensor as a remote reference in an auto mode
 * Automatically works out if S21 or X50 protocol (used on bigger/ducted units)
 * Backwards compatible direct `/aircon/...` URLs
 

@@ -28,4 +28,6 @@ The "Auto⏻" control enables automatic *on*/*off* based on temperature. If well
 
 ## BLE
 
-The *Target* uses the air-con's own temperature sensor normally, but if you have a BlueCoinT BLE sensor you can select that as an external reference. This allows the room to be controlled based on a sensor that may be by your bed or where your sit.
+The *Target* uses the air-con's own temperature sensor normally, but if you have a BlueCoinT BLE or Telink sensor you can select that as an external reference. This allows the room to be controlled based on a sensor that may be by your bed or where your sit.
+
+For more about sensors, see [here](BLE.md).
