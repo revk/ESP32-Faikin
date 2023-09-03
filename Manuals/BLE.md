@@ -20,6 +20,8 @@ It appears with the name as printed on it, usually somethiung like `C T 802B03`,
 
 It seems there are a lot of very cheap sensors (£9), even with displays. Amazon sell the [Mi Temperature and Humidity Monitor 2](https://www.amazon.co.uk/dp/B08C7KVDJW).
 
+It does need a CR2032 battery. But the battery is replaceable. Not waterproof.
+
 These sensors seem to require an app, and then to be activated. The app needs a login, I nearly did not add them at all. However, it seems someone has done some customer firmware and it is easy to reflash!
 
 The instructions are [here](https://github.com/pvvx/ATC_MiThermometer#flashing-or-updating-the-firmware-ota) and pretty easy to follow. You go to a [web page](https://pvvx.github.io/ATC_MiThermometer/TelinkMiFlasher.html), select `Connect` and find the sensor (e.g. `LYWSD03MMC`), select `Activate`, then `Custom Firmware`, then `Start flashing`. Simple as that, takes a few minutes.
