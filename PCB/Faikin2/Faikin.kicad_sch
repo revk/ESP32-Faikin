@@ -1915,8 +1915,12 @@
     (uuid f4de4092-da66-43c2-a3dc-44f2719a3e47)
   )
 
+  (text "Careful routing of Rx line\nto avoid the regulator" (at 140.97 101.6 0)
+    (effects (font (size 1.27 1.27)) (justify left bottom))
+    (uuid 23146ad3-f183-4208-abb4-3d8cc0243066)
+  )
   (text "A cap to GND seems obvious\nBut experiments show it\nmakes it way more noisy!"
-    (at 129.54 107.95 0)
+    (at 146.05 73.66 0)
     (effects (font (size 1.27 1.27)) (justify left bottom))
     (uuid c021039a-81b9-48eb-84ca-f7327af22708)
   )

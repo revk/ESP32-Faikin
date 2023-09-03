@@ -1,6 +1,6 @@
 #!/bin/csh
 again:
-idf.py flash --port /dev/cu.usbserial-RevK
+idf.py flash --port /dev/cu.usbmodem9133401
 if($status) goto again
-idf.py monitor --port /dev/cu.usbserial-RevK
+idf.py monitor --port /dev/cu.usbmodem9133401
 goto again
