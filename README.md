@@ -67,7 +67,7 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 * Works with Home Assistant over MQTT - note Home Assistant can work with HomeKit
 * Includes linux mysql/mariadb based logging and graphing tools
 * Works with [EnvMon](https://github.com/revk/ESP32-EnvMon) Environmental Monitor for finer control and status display
-* or, works with BlueCoinT and Telink BLE temperature sensor as a remote reference in an auto mode
+* or, works with BlueCoinT and Telink [BLE temperature sensor](Manuals/BLE.md) as a remote reference in an auto mode
 * Automatically works out if S21 or X50 protocol (used on bigger/ducted units)
 * Backwards compatible direct `/aircon/...` URLs
 
