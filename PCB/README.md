@@ -38,7 +38,7 @@ From what we can tell, the `S21` pin out is as follows :-
 |4|12V, or 14V. We accept 4V to 36V|
 |5|GND|
 
-However, there are jumper wires available readily available that can be used easily with these connectors, and can be used to connect to the `S21` connector on the aircon PCB one wire at a time.
+However, there are jumper wires readily available that can be used easily with these connectors, and can be used to connect to the `S21` connector on the aircon PCB one wire at a time.
 
 **Please take care with your air-con unit - disconnect power before opening, and anything you do is at your own risk.**
 
