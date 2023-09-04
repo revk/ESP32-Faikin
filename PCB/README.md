@@ -1,6 +1,8 @@
 # PCB designs
 
-The `Faikin` directory has the current working design. `Faikin` is the current shipping board. The design is in `KiCad` and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+The `Faikin` directory has the current working design. `Faikin` is the current shipping board. The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+
+*Note: you can make your own boards, but you need to remove the AJK and A&A logos as these are trademarks.*
 
 Other directories such as `Faikin2` or `Faikin3` are work in progress and may not be tested yet. They will replace `Faikin` once tested.
 
