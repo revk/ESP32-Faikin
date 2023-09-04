@@ -1,6 +1,11 @@
 #!/bin/csh
+set d=(/dev/cu.usbmodem613*)
+if($#d == 0) then
+	echo No device
+	exit 0
+endif
 again:
-idf.py flash --port /dev/cu.usbmodem9133401
+idf.py flash --port $d[1]
 if($status) goto again
-idf.py monitor --port /dev/cu.usbmodem9133401
+idf.py monitor --port $d[1]
 goto again
