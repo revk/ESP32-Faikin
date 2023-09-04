@@ -56,6 +56,6 @@ Note that Tx and Rx are now inverted, and the LED GPIOs are active low.
 
 ## Programming
 
-As you see, on the back of the current boards, there is a 5 pin and 4 pin header. The 5 pin header is the same as used in the Shelly 1, and work with a (Tasmotiser)[https://www.amazon.co.uk/dp/B0C15K9ZC4] serial programming header.
+As you see, on the back of the current boards, there is a 5 pin and 4 pin header. The 5 pin header is the same as used in the Shelly 1, and work with a [Tasmotiser](https://www.amazon.co.uk/dp/B0C15K9ZC4) serial programming header.
 
 The 4 pins are direct to USB allowing faster flashing.
