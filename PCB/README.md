@@ -16,7 +16,7 @@ The latest board designs allow the panel to be snapped off down to a 45mm x 36mm
 
 You can further snap off down to the actual module, which is currently 35mm x 16mm. This is the usual way the module is used. The 3D print design is for this board.
 
-<img src=../Manual/panel.jpg width=33%><img src=../Manual/knockout.jpg width=33%><img src=../Manual/module.jpg width=33%>
+<img src=../Manuals/panel.jpg width=33%><img src=../Manuals/knockout.jpg width=33%><img src=../Manuals/module.jpg width=33%>
 
 The back of the board has no components, making it simple to stick to a flat surface with gecko tape - you may want to crop the pins on the 5 pin connector if doing this. Do not stick to a metal surface as this may impact the WiFi.
 
@@ -24,7 +24,7 @@ The back of the board has no components, making it simple to stick to a flat sur
 
 The connector is `JST-EH` 5 pin connector. This seems to be pretty standard in Daikin units. It is the connector used on the Daikin WiFi modules `BRP069B41` and `BRP069C41`. This means it should usually be possible to get a lead for your Daikin to a `JST-EH` 5 pin `S21` connector. If you have and `S21` connector on your air-con it will likely be the same pin out, so one to one wiring. If you hve an `X50A` connector the wiring is different, and getting a suitable lead is a good idea.
 
-<img src=../Manual/jumper.jpg width=25% align=right>
+<img src=../Manuals/jumper.jpg width=25% align=right>
 
 From what we can tell, the `S21` pin out is as follows :-
 
@@ -42,7 +42,7 @@ However, there are jumper wires available readily available that can be used eas
 
 ## GPIO
 
-<img src=../Manual/back.jpg align=right width=50%>
+<img src=../Manuals/back.jpg align=right width=50%>
 
 This board is designed to work with the Daikin air-con, but it is a general purpose board. The latest boards use `ESP32-S3-MINI-N4R2` processor, with previous being `ESP32-MINI-PICO-01` (S1).
 
