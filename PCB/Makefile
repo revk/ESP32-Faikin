@@ -5,12 +5,9 @@
 	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
 	echo "Made $@"
 
-stl: 	Faikin/Faikin.stl Faikin2/Faikin.stl
+stl: 	Faikin/Faikin.stl
 
 Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=4 --base=2.6 --pcb=2
-
-Faikin2/Faikin.scad: Faikin2/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case
 	PCBCase/case -o $@ $< --edge=2 --top=4 --base=2.6 --pcb=2
 
 PCBCase/case: PCBCase/case.c
