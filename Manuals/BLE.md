@@ -18,7 +18,7 @@ It appears with the name as printed on it, usually somethiung like `C T 802B03`,
 
 <img src="MiSensor.jpg" align=right width="33%">
 
-It seems there are a lot of very cheap sensors (£9), even with displays. Amazon sell the [Mi Temperature and Humidity Monitor 2](https://www.amazon.co.uk/dp/B08C7KVDJW).
+It seems there are a lot of very cheap sensors (£9), even with displays. Amazon sell the [Mi Temperature and Humidity Monitor 2](https://www.amazon.co.uk/dp/B08C7KVDJW). However, it seems the price can be as low as £3 from AliExpress.
 
 It does need a CR2032 battery. But the battery is replaceable. Not waterproof.
 
