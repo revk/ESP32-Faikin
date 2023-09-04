@@ -24,7 +24,7 @@ The back of the board has no components, making it simple to stick to a flat sur
 
 ## S21 Connector
 
-The connector is `JST-EH` 5 pin connector. This seems to be pretty standard in Daikin units. It is the connector used on the Daikin WiFi modules `BRP069B41` and `BRP069C41`. This means it should usually be possible to get a lead for your Daikin to a `JST-EH` 5 pin `S21` connector. If you have and `S21` connector on your air-con it will likely be the same pin out, so one to one wiring. If you hve an `X50A` connector the wiring is different, and getting a suitable lead is a good idea.
+The connector is `JST-EH` 5 pin connector. This seems to be pretty standard in Daikin units. It is the connector used on the Daikin WiFi modules `BRP069B41` and `BRP069C41`. This means it should usually be possible to get a lead for your Daikin to a `JST-EH` 5 pin `S21` connector. If you have an `S21` connector on your air-con it will likely be the same pin out, so one to one wiring. If you hve an `X50A` connector the wiring is different, and getting a suitable lead is a good idea.
 
 <img src=../Manuals/jumper.jpg width=25% align=right>
 
