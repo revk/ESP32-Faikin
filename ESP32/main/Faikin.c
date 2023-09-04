@@ -11,7 +11,7 @@ static const char TAG[] = "Faikin";
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
-#include "ela.h"
+#include "bleenv.h"
 #include "daikin_s21.h"
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
@@ -132,7 +132,7 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #ifdef ELA
-static ela_t *bletemp = NULL;
+static bleenv_t *bletemp = NULL;
 #endif
 
 // The current aircon state and stats
@@ -1209,7 +1209,7 @@ web_root (httpd_req_t * req)
          if (!*autob)
             httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
          char found = 0;
-         for (ela_t * e = ela; e; e = e->next)
+         for (bleenv_t * e = bleenv; e; e = e->next)
          {
             httpd_resp_sendstr_chunk (req, "<option value=\"");
             httpd_resp_sendstr_chunk (req, e->name);
@@ -2060,7 +2060,7 @@ app_main ()
    }
 #ifdef	ELA
    if (ble)
-      ela_run ();
+      bleenv_run ();
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
@@ -2109,12 +2109,12 @@ app_main ()
 #ifdef ELA
          if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
-            ela_expire (60);
+            bleenv_expire (60);
             if (!bletemp || strcmp (bletemp->name, autob))
             {
                bletemp = NULL;
-               ela_clean ();
-               for (ela_t * e = ela; e; e = e->next)
+               bleenv_clean ();
+               for (bleenv_t * e = bleenv; e; e = e->next)
                   if (!strcmp (e->name, autob))
                   {
                      bletemp = e;
