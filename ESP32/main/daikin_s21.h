@@ -50,8 +50,8 @@ static inline uint8_t s21_checksum(uint8_t *buf, int len)
    for (int i = 1; i < len - 2; i++)
       c += buf[i];
 
-   // Sees checksum of 03 actually sends as 05 in order not to clash with ETX
-   return (c == ACK) ? ENQ : c;
+   // Seems checksum of 03 actually sends as 05 in order not to clash with ETX
+   return (c == ETX) ? ENQ : c;
 }
 
 // Target temperature is encoded as one character
