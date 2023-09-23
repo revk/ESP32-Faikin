@@ -822,6 +822,7 @@ daikin_control (jo_t j)
          if (!s)
             s = jo_object_alloc ();
          jo_int (s, tag, lroundf (strtof (val, NULL) * 10.0));
+         daikin.status_changed = 1;
       }
       if (!strcmp (tag, "autob"))
       {                         // Stored settings
@@ -959,7 +960,12 @@ app_callback (int client, const char *prefix, const char *target, const char *su
       char value[20] = "";
       jo_strncpy (j, value, sizeof (value));
       if (!strcmp (suffix, "temp"))
-         jo_lit (s, "temp", value);
+      {
+         if (autor)
+            autot = lroundf (strtof (value, NULL) * 10.0);      // Setting the controls we are using
+         else
+            jo_lit (s, "temp", value);  // Direct controls
+      }
       // HA stuff
       if (!strcmp (suffix, "mode"))
       {
@@ -1814,8 +1820,10 @@ ha_status (void)
    else if (daikin.status_known & CONTROL_online)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_temp)
-      jo_litf (j, "target", "%.2f", daikin.temp);
-   if (daikin.status_known & CONTROL_home)
+      jo_litf (j, "target", "%.2f", autor ? autot / 10.0 : daikin.temp);        // Target - either internal or what we are using as reference
+   if (autor && *autob)
+      jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
+   else if (daikin.status_known & CONTROL_home)
       jo_litf (j, "temp", "%.2f", daikin.home); // We use home if present, else inlet
    else if (daikin.status_known & CONTROL_inlet)
       jo_litf (j, "temp", "%.2f", daikin.inlet);
@@ -1832,7 +1840,7 @@ ha_status (void)
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
-      jo_string (j, "mode", daikin.power ? modes[daikin.mode] : "off");
+      jo_string (j, "mode", daikin.power ? autor ? "auto" : modes[daikin.mode] : "off");        // If we are controlling, it is auto
    }
    if (daikin.status_known & CONTROL_fan)
    {
