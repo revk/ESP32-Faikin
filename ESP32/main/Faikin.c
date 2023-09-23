@@ -2096,10 +2096,11 @@ app_main ()
             daikin.status_changed = 1;
          }
       } else
-      {
-         // Mock configuration for interface testing
+      {                         // Mock configuration for interface testing
          proto = PROTO_S21;
+         protocol_set = 1;
          daikin.control_changed = 0;
+         daikin.online = 1;
       }
       if (ha)
          daikin.ha_send = 1;
