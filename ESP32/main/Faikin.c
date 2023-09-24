@@ -19,6 +19,9 @@ static const char TAG[] = "Faikin";
 #endif
 
 // Macros for setting values
+// They set new values for parameters inside the big "daikin" state struct
+// and also set appropriate flags, so that changes are picked up by the main
+// loop and commands are sent to the aircon to apply the settings
 #define	daikin_set_v(name,value)	daikin_set_value(#name,&daikin.name,CONTROL_##name,value)
 #define	daikin_set_i(name,value)	daikin_set_int(#name,&daikin.name,CONTROL_##name,value)
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
@@ -657,6 +660,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return S21_OK;
    }
    loopback = 0;
+   // If we've got an STX, S21 protocol is now confirmed; we won't change it any more
    if (buf[0] == STX && !protocol_set)
       protocol_found ();
    // An expected S21 reply contains the first character of the command
@@ -784,6 +788,7 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
    daikin_response (cmd, rxlen - 6, buf + 5);
 }
 
+// Parse control JSON, arrived by MQTT, and apply values
 const char *
 daikin_control (jo_t j)
 {                               // Control settings as JSON
@@ -850,8 +855,9 @@ daikin_control (jo_t j)
 
 // --------------------------------------------------------------------------------
 char debugsend[10] = "";
+// Called by an MQTT client inside the revk library
 const char *
-app_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
+mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
    const char *ret = NULL;
    if (client || !prefix || target || strcmp (prefix, prefixcommand))
@@ -1969,7 +1975,7 @@ app_main ()
 #define	t(name)	daikin.name=NAN;
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
 #include "acextras.m"
-   revk_boot (&app_callback);
+   revk_boot (&mqtt_client_callback);
 #define str(x) #x
 #define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
 #ifndef CONFIG_REVK_BLINK
@@ -2059,8 +2065,8 @@ app_main ()
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
       // When updating the code below, make sure this is enough
-      // Note that we're also 4 adding revk's web config handlers
-      config.max_uri_handlers = 16;
+      // Note that we're also adding revk's own web config handlers
+      config.max_uri_handlers = 12 + revk_num_web_handlers();
       if (!httpd_start (&webserver, &config))
       {
          if (webcontrol >= 2)
@@ -2098,6 +2104,8 @@ app_main ()
    proto = protocol - 1;        // Starts one advanced
    while (1)
    {                            // Main loop
+      // We're (re)starting comms from scratch, so set "talking" flag.
+      // This signals protocol integrity and actually enables communicating with the AC.
       daikin.talking = 1;
       if (tx || rx)
       {
@@ -2127,7 +2135,8 @@ app_main ()
       if (ha)
          daikin.ha_send = 1;
       do
-      {                         // Polling loop
+      {
+         // Polling loop. We exit from here only if we get a protocol error
          usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
 #ifdef ELA
          if (ble && *autob)
@@ -2158,6 +2167,7 @@ app_main ()
             daikin.mintarget = (autot - autor) / 10.0;
             daikin.maxtarget = (autot + autor) / 10.0;
          }
+         // Talk to the AC
          if (tx || rx)
          {
             if (proto & PROTO_S21)
@@ -2165,7 +2175,9 @@ app_main ()
                char temp[5];
                if (debug)
                   s21debug = jo_object_alloc ();
-               // These are what their wifi polls
+               // Poll the AC status.
+               // Each value has a smart NAK counter (see macro below), which allows
+               // for autodetecting unsupported commands
 #define poll(a,b,c,d)                         \
    static uint8_t a##b##d=2;                  \
    if(a##b##d){                               \
@@ -2237,6 +2249,8 @@ app_main ()
 #undef poll
                if (debug)
                   revk_info ("s21", &s21debug);
+
+               // Now send new values, requested by the user, if any
                if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
                {                // D1
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
@@ -2321,6 +2335,9 @@ app_main ()
                daikin_command (0xCB, sizeof (cb), cb);
             }
          }
+
+         // Report status changes if happen on AC side. Ignore if we've just sent
+         // some new control values
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
          {
             uint8_t send = ((debug || livestatus || daikin.status_report || daikin.mode_changed) ? 1 : 0);
@@ -2646,6 +2663,9 @@ app_main ()
          }
       }
       while (daikin.talking);
+      // We're here if protocol has been broken. We'll reconfigure the UART
+      // and restart from scratch, possibly changing the protocol, if we're
+      // in detection phase.
       uart_driver_delete (uart);
    }
 }
