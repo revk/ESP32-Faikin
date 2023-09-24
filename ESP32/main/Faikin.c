@@ -2065,8 +2065,8 @@ app_main ()
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
       // When updating the code below, make sure this is enough
-      // Note that we're also 4 adding revk's web config handlers
-      config.max_uri_handlers = 16;
+      // Note that we're also adding revk's own web config handlers
+      config.max_uri_handlers = 12 + revk_num_web_handlers();
       if (!httpd_start (&webserver, &config))
       {
          if (webcontrol >= 2)
