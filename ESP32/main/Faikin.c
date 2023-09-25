@@ -2123,7 +2123,7 @@ app_main ()
       ESP_LOGE (TAG, "Dummy operational mode (no tx/rx set)");
       daikin.status_known |=
          CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
-         CONTROL_streamer | CONTROL_sensor | CONTROL_quiet;
+         CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
       daikin.power = 1;
       daikin.mode = 1;
       daikin.temp = 20.0;
@@ -2302,8 +2302,8 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.
-                   control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
+               if (daikin.control_changed &
+                   (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
