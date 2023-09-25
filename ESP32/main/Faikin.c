@@ -371,7 +371,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '6':                // 'G6' - "powerful" mode and some others
          set_val (powerful, payload[0] & 0x02 ? 1 : 0);
          set_val (comfort, payload[0] & 0x40 ? 1 : 0);
-         set_val (quiet, payload[1] & 0x80 ? 1 : 0);
+         set_val (quiet, payload[0] & 0x80 ? 1 : 0);
          set_val (streamer, payload[1] & 0x80 ? 1 : 0);
          set_val (sensor, payload[3] & 0x08 ? 1 : 0);
          break;
