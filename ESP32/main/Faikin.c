@@ -1186,7 +1186,7 @@ web_root (httpd_req_t * req)
          addb ("💪", "powerful");
       httpd_resp_sendstr_chunk (req, "</tr>");
    }
-   if (daikin.status_known & (CONTROL_swingv | CONTROL_powerful))
+   if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh))
    {
       httpd_resp_sendstr_chunk (req, "<tr>");
       if (daikin.status_known & CONTROL_swingv)
