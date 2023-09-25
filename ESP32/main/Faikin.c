@@ -2303,7 +2303,7 @@ app_main ()
                   xSemaphoreGive (daikin.mutex);
                }
                if (daikin.
-                   control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor || CONTROL_quiet))
+                   control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
