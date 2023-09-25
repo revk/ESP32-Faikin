@@ -34,6 +34,8 @@ b(econo)
 b(powerful)
 b(comfort)
 b(streamer)
+b(sensor)
+b(quiet)
 
 #undef	e
 #undef	b
