@@ -362,17 +362,19 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_val (fan, 0);   // Auto as fan too fast to be quiet mode
          break;
       case '3':                // Seems to be an alternative to G6
-         set_val (powerful, payload[3] == '2' ? 1 : 0);
+         set_val (powerful, payload[3] & 0x02 ? 1 : 0);
          break;
       case '5':                // 'G5' - swing status
          set_val (swingv, (payload[0] & 1) ? 1 : 0);
          set_val (swingh, (payload[0] & 2) ? 1 : 0);
          break;
-      case '6':                // 'G6' - "powerful" mode
-         set_val (powerful, payload[0] == '2' ? 1 : 0);
+      case '6':                // 'G6' - "powerful" mode and some others
+         set_val (powerful, payload[0] & 0x02 ? 1 : 0);
+         set_val (comfort, payload[0] & 0x40 ? 1 : 0);
+         set_val (streamer, payload[1] & 0x80 ? 1 : 0);
          break;
       case '7':                // 'G7' - "eco" mode
-         set_val (econo, payload[1] == '2' ? 1 : 0);
+         set_val (econo, payload[1] & 0x02 ? 1 : 0);
          break;
       case '9':
          set_temp (home, (float) ((signed) payload[0] - 0x80) / 2);
@@ -996,6 +998,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          jo_bool (s, "econo", *value == 'e');
          jo_bool (s, "powerful", *value == 'b');
       }
+      // TODO comfort/streamer
    }
    jo_close (s);
    jo_rewind (s);
@@ -1135,13 +1138,15 @@ web_root (httpd_req_t * req)
       va_end (ap);
       addf (tag);
    }
-   void addb (const char *tag, const char *field)
+   void addb (const char *tag, const char *field,const char *help)
    {
       httpd_resp_sendstr_chunk (req, "<td align=right>");
       httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td><td><label class=switch><input type=checkbox id=");
+      httpd_resp_sendstr_chunk (req, "</td><td title=\"");
+      httpd_resp_sendstr_chunk (req, help);
+      httpd_resp_sendstr_chunk (req, "\"><label class=switch><input type=checkbox id=\"");
       httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, " onchange=\"w('");
+      httpd_resp_sendstr_chunk (req, "\" onchange=\"w('");
       httpd_resp_sendstr_chunk (req, field);
       httpd_resp_sendstr_chunk (req, "',this.checked);\"><span class=slider></span></label></td>");
    }
@@ -1167,7 +1172,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "</td></tr>");
    }
    httpd_resp_sendstr_chunk (req, "<tr>");
-   addb ("0/1", "power");
+   addb ("0/1", "power","Main power");
    httpd_resp_sendstr_chunk (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
@@ -1181,18 +1186,27 @@ web_root (httpd_req_t * req)
    {
       httpd_resp_sendstr_chunk (req, "<tr>");
       if (daikin.status_known & CONTROL_econo)
-         addb ("Eco", "econo");
+         addb ("Eco", "econo","Eco mode");
       if (daikin.status_known & CONTROL_powerful)
-         addb ("💪", "powerful");
+         addb ("💪", "powerful","Powerful mode");
       httpd_resp_sendstr_chunk (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh))
    {
       httpd_resp_sendstr_chunk (req, "<tr>");
       if (daikin.status_known & CONTROL_swingv)
-         addb ("↕", "swingv");
+         addb ("↕", "swingv","Vertical Swing");
       if (daikin.status_known & CONTROL_swingh)
-         addb ("↔", "swingh");
+         addb ("↔", "swingh","Horizontal Swing");
+      httpd_resp_sendstr_chunk (req, "</tr>");
+   }
+   if (daikin.status_known & (CONTROL_comfort | CONTROL_streamer))
+   {
+      httpd_resp_sendstr_chunk (req, "<tr>");
+      if (daikin.status_known & CONTROL_comfort)
+         addb ("🧸", "comfort","Comfort mode");
+      if (daikin.status_known & CONTROL_streamer)
+         addb ("🦠", "streamer","Stream/filter enable");
       httpd_resp_sendstr_chunk (req, "</tr>");
    }
    httpd_resp_sendstr_chunk (req, "</table>");
@@ -1225,7 +1239,7 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      addb ("Auto", "autop");
+      addb ("Auto", "autop","Automatic power on/off");
       httpd_resp_sendstr_chunk (req, "</tr>");
       if (ble)
       {
@@ -1297,7 +1311,10 @@ web_root (httpd_req_t * req)
                              "b('swingh',o.swingh);"    //
                              "b('swingv',o.swingv);"    //
                              "b('econo',o.econo);"      //
-                             "b('powerful',o.powerful);" "e('mode',o.mode);"    //
+                             "b('powerful',o.powerful);"        //
+                             "b('comfort',o.comfort);"  //
+                             "b('streamer',o.streamer);"        //
+                             "e('mode',o.mode);"        //
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
                              "n('temp',o.temp);"        //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
@@ -1481,7 +1498,7 @@ web_get_control_info (httpd_req_t * req)
    o += sprintf (o, ",pow=%d", daikin.power);
    if (daikin.mode <= 7)
       o += sprintf (o, ",mode=%c", brp_mode ());
-   o += sprintf (o, ",adv=%s", daikin.powerful ? "2" : "");
+   o += sprintf (o, ",adv=%s", daikin.powerful ? "2" : "");     // TODO comfort/streamer?
    o += sprintf (o, ",stemp=%.1f", daikin.temp);
    o += sprintf (o, ",shum=0");
    for (int i = 1; i <= 7; i++)
@@ -1675,6 +1692,7 @@ web_set_special_mode (httpd_req_t * req)
          {
             err = "Unsupported spmode_kind value";
          }
+         // TODO comfort/streamer
 
          // The following other modes are known from OpenHAB sources:
          // STREAMER "13"
@@ -2066,7 +2084,7 @@ app_main ()
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
-      config.max_uri_handlers = 12 + revk_num_web_handlers();
+      config.max_uri_handlers = 12 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
          if (webcontrol >= 2)
@@ -2093,9 +2111,11 @@ app_main ()
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
    if (!tx && !rx)
-   {
-      // Mock for interface development and testing
-      daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful;
+   { // Mock for interface development and testing
+	   ESP_LOGE(TAG,"Dummy operational mode (no tx/rx set)");
+      daikin.status_known |=
+         CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
+         CONTROL_streamer;
       daikin.power = 1;
       daikin.mode = 1;
       daikin.temp = 20.0;
@@ -2274,7 +2294,7 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.control_changed & CONTROL_powerful)
+               if (daikin.control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
@@ -2287,8 +2307,8 @@ app_main ()
                   }
                   if (F6)
                   {
-                     temp[0] = '0' + (daikin.powerful ? 2 : 0);
-                     temp[1] = '0';
+                     temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0);
+                     temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
                      temp[2] = '0';
                      temp[3] = '0';
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);

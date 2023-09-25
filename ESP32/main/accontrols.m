@@ -32,6 +32,8 @@ b(swingh)
 b(swingv)
 b(econo)
 b(powerful)
+b(comfort)
+b(streamer)
 
 #undef	e
 #undef	b
