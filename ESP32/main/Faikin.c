@@ -459,7 +459,6 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                break;
             }
          }
->>>>>>> d7a6c34 (More flexible S21):main/Faikin.c
       }
    }
    return S21_OK;
@@ -712,7 +711,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       protocol_found ();
    // An expected S21 reply contains the first character of the command
    // incremented by 1, the second character is left intact
-   if (rxlen < S21_MIN_PKT_LEN || buf[0] != STX || buf[rxlen - 1] != ETX || buf[1] != cmd + 1 || buf[2] != cmd2)
+   if (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1 || buf[S21_CMD1_OFFSET] != cmd2)
    {
       // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
@@ -725,7 +724,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_error ("comms", &j);
       return S21_BAD;
    }
-   return daikin_s21_response (buf[1], buf[2], rxlen - 5, buf + 3);
+   return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
 }
 
 void
