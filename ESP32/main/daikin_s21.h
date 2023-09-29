@@ -18,6 +18,8 @@
 #define S21_CMD0_OFFSET    1
 #define S21_CMD1_OFFSET    2
 #define S21_PAYLOAD_OFFSET 3
+
+// A typical payload length, but there are deviations
 #define S21_PAYLOAD_LEN    4
 
 // A minimum length of a packet (with no payload)
@@ -63,6 +65,17 @@ static inline float s21_decode_target_temp(unsigned char v)
 static inline float s21_encode_target_temp(float temp)
 {
    return lroundf((temp - 18.0) * 2) + AC_MIN_TEMP_VALUE;
+}
+
+static inline int s21_decode_int_sensor(const unsigned char * payload)
+{
+   return (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
+}
+
+static inline float s21_decode_float_sensor(const unsigned char * payload)
+{
+   float v = s21_decode_int_sensor(payload) * 0.1;
+   return payload[3] == '-' ? -v : v;
 }
 
 // Convert between Daikin and Faikin fan speed enums
