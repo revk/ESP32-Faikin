@@ -333,7 +333,7 @@ enum
 };
 
 static int
-check_length(uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * payload)
+check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * payload)
 {
    if (len >= required)
       return 1;
@@ -361,39 +361,39 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       switch (cmd2)
       {
       case '1':                // 'G1' - basic status
-         if (check_length(cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
+         if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
             set_val (online, 1);
             set_val (power, (payload[0] == '1') ? 1 : 0);
-            set_val (mode, "30721003"[payload[1] & 0x7] - '0');    // FHCA456D mapped from AXDCHXF
-            set_val (heat, daikin.mode == 1);      // Crude - TODO find if anything actually tells us this
+            set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
+            set_val (heat, daikin.mode == 1);   // Crude - TODO find if anything actually tells us this
             if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
                set_temp (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
-               set_temp (temp, daikin.temp);       // Does not have temp in other modes
-            if (payload[3] != 'A') // Set fan speed
-               set_val (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
+               set_temp (temp, daikin.temp);    // Does not have temp in other modes
+            if (payload[3] != 'A')      // Set fan speed
+               set_val (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
             else if (daikin.fan == 6)
-               set_val (fan, 6);   // Quiet mode set (it returns as auto, so we assume it set to quiet if not powered on)
+               set_val (fan, 6);        // Quiet mode set (it returns as auto, so we assume it set to quiet if not powered on)
             else if (!daikin.power || !daikin.fan || daikin.fanrpm >= 750)
-               set_val (fan, 0);   // Auto as fan too fast to be quiet mode
+               set_val (fan, 0);        // Auto as fan too fast to be quiet mode
          }
          break;
       case '3':                // Seems to be an alternative to G6
-         if (check_length(cmd, cmd2, len, 1, payload))
+         if (check_length (cmd, cmd2, len, 1, payload))
          {
             set_val (powerful, payload[3] & 0x02 ? 1 : 0);
          }
          break;
       case '5':                // 'G5' - swing status
-         if (check_length(cmd, cmd2, len, 1, payload))
+         if (check_length (cmd, cmd2, len, 1, payload))
          {
             set_val (swingv, (payload[0] & 1) ? 1 : 0);
             set_val (swingh, (payload[0] & 2) ? 1 : 0);
          }
          break;
       case '6':                // 'G6' - "powerful" mode and some others
-         if (check_length(cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
+         if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
             set_val (powerful, payload[0] & 0x02 ? 1 : 0);
             set_val (comfort, payload[0] & 0x40 ? 1 : 0);
@@ -403,13 +403,13 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
          break;
       case '7':                // 'G7' - "eco" mode
-         if (check_length(cmd, cmd2, len, 2, payload))
+         if (check_length (cmd, cmd2, len, 2, payload))
          {
             set_val (econo, payload[1] & 0x02 ? 1 : 0);
          }
          break;
       case '9':
-         if (check_length(cmd, cmd2, len, 2, payload))
+         if (check_length (cmd, cmd2, len, 2, payload))
          {
             set_temp (home, (float) ((signed) payload[0] - 0x80) / 2);
             set_temp (outside, (float) ((signed) payload[1] - 0x80) / 2);
@@ -421,41 +421,39 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       if (cmd2 == 'L' || cmd2 == 'd')
       {
          // These responses are always only 3 bytes long
-         if (check_length(cmd, cmd2, len, 3, payload))
+         if (check_length (cmd, cmd2, len, 3, payload))
          {
-            int v = s21_decode_int_sensor(payload) * 10;
-
+            int v = s21_decode_int_sensor (payload);
             switch (cmd2)
             {
-            case 'L':                // Fan
+            case 'L':          // Fan
                set_int (fanrpm, v * 10);
                break;
-            case 'd':                // Compressor
+            case 'd':          // Compressor
                set_int (comp, v);
                break;
             }
          }
-      }
-      else if (check_length(cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
+      } else if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
       {
-         float t = s21_decode_float_sensor(payload);
+         float t = s21_decode_float_sensor (payload);
 
-         if (t < 100)              // Sanity check
+         if (t < 100)           // Sanity check
          {
             switch (cmd2)
-            {                      // Temperatures (guess)
-            case 'H':             // 'SH' - home temp
+            {                   // Temperatures (guess)
+            case 'H':          // 'SH' - home temp
                set_temp (home, t);
                break;
-            case 'a':             // 'Sa' - outside temp
+            case 'a':          // 'Sa' - outside temp
                set_temp (outside, t);
                break;
-            case 'I':             // 'SI' - liquid ???
+            case 'I':          // 'SI' - liquid ???
                set_temp (liquid, t);
                break;
-            case 'N':             // ?
+            case 'N':          // ?
                break;
-            case 'X':             // ?
+            case 'X':          // ?
                break;
             }
          }
@@ -711,7 +709,8 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       protocol_found ();
    // An expected S21 reply contains the first character of the command
    // incremented by 1, the second character is left intact
-   if (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1 || buf[S21_CMD1_OFFSET] != cmd2)
+   if (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1
+       || buf[S21_CMD1_OFFSET] != cmd2)
    {
       // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
