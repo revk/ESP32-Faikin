@@ -33,10 +33,12 @@ static const char TAG[] = "Faikin";
 #define	gpio			\
 	io(tx,-48)		\
 	io(rx,-34)		\
+
 #else
 #define	gpio			\
 	io(tx,-26)		\
 	io(rx,-27)		\
+
 #endif
 
 #define	settings		\
