@@ -679,15 +679,24 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       jo_stringn (j, c, (char *) buf + 3, rxlen - 5);
       revk_info ("rx", &j);
    }
+   int s21_bad (jo_t j)
+   {                            // Report error and return S21_BAD - also pause/flush
+      jo_base16 (j, "data", buf, rxlen);
+      revk_error ("comms", &j);
+      if (!protocol_set)
+      {
+         sleep (1);
+         uart_flush (uart);
+      }
+      return S21_BAD;
+   }
    // Check checksum
    uint8_t c = s21_checksum (buf, rxlen);
    if (c != buf[rxlen - 2])
    {                            // Sees checksum of 03 actually sends as 05
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "badsum", "%02X", c);
-      jo_base16 (j, "data", buf, rxlen);
-      revk_error ("comms", &j);
-      return S21_BAD;           // Ignore - it'll get resent some time
+      return s21_bad (j);
    }
    if (rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
    {                            // Loop back
@@ -719,9 +728,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_bool (j, "badhead", 1);
       if (buf[1] != cmd + 1 || buf[2] != cmd2)
          jo_bool (j, "mismatch", 1);
-      jo_base16 (j, "data", buf, rxlen);
-      revk_error ("comms", &j);
-      return S21_BAD;
+      return s21_bad (j);
    }
    return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
 }
