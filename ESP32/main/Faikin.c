@@ -340,6 +340,7 @@ check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * 
 
    jo_t j = jo_comms_alloc ();
    jo_stringf (j, "badlength", "%d", len);
+   jo_stringf (j, "expected", "%d", required);
    jo_stringf (j, "command", "%c%c", cmd, cmd2);
    jo_base16 (j, "data", payload, len);
    revk_error ("comms", &j);
@@ -418,9 +419,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       }
    if (cmd == 'S')
    {
-      if (cmd2 == 'L' || cmd2 == 'd')
-      {
-         // These responses are always only 3 bytes long
+      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D')
+      {                         // These responses are always only 3 bytes long
          if (check_length (cmd, cmd2, len, 3, payload))
          {
             int v = s21_decode_int_sensor (payload);
