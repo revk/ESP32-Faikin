@@ -1934,7 +1934,7 @@ send_ha_config (void)
    if (ble)
    {
       addtemp ("bletemp", "mdi:coolant-temperature");
-      addhum ("blehum", "mdi:humidity");
+      addhum ("blehum", "mdi:water-percent");
    }
 }
 
