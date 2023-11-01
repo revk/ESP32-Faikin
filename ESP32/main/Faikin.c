@@ -1237,7 +1237,10 @@ web_root (httpd_req_t * req)
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addtemp ("Set", "temp");
    addhf ("Temp");
+   if (daikin.status_known & CONTROL_liquid)
    addhf ("Coil");
+   if (daikin.status_known & CONTROL_outside)
+   addhf ("Outside");
    if (ble)
       addhf ("BLE");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
@@ -1398,6 +1401,7 @@ web_root (httpd_req_t * req)
                              "n('auto1',o.auto1);"      //
                              "s('Tautot',(o.autot?o.autot+'℃':''));"  //
                              "s('Coil',(o.liquid?o.liquid+'℃':'---'));"       //
+                             "s('Outside',(o.outside?o.outside+'℃':'---'));"       //
                              "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
