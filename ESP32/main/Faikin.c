@@ -1074,7 +1074,14 @@ daikin_status (void)
 #include "acextras.m"
 #ifdef	ELA
    if (bletemp && !bletemp->missing)
-      jo_string (j, "ble", bletemp->name);
+   {
+      jo_object (j, "ble");
+      jo_string (j, "name", bletemp->name);
+      jo_litf (j, "temp", "%.2f", bletemp->temp / 100.0);
+      jo_litf (j, "hum", "%.2f", bletemp->hum / 100.0);
+      jo_int (j, "bat", bletemp->temp);
+      jo_close (j);
+   }
    if (ble)
       jo_string (j, "autob", autob);
 #endif
@@ -1226,6 +1233,8 @@ web_root (httpd_req_t * req)
    addtemp ("Set", "temp");
    addhf ("Temp");
    addhf ("Coil");
+   if (ble)
+      addhf ("BLE");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
       httpd_resp_sendstr_chunk (req, "<tr>");
@@ -1373,6 +1382,7 @@ web_root (httpd_req_t * req)
                              "b('streamer',o.streamer);"        //
                              "e('mode',o.mode);"        //
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
+                             "s('BLE',o.BLE?o.BLE.temp+'℃':'---');"      //
                              "n('temp',o.temp);"        //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
                              "b('autop',o.autop);"      //
@@ -1932,6 +1942,11 @@ ha_status (void)
       jo_int (j, "comp", daikin.comp);
    if (daikin.status_known & CONTROL_fanrpm)
       jo_int (j, "fanrpm", daikin.fanrpm);
+   if(ble&&bletemp)
+   {
+	   jo_litf(j,"bletemp","%.2f",bletemp->temp/100.0);
+	   jo_litf(j,"blehum","%.2f",bletemp->hum/100.0);
+   }
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
