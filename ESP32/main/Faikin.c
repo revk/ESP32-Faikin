@@ -1387,7 +1387,7 @@ web_root (httpd_req_t * req)
                              "b('streamer',o.streamer);"        //
                              "e('mode',o.mode);"        //
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
-                             "s('BLE',(o.ble.temp?o.ble.temp+'℃':'---')+(o.ble.hum?' / '+o.ble.hum+'%':''));" //
+                             "if(o.ble)s('BLE',(o.ble.temp?o.ble.temp+'℃':'---')+(o.ble.hum?' / '+o.ble.hum+'%':''));" //
                              "n('temp',o.temp);"        //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
                              "b('autop',o.autop);"      //
