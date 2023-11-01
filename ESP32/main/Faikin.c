@@ -1307,7 +1307,7 @@ web_root (httpd_req_t * req)
                                 "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
       add ("Enable", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addtemp ("Target", "autot");
-      addnote ("Timed on and off (set other that 00:00)<br>Automated on/off if temp is way off target.");
+      addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       httpd_resp_sendstr_chunk (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
