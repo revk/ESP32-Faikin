@@ -1077,9 +1077,14 @@ daikin_status (void)
    {
       jo_object (j, "ble");
       jo_string (j, "name", bletemp->name);
-      jo_litf (j, "temp", "%.2f", bletemp->temp / 100.0);
-      jo_litf (j, "hum", "%.2f", bletemp->hum / 100.0);
-      jo_int (j, "bat", bletemp->temp);
+      if (bletemp->tempset)
+         jo_litf (j, "temp", "%.2f", bletemp->temp / 100.0);
+      if (bletemp->humset)
+         jo_litf (j, "hum", "%.2f", bletemp->hum / 100.0);
+      if (bletemp->batset)
+         jo_int (j, "bat", bletemp->temp);
+      if (bletemp->voltset)
+         jo_litf (j, "volt", "%.2f", bletemp->volt / 100.0);
       jo_close (j);
    }
    if (ble)
@@ -1382,7 +1387,7 @@ web_root (httpd_req_t * req)
                              "b('streamer',o.streamer);"        //
                              "e('mode',o.mode);"        //
                              "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
-                             "s('BLE',o.BLE?o.BLE.temp+'℃':'---');"      //
+                             "s('BLE',(o.ble.temp?o.ble.temp+'℃':'---')+(o.ble.hum?' / '+o.ble.hum+'%':''));" //
                              "n('temp',o.temp);"        //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
                              "b('autop',o.autop);"      //
@@ -1810,6 +1815,20 @@ send_ha_config (void)
          free (topic);
       }
    }
+   void addhum (const char *tag, const char *icon)
+   {
+      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         jo_t j = make (tag, icon);
+         jo_string (j, "name", tag);
+         jo_string (j, "dev_cla", "humidity");
+         jo_string (j, "stat_t", revk_id);
+         jo_string (j, "unit_of_meas", "%");
+         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+         revk_mqtt_send (NULL, 1, topic, &j);
+         free (topic);
+      }
+   }
    void addfreq (const char *tag, const char *unit, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
@@ -1912,6 +1931,11 @@ send_ha_config (void)
       addfreq ("comp", "Hz", "mdi:sine-wave");
    if (daikin.status_known & CONTROL_fanrpm)
       addfreq ("fanrpm", "rpm", "mdi:fan");
+   if (ble)
+   {
+      addtemp ("bletemp", "mdi:coolant-temperature");
+      addhum ("blehum", "mdi:humidity");
+   }
 }
 
 static void
@@ -1942,10 +1966,12 @@ ha_status (void)
       jo_int (j, "comp", daikin.comp);
    if (daikin.status_known & CONTROL_fanrpm)
       jo_int (j, "fanrpm", daikin.fanrpm);
-   if(ble&&bletemp)
+   if (ble && bletemp)
    {
-	   jo_litf(j,"bletemp","%.2f",bletemp->temp/100.0);
-	   jo_litf(j,"blehum","%.2f",bletemp->hum/100.0);
+      if (bletemp->tempset)
+         jo_litf (j, "bletemp", "%.2f", bletemp->temp / 100.0);
+      if (bletemp->humset)
+         jo_litf (j, "blehum", "%.2f", bletemp->hum / 100.0);
    }
    if (daikin.status_known & CONTROL_mode)
    {
@@ -2245,12 +2271,12 @@ app_main ()
                      break;
                   }
             }
-            if (bletemp && !bletemp->missing)
+            if (bletemp && !bletemp->missing && bletemp->tempset)
             {                   // Use temp
                daikin.env = bletemp->temp / 100.0;
                daikin.status_known |= CONTROL_env;      // So we report it
             } else
-               daikin.status_known &= ~CONTROL_env;     // So we dont report it
+               daikin.status_known &= ~CONTROL_env;     // So we don't report it
          }
 #endif
          if (autor && autot)
