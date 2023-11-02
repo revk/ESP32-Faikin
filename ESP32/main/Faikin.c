@@ -1212,11 +1212,6 @@ web_root (httpd_req_t * req)
       httpd_resp_sendstr_chunk (req, field);
       httpd_resp_sendstr_chunk (req, "',this.checked);\"><span class=slider></span></label></td>");
    }
-   void addhf (const char *tag)
-   {
-      addh (tag);
-      addf (tag);
-   }
    void addtemp (const char *tag, const char *field)
    {
       addh (tag);
@@ -1236,13 +1231,33 @@ web_root (httpd_req_t * req)
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addtemp ("Set", "temp");
-   addhf ("Temp");
+   void addt (const char *tag, const char *help)
+   {
+      httpd_resp_sendstr_chunk (req, "<td title=\"");
+      httpd_resp_sendstr_chunk (req, help);
+      httpd_resp_sendstr_chunk (req, "\" align=right>");
+      httpd_resp_sendstr_chunk (req, tag);
+      httpd_resp_sendstr_chunk (req, "<br><span id=\"");
+      httpd_resp_sendstr_chunk (req, tag);
+      +httpd_resp_sendstr_chunk (req, "\"></span></td>");
+   }
+   httpd_resp_sendstr_chunk (req, "<tr><td>Temps</td>");
+   if (daikin.status_known & CONTROL_inlet)
+      addt ("Inlet", "Inlet temperature");
+   if (daikin.status_known & CONTROL_home)
+      addt ("Home", "Inlet temperature");
    if (daikin.status_known & CONTROL_liquid)
-   addhf ("Coil");
+      addt ("Liquid", "Liquid coolant temperature");
    if (daikin.status_known & CONTROL_outside)
-   addhf ("Outside");
+      addt ("Outside", "Outside temperature");
+   if ((daikin.status_known & CONTROL_env) && !*autob)
+      addt ("Env", "External reference temperature");
    if (ble)
-      addhf ("BLE");
+   {
+      addt ("BLE", "External BLE temperature");
+      addt ("Hum", "External BLE humidity");
+   }
+   httpd_resp_sendstr_chunk (req, "</tr>");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
       httpd_resp_sendstr_chunk (req, "<tr>");
@@ -1366,7 +1381,8 @@ web_root (httpd_req_t * req)
                              "function s(n,v){var d=g(n);if(d)d.textContent=v;}"        //
                              "function n(n,v){var d=g(n);if(d)d.value=v;}"      //
                              "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"       //
-                             "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m))}"    //
+                             "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"   //
+                             "function t(n,v){s(n,v?v+'℃':'---');}"      //
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
@@ -1389,9 +1405,13 @@ web_root (httpd_req_t * req)
                              "b('quiet',o.quiet);"      //
                              "b('streamer',o.streamer);"        //
                              "e('mode',o.mode);"        //
-                             "s('Temp',(o.home?o.home+'℃':'---')+(o.env?' / '+o.env+'℃':''));"      //
-                             "if(o.ble)s('BLE',(o.ble.temp?o.ble.temp+'℃':'---')+(o.ble.hum?' / '+o.ble.hum+'%':''));" //
-                             "n('temp',o.temp);"        //
+                             "t('Inlet',o.inlet);" //
+                             "t('Home',o.home);"        //
+                             "t('Env',o.env);"  //
+                             "t('Outside',o.outside);"  //
+                             "t('Liquid',o.liquid);"    //
+                             "if(o.ble)t('BLE',o.ble.temp);"    //
+                             "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%':'');"    //
                              "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
                              "b('autop',o.autop);"      //
                              "n('autot',o.autot);"      //
@@ -1401,7 +1421,7 @@ web_root (httpd_req_t * req)
                              "n('auto1',o.auto1);"      //
                              "s('Tautot',(o.autot?o.autot+'℃':''));"  //
                              "s('Coil',(o.liquid?o.liquid+'℃':'---'));"       //
-                             "s('Outside',(o.outside?o.outside+'℃':'---'));"       //
+                             "s('Outside',(o.outside?o.outside+'℃':'---'));"  //
                              "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
                              "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
                              "e('fan',o.fan);"  //
@@ -1425,11 +1445,9 @@ static void
 simple_response (httpd_req_t * req, const char *err)
 {
    httpd_resp_set_type (req, "text/plain");
-
    if (err)
    {
       char resp[1000];
-
       // This "ret" value is reported by my BRP on malformed request
       // Error text after 'adv' is my addition; assuming 'advisory'
       snprintf (resp, sizeof (resp), "ret=PARAM NG,adv=%s", err);
@@ -1532,13 +1550,11 @@ web_get_basic_info (httpd_req_t * req)
    httpd_resp_set_type (req, "text/plain");
    char resp[1000],
     *o = resp;
-
    // Report something. In fact OpenHAB only uses this URL for discovery,
    // and only checks for ret=OK.
    o += sprintf (o, "ret=OK,type=aircon,reg=eu");
    o += sprintf (o, ",mac=%02X%02X%02X%02X%02X%02X", revk_mac[0], revk_mac[1], revk_mac[2], revk_mac[3], revk_mac[4], revk_mac[5]);
    o += sprintf (o, ",ssid1=%s", revk_wifi ());
-
    httpd_resp_sendstr (req, resp);
    return ESP_OK;
 }
@@ -1611,11 +1627,9 @@ web_set_control_info (httpd_req_t * req)
 {
    char query[1000];
    const char *err = get_query (req, query, sizeof (query));
-
    if (!err)
    {
       char value[10];
-
       if (!httpd_query_key_value (query, "pow", value, sizeof (value)) && *value)
          daikin_set_v_e (err, power, *value == '1');
       if (!httpd_query_key_value (query, "mode", value, sizeof (value)) && *value)
@@ -1628,7 +1642,6 @@ web_set_control_info (httpd_req_t * req)
          // Here we promote all three values as 'Auto'. Just in case.
          static int8_t modes[] = { 3, 3, 7, 2, 1, -1, 0, 3 };   // AADCH-FA
          int8_t setval = (*value >= '0' && *value <= '7') ? modes[*value - '0'] : -1;
-
          if (setval == -1)
             err = "Invalid mode value";
          else
@@ -1639,7 +1652,6 @@ web_set_control_info (httpd_req_t * req)
       if (!httpd_query_key_value (query, "f_rate", value, sizeof (value)) && *value)
       {
          int8_t setval;
-
          if (*value == 'A')
             setval = 0;
          else if (*value == 'B')
@@ -1673,7 +1685,6 @@ web_get_sensor_info (httpd_req_t * req)
    httpd_resp_set_type (req, "text/plain");
    char resp[1000],
     *o = resp;
-
    o += sprintf (o, "ret=OK");
    o += sprintf (o, ",htemp="); // Indoor temperature
    if (daikin.status_known & CONTROL_home)
@@ -1688,7 +1699,6 @@ web_get_sensor_info (httpd_req_t * req)
       *o++ = '-';
    o += sprintf (o, ",err=0");  // Just for completeness
    o += sprintf (o, ",cmpfreq=-");      // Compressor frequency, not supported (yet)
-
    httpd_resp_sendstr (req, resp);
    return ESP_OK;
 }
@@ -1703,9 +1713,7 @@ web_register_terminal (httpd_req_t * req)
    httpd_resp_set_type (req, "text/plain");
    char resp[1000],
     *o = resp;
-
    o += sprintf (o, "ret=OK");
-
    httpd_resp_sendstr (req, resp);
    return ESP_OK;
 }
@@ -1717,12 +1725,10 @@ web_get_year_power (httpd_req_t * req)
    httpd_resp_set_type (req, "text/plain");
    char resp[1000],
     *o = resp;
-
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
    // For now let's just prevent errors in OpenHAB and return an empty OK response
    // Note all zeroes from my BRP
    o += sprintf (o, "ret=OK");
-
    httpd_resp_sendstr (req, resp);
    return ESP_OK;
 }
@@ -1734,12 +1740,10 @@ web_get_week_power (httpd_req_t * req)
    httpd_resp_set_type (req, "text/plain");
    char resp[1000],
     *o = resp;
-
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
    // For now let's just prevent errors in OpenHAB and return an empty OK response
    // Note all zeroes from my BRP
    o += sprintf (o, "ret=OK");
-
    httpd_resp_sendstr (req, resp);
    return ESP_OK;
 }
@@ -1749,12 +1753,10 @@ web_set_special_mode (httpd_req_t * req)
 {
    char query[200];
    const char *err = get_query (req, query, sizeof (query));
-
    if (!err)
    {
       char mode[6],
         value[2];
-
       if (!httpd_query_key_value (query, "spmode_kind", mode, sizeof (mode)) &&
           !httpd_query_key_value (query, "set_spmode", value, sizeof (value)))
       {
@@ -2019,7 +2021,6 @@ register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
       .method = HTTP_GET,
       .handler = handler,
    };
-
    register_uri (&uri_struct);
 }
 
@@ -2032,7 +2033,6 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
       .handler = handler,
       .is_websocket = true,
    };
-
    register_uri (&uri_struct);
 }
 
@@ -2216,8 +2216,8 @@ app_main ()
    {                            // Mock for interface development and testing
       ESP_LOGE (TAG, "Dummy operational mode (no tx/rx set)");
       daikin.status_known |=
-         CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
-         CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
+         CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful |
+         CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
       daikin.power = 1;
       daikin.mode = 1;
       daikin.temp = 20.0;
@@ -2371,7 +2371,6 @@ app_main ()
 #undef poll
                if (debug)
                   revk_info ("s21", &s21debug);
-
                // Now send new values, requested by the user, if any
                if (daikin.control_changed & (CONTROL_power | CONTROL_mode | CONTROL_temp | CONTROL_fan))
                {                // D1
@@ -2396,8 +2395,8 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.control_changed &
-                   (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
+               if (daikin.control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor |
+                                             CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
