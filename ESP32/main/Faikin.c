@@ -1076,7 +1076,7 @@ daikin_status (void)
    if (bletemp && !bletemp->missing)
    {
       jo_object (j, "ble");
-      jo_string (j, "name", bletemp->name);
+      //jo_string (j, "name", bletemp->name); // No need as in "autob" anyway
       if (bletemp->tempset)
          jo_litf (j, "temp", "%.2f", bletemp->temp / 100.0);
       if (bletemp->humset)
