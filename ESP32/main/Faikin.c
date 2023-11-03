@@ -917,6 +917,16 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
       return daikin_control (j);        // General setting
+#if 0                           // MQTT debug
+   {
+      jo_t l = jo_object_alloc ();
+      jo_string (l, "prefix", prefix);
+      jo_string (l, "target", target);
+      jo_string (l, "suffix", suffix);
+      jo_string (l, "payload", jo_debug (j));
+      revk_info ("debug", &l);
+   }
+#endif
    if (!strcmp (suffix, "reconnect"))
    {
       daikin.talking = 0;       // Disconnect and reconnect
@@ -1041,8 +1051,13 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
                      *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : *value == 'n' ? 'Q' : toupper (*value));
       if (!strcmp (suffix, "swing"))
       {
-         jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
-         jo_bool (s, "swingv", strchr (value, 'V') ? 1 : 0);
+         if (*value == 'C')
+            jo_bool (s, "comfort", 1);
+         else
+         {
+            jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
+            jo_bool (s, "swingv", strchr (value, 'V') ? 1 : 0);
+         }
       }
       if (!strcmp (suffix, "preset"))
       {
@@ -1910,6 +1925,8 @@ send_ha_config (void)
          jo_string (j, NULL, "H");
          jo_string (j, NULL, "V");
          jo_string (j, NULL, "H+V");
+         if (daikin.status_known & CONTROL_comfort)
+            jo_string (j, NULL, "C");
          jo_close (j);
       }
       if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
@@ -1997,8 +2014,9 @@ ha_status (void)
          jo_string (j, "fan", fans[daikin.fan]);
       }
    }
-   if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
-      jo_string (j, "swing", daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
+   if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
+      jo_string (j, "swing",
+                 daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : "home");       // Limited modes
    revk_mqtt_send_clients (NULL, 1, revk_id, &j, 1);
