@@ -52,6 +52,7 @@ static const char TAG[] = "Faikin";
 	b(dark,false)		\
 	b(ble,false)		\
 	b(ha,true)		\
+	b(lockmode,false)	\
 	u8(uart,1)		\
 	u8l(thermref,50)	\
 	u8l(autop10,5)		\
@@ -1382,7 +1383,7 @@ web_root (httpd_req_t * req)
                              "function n(n,v){var d=g(n);if(d)d.value=v;}"      //
                              "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"       //
                              "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"   //
-                             "function t(n,v){s(n,v?v+'℃':'---');}"      //
+                             "function t(n,v){s(n,v?v+'℃':'---');}"   //
                              "function c(){"    //
                              "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
                              "ws.onopen=function(v){g('top').className='on';};" //
@@ -1405,7 +1406,7 @@ web_root (httpd_req_t * req)
                              "b('quiet',o.quiet);"      //
                              "b('streamer',o.streamer);"        //
                              "e('mode',o.mode);"        //
-                             "t('Inlet',o.inlet);" //
+                             "t('Inlet',o.inlet);"      //
                              "t('Home',o.home);"        //
                              "t('Env',o.env);"  //
                              "t('Outside',o.outside);"  //
@@ -2074,6 +2075,7 @@ revk_web_extra (httpd_req_t * req)
    b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
    b ("BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    b ("Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
+   b ("Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
 }
 
 // --------------------------------------------------------------------------------
@@ -2634,12 +2636,15 @@ app_main ()
                      int step = (fanstep ? : (proto & PROTO_S21) ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
-                        jo_string (j, "set-mode", hot ? "C" : "H");
-                        daikin_set_e (mode, hot ? "C" : "H");   // Swap mode
-                        if (step && daikin.fan > 1 && daikin.fan <= 5)
+                        if (!lockmode)
                         {
-                           jo_int (j, "set-fan", 1);
-                           daikin_set_v (fan, 1);
+                           jo_string (j, "set-mode", hot ? "C" : "H");
+                           daikin_set_e (mode, hot ? "C" : "H");        // Swap mode
+                           if (step && daikin.fan > 1 && daikin.fan <= 5)
+                           {
+                              jo_int (j, "set-fan", 1);
+                              daikin_set_v (fan, 1);
+                           }
                         }
                      } else if (a * 10 < t * 7 && step && daikin.fan > 1 && daikin.fan <= 5)
                      {
@@ -2657,8 +2662,8 @@ app_main ()
                   } else
                      if ((autop || (daikin.remote && autop10))
                          && (daikin.counta == daikin.countt || daikin.countb == daikin.countt)
-                         && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0))
-                  {             // Auto on
+                         && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0) && (!lockmode || b != t))
+                  {             // Auto on (don't auto on if would reverse mode and lockmode)
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
                      if (b == t)
