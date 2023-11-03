@@ -917,16 +917,6 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
       return daikin_control (j);        // General setting
-#if 0                           // MQTT debug
-   {
-      jo_t l = jo_object_alloc ();
-      jo_string (l, "prefix", prefix);
-      jo_string (l, "target", target);
-      jo_string (l, "suffix", suffix);
-      jo_string (l, "payload", jo_debug (j));
-      revk_info ("debug", &l);
-   }
-#endif
    if (!strcmp (suffix, "reconnect"))
    {
       daikin.talking = 0;       // Disconnect and reconnect
@@ -992,11 +982,13 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          daikin.mintarget = min;
          daikin.maxtarget = max;
       }
-      if (!*autob)
+      if (!ble || !*autob)
+      {
          daikin.env = env;
+         daikin.status_known |= CONTROL_env;    // So we report it
+      }
       if (!autor && !*autob)
          daikin.remote = 1;     // Hides local automation settings
-      daikin.status_known |= CONTROL_env;       // So we report it
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
    }
@@ -1092,7 +1084,6 @@ daikin_status (void)
    if (bletemp && !bletemp->missing)
    {
       jo_object (j, "ble");
-      //jo_string (j, "name", bletemp->name); // No need as in "autob" anyway
       if (bletemp->tempset)
          jo_litf (j, "temp", "%.2f", bletemp->temp / 100.0);
       if (bletemp->humset)
@@ -1103,7 +1094,7 @@ daikin_status (void)
          jo_litf (j, "volt", "%.2f", bletemp->volt / 100.0);
       jo_close (j);
    }
-   if (ble)
+   if (ble && *autob)
       jo_string (j, "autob", autob);
 #endif
    if (daikin.remote)
@@ -1266,7 +1257,7 @@ web_root (httpd_req_t * req)
       addt ("Liquid", "Liquid coolant temperature");
    if (daikin.status_known & CONTROL_outside)
       addt ("Outside", "Outside temperature");
-   if ((daikin.status_known & CONTROL_env) && !*autob)
+   if ((daikin.status_known & CONTROL_env) && (!ble || !*autob))
       addt ("Env", "External reference temperature");
    if (ble)
    {
@@ -1315,7 +1306,7 @@ web_root (httpd_req_t * req)
    httpd_resp_sendstr_chunk (req,
                              "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 #ifdef ELA
-   if (autor || *autob || !daikin.remote)
+   if (autor || (ble && *autob) || !daikin.remote)
    {
       void addnote (const char *note)
       {
@@ -1974,7 +1965,7 @@ ha_status (void)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_temp)
       jo_litf (j, "target", "%.2f", autor ? autot / 10.0 : daikin.temp);        // Target - either internal or what we are using as reference
-   if (autor && *autob)
+   if (autor && ble && *autob)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
    else if (daikin.status_known & CONTROL_home)
       jo_litf (j, "temp", "%.2f", daikin.home); // We use home if present, else inlet
