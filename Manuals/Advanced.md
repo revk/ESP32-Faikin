@@ -24,6 +24,7 @@ There are a number of standard settings as per the [RevK library](https://github
 |`ha`|`true` (default) means work with Home Assistant via MQTT|
 |`reporting`|Interval for reporting state (seconds)|
 |`dark`|If set, LED to be off unless something non normal happening|
+|`fixstatus`|Make status messages always use array format rather than single values|
 |`tmin`|Min temperature|
 |`tmax`|Max temperature|
 
@@ -40,6 +41,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 
 |Setting|Meaning|
 |-------|-------|
+|`lockmode`|Disable auto change heat/cool mode|
 |`coolover` `heatover`|When we want to turn on heating or cooling the temperature is set to the target, adjusted for the temperature the air-con unit is seeing. To encourage the air-con to actually apply the heating/cooling this has a number of degrees added (for heat) or reduced (for cool) as set by these settings.
 |`coolback` `heatback`|When we want to turn off the heating or cooling, we set a temperature that backs away from the target temperature by this many degrees.|
 |`tsample`|Automation sampling time period (seconds), usually `900`|
@@ -128,6 +130,8 @@ The setting `livestatus` causes the `state/` topic on any change.
 |`control`|Boolean, if we are under external/automatic control|
 
 The `faikinglog` reports the last periods for values. For each value, if it is the same for the whole period it is reported as is. If not, then for numeric is reported as an array of *min*, *ave*, *max*. For an enumerated type it is the current value. For a Boolean, it is a value `0.0` to `1.0` indicating how much it was `true` in the period.
+
+The `fixstatus` setting forces the format as if the value had changed during the period, i.e. min/ave/max array or 0.0-1.0 for Boolean.
 
 ## Aircon control
 
