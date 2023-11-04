@@ -26,6 +26,8 @@ One approach is "jumper wires" using header pins or sockets, e.g
 
 ![photo_2023-08-29_17-49-13](https://github.com/revk/ESP32-Faikin/assets/996983/6e062178-7fac-4f75-885e-fb7f1060f89e)
 
+It is also possible to connect to the `S403` connector. The proper way to do this is with a Daikin `S21` adapter board, as the `S403` is not isolated, and use directly could be dangerous. This [link](https://community.openenergymonitor.org/t/hack-my-heat-pump-and-publish-data-onto-emoncms/2551/99) has some more details of the `S403` connector.
+
 ## Why I made this
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
