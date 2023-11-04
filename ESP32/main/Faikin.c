@@ -2695,66 +2695,63 @@ app_main ()
             }
          }
          // Control
+         if (daikin.controlvalid && now > daikin.controlvalid)
+         {                      // End of auto mode and no env data either
+            daikin.controlvalid = 0;
+            daikin.status_known &= ~CONTROL_env;
+            daikin.env = NAN;
+            daikin.remote = 0;
+            controlstop ();
+         }
          if (daikin.power && daikin.controlvalid && !revk_shutting_down (NULL))
          {                      // Local auto controls
-            if (now > daikin.controlvalid)
-            {                   // End of auto mode and no env data either
-               daikin.controlvalid = 0;
-               daikin.status_known &= ~CONTROL_env;
-               daikin.env = NAN;
-               daikin.remote = 0;
+            // Get the settings atomically
+            if (isnan (min) || isnan (max))
                controlstop ();
-            } else
-            {                   // Auto mode
-               // TODO manual control override
-               // Get the settings atomically
-               if (isnan (min) || isnan (max))
-                  controlstop ();
-               else
-               {                // Control
-                  controlstart ();
-                  // What the A/C is using as current temperature
-                  float reference = NAN;
-                  if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))
-                     reference = (daikin.home * thermref + daikin.inlet * (100 - thermref)) / 100;      // thermref is how much inlet and home are used as reference
-                  else if (daikin.status_known & CONTROL_home)
-                     reference = daikin.home;
-                  else if (daikin.status_known & CONTROL_inlet)
-                     reference = daikin.inlet;
-                  // It looks like the ducted units are using inlet in some way, even when field settings say controller.
-                  if (daikin.mode == 3)
-                     daikin_set_e (mode, hot ? "H" : "C");      // Out of auto
-                  // Temp set
-                  float set = min + reference - current;        // Where we will set the temperature
-                  if ((hot && current < min) || (!hot && current > max))
+            else
+            {                   // Control
+               controlstart ();
+               // What the A/C is using as current temperature
+               float reference = NAN;
+               if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))
+                  reference = (daikin.home * thermref + daikin.inlet * (100 - thermref)) / 100; // thermref is how much inlet and home are used as reference
+               else if (daikin.status_known & CONTROL_home)
+                  reference = daikin.home;
+               else if (daikin.status_known & CONTROL_inlet)
+                  reference = daikin.inlet;
+               // It looks like the ducted units are using inlet in some way, even when field settings say controller.
+               if (daikin.mode == 3)
+                  daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
+               // Temp set
+               float set = min + reference - current;   // Where we will set the temperature
+               if ((hot && current < min) || (!hot && current > max))
+               {
+                  if (hot)
+                     set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
+                  else
+                     set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
+               } else
+               {                // At or beyond temp
+                  if (daikin.fansaved)
                   {
-                     if (hot)
-                        set = max + reference - current + heatover;     // Ensure heating by applying A/C offset to force it
-                     else
-                        set = max + reference - current - coolover;     // Ensure cooling by applying A/C offset to force it
-                  } else
-                  {             // At or beyond temp
-                     if (daikin.fansaved)
-                     {
-                        daikin_set_v (fan, daikin.fansaved);    // revert fan speed
-                        daikin.fansaved = 0;
-                        samplestart (); // Initial phase complete, start samples again.
-                     }
-                     if (hot)
-                        set = min + reference - current - heatback;     // Heating mode but apply negative offset to not actually heat any more than this
-                     else
-                        set = max + reference - current + coolback;     // Cooling mode but apply positive offset to not actually cool any more than this
+                     daikin_set_v (fan, daikin.fansaved);       // revert fan speed
+                     daikin.fansaved = 0;
+                     samplestart ();    // Initial phase complete, start samples again.
                   }
-                  // Limit settings to acceptable values
-                  if (proto & PROTO_S21)
-                     set = roundf (set * 2.0) / 2.0;    // S21 only does 0.5C steps
-                  if (set < tmin)
-                     set = tmin;
-                  if (set > tmax)
-                     set = tmax;
-                  if (!isnan (reference))
-                     daikin_set_t (temp, set);  // Apply temperature setting
+                  if (hot)
+                     set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
+                  else
+                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                }
+               // Limit settings to acceptable values
+               if (proto & PROTO_S21)
+                  set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
+               if (set < tmin)
+                  set = tmin;
+               if (set > tmax)
+                  set = tmax;
+               if (!isnan (reference))
+                  daikin_set_t (temp, set);     // Apply temperature setting
             }
          } else
             controlstop ();
