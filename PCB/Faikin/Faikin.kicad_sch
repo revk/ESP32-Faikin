@@ -1067,14 +1067,14 @@
         )
       )
     )
-    (symbol "RevK:Hidden" (pin_names (offset 1.016)) (in_bom yes) (on_board yes)
+    (symbol "RevK:Hidden" (pin_names (offset 1.016)) (in_bom no) (on_board yes)
       (property "Reference" "Z" (at 0.635 0 0)
         (effects (font (size 1.27 1.27)) (justify left))
       )
       (property "Value" "Hidden" (at 4.445 0 0)
         (effects (font (size 1.27 1.27)) (justify left))
       )
-      (property "Footprint" "RevK:Hidden" (at 0 1.905 0)
+      (property "Footprint" "" (at 0 1.905 0)
         (effects (font (size 1.27 1.27)) hide)
       )
       (property "Datasheet" "" (at 0 0 0)
@@ -1102,12 +1102,6 @@
           )
           (stroke (width 0.1524) (type default))
           (fill (type none))
-        )
-      )
-      (symbol "Hidden_1_1"
-        (pin no_connect non_logic (at 0 -2.54 90) (length 2.54) hide
-          (name "~" (effects (font (size 1.27 1.27))))
-          (number "~" (effects (font (size 1.27 1.27))))
         )
       )
     )
@@ -1799,7 +1793,6 @@
     (property "Note" "" (at 151.13 48.895 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid 625ec854-7d63-421e-bea4-990c68db0c92))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -2161,7 +2154,6 @@
     (property "Note" "" (at 151.13 50.8 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid 5eda0fda-09c6-4b73-9b3c-9dedd29dfe8c))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -2499,7 +2491,6 @@
     (property "Note" "" (at 151.13 52.705 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid b077a5e8-620e-4cc2-912c-5b2e659cf6ef))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -2559,7 +2550,12 @@
     (property "Datasheet" "~" (at 151.13 56.515 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid ba5c5167-17cc-4b51-8e5c-99153f3fd47c))
+    (property "Part No" "" (at 151.13 56.515 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
+    (property "Note" "" (at 151.13 56.515 0)
+      (effects (font (size 1.27 1.27)) hide)
+    )
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -2712,7 +2708,6 @@
     (property "Note" "" (at 151.13 46.99 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid caf45966-62f8-4a0e-8635-451634ea5c9d))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -2963,7 +2958,6 @@
     (property "Note" "" (at 151.13 45.085 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid 48c68214-8fd1-4d64-b2e9-af0a1948697a))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -3054,7 +3048,6 @@
     (property "Note" "" (at 151.13 54.61 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (pin "~" (uuid 1a613614-472e-461e-a128-b3c10be08c64))
     (instances
       (project "Faikin"
         (path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
