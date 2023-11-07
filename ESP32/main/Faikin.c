@@ -1945,8 +1945,13 @@ send_ha_config (void)
       addtemp ("liquid", "mdi:coolant-temperature");
    if (daikin.status_known & CONTROL_comp)
       addfreq ("comp", "Hz", "mdi:sine-wave");
+#if 0
    if (daikin.status_known & CONTROL_fanrpm)
       addfreq ("fanrpm", "rpm", "mdi:fan");
+#else
+   if (daikin.status_known & CONTROL_fanrpm)
+      addfreq ("fanfreq", "Hz", "mdi:fan");
+#endif
    if (ble)
    {
       addtemp ("bletemp", "mdi:coolant-temperature");
@@ -1980,8 +1985,13 @@ ha_status (void)
       jo_litf (j, "liquid", "%.2f", daikin.liquid);
    if (daikin.status_known & CONTROL_comp)
       jo_int (j, "comp", daikin.comp);
+#if 0
    if (daikin.status_known & CONTROL_fanrpm)
       jo_int (j, "fanrpm", daikin.fanrpm);
+#else
+   if (daikin.status_known & CONTROL_fanrpm)
+      jo_litf (j, "fanfreq", "%.1f", daikin.fanrpm / 60.0);
+#endif
    if (ble && bletemp)
    {
       if (bletemp->tempset)
