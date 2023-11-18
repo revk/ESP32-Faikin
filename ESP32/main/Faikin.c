@@ -1954,7 +1954,7 @@ send_ha_config (void)
 #endif
    if (ble)
    {
-      addtemp ("bletemp", "mdi:coolant-temperature");
+      addtemp ("bletemp", "mdi:thermometer");
       addhum ("blehum", "mdi:water-percent");
    }
 }
