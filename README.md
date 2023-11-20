@@ -84,6 +84,3 @@ The code is normally set up to automatically upgrade software, checking roughtly
 If you build yourself, you either need no code signing, or your own signing key. This will break auto-updates which try to load me code releases, so you need to adjuist settings `otahost` and `otaauto` accordingly. You can set these in the build config, along with WiFi settings, etc.
 
 If you want to purchase a pre-loaded assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
-
-Note, you can usually reflash using files provided
-`esptool.py -p /dev/ttyUSB0 write_flash 0x1000 Faikin-S1-PICO-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S1-PICO.bin`
