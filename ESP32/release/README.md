@@ -10,5 +10,5 @@ You need `esptool`
 
 `esptool.py -p /dev/ttyUSB0 write_flash 0x1000 Faikin-S1-PICO-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S1-PICO.bin`
 
-- The `bootloader.bin` needs to be the relevant release bootloader binary file for the chip used.
-- The `Faikin.bin` needs to be the relevant release binary file for the chip used.
+- The `Faikin-S1-PICO-bootloader.bin` needs to be the relevant release bootloader binary file for the chip used.
+- The `Faikin-S1-PICO.bin` needs to be the relevant release binary file for the chip used.
