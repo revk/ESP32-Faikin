@@ -12,7 +12,7 @@ Support is provided here ([issues](issues) and [discussions](discussions)).
 
 ## PCB
 
-The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` connector, or similar. The design is updated from time to time so may not look exactly like this. See wiki [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units).
+The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this. See wiki [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units).
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
@@ -22,8 +22,7 @@ There have been various discussions on this - Daikin appear to have a *standard*
 
 Another approach is "jumper wires" using header pins or sockets, e.g
 
-<img src=https://github.com/revk/ESP32-Faikin/assets/996983/45a4cb59-da3f-47ab-9d0b-f99bdbcca763 width=45%>
-<img src=https://github.com/revk/ESP32-Faikin/assets/996983/6e062178-7fac-4f75-885e-fb7f1060f89e width=45%>
+<img src=https://github.com/revk/ESP32-Faikin/assets/996983/45a4cb59-da3f-47ab-9d0b-f99bdbcca763 width=50%><img src=https://github.com/revk/ESP32-Faikin/assets/996983/6e062178-7fac-4f75-885e-fb7f1060f89e width=50%>
 
 It is also possible to connect to the `S403` connector. The proper way to do this is with a Daikin `S21` adapter board, as the `S403` is not isolated, and use directly could be dangerous. This [link](https://community.openenergymonitor.org/t/hack-my-heat-pump-and-publish-data-onto-emoncms/2551/99) has some more details of the `S403` connector, as well as [issue 134](https://github.com/revk/ESP32-Faikin/issues/134).
 
@@ -80,7 +79,7 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 * Automatically works out if S21 or X50 protocol (used on bigger/ducted units)
 * Backwards compatible direct `/aircon/...` URLs
 
-# Building
+# Building code yourself
 
 Git clone this `--recursive` to get all the submodules, and it should build with just `make`. There are make targets for other variations, but this hardware is the `make pico` or `make s3` version. The `make` actually runs the normal `idf.py` to build which then uses cmake. `make menuconfig` can be used to fine tune the settings, but the defaults should be mostly sane. `make flash` should work to program. If flashing yourself, you will need a programming lead, e.g. [Tazmotizer](https://github.com/revk/Shelly-Tasmotizer-PCB) or similar, and of course the full ESP IDF environment. The latest boards also have 4 pads for direct USB connection to flash with no adaptor. The modules on Amazon come pre-loaded and can upgrade over the air.
 

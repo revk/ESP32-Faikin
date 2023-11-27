@@ -1,5 +1,5 @@
 #!/bin/csh
-set d=(/dev/cu.usbmodem?13*)
+set d=(/dev/cu.usbmodem61*)
 if($#d == 0) then
 	echo No device
 	exit 0
