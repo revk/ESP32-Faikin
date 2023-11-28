@@ -1857,6 +1857,20 @@ send_ha_config (void)
          free (topic);
       }
    }
+   void addbat (const char *tag, const char *icon)
+   {
+      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         jo_t j = make (tag, icon);
+         jo_string (j, "name", tag);
+         jo_string (j, "dev_cla", "battery");
+         jo_string (j, "stat_t", revk_id);
+         jo_string (j, "unit_of_meas", "%");
+         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+         revk_mqtt_send (NULL, 1, topic, &j);
+         free (topic);
+      }
+   }
    if (asprintf (&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make ("", "mdi:thermostat");
@@ -1952,10 +1966,14 @@ send_ha_config (void)
    if (daikin.status_known & CONTROL_fanrpm)
       addfreq ("fanfreq", "Hz", "mdi:fan");
 #endif
-   if (ble)
+   if (ble && bletemp)
    {
-      addtemp ("bletemp", "mdi:thermometer");
-      addhum ("blehum", "mdi:water-percent");
+      if (bletemp->tempset)
+         addtemp ("bletemp", "mdi:thermometer");
+      if (bletemp->humset)
+         addhum ("blehum", "mdi:water-percent");
+      if (bletemp->batset)
+         addbat ("blebat", "mdi:battery-bluetooth-variant");
    }
 }
 
@@ -1998,6 +2016,8 @@ ha_status (void)
          jo_litf (j, "bletemp", "%.2f", bletemp->temp / 100.0);
       if (bletemp->humset)
          jo_litf (j, "blehum", "%.2f", bletemp->hum / 100.0);
+      if (bletemp->batset)
+         jo_int (j, "blebat", bletemp->bat);
    }
    if (daikin.status_known & CONTROL_mode)
    {
@@ -2294,6 +2314,8 @@ app_main ()
                   if (!strcmp (e->name, autob))
                   {
                      bletemp = e;
+                     if (ha)
+                        daikin.ha_send = 1;
                      break;
                   }
             }
