@@ -18,6 +18,10 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 ## Cabling
 
+If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit.
+
+**WARNING** Messing about in your air-con unit can be dangerous with live power, and could damage the unit. Take all precautions necessary and you mess with your air-con unit at your own risk!
+
 There have been various discussions on this - Daikin appear to have a *standard* connector that is `S21`. They seem to have this in models that even have build in WiFi modules (see image). You need a JST-EH 5 way connector for `S21`. However the module can also be wired to units that have an `X50A` connector, with slightly different cabling. The discussions have various comments on this, but please do ask.
 
 Another approach is "jumper wires" using header pins or sockets, e.g
