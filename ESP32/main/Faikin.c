@@ -491,19 +491,29 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 
 
 bool
-daikin_cn_wired_response (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * edata, void *user_data)
+rmt_rx_callback (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * edata, void *user_data)
 {
-#if 0
-   if (edata->num_symbols < 8)
+   if (edata->num_symbols < 66)
    {                            // Silly... restart rx
       rmt_rx_len = 0;
       rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config);
       return pdFALSE;
    }
-#endif
    // Got something
    rmt_rx_len = edata->num_symbols;
    return pdFALSE;
+}
+
+void
+daikin_cn_wired_response (int len, uint8_t * payload)
+{                               // Process response
+   if (dump)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "dump", payload, len);
+      revk_info ("rx", &j);
+   }
+
 }
 
 void
@@ -822,8 +832,68 @@ daikin_cn_wired_command (int len, uint8_t * buf)
 
    if (rmt_rx_len)
    {                            // Process receive
-      ESP_LOGE (TAG, "RMT Rx %d", rmt_rx_len);
-
+      uint8_t rx[8] = { 0 };
+      const char *e = NULL;
+      int p = 0;
+      // Sanity checking
+      if (!e && rmt_rx_len != sizeof (rx) * 8 + 2)
+         e = "Wrong length";
+      if (!e && rmt_rx_raw[p].level0)
+         e = "Bad start polarity";
+      if (!e && (rmt_rx_raw[p].duration0 < 2000 || rmt_rx_raw[p].duration0 > 3000))
+         e = "Bad start duration";
+      if (!e && (rmt_rx_raw[p].duration1 < 900 || rmt_rx_raw[p].duration1 > 1100))
+         e = "Bad start bit";
+      p++;
+      for (int i = 0; !e && i < sizeof (rx); i++)
+         for (uint8_t b = 0x01; !e && b; b <<= 1)
+         {
+            if (!e && (rmt_rx_raw[p].duration0 < 200 || rmt_rx_raw[p].duration0 > 400))
+               e = "Bad gap duration";
+            if (!e && rmt_rx_raw[p].duration1 > 900 && rmt_rx_raw[p].duration1 < 1100)
+               rx[i] |= b;
+            else if (!e && (rmt_rx_raw[p].duration1 < 300 || rmt_rx_raw[p].duration1 > 500))
+               e = "Bad bit duration";
+            p++;
+         }
+      if (!e)
+      {
+         uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
+         for (int i = 0; i < sizeof (rx) - 1; i++)
+            sum += (rx[i] >> 4) + rx[i];
+         if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
+            e = "Bad checksum";
+      }
+      if (e)
+      {
+         jo_t j = jo_comms_alloc ();
+         jo_string (j, "error", e);
+         if (p > 1)
+            jo_base16 (j, "data", rx, (p - 1) / 8);
+         revk_error ("comms", &j);
+      } else
+      {                         // Got a message, yay!
+#if 0                           // If we can ever be sure the response is not an exact match, needs checking
+         if (len == sizeof (rx) && !memcmp (rx, buf, sizeof (rx)))
+         {                      // Exact match of what we sent...
+            daikin.talking = 0;
+            if (!loopback)
+            {
+               ESP_LOGE (TAG, "Loopback");
+               loopback = 1;
+               revk_blink (0, 0, "RGB");
+            }
+            jo_t j = jo_comms_alloc ();
+            jo_bool (j, "loopback", 1);
+            revk_error ("comms", &j);
+         } else
+#endif
+         {
+            if (!protocol_set)
+               protocol_found ();
+            daikin_cn_wired_response (sizeof (rx), rx);
+         }
+      }
    }
    rmt_rx_len = 0;
    REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
@@ -1063,7 +1133,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
                while (jo_here (j) > JO_CLOSE)
                   jo_next (j);  // Should not be more
                t = jo_next (j); // Pass the close
-               continue;        // As we passed the close, don't skip
+               continue;        // As we passed the close, don't skip}
             } else
                min = max = strtof (val, NULL);
          }
@@ -1074,6 +1144,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
 #include "accontrols.m"
          t = jo_skip (j);
       }
+
       xSemaphoreTake (daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime () + tcontrol;
       if (!autor)
@@ -1091,6 +1162,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
    }
+
    jo_t s = jo_object_alloc ();
    // Crude commands - setting one thing
    if (!j)
@@ -1157,6 +1229,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       // TODO comfort/streamer/sensor/quiet
    }
+
    jo_close (s);
    jo_rewind (s);
    if (jo_next (s) == JO_TAG)
@@ -1324,8 +1397,9 @@ web_root (httpd_req_t * req)
       char temp[300];
       sprintf (temp,
                "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
-               tmin, tmax, proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1",
-               field, field, field);
+               tmin, tmax,
+               proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1", field,
+               field, field);
       httpd_resp_sendstr_chunk (req, temp);
       addf (tag);
    }
@@ -2323,7 +2397,7 @@ app_main ()
             if (rmt_rx)
             {
                rmt_rx_event_callbacks_t cbs = {
-                  .on_recv_done = daikin_cn_wired_response,
+                  .on_recv_done = rmt_rx_callback,
                };
                REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
                REVK_ERR_CHECK (rmt_enable (rmt_rx));
