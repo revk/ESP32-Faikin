@@ -150,6 +150,13 @@ static uint8_t proto = 0;
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
+rmt_symbol_word_t rmt_rx_raw[128];
+volatile size_t rmt_rx_len = 0; // Rx is ready
+const rmt_receive_config_t rmt_rx_config = {
+   .signal_range_min_ns = 1000, // shortest - to eliminate glitches
+   .signal_range_max_ns = 1500000,      //  longest - Set between longest (1000us) and sync pulse (2500us)
+};
+
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
 #endif
@@ -481,21 +488,21 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
    return S21_OK;
 }
 
-void
-daikin_cn_wired_response (int len, uint8_t * buf)
+
+bool
+daikin_cn_wired_response (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * edata, void *user_data)
 {
-   if (!rmt_rx)
-   {
-      daikin.talking = 0;       // Not ready
-      return;
+#if 0
+   if (edata->num_symbols < 8)
+   {                            // Silly... restart rx
+      rmt_rx_len = 0;
+      rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config);
+      return pdFALSE;
    }
-   if (dump)
-   {
-      jo_t j = jo_comms_alloc ();
-      jo_base16 (j, "dump", buf, len);
-      revk_info ("rx", &j);
-   }
-   // TODO
+#endif
+   // Got something
+   rmt_rx_len = edata->num_symbols;
+   return pdFALSE;
 }
 
 void
@@ -812,9 +819,14 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config);
    rmt_tx_wait_all_done (rmt_tx, 1000);
 
-   // TODO rx
+   if (rmt_rx_len)
+   {                            // Process receive
+      ESP_LOGE (TAG, "RMT Rx %d", rmt_rx_len);
 
-   // TODO
+   }
+   rmt_rx_len = 0;
+   REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
+
    if (!dump || uptime () > 300)        // TODO bodge
       daikin.talking = 0;       // TODO not coded yet - move on
 }
@@ -2274,43 +2286,56 @@ app_main ()
          err = gpio_reset_pin (port_mask (tx));
       if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
       {
-         rmt_tx_channel_config_t tx_chan_config = {
-            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
-            .gpio_num = port_mask (tx), // GPIO number
-            .mem_block_symbols = 128,   // symbols
-            .resolution_hz = 1 * 1000 * 1000,   // 1 MHz tick resolution, i.e., 1 tick = 1 µs
-            .trans_queue_depth = 1,     // set the number of transactions that can pend in the background
-            .flags.invert_out = (tx & PORT_INV) ? true : false,
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-            .flags.with_dma = true,
-#endif
-         };
-         ESP_ERROR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
-         if (rmt_tx)
+         if (!rmt_encoder)
          {
-            ESP_ERROR_CHECK (rmt_enable (rmt_tx));
-            if (!rmt_encoder)
-            {
-               rmt_copy_encoder_config_t encoder_config = {
-               };
-               ESP_ERROR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
-            }
-            // TODO rmt_rx
-            // TODO set up CN_WIRED
+            rmt_copy_encoder_config_t encoder_config = {
+            };
+            REVK_ERR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
+         }
+         if (!rmt_tx)
+         {                      // Create rmt_tx
+            rmt_tx_channel_config_t tx_chan_config = {
+               .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
+               .gpio_num = port_mask (tx),      // GPIO number
+               .mem_block_symbols = 72, // symbols
+               .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
+               .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
+               .flags.invert_out = (tx & PORT_INV) ? true : false,
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+               .flags.with_dma = true,
+#endif
+            };
+            REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
+         }
+         if (!rmt_rx)
+         {                      // Create rmt_rx
+            rmt_rx_channel_config_t rx_chan_config = {
+               .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
+               .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
+               .mem_block_symbols = 72, // 
+               .gpio_num = port_mask (rx),      // GPIO number
+               .flags.invert_in = (rx & PORT_INV) ? true : false,
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+               .flags.with_dma = true,
+#endif
+            };
+            REVK_ERR_CHECK (rmt_new_rx_channel (&rx_chan_config, &rmt_rx));
+         }
+         if (rmt_tx && rmt_rx)
+         {
+            rmt_rx_event_callbacks_t cbs = {
+               .on_recv_done = daikin_cn_wired_response,
+            };
+            REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
+            REVK_ERR_CHECK (rmt_enable (rmt_rx));
+            REVK_ERR_CHECK (rmt_enable (rmt_tx));
          }
       } else
       {
          if (rmt_tx)
-         {
             rmt_disable (rmt_tx);
-            rmt_del_channel (rmt_tx);
-         }
          if (rmt_rx)
-         {
             rmt_disable (rmt_rx);
-            rmt_del_channel (rmt_rx);
-         }
-         rmt_tx = rmt_rx = NULL;
          uart_config_t uart_config = {
             .baud_rate = (proto_type (proto) == PROTO_TYPE_S21) ? 2400 : 9600,
             .data_bits = UART_DATA_8_BITS,
@@ -2352,6 +2377,7 @@ app_main ()
          uart_flush (uart);
       }
    }
+
    if (webcontrol)
    {
       // Web interface
@@ -2576,8 +2602,8 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor |
-                                             CONTROL_quiet))
+               if (daikin.
+                   control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
