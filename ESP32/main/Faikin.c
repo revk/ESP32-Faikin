@@ -126,10 +126,19 @@ settings
 #define	s(name,len)	b(name)
 #include "acextras.m"
 
-#define	PROTO_S21	1
-#define	PROTO_TXINVERT	2
-#define	PROTO_RXINVERT	4
-const char *protoname[] = { "X50", "S21", "X50¬Tx", "S21¬Tx", "X50¬Rx", "S21¬Rx", "X50¬Rx¬Tx", "S21¬Rx¬Tx" };
+enum
+{
+   PROTO_TYPE_S21,
+   PROTO_TYPE_X50A,
+   PROTO_TYPE_CN_WIRED,
+   PROTO_TYPE_MAX,
+};
+const char *prototype[] = { "S21", "X50A", "CN_WIRED" };
+
+#define	PROTO_TXINVERT	1
+#define	PROTO_RXINVERT	2
+#define	PROTO_SCALE	4
+#define	proto_type(p)	((p)/PROTO_SCALE)
 
 // Globals
 static httpd_handle_t webserver = NULL;
@@ -225,7 +234,9 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
 {                               // Setting a value (float)
    if (*ptr == value)
       return NULL;              // No change
-   if (proto & PROTO_S21)
+   if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+      value = roundf (value);   // CN_WIRED only does 1C steps
+   else if (proto_type (proto) == PROTO_TYPE_S21)
       value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
@@ -319,7 +330,8 @@ jo_t
 jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_string (j, "protocol", loopback ? "loopback" : protoname[proto]);
+   jo_stringf (j, "protocol", "%s%s%s", loopback ? "loopback" : prototype[proto_type (proto)],
+               (proto & PROTO_TXINVERT) ? "¬Tx" : "", (proto & PROTO_RXINVERT) ? "¬Rx" : "");
    return j;
 }
 
@@ -1230,7 +1242,8 @@ web_root (httpd_req_t * req)
       char temp[300];
       sprintf (temp,
                "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
-               tmin, tmax, (proto & PROTO_S21) ? "0.5" : "0.1", field, field, field);
+               tmin, tmax, proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1",
+               field, field, field);
       httpd_resp_sendstr_chunk (req, temp);
       addf (tag);
    }
@@ -1238,7 +1251,7 @@ web_root (httpd_req_t * req)
    addb ("0/1", "power", "Main power");
    httpd_resp_sendstr_chunk (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
-   if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
+   if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
@@ -1912,7 +1925,7 @@ send_ha_config (void)
          jo_string (j, "fan_mode_cmd_t", "~/fan");
          jo_string (j, "fan_mode_stat_t", revk_id);
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
-         if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
+         if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
          {
             jo_array (j, "fan_modes");
             jo_string (j, NULL, "auto");
@@ -2030,7 +2043,7 @@ ha_status (void)
    }
    if (daikin.status_known & CONTROL_fan)
    {
-      if (fanstep == 1 || (!fanstep && (proto & PROTO_S21)))
+      if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
       {
          const char *fans[] = { "auto", "1", "2", "3", "4", "5", "night" };     // A12345Q
          jo_string (j, "fan", fans[daikin.fan]);
@@ -2178,53 +2191,60 @@ app_main ()
       if (!protocol_set && !loopback)
       {
          proto++;
-         if (proto >= sizeof (protoname) / sizeof (*protoname))
+         if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
             proto = 0;
       }
-      ESP_LOGI (TAG, "Trying %s", protoname[proto]);
-      uart_config_t uart_config = {
-         .baud_rate = (proto & PROTO_S21) ? 2400 : 9600,
-         .data_bits = UART_DATA_8_BITS,
-         .parity = UART_PARITY_EVEN,
-         .stop_bits = (proto & PROTO_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
-         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-         .source_clk = UART_SCLK_DEFAULT,
-      };
-      if (!err)
-         err = uart_param_config (uart, &uart_config);
+      ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", prototype[proto_type (proto)], (proto & PROTO_TXINVERT) ? "¬" : "",
+                port_mask (tx), (proto & PROTO_RXINVERT) ? "¬" : "", port_mask (rx));
       if (!err)
          err = gpio_reset_pin (port_mask (rx));
       if (!err)
          err = gpio_reset_pin (port_mask (tx));
-      if (!err)
-         err = uart_set_pin (uart, port_mask (tx), port_mask (rx), -1, -1);
-      if (!err)
-         err = gpio_pullup_en (port_mask (rx));
-      if (!err)
+      if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
       {
-         uint8_t i = 0;
-         if (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
-            i |= UART_SIGNAL_RXD_INV;
-         if (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
-            i |= UART_SIGNAL_TXD_INV;
-         err = uart_set_line_inverse (uart, i);
-      }
-      if (!err)
-         err = uart_driver_install (uart, 1024, 0, 0, NULL, 0);
-      if (!err)
-         err = uart_set_rx_full_threshold (uart, 1);
-      if (err)
+         // TODO set up CN_WIRED
+      } else
       {
-         jo_t j = jo_object_alloc ();
-         jo_string (j, "error", "Failed to uart");
-         jo_int (j, "uart", uart);
-         jo_int (j, "gpio", port_mask (rx));
-         jo_string (j, "description", esp_err_to_name (err));
-         revk_error ("uart", &j);
-         return;
+         uart_config_t uart_config = {
+            .baud_rate = (proto_type (proto) == PROTO_TYPE_S21) ? 2400 : 9600,
+            .data_bits = UART_DATA_8_BITS,
+            .parity = UART_PARITY_EVEN,
+            .stop_bits = (proto_type (proto) == PROTO_TYPE_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
+            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+            .source_clk = UART_SCLK_DEFAULT,
+         };
+         if (!err)
+            err = uart_param_config (uart, &uart_config);
+         if (!err)
+            err = uart_set_pin (uart, port_mask (tx), port_mask (rx), -1, -1);
+         if (!err)
+            err = gpio_pullup_en (port_mask (rx));
+         if (!err)
+         {
+            uint8_t i = 0;
+            if (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
+               i |= UART_SIGNAL_RXD_INV;
+            if (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
+               i |= UART_SIGNAL_TXD_INV;
+            err = uart_set_line_inverse (uart, i);
+         }
+         if (!err)
+            err = uart_driver_install (uart, 1024, 0, 0, NULL, 0);
+         if (!err)
+            err = uart_set_rx_full_threshold (uart, 1);
+         if (err)
+         {
+            jo_t j = jo_object_alloc ();
+            jo_string (j, "error", "Failed to uart");
+            jo_int (j, "uart", uart);
+            jo_int (j, "gpio", port_mask (rx));
+            jo_string (j, "description", esp_err_to_name (err));
+            revk_error ("uart", &j);
+            return;
+         }
+         sleep (1);
+         uart_flush (uart);
       }
-      sleep (1);
-      uart_flush (uart);
    }
    if (webcontrol)
    {
@@ -2279,8 +2299,8 @@ app_main ()
       {
          // Poke UART
          uart_setup ();
-         if (!(proto & PROTO_S21))
-         {                      // Startup
+         if ((proto_type (proto) == PROTO_TYPE_X50A))
+         {                      // Startup X50A
             daikin_command (0xAA, 1, (uint8_t[])
                             {
                             0x01}
@@ -2295,7 +2315,7 @@ app_main ()
          }
       } else
       {                         // Mock configuration for interface testing
-         proto = PROTO_S21;
+         proto = PROTO_TYPE_S21 * PROTO_SCALE;
          protocol_set = 1;
          daikin.control_changed = 0;
          daikin.online = 1;
@@ -2340,7 +2360,10 @@ app_main ()
          // Talk to the AC
          if (tx || rx)
          {
-            if (proto & PROTO_S21)
+            if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+            {                   // CN WIRED
+               daikin.talking = 0;      // TODO not coded yet
+            } else if (proto_type (proto) == PROTO_TYPE_S21)
             {                   // Older S21
                char temp[5];
                if (debug)
@@ -2475,7 +2498,7 @@ app_main ()
                   daikin_s21_command ('D', '7', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-            } else
+            } else if (proto_type (proto) == PROTO_TYPE_X50A)
             {                   // Newer protocol
                //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
                daikin_command (0xBD, 0, NULL);
@@ -2679,7 +2702,7 @@ app_main ()
                {                // Power, mode, fan, automation
                   if (daikin.power)
                   {
-                     int step = (fanstep ? : (proto & PROTO_S21) ? 1 : 2);
+                     int step = (fanstep ? : (proto_type (proto) == PROTO_TYPE_S21) ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
                         if (!lockmode)
@@ -2781,7 +2804,9 @@ app_main ()
                      set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                }
                // Limit settings to acceptable values
-               if (proto & PROTO_S21)
+               if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+                  set = roundf (set);   // CN_WIRED only does 1C steps
+               else if (proto_type (proto) == PROTO_TYPE_S21)
                   set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
                if (set < tmin)
                   set = tmin;
