@@ -133,7 +133,7 @@ enum
    PROTO_TYPE_S21,
    PROTO_TYPE_X50A,
    PROTO_TYPE_CN_WIRED,
-   PROTO_TYPE_MAX,
+   PROTO_TYPE_MAX = PROTO_TYPE_CN_WIRED,        // Fudge, don't scan CN_WIRED for now
 };
 const char *prototype[] = { "S21", "X50A", "CN_WIRED" };
 
@@ -154,7 +154,8 @@ rmt_symbol_word_t rmt_rx_raw[128];
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   .signal_range_max_ns = 1500000,      //  longest - Set between longest (1000us) and sync pulse (2500us)
+   //.signal_range_max_ns = 1500000,      //  longest - Set between longest (1000us) and sync pulse (2500us)
+   .signal_range_max_ns = 5000000,      // longest - needs to be over the 2500uS start pulse...
 };
 
 #ifdef ELA
@@ -779,16 +780,16 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 void
 daikin_cn_wired_command (int len, uint8_t * buf)
 {
-   if (!rmt_tx || !rmt_encoder)
+   if (!rmt_tx || !rmt_encoder || !rmt_rx)
    {
       daikin.talking = 0;       // Not ready?
       return;
    }
    // Checksum (LOL)
-   uint8_t sum = 0;
+   uint8_t sum = (buf[len - 1] & 0x0F);
    for (int i = 0; i < len - 1; i++)
       sum += (buf[i] >> 4) + buf[i];
-   buf[len - 1] = (sum << 4);
+   buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
    if (dump)
    {
       jo_t j = jo_comms_alloc ();
@@ -801,7 +802,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
    rmt_symbol_word_t seq[2 + len * 8];
    int p = 0;
-   seq[p].duration0 = 1500;     // 2500us low
+   seq[p].duration0 = 1500;     // 2500us low - do in two parts?
    seq[p].level0 = 0;
    seq[p].duration1 = 1000;
    seq[p++].level1 = 0;
@@ -814,10 +815,10 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
    add (1000);
    for (int i = 0; i < len; i++)
-      for (int b = 0x80; b; b >>= 1)
+      for (uint8_t b = 0x01; b; b <<= 1)
          add ((buf[i] & b) ? 1000 : 400);
-   rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config);
-   rmt_tx_wait_all_done (rmt_tx, 1000);
+   REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config));
+   REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
 
    if (rmt_rx_len)
    {                            // Process receive
@@ -826,9 +827,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
    rmt_rx_len = 0;
    REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
-
-   if (!dump || uptime () > 300)        // TODO bodge
-      daikin.talking = 0;       // TODO not coded yet - move on
 }
 
 void
@@ -2300,12 +2298,14 @@ app_main ()
                .mem_block_symbols = 72, // symbols
                .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
                .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
-               .flags.invert_out = (tx & PORT_INV) ? true : false,
+               .flags.invert_out = (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
                .flags.with_dma = true,
 #endif
             };
             REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
+            if (rmt_tx)
+               REVK_ERR_CHECK (rmt_enable (rmt_tx));
          }
          if (!rmt_rx)
          {                      // Create rmt_rx
@@ -2314,28 +2314,36 @@ app_main ()
                .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
                .mem_block_symbols = 72, // 
                .gpio_num = port_mask (rx),      // GPIO number
-               .flags.invert_in = (rx & PORT_INV) ? true : false,
+               .flags.invert_in = (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
                .flags.with_dma = true,
 #endif
             };
             REVK_ERR_CHECK (rmt_new_rx_channel (&rx_chan_config, &rmt_rx));
-         }
-         if (rmt_tx && rmt_rx)
-         {
-            rmt_rx_event_callbacks_t cbs = {
-               .on_recv_done = daikin_cn_wired_response,
-            };
-            REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
-            REVK_ERR_CHECK (rmt_enable (rmt_rx));
-            REVK_ERR_CHECK (rmt_enable (rmt_tx));
+            if (rmt_rx)
+            {
+               rmt_rx_event_callbacks_t cbs = {
+                  .on_recv_done = daikin_cn_wired_response,
+               };
+               REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
+               REVK_ERR_CHECK (rmt_enable (rmt_rx));
+            }
          }
       } else
       {
          if (rmt_tx)
-            rmt_disable (rmt_tx);
+         {
+            REVK_ERR_CHECK (rmt_disable (rmt_tx));
+            REVK_ERR_CHECK (rmt_del_channel (rmt_tx));
+            rmt_tx = NULL;
+         }
          if (rmt_rx)
-            rmt_disable (rmt_rx);
+         {
+            REVK_ERR_CHECK (rmt_disable (rmt_rx));
+            REVK_ERR_CHECK (rmt_del_channel (rmt_rx));
+            rmt_rx = NULL;
+         }
+         uart_driver_delete (uart);
          uart_config_t uart_config = {
             .baud_rate = (proto_type (proto) == PROTO_TYPE_S21) ? 2400 : 9600,
             .data_bits = UART_DATA_8_BITS,
@@ -2421,7 +2429,14 @@ app_main ()
       daikin.temp = 20.0;
    }
 
-   proto = protocol - 1;        // Starts one advanced
+   proto = protocol;
+   if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
+   {                            // Manually set protocol above the auto scanning range
+      if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+         daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;   // TODO manually enabled for now
+      protocol_set = 1;
+   } else
+      proto--;
    while (1)
    {                            // Main loop
       // We're (re)starting comms from scratch, so set "talking" flag.
@@ -2602,8 +2617,8 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.
-                   control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
+               if (daikin.control_changed &
+                   (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
@@ -2997,6 +3012,5 @@ app_main ()
       // We're here if protocol has been broken. We'll reconfigure the UART
       // and restart from scratch, possibly changing the protocol, if we're
       // in detection phase.
-      uart_driver_delete (uart);
    }
 }
