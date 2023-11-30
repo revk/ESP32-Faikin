@@ -8,6 +8,8 @@ static const char TAG[] = "Faikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <driver/rmt_tx.h>
+#include <driver/rmt_rx.h>
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
@@ -145,6 +147,9 @@ static httpd_handle_t webserver = NULL;
 static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
+rmt_channel_handle_t rmt_tx = NULL,
+   rmt_rx = NULL;
+rmt_encoder_handle_t rmt_encoder = NULL;
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
 #endif
@@ -477,7 +482,24 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 }
 
 void
-daikin_response (uint8_t cmd, int len, uint8_t * payload)
+daikin_cn_wired_response (int len, uint8_t * buf)
+{
+   if (!rmt_rx)
+   {
+      daikin.talking = 0;       // Not ready
+      return;
+   }
+   if (dump)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "dump", buf, len);
+      revk_info ("rx", &j);
+   }
+   // TODO
+}
+
+void
+daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
    if (debug && len)
    {
@@ -748,7 +770,57 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 }
 
 void
-daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
+daikin_cn_wired_command (int len, uint8_t * buf)
+{
+   if (!rmt_tx || !rmt_encoder)
+   {
+      daikin.talking = 0;       // Not ready?
+      return;
+   }
+   // Checksum (LOL)
+   uint8_t sum = 0;
+   for (int i = 0; i < len - 1; i++)
+      sum += (buf[i] >> 4) + buf[i];
+   buf[len - 1] = (sum << 4);
+   if (dump)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "dump", buf, len);
+      revk_info ("tx", &j);
+   }
+   rmt_transmit_config_t config = {
+      .flags.eot_level = 1,
+   };
+   // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
+   rmt_symbol_word_t seq[2 + len * 8];
+   int p = 0;
+   seq[p].duration0 = 1500;     // 2500us low
+   seq[p].level0 = 0;
+   seq[p].duration1 = 1000;
+   seq[p++].level1 = 0;
+   void add (int d)
+   {
+      seq[p].duration0 = d;
+      seq[p].level0 = 1;
+      seq[p].duration1 = 300;
+      seq[p++].level1 = 0;
+   }
+   add (1000);
+   for (int i = 0; i < len; i++)
+      for (int b = 0x80; b; b >>= 1)
+         add ((buf[i] & b) ? 1000 : 400);
+   rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config);
+   rmt_tx_wait_all_done (rmt_tx, 1000);
+
+   // TODO rx
+
+   // TODO
+   if (!dump || uptime () > 300)        // TODO bodge
+      daikin.talking = 0;       // TODO not coded yet - move on
+}
+
+void
+daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
 {                               // Send a command and get response
    if (debug && txlen)
    {
@@ -851,7 +923,7 @@ daikin_command (uint8_t cmd, int txlen, uint8_t * payload)
    loopback = 0;
    if (buf[0] == 0x06 && !protocol_set)
       protocol_found ();
-   daikin_response (cmd, rxlen - 6, buf + 5);
+   daikin_x50a_response (cmd, rxlen - 6, buf + 5);
 }
 
 // Parse control JSON, arrived by MQTT, and apply values
@@ -2202,9 +2274,43 @@ app_main ()
          err = gpio_reset_pin (port_mask (tx));
       if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
       {
-         // TODO set up CN_WIRED
+         rmt_tx_channel_config_t tx_chan_config = {
+            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
+            .gpio_num = port_mask (tx), // GPIO number
+            .mem_block_symbols = 128,   // symbols
+            .resolution_hz = 1 * 1000 * 1000,   // 1 MHz tick resolution, i.e., 1 tick = 1 µs
+            .trans_queue_depth = 1,     // set the number of transactions that can pend in the background
+            .flags.invert_out = (tx & PORT_INV) ? true : false,
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+            .flags.with_dma = true,
+#endif
+         };
+         ESP_ERROR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
+         if (rmt_tx)
+         {
+            ESP_ERROR_CHECK (rmt_enable (rmt_tx));
+            if (!rmt_encoder)
+            {
+               rmt_copy_encoder_config_t encoder_config = {
+               };
+               ESP_ERROR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
+            }
+            // TODO rmt_rx
+            // TODO set up CN_WIRED
+         }
       } else
       {
+         if (rmt_tx)
+         {
+            rmt_disable (rmt_tx);
+            rmt_del_channel (rmt_tx);
+         }
+         if (rmt_rx)
+         {
+            rmt_disable (rmt_rx);
+            rmt_del_channel (rmt_rx);
+         }
+         rmt_tx = rmt_rx = NULL;
          uart_config_t uart_config = {
             .baud_rate = (proto_type (proto) == PROTO_TYPE_S21) ? 2400 : 9600,
             .data_bits = UART_DATA_8_BITS,
@@ -2301,12 +2407,12 @@ app_main ()
          uart_setup ();
          if ((proto_type (proto) == PROTO_TYPE_X50A))
          {                      // Startup X50A
-            daikin_command (0xAA, 1, (uint8_t[])
-                            {
-                            0x01}
+            daikin_x50a_command (0xAA, 1, (uint8_t[])
+                                 {
+                                 0x01}
             );
-            daikin_command (0xBA, 0, NULL);
-            daikin_command (0xBB, 0, NULL);
+            daikin_x50a_command (0xBA, 0, NULL);
+            daikin_x50a_command (0xBB, 0, NULL);
          }
          if (protocol_set && daikin.online != daikin.talking)
          {
@@ -2362,7 +2468,11 @@ app_main ()
          {
             if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
-               daikin.talking = 0;      // TODO not coded yet
+               uint8_t cmd[8] = { 0 };
+               cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
+               cmd[3] = ((const uint8_t[])
+                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0x10 : 0);  // FHCA456D mapped
+               daikin_cn_wired_command (sizeof (cmd), cmd);
             } else if (proto_type (proto) == PROTO_TYPE_S21)
             {                   // Older S21
                char temp[5];
@@ -2500,9 +2610,9 @@ app_main ()
                }
             } else if (proto_type (proto) == PROTO_TYPE_X50A)
             {                   // Newer protocol
-               //daikin_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
-               daikin_command (0xBD, 0, NULL);
-               daikin_command (0xBE, 0, NULL);
+               //daikin_x50a_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
+               daikin_x50a_command (0xBD, 0, NULL);
+               daikin_x50a_command (0xBE, 0, NULL);
                uint8_t ca[17] = { 0 };
                uint8_t cb[2] = { 0 };
                if (daikin.control_changed)
@@ -2524,8 +2634,8 @@ app_main ()
                   cb[1] = 0x80 + ((daikin.fan & 7) << 4);
                   xSemaphoreGive (daikin.mutex);
                }
-               daikin_command (0xCA, sizeof (ca), ca);
-               daikin_command (0xCB, sizeof (cb), cb);
+               daikin_x50a_command (0xCA, sizeof (ca), ca);
+               daikin_x50a_command (0xCB, sizeof (cb), cb);
             }
          }
 
