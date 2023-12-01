@@ -147,6 +147,7 @@ static httpd_handle_t webserver = NULL;
 static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
+#define	CN_WIRED_LEN	8
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -493,7 +494,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 bool
 rmt_rx_callback (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * edata, void *user_data)
 {
-   if (edata->num_symbols < 66)
+   if (edata->num_symbols < 64)
    {                            // Silly... restart rx
       rmt_rx_len = 0;
       rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config);
@@ -513,7 +514,9 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       jo_base16 (j, "dump", payload, len);
       revk_info ("rx", &j);
    }
-
+   if (len != CN_WIRED_LEN)
+      return;
+   set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));        // TODO for testing, and no idea how negative is done
 }
 
 void
@@ -832,7 +835,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
 
    if (rmt_rx_len)
    {                            // Process receive
-      uint8_t rx[8] = { 0 };
+      uint8_t rx[CN_WIRED_LEN] = { 0 };
       const char *e = NULL;
       int p = 0;
       // Sanity checking
@@ -2583,7 +2586,7 @@ app_main ()
          {
             if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
-               uint8_t cmd[8] = { 0 };
+               uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0x10 : 0);  // FHCA456D mapped
