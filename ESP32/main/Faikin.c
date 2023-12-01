@@ -1613,7 +1613,7 @@ web_root (httpd_req_t * req)
                              "};};c();" //
                              "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
                              "</script>");
-   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0);
+   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, prototype[proto_type (proto)]);
 }
 
 static const char *
