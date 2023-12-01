@@ -148,6 +148,11 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
+#define	CN_WIRED_SYNC	2600    // Timings uS
+#define	CN_WIRED_START	1000
+#define	CN_WIRED_SPACE	300
+#define	CN_WIRED_1	900
+#define	CN_WIRED_0	400
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -155,7 +160,6 @@ rmt_symbol_word_t rmt_rx_raw[128];
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   //.signal_range_max_ns = 1500000,      //  longest - Set between longest (1000us) and sync pulse (2500us)
    .signal_range_max_ns = 5000000,      // longest - needs to be over the 2500uS start pulse...
 };
 
@@ -815,7 +819,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
    rmt_symbol_word_t seq[2 + len * 8];
    int p = 0;
-   seq[p].duration0 = 1500;     // 2500us low - do in two parts?
+   seq[p].duration0 = CN_WIRED_SYNC - 1000;     // 2500us low - do in two parts?
    seq[p].level0 = 0;
    seq[p].duration1 = 1000;
    seq[p++].level1 = 0;
@@ -823,13 +827,13 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    {
       seq[p].duration0 = d;
       seq[p].level0 = 1;
-      seq[p].duration1 = 300;
+      seq[p].duration1 = CN_WIRED_SPACE;
       seq[p++].level1 = 0;
    }
-   add (1000);
+   add (CN_WIRED_START);
    for (int i = 0; i < len; i++)
       for (uint8_t b = 0x01; b; b <<= 1)
-         add ((buf[i] & b) ? 1000 : 400);
+         add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
    REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config));
    REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
 
@@ -843,19 +847,19 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          e = "Wrong length";
       if (!e && rmt_rx_raw[p].level0)
          e = "Bad start polarity";
-      if (!e && (rmt_rx_raw[p].duration0 < 2000 || rmt_rx_raw[p].duration0 > 3000))
+      if (!e && (rmt_rx_raw[p].duration0 < CN_WIRED_SYNC - 200 || rmt_rx_raw[p].duration0 > CN_WIRED_SYNC + 200))
          e = "Bad start duration";
-      if (!e && (rmt_rx_raw[p].duration1 < 900 || rmt_rx_raw[p].duration1 > 1100))
+      if (!e && (rmt_rx_raw[p].duration1 < CN_WIRED_START - 200 || rmt_rx_raw[p].duration1 > CN_WIRED_START + 200))
          e = "Bad start bit";
       p++;
       for (int i = 0; !e && i < sizeof (rx); i++)
          for (uint8_t b = 0x01; !e && b; b <<= 1)
          {
-            if (!e && (rmt_rx_raw[p].duration0 < 200 || rmt_rx_raw[p].duration0 > 400))
+            if (!e && (rmt_rx_raw[p].duration0 < CN_WIRED_SPACE - 100 || rmt_rx_raw[p].duration0 > CN_WIRED_SPACE + 100))
                e = "Bad gap duration";
-            if (!e && rmt_rx_raw[p].duration1 > 900 && rmt_rx_raw[p].duration1 < 1100)
+            if (!e && rmt_rx_raw[p].duration1 > CN_WIRED_1 - 100 && rmt_rx_raw[p].duration1 < CN_WIRED_1 + 100)
                rx[i] |= b;
-            else if (!e && (rmt_rx_raw[p].duration1 < 300 || rmt_rx_raw[p].duration1 > 500))
+            else if (!e && (rmt_rx_raw[p].duration1 < CN_WIRED_0 - 100 || rmt_rx_raw[p].duration1 > CN_WIRED_1 + 100))
                e = "Bad bit duration";
             p++;
          }
