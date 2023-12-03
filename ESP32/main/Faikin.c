@@ -1000,11 +1000,10 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
       return;
    }
    loopback = 0;
-   if (buf[0] == 0x06 && !protocol_set)
+   if (buf[0] == 0x06 && !protocol_set && (buf[1] != 0xFF || (proto & PROTO_TXINVERT)))
       protocol_found ();
    if (buf[1] == 0xFF)
    {                            // Error report
-      daikin.talking = 0;
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "fault", 1);
       jo_base16 (j, "data", buf, rxlen);
