@@ -48,6 +48,7 @@ static const char TAG[] = "Faikin";
 #define	settings		\
 	u8(webcontrol,2)	\
 	u8(protocol,0)		\
+	b(protofix,false)	\
 	bl(debug)		\
 	bl(dump)		\
 	bl(livestatus)		\
@@ -2511,7 +2512,9 @@ app_main ()
    }
 
    proto = protocol;
-   if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
+   if (protofix)
+      protocol_set = 1;         // Fixed protocol - do not change
+   else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
    {                            // Manually set protocol above the auto scanning range
       if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
          daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;   // TODO manually enabled for now
