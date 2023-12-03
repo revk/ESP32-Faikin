@@ -969,15 +969,6 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
       return;
    }
    // Process response
-   if (buf[1] == 0xFF)
-   {                            // Error report
-      daikin.talking = 0;
-      jo_t j = jo_comms_alloc ();
-      jo_bool (j, "fault", 1);
-      jo_base16 (j, "data", buf, rxlen);
-      revk_error ("comms", &j);
-      return;
-   }
    if (rxlen < 6 || buf[0] != 0x06 || buf[1] != cmd || buf[2] != rxlen || buf[3] != 1)
    {                            // Basic checks
       daikin.talking = 0;
@@ -1011,6 +1002,15 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    loopback = 0;
    if (buf[0] == 0x06 && !protocol_set)
       protocol_found ();
+   if (buf[1] == 0xFF)
+   {                            // Error report
+      daikin.talking = 0;
+      jo_t j = jo_comms_alloc ();
+      jo_bool (j, "fault", 1);
+      jo_base16 (j, "data", buf, rxlen);
+      revk_error ("comms", &j);
+      return;
+   }
    daikin_x50a_response (cmd, rxlen - 6, buf + 5);
 }
 
