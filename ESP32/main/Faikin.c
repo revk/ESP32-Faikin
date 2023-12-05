@@ -2851,14 +2851,17 @@ app_main ()
                return;
             set_val (control, 1);
             samplestart ();
-            if (hot && current > max)
+            if (!lockmode)
             {
-               hot = 0;
-               daikin_set_e (mode, "C");        // Set cooling as over temp
-            } else if (!hot && current < min)
-            {
-               hot = 1;
-               daikin_set_e (mode, "H");        // Set heating as under temp
+               if (hot && current > max)
+               {
+                  hot = 0;
+                  daikin_set_e (mode, "C");     // Set cooling as over temp
+               } else if (!hot && current < min)
+               {
+                  hot = 1;
+                  daikin_set_e (mode, "H");     // Set heating as under temp
+               }
             }
             if (daikin.fan && ((hot && current < min - 2 * switch10 * 0.1) || (!hot && current > max + 2 * switch10 * 0.1)))
             {                   // Not in auto mode, and not close to target temp - force a high fan to get there
