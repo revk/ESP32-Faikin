@@ -2897,7 +2897,7 @@ app_main ()
             if (auto1 && last < auto1 && hhmm >= auto1)
             {                   // Auto on - and consider mode change is not on Auto
                daikin_set_v (power, 1);
-               if (daikin.mode != 3 && !isnan (current) && !isnan (min) && !isnan (max)
+               if (!lockmode && daikin.mode != 3 && !isnan (current) && !isnan (min) && !isnan (max)
                    && ((hot && current > max) || (!hot && current < min)))
                   daikin_set_e (mode, hot ? "C" : "H"); // Swap mode
             }
