@@ -798,7 +798,7 @@
     (at 146.275 58.1 180)
     (descr "SOT-363, SC-70-6")
     (tags "SOT-363 SC-70-6")
-    (property "JLCPCB Rotation Offset" "-90")
+    (property "JLCPCB Rotation Offset" "180")
     (property "LCSC Part #" "C193381")
     (property "Sheetfile" "Faikin.kicad_sch")
     (property "Sheetname" "")
