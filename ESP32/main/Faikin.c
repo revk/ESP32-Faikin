@@ -635,9 +635,9 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_base16 (j, "payload", payload, txlen);
          jo_stringn (j, "text", (char *) payload, txlen);
       }
-      revk_info (daikin.talking ? "tx" : "cannot-tx", &j);
+      revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
-   if (!daikin.talking)
+   if (!daikin.talking && !protofix)
       return S21_WAIT;          // Failed
    uint8_t buf[256],
      temp;
@@ -915,9 +915,9 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%02X", cmd);
       jo_base16 (j, "payload", payload, txlen);
-      revk_info (daikin.talking ? "tx" : "cannot-tx", &j);
+      revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
-   if (!daikin.talking)
+   if (!daikin.talking && !protofix)
       return;                   // Failed
    uint8_t buf[256];
    buf[0] = 0x06;
