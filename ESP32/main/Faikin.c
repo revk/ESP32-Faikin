@@ -2560,7 +2560,7 @@ app_main ()
 #ifdef ELA
          if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
-            bleenv_expire (60);
+            bleenv_expire (120);
             if (!bletemp || strcmp (bletemp->name, autob))
             {
                bletemp = NULL;
