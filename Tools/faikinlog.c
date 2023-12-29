@@ -181,6 +181,7 @@ main (int argc, const char *argv[])
    mosquitto_connect_callback_set (mqtt, connect);
    mosquitto_disconnect_callback_set (mqtt, disconnect);
    mosquitto_message_callback_set (mqtt, message);
+   mosquitto_reconnect_delay_set (mqtt, 5, 300, true);
    e = mosquitto_connect (mqtt, mqtthostname, 1883, 60);
    if (e)
       errx (1, "MQTT connect failed (%s) %s", mqtthostname, mosquitto_strerror (e));
