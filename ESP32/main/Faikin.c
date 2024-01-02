@@ -202,6 +202,7 @@ struct
    uint8_t status_report:1;     // Send status report
    uint8_t ha_send:1;           // Send HA config
    uint8_t remote:1;            // Remote control via MQTT
+   uint8_t seq:1;               // Data sequence (CN_WIRED)
 } daikin = { 0 };
 
 const char *
@@ -213,6 +214,8 @@ daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
+   if (!daikin.control_changed)
+      daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -227,6 +230,8 @@ daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
    if (!(daikin.status_known & flag))
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+   if (!daikin.control_changed)
+      daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    *ptr = value;
@@ -259,6 +264,8 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
       value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
+   if (!daikin.control_changed)
+      daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -521,9 +528,11 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    }
    if (len != CN_WIRED_LEN)
       return;
-   // We don't get confirmation for some things, so we consider they have worked.
-   daikin.control_changed &= ~(CONTROL_temp);
-   daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
+   if ((payload[7] & 0xF) == daikin.seq)
+      daikin.control_changed = 0;
+   daikin.status_known |=
+      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
+      CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
    // Values
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
    // TODO
@@ -808,7 +817,10 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       daikin.talking = 0;       // Not ready?
       return;
    }
+   // Sequence
+
    // Checksum (LOL)
+   buf[len - 1] = daikin.seq;
    uint8_t sum = (buf[len - 1] & 0x0F);
    for (int i = 0; i < len - 1; i++)
       sum += (buf[i] >> 4) + buf[i];
@@ -2522,6 +2534,7 @@ app_main ()
    else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
    {                            // Manually set protocol above the auto scanning range
       protocol_set = 1;
+      daikin.temp = 25;
    } else
       proto--;
    while (1)
