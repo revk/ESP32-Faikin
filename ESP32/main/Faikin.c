@@ -521,7 +521,12 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    }
    if (len != CN_WIRED_LEN)
       return;
-   set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));        // TODO for testing, and no idea how negative is done
+   // We don't get confirmation for some things, so we consider they have worked.
+   daikin.control_changed &= ~(CONTROL_temp);
+   daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
+   // Values
+   set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+   // TODO
 }
 
 void
@@ -2516,8 +2521,6 @@ app_main ()
       protocol_set = 1;         // Fixed protocol - do not change
    else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
    {                            // Manually set protocol above the auto scanning range
-      if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
-         daikin.status_known |= CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;   // TODO manually enabled for now
       protocol_set = 1;
    } else
       proto--;
@@ -2595,8 +2598,13 @@ app_main ()
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
+               cmd[2] = 0x23;   // Unknown
                cmd[3] = ((const uint8_t[])
-                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0x10 : 0);  // FHCA456D mapped
+                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
+               cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
+                                                  { 0x01, 0x01, 0x01, 0x04, 0x04, 0x02, 0x08 }[daikin.fan]);    // A12345Q mapped
+               cmd[5] = daikin.swingv ? 0xF0 : 0x00;
+               cmd[6] = daikin.swingv ? 0x11 : 0x10;    // ??
                daikin_cn_wired_command (sizeof (cmd), cmd);
             } else if (proto_type (proto) == PROTO_TYPE_S21)
             {                   // Older S21
@@ -2701,8 +2709,8 @@ app_main ()
                   daikin_s21_command ('D', '5', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.control_changed &
-                   (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
+               if (daikin.control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer |
+                                             CONTROL_sensor | CONTROL_quiet))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
@@ -3068,8 +3076,8 @@ app_main ()
                   {             // Timestamp
                      struct tm tm;
                      gmtime_r (&clock, &tm);
-                     jo_stringf (j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
-                                 tm.tm_hour, tm.tm_min, tm.tm_sec);
+                     jo_stringf (j, "ts", "%04d-%02d-%02dT%02d:%02d:%02dZ", tm.tm_year + 1900,
+                                 tm.tm_mon + 1, tm.tm_mday, tm.tm_hour, tm.tm_min, tm.tm_sec);
                   }
 #define	b(name)		if(daikin.status_known&CONTROL_##name){if(!daikin.total##name)jo_bool(j,#name,0);else if(!fixstatus&&daikin.total##name==daikin.statscount)jo_bool(j,#name,1);else jo_litf(j,#name,"%.2f",(float)daikin.total##name/daikin.statscount);} \
 		  	daikin.total##name=0;
