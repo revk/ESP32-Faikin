@@ -149,11 +149,16 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
-#define	CN_WIRED_SYNC	2600    // Timings uS
-#define	CN_WIRED_START	1000
-#define	CN_WIRED_SPACE	300
-#define	CN_WIRED_1	900
-#define	CN_WIRED_0	400
+//#define	CN_WIRED_SYNC	2600    // Timings uS
+//#define	CN_WIRED_START	1000
+//#define	CN_WIRED_SPACE	300
+//#define	CN_WIRED_0	400
+//#define	CN_WIRED_1	900
+#define	CN_WIRED_SYNC	2585    // Timings uS
+#define	CN_WIRED_START	1015
+#define	CN_WIRED_SPACE	285
+#define	CN_WIRED_0	415
+#define	CN_WIRED_1	915
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -520,12 +525,6 @@ rmt_rx_callback (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * 
 void
 daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
-   if (dump)
-   {
-      jo_t j = jo_comms_alloc ();
-      jo_base16 (j, "dump", payload, len);
-      revk_info ("rx", &j);
-   }
    if (len != CN_WIRED_LEN)
       return;
    if ((payload[7] & 0xF) == daikin.seq)
@@ -857,6 +856,14 @@ daikin_cn_wired_command (int len, uint8_t * buf)
 
    if (rmt_rx_len)
    {                            // Process receive
+      uint32_t sum0 = 0,
+         sum1 = 0,
+         sums = 0,
+         cnt0 = 0,
+         cnt1 = 0,
+         cnts = 0,
+         sync = 0,
+         start = 0;
       uint8_t rx[CN_WIRED_LEN] = { 0 };
       const char *e = NULL;
       int p = 0;
@@ -867,18 +874,30 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          e = "Bad start polarity";
       if (!e && (rmt_rx_raw[p].duration0 < CN_WIRED_SYNC - 200 || rmt_rx_raw[p].duration0 > CN_WIRED_SYNC + 200))
          e = "Bad start duration";
+      sync = rmt_rx_raw[p].duration0;
       if (!e && (rmt_rx_raw[p].duration1 < CN_WIRED_START - 200 || rmt_rx_raw[p].duration1 > CN_WIRED_START + 200))
          e = "Bad start bit";
+      start = rmt_rx_raw[p].duration1;
       p++;
       for (int i = 0; !e && i < sizeof (rx); i++)
          for (uint8_t b = 0x01; !e && b; b <<= 1)
          {
             if (!e && (rmt_rx_raw[p].duration0 < CN_WIRED_SPACE - 100 || rmt_rx_raw[p].duration0 > CN_WIRED_SPACE + 100))
-               e = "Bad gap duration";
+               e = "Bad space duration";
+            sums += rmt_rx_raw[p].duration0;
+            cnts++;
             if (!e && rmt_rx_raw[p].duration1 > CN_WIRED_1 - 100 && rmt_rx_raw[p].duration1 < CN_WIRED_1 + 100)
+            {
                rx[i] |= b;
-            else if (!e && (rmt_rx_raw[p].duration1 < CN_WIRED_0 - 100 || rmt_rx_raw[p].duration1 > CN_WIRED_1 + 100))
+               sum1 += rmt_rx_raw[p].duration1;
+               cnt1++;
+            } else if (!e && (rmt_rx_raw[p].duration1 < CN_WIRED_0 - 100 || rmt_rx_raw[p].duration1 > CN_WIRED_1 + 100))
                e = "Bad bit duration";
+            else
+            {
+               sum0 += rmt_rx_raw[p].duration1;
+               cnt0++;
+            }
             p++;
          }
       if (!e)
@@ -895,6 +914,14 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          jo_string (j, "error", e);
          if (p > 1)
             jo_base16 (j, "data", rx, (p - 1) / 8);
+         jo_int (j, "sync", sync);
+         jo_int (j, "start", start);
+         if (cnts)
+            jo_int (j, "space", sums / cnts);
+         if (cnt0)
+            jo_int (j, "0", sum0 / cnt0);
+         if (cnt1)
+            jo_int (j, "1", sum1 / cnt1);
          revk_error ("comms", &j);
       } else
       {                         // Got a message, yay!
@@ -916,6 +943,20 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          {
             if (!protocol_set)
                protocol_found ();
+            if (dump)
+            {
+               jo_t j = jo_comms_alloc ();
+               jo_base16 (j, "dump", rx, sizeof (rx));
+               jo_int (j, "sync", sync);
+               jo_int (j, "start", start);
+               if (cnts)
+                  jo_int (j, "space", sums / cnts);
+               if (cnt0)
+                  jo_int (j, "0", sum0 / cnt0);
+               if (cnt1)
+                  jo_int (j, "1", sum1 / cnt1);
+               revk_info ("rx", &j);
+            }
             daikin_cn_wired_response (sizeof (rx), rx);
          }
       }
@@ -2186,7 +2227,7 @@ ha_status (void)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_temp)
       jo_litf (j, "target", "%.2f", autor ? autot / 10.0 : daikin.temp);        // Target - either internal or what we are using as reference
-   if (autor && ble && *autob)
+   if (daikin.status_known & CONTROL_env)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
    else if (daikin.status_known & CONTROL_home)
       jo_litf (j, "temp", "%.2f", daikin.home); // We use home if present, else inlet
@@ -2534,7 +2575,6 @@ app_main ()
    else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
    {                            // Manually set protocol above the auto scanning range
       protocol_set = 1;
-      daikin.temp = 25;
    } else
       proto--;
    while (1)
@@ -2610,7 +2650,10 @@ app_main ()
             if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
-               cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
+               if (daikin.temp > 99)
+                  cmd[0] = 0x20;
+               else
+                  cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
                cmd[2] = 0x23;   // Unknown
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
