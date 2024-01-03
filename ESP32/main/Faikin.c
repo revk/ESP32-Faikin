@@ -529,14 +529,14 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       return;
    if ((payload[7] & 0xF) == daikin.seq)
       daikin.control_changed = 0;
-   if (!(daikin.status_known & CONTROL_temp))
-      daikin.temp = 20.0;       // Cannot actually read temp
-   daikin.status_known |=
-      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
-      CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
    // Values
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
    // TODO
+   if (!(daikin.status_known & CONTROL_temp))
+      daikin.temp = home;       // Cannot actually read temp target - use current temp first time
+   daikin.status_known |=
+      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
+      CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
 }
 
 void
