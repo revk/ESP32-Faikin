@@ -149,11 +149,11 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
-//#define	CN_WIRED_SYNC	2600    // Timings uS
-//#define	CN_WIRED_START	1000
-//#define	CN_WIRED_SPACE	300
-//#define	CN_WIRED_0	400
-//#define	CN_WIRED_1	900
+//#define       CN_WIRED_SYNC   2600    // Timings uS
+//#define       CN_WIRED_START  1000
+//#define       CN_WIRED_SPACE  300
+//#define       CN_WIRED_0      400
+//#define       CN_WIRED_1      900
 #define	CN_WIRED_SYNC	2585    // Timings uS
 #define	CN_WIRED_START	1015
 #define	CN_WIRED_SPACE	285
@@ -529,6 +529,8 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       return;
    if ((payload[7] & 0xF) == daikin.seq)
       daikin.control_changed = 0;
+   if (!(daikin.status_known & CONTROL_temp))
+      daikin.temp = 20.0;       // Cannot actually read temp
    daikin.status_known |=
       CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
       CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
@@ -2650,10 +2652,7 @@ app_main ()
             if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
-               if (daikin.temp > 99)
-                  cmd[0] = 0x20;
-               else
-                  cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
+               cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
                cmd[2] = 0x23;   // Unknown
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
