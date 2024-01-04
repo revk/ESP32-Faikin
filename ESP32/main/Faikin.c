@@ -159,6 +159,8 @@ static uint8_t proto = 0;
 #define	CN_WIRED_SPACE	285
 #define	CN_WIRED_0	415
 #define	CN_WIRED_1	915
+#define	CN_WIRED_TAIL	10000
+#define	CN_WIRED_PULSE	2500
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -533,7 +535,7 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
    // TODO
    if (!(daikin.status_known & CONTROL_temp))
-      daikin.temp = daikin.home;       // Cannot actually read temp target - use current temp first time
+      daikin.temp = daikin.home;        // Cannot actually read temp target - use current temp first time
    daikin.status_known |=
       CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
       CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
@@ -836,7 +838,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       .flags.eot_level = 1,
    };
    // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-   rmt_symbol_word_t seq[2 + len * 8];
+   rmt_symbol_word_t seq[2 + len * 8 + 1];
    int p = 0;
    seq[p].duration0 = CN_WIRED_SYNC - 1000;     // 2500us low - do in two parts?
    seq[p].level0 = 0;
@@ -853,7 +855,11 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    for (int i = 0; i < len; i++)
       for (uint8_t b = 0x01; b; b <<= 1)
          add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
-   REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, (2 + len * 8) * sizeof (rmt_symbol_word_t), &config));
+   seq[p].duration0 = CN_WIRED_TAIL;
+   seq[p].level0 = 1;
+   seq[p].duration1 = CN_WIRED_PULSE;
+   seq[p++].level1 = 0;
+   REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
    REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
 
    if (rmt_rx_len)
