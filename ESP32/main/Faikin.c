@@ -159,8 +159,6 @@ static uint8_t proto = 0;
 #define	CN_WIRED_SPACE	285
 #define	CN_WIRED_0	415
 #define	CN_WIRED_1	915
-#define	CN_WIRED_TAIL	10000
-#define	CN_WIRED_PULSE	2500
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -820,47 +818,52 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       daikin.talking = 0;       // Not ready?
       return;
    }
-   // Sequence
-
-   // Checksum (LOL)
-   buf[len - 1] = daikin.seq;
-   uint8_t sum = (buf[len - 1] & 0x0F);
-   for (int i = 0; i < len - 1; i++)
-      sum += (buf[i] >> 4) + buf[i];
-   buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
-   if (dump)
+   void send (void)
    {
-      jo_t j = jo_comms_alloc ();
-      jo_base16 (j, "dump", buf, len);
-      revk_info ("tx", &j);
-   }
-   rmt_transmit_config_t config = {
-      .flags.eot_level = 1,
-   };
-   // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-   rmt_symbol_word_t seq[2 + len * 8 + 1];
-   int p = 0;
-   seq[p].duration0 = CN_WIRED_SYNC - 1000;     // 2500us low - do in two parts?
-   seq[p].level0 = 0;
-   seq[p].duration1 = 1000;
-   seq[p++].level1 = 0;
-   void add (int d)
-   {
-      seq[p].duration0 = d;
-      seq[p].level0 = 1;
-      seq[p].duration1 = CN_WIRED_SPACE;
+      // Checksum (LOL)
+      buf[len - 1] = daikin.seq;
+      uint8_t sum = (buf[len - 1] & 0x0F);
+      for (int i = 0; i < len - 1; i++)
+         sum += (buf[i] >> 4) + buf[i];
+      buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
+      if (dump)
+      {
+         jo_t j = jo_comms_alloc ();
+         jo_int (j, "ts", esp_timer_get_time ());
+         jo_base16 (j, "dump", buf, len);
+         revk_info ("tx", &j);
+      }
+      rmt_transmit_config_t config = {
+         .flags.eot_level = 1,
+      };
+      // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
+      rmt_symbol_word_t seq[2 + len * 8 + 1];
+      int p = 0;
+      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts?
+      seq[p].level0 = 0;
+      seq[p].duration1 = 1000;
       seq[p++].level1 = 0;
+      void add (int d)
+      {
+         seq[p].duration0 = d;
+         seq[p].level0 = 1;
+         seq[p].duration1 = CN_WIRED_SPACE;
+         seq[p++].level1 = 0;
+      }
+      add (CN_WIRED_START);
+      for (int i = 0; i < len; i++)
+         for (uint8_t b = 0x01; b; b <<= 1)
+            add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
+      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
+      REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
    }
-   add (CN_WIRED_START);
-   for (int i = 0; i < len; i++)
-      for (uint8_t b = 0x01; b; b <<= 1)
-         add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
-   seq[p].duration0 = CN_WIRED_TAIL;
-   seq[p].level0 = 1;
-   seq[p].duration1 = CN_WIRED_PULSE;
-   seq[p++].level1 = 0;
-   REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
-   REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
+
+
+   {                            // Wait rx
+      int wait = 2000;
+      while (!rmt_rx_len && --wait)
+         usleep (2000);
+   }
 
    if (rmt_rx_len)
    {                            // Process receive
@@ -920,6 +923,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       {
          jo_t j = jo_comms_alloc ();
          jo_string (j, "error", e);
+         jo_int (j, "ts", esp_timer_get_time ());
          if (p > 1)
             jo_base16 (j, "data", rx, (p - 1) / 8);
          jo_int (j, "sync", sync);
@@ -954,6 +958,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
             if (dump)
             {
                jo_t j = jo_comms_alloc ();
+               jo_int (j, "ts", esp_timer_get_time ());
                jo_base16 (j, "dump", rx, sizeof (rx));
                jo_int (j, "sync", sync);
                jo_int (j, "start", start);
@@ -971,6 +976,8 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
    rmt_rx_len = 0;
    REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
+
+   send ();
 }
 
 void
@@ -2620,7 +2627,8 @@ app_main ()
       do
       {
          // Polling loop. We exit from here only if we get a protocol error
-         usleep (1000000LL - (esp_timer_get_time () % 1000000LL));      /* wait for next second */
+         if (proto_type (proto) != PROTO_TYPE_CN_WIRED)
+            usleep (1000000LL - (esp_timer_get_time () % 1000000LL));   /* wait for next second  - CN_WIRED has built in wait */
 #ifdef ELA
          if (ble && *autob)
          {                      // Automatic external temperature logic - only really useful if autor/autot set
