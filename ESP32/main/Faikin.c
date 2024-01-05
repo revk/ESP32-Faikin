@@ -154,11 +154,11 @@ static uint8_t proto = 0;
 //#define       CN_WIRED_SPACE  300
 //#define       CN_WIRED_0      400
 //#define       CN_WIRED_1      900
-#define	CN_WIRED_SYNC	2585    // Timings uS
-#define	CN_WIRED_START	1015
-#define	CN_WIRED_SPACE	285
-#define	CN_WIRED_0	415
-#define	CN_WIRED_1	915
+#define	CN_WIRED_SYNC	2600    // Timings uS
+#define	CN_WIRED_START	1000
+#define	CN_WIRED_SPACE	300
+#define	CN_WIRED_0	400
+#define	CN_WIRED_1	1000
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -2667,7 +2667,7 @@ app_main ()
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
-               cmd[2] = 0x23;   // Unknown
+               cmd[1] = 0xC4;   // Unknown
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
                cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
