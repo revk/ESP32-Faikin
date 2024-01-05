@@ -149,11 +149,6 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
-//#define       CN_WIRED_SYNC   2600    // Timings uS
-//#define       CN_WIRED_START  1000
-//#define       CN_WIRED_SPACE  300
-//#define       CN_WIRED_0      400
-//#define       CN_WIRED_1      900
 #define	CN_WIRED_SYNC	2600    // Timings uS
 #define	CN_WIRED_START	1000
 #define	CN_WIRED_SPACE	300
