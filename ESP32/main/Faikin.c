@@ -1364,25 +1364,22 @@ static void
 web_head (httpd_req_t * req, const char *title)
 {
    revk_web_head (req, title);
-   httpd_resp_sendstr_chunk (req, "<style>"     //
-                             "body{font-family:sans-serif;background:#8cf;}"    //
-                             ".on{opacity:1;transition:1s;}"    // 
-                             ".off{opacity:0;transition:1s;}"   // 
-                             ".switch,.box{position:relative;display:inline-block;min-width:64px;min-height:34px;margin:3px;}"  //
-                             ".switch input,.box input{opacity:0;width:0;height:0;}"    //
-                             ".slider,.button{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;-webkit-transition:.4s;transition:.4s;}"     //
-                             ".slider:before{position:absolute;content:\"\";min-height:26px;min-width:26px;left:4px;bottom:3px;background-color:white;-webkit-transition:.4s;transition:.4s;}"  //
-                             "input:checked+.slider,input:checked+.button{background-color:#12bd20;}"   //
-                             "input:checked+.slider:before{-webkit-transform:translateX(30px);-ms-transform:translateX(30px);transform:translateX(30px);}"      //
-                             "span.slider:before{border-radius:50%;}"   //
-                             "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"        //
-                             "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}" //
-                             "input.temp{min-width:300px;}"     //
-                             "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"      //
-                             "</style><body><h1>");
-   if (title)
-      httpd_resp_sendstr_chunk (req, title);
-   httpd_resp_sendstr_chunk (req, "</h1>");
+   revk_web_send (req, "<style>"        //
+                  "body{font-family:sans-serif;background:#8cf;}"       //
+                  ".on{opacity:1;transition:1s;}"       // 
+                  ".off{opacity:0;transition:1s;}"      // 
+                  ".switch,.box{position:relative;display:inline-block;min-width:64px;min-height:34px;margin:3px;}"     //
+                  ".switch input,.box input{opacity:0;width:0;height:0;}"       //
+                  ".slider,.button{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background-color:#ccc;-webkit-transition:.4s;transition:.4s;}"        //
+                  ".slider:before{position:absolute;content:\"\";min-height:26px;min-width:26px;left:4px;bottom:3px;background-color:white;-webkit-transition:.4s;transition:.4s;}"     //
+                  "input:checked+.slider,input:checked+.button{background-color:#12bd20;}"      //
+                  "input:checked+.slider:before{-webkit-transform:translateX(30px);-ms-transform:translateX(30px);transform:translateX(30px);}" //
+                  "span.slider:before{border-radius:50%%;}"     //
+                  "span.slider,span.button{border-radius:34px;padding-top:8px;padding-left:10px;border:1px solid gray;box-shadow:3px 3px 3px #0008;}"   //
+                  "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"    //
+                  "input.temp{min-width:300px;}"        //
+                  "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}" //
+                  "</style><body><h1>%s</h1>", title ? : "");
 }
 
 static esp_err_t
@@ -1405,18 +1402,14 @@ web_root (httpd_req_t * req)
    if (revk_link_down () && webcontrol >= 2)
       return revk_web_settings (req);   // Direct to web set up
    web_head (req, hostname == revk_id ? appname : hostname);
-   httpd_resp_sendstr_chunk (req, "<div id=top class=off><form name=F><table id=live>");
+   revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
    {                            // Head (well, start of row)
-      httpd_resp_sendstr_chunk (req, "<tr><td align=right>");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td>");
+      revk_web_send (req, "<tr><td align=right>%s</td>", tag);
    }
    void addf (const char *tag)
    {                            // Foot (well, end of row)
-      httpd_resp_sendstr_chunk (req, "<td colspan=2 id=");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "></td></tr>");
+      revk_web_send (req, "<td colspan=2 id='%s'></td></tr>", tag);
    }
    void add (const char *tag, const char *field, ...)
    {
@@ -1431,56 +1424,37 @@ web_root (httpd_req_t * req)
             break;
          if (n == 5)
          {
-            httpd_resp_sendstr_chunk (req, "</tr><tr><td></td>");
+            revk_web_send (req, "</tr><tr><td></td>");
             n = 0;
          }
          n++;
          const char *value = va_arg (ap, char *);
-         httpd_resp_sendstr_chunk (req, "<td><label class=box><input type=radio name=");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, " value=");
-         httpd_resp_sendstr_chunk (req, value);
-         httpd_resp_sendstr_chunk (req, " id=");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, value);
-         httpd_resp_sendstr_chunk (req, " onchange=\"if(this.checked)w('");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, "','");
-         httpd_resp_sendstr_chunk (req, value);
-         httpd_resp_sendstr_chunk (req, "');\"><span class=button>");
-         httpd_resp_sendstr_chunk (req, tag);
-         httpd_resp_sendstr_chunk (req, "</span></label></td>");
+         revk_web_send (req,
+                        "<td><label class=box><input type=radio name='%s' value='%s' id='%s%s' onchange=\"if(this.checked)w('%s','%s');\"><span class=button>%s</span></label></td>",
+                        field, value, field, value, field, value, tag);
       }
       va_end (ap);
       addf (tag);
    }
    void addb (const char *tag, const char *field, const char *help)
    {
-      httpd_resp_sendstr_chunk (req, "<td align=right>");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td><td title=\"");
-      httpd_resp_sendstr_chunk (req, help);
-      httpd_resp_sendstr_chunk (req, "\"><label class=switch><input type=checkbox id=\"");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, "\" onchange=\"w('");
-      httpd_resp_sendstr_chunk (req, field);
-      httpd_resp_sendstr_chunk (req, "',this.checked);\"><span class=slider></span></label></td>");
+      revk_web_send (req,
+                     "<td align=right>%s</td><td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
+                     tag, help, field, field);
    }
    void addtemp (const char *tag, const char *field)
    {
       addh (tag);
-      char temp[300];
-      sprintf (temp,
-               "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
-               tmin, tmax,
-               proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1", field,
-               field, field);
-      httpd_resp_sendstr_chunk (req, temp);
+      revk_web_send (req,
+                     "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
+                     tmin, tmax,
+                     proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1", field,
+                     field, field);
       addf (tag);
    }
-   httpd_resp_sendstr_chunk (req, "<tr>");
+   revk_web_send (req, "<tr>");
    addb ("0/1", "power", "Main power");
-   httpd_resp_sendstr_chunk (req, "</tr>");
+   revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
@@ -1489,15 +1463,9 @@ web_root (httpd_req_t * req)
    addtemp ("Set", "temp");
    void addt (const char *tag, const char *help)
    {
-      httpd_resp_sendstr_chunk (req, "<td title=\"");
-      httpd_resp_sendstr_chunk (req, help);
-      httpd_resp_sendstr_chunk (req, "\" align=right>");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "<br><span id=\"");
-      httpd_resp_sendstr_chunk (req, tag);
-      +httpd_resp_sendstr_chunk (req, "\"></span></td>");
+      revk_web_send (req, "<td title=\"%s\" align=right>%s<br><span id=\"%s\"></span></td>", help, tag, tag);
    }
-   httpd_resp_sendstr_chunk (req, "<tr><td>Temps</td>");
+   revk_web_send (req, "<tr><td>Temps</td>");
    if (daikin.status_known & CONTROL_inlet)
       addt ("Inlet", "Inlet temperature");
    if (daikin.status_known & CONTROL_home)
@@ -1513,178 +1481,160 @@ web_root (httpd_req_t * req)
       addt ("BLE", "External BLE temperature");
       addt ("Hum", "External BLE humidity");
    }
-   httpd_resp_sendstr_chunk (req, "</tr>");
+   revk_web_send (req, "</tr>");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
-      httpd_resp_sendstr_chunk (req, "<tr>");
+      revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_econo)
          addb ("Eco", "econo", "Eco mode");
       if (daikin.status_known & CONTROL_powerful)
          addb ("💪", "powerful", "Powerful mode");
-      httpd_resp_sendstr_chunk (req, "</tr>");
+      revk_web_send (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh | CONTROL_comfort))
    {
-      httpd_resp_sendstr_chunk (req, "<tr>");
+      revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_swingv)
          addb ("↕", "swingv", "Vertical Swing");
       if (daikin.status_known & CONTROL_swingh)
          addb ("↔", "swingh", "Horizontal Swing");
       if (daikin.status_known & CONTROL_comfort)
          addb ("🧸", "comfort", "Comfort mode");
-      httpd_resp_sendstr_chunk (req, "</tr>");
+      revk_web_send (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
    {
-      httpd_resp_sendstr_chunk (req, "<tr>");
+      revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_streamer)
          addb ("🦠", "streamer", "Stream/filter enable");
       if (daikin.status_known & CONTROL_sensor)
          addb ("🙆", "sensor", "Sensor mode");
       if (daikin.status_known & CONTROL_quiet)
          addb ("🤫", "quiet", "Quiet outdoor unit");
-      httpd_resp_sendstr_chunk (req, "</tr>");
+      revk_web_send (req, "</tr>");
    }
-   httpd_resp_sendstr_chunk (req, "</table>");
-   httpd_resp_sendstr_chunk (req, "<p id=offline style='display:none'><b>System is off line.</b></p>");
-   httpd_resp_sendstr_chunk (req, "<p id=loopback style='display:none'><b>System is in loopback test.</b></p>");
-   httpd_resp_sendstr_chunk (req, "<p id=shutdown style='display:none;color:red;'></p>");
-   httpd_resp_sendstr_chunk (req,
-                             "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>");
-   httpd_resp_sendstr_chunk (req, "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>");
-   httpd_resp_sendstr_chunk (req,
-                             "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
+   revk_web_send (req, "</table>"       //
+                  "<p id=offline style='display:none'><b>System is off line.</b></p>"   //
+                  "<p id=loopback style='display:none'><b>System is in loopback test.</b></p>"  //
+                  "<p id=shutdown style='display:none;color:red;'></p>" //
+                  "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>"    //
+                  "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
+                  "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 #ifdef ELA
    if (autor || (ble && *autob) || !daikin.remote)
    {
       void addnote (const char *note)
       {
-         httpd_resp_sendstr_chunk (req, "<tr><td colspan=6>");
-         httpd_resp_sendstr_chunk (req, note);
-         httpd_resp_sendstr_chunk (req, "</td></tr>");
+         revk_web_send (req, "<tr><td colspan=6>%s</td></tr>", note);
       }
 
       void addtime (const char *tag, const char *field)
       {
-         httpd_resp_sendstr_chunk (req, "<td align=right>");
-         httpd_resp_sendstr_chunk (req, tag);
-         httpd_resp_sendstr_chunk (req, "</td><td><input class=time type=time title=\"Set 00:00 to disable\" id=");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, " onchange=\"w('");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, "',this.value);\"></td>");
+         revk_web_send (req,
+                        "<td align=right>%s</td><td><input class=time type=time title=\"Set 00:00 to disable\" id='%s' onchange=\"w('%s',this.value);\"></td>",
+                        tag, field, field);
       }
-      httpd_resp_sendstr_chunk (req,
-                                "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
+      revk_web_send (req,
+                     "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
       add ("Enable", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
       addtemp ("Target", "autot");
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
-      httpd_resp_sendstr_chunk (req, "<tr>");
+      revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
       addb ("Auto", "autop", "Automatic power on/off");
-      httpd_resp_sendstr_chunk (req, "</tr>");
+      revk_web_send (req, "</tr>");
       if (ble)
       {
          addnote ("External temperature reference for Faikin-auto mode");
-         httpd_resp_sendstr_chunk (req, "<tr><td>BLE</td><td colspan=6>");
-         httpd_resp_sendstr_chunk (req, "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
+         revk_web_send (req, "<tr><td>BLE</td><td colspan=6>"   //
+                        "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
          if (!*autob)
-            httpd_resp_sendstr_chunk (req, "<option value=\"\">-- None --");
+            revk_web_send (req, "<option value=\"\">-- None --");
          char found = 0;
          for (bleenv_t * e = bleenv; e; e = e->next)
          {
-            httpd_resp_sendstr_chunk (req, "<option value=\"");
-            httpd_resp_sendstr_chunk (req, e->name);
-            httpd_resp_sendstr_chunk (req, "\"");
+            revk_web_send (req, "<option value=\"%s\"", e->name);
             if (*autob && !strcmp (autob, e->name))
             {
-               httpd_resp_sendstr_chunk (req, " selected");
+               revk_web_send (req, " selected");
                found = 1;
             }
-            httpd_resp_sendstr_chunk (req, ">");
-            httpd_resp_sendstr_chunk (req, e->name);
+            revk_web_send (req, ">%s", e->name);
             if (!e->missing && e->rssi)
-            {
-               char temp[20];
-               snprintf (temp, sizeof (temp), " %ddB", e->rssi);
-               httpd_resp_sendstr_chunk (req, temp);
-            }
+               revk_web_send (req, " %ddB", e->rssi);
          }
          if (!found && *autob)
          {
-            httpd_resp_sendstr_chunk (req, "<option selected value=\"");
-            httpd_resp_sendstr_chunk (req, autob);
-            httpd_resp_sendstr_chunk (req, "\">");
-            httpd_resp_sendstr_chunk (req, autob);
+            revk_web_send (req, "<option selected value=\"%s\">%s", autob, autob);
          }
-         httpd_resp_sendstr_chunk (req, "</select>");
+         revk_web_send (req, "</select>");
          if (ble && (uptime () < 60 || !found))
-            httpd_resp_sendstr_chunk (req, " (reload to refresh list)");
-         httpd_resp_sendstr_chunk (req, "</td></tr>");
+            revk_web_send (req, " (reload to refresh list)");
+         revk_web_send (req, "</td></tr>");
       }
-      httpd_resp_sendstr_chunk (req, "</table></div>");
+      revk_web_send (req, "</table></div>");
    }
 #endif
-   httpd_resp_sendstr_chunk (req, "</form>");
-   httpd_resp_sendstr_chunk (req, "</div>");
-   httpd_resp_sendstr_chunk (req, "<script>"    //
-                             "var ws=0;"        //
-                             "var reboot=0;"    //
-                             "function g(n){return document.getElementById(n);};"       //
-                             "function b(n,v){var d=g(n);if(d)d.checked=v;}"    //
-                             "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"       //
-                             "function s(n,v){var d=g(n);if(d)d.textContent=v;}"        //
-                             "function n(n,v){var d=g(n);if(d)d.value=v;}"      //
-                             "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"       //
-                             "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"   //
-                             "function t(n,v){s(n,v?v+'℃':'---');}"   //
-                             "function c(){"    //
-                             "ws=new WebSocket('ws://'+window.location.host+'/status');"        //
-                             "ws.onopen=function(v){g('top').className='on';};" //
-                             "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};"      //
-                             "ws.onerror=function(v){ws.close();};"     //
-                             "ws.onmessage=function(v){"        //
-                             "o=JSON.parse(v.data);"    //
-                             "b('power',o.power);"      //
-                             "h('offline',!o.online);"  //
-                             "h('loopback',o.loopback);"        //
-                             "h('control',o.control);"  //
-                             "h('slave',o.slave);"      //
-                             "h('remote',!o.remote);"   //
-                             "b('swingh',o.swingh);"    //
-                             "b('swingv',o.swingv);"    //
-                             "b('econo',o.econo);"      //
-                             "b('powerful',o.powerful);"        //
-                             "b('comfort',o.comfort);"  //
-                             "b('sensor',o.sensor);"    //
-                             "b('quiet',o.quiet);"      //
-                             "b('streamer',o.streamer);"        //
-                             "e('mode',o.mode);"        //
-                             "t('Inlet',o.inlet);"      //
-                             "t('Home',o.home);"        //
-                             "t('Env',o.env);"  //
-                             "t('Outside',o.outside);"  //
-                             "t('Liquid',o.liquid);"    //
-                             "if(o.ble)t('BLE',o.ble.temp);"    //
-                             "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%':'');"    //
-                             "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"     //
-                             "b('autop',o.autop);"      //
-                             "n('autot',o.autot);"      //
-                             "e('autor',o.autor);"      //
-                             "n('autob',o.autob);"      //
-                             "n('auto0',o.auto0);"      //
-                             "n('auto1',o.auto1);"      //
-                             "s('Tautot',(o.autot?o.autot+'℃':''));"  //
-                             "s('Coil',(o.liquid?o.liquid+'℃':'---'));"       //
-                             "s('Outside',(o.outside?o.outside+'℃':'---'));"  //
-                             "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"     //
-                             "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));"      //
-                             "e('fan',o.fan);"  //
-                             "if(o.shutdown){reboot=true;s('shutdown','Restarting: '+o.shutdown);h('shutdown',true);};" //
-                             "};};c();" //
-                             "setInterval(function() {if(!ws)c();else ws.send('');},1000);"     //
-                             "</script>");
+   revk_web_send (req, "</form>"        //
+                  "</div>"      //
+                  "<script>"    //
+                  "var ws=0;"   //
+                  "var reboot=0;"       //
+                  "function g(n){return document.getElementById(n);};"  //
+                  "function b(n,v){var d=g(n);if(d)d.checked=v;}"       //
+                  "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"  //
+                  "function s(n,v){var d=g(n);if(d)d.textContent=v;}"   //
+                  "function n(n,v){var d=g(n);if(d)d.value=v;}" //
+                  "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"  //
+                  "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"      //
+                  "function t(n,v){s(n,v?v+'℃':'---');}"      //
+                  "function c(){"       //
+                  "ws=new WebSocket('ws://'+window.location.host+'/status');"   //
+                  "ws.onopen=function(v){g('top').className='on';};"    //
+                  "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};" //
+                  "ws.onerror=function(v){ws.close();};"        //
+                  "ws.onmessage=function(v){"   //
+                  "o=JSON.parse(v.data);"       //
+                  "b('power',o.power);" //
+                  "h('offline',!o.online);"     //
+                  "h('loopback',o.loopback);"   //
+                  "h('control',o.control);"     //
+                  "h('slave',o.slave);" //
+                  "h('remote',!o.remote);"      //
+                  "b('swingh',o.swingh);"       //
+                  "b('swingv',o.swingv);"       //
+                  "b('econo',o.econo);" //
+                  "b('powerful',o.powerful);"   //
+                  "b('comfort',o.comfort);"     //
+                  "b('sensor',o.sensor);"       //
+                  "b('quiet',o.quiet);" //
+                  "b('streamer',o.streamer);"   //
+                  "e('mode',o.mode);"   //
+                  "t('Inlet',o.inlet);" //
+                  "t('Home',o.home);"   //
+                  "t('Env',o.env);"     //
+                  "t('Outside',o.outside);"     //
+                  "t('Liquid',o.liquid);"       //
+                  "if(o.ble)t('BLE',o.ble.temp);"       //
+                  "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
+                  "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
+                  "b('autop',o.autop);" //
+                  "n('autot',o.autot);" //
+                  "e('autor',o.autor);" //
+                  "n('autob',o.autob);" //
+                  "n('auto0',o.auto0);" //
+                  "n('auto1',o.auto1);" //
+                  "s('Tautot',(o.autot?o.autot+'℃':''));"     //
+                  "s('Coil',(o.liquid?o.liquid+'℃':'---'));"  //
+                  "s('Outside',(o.outside?o.outside+'℃':'---'));"     //
+                  "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"        //
+                  "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));" //
+                  "e('fan',o.fan);"     //
+                  "if(o.shutdown){reboot=true;s('shutdown','Restarting: '+o.shutdown);h('shutdown',true);};"    //
+                  "};};c();"    //
+                  "setInterval(function() {if(!ws)c();else ws.send('');},1000);"        //
+                  "</script>");
    return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, protocol_set ? prototype[proto_type (proto)] : NULL);
 }
 
@@ -2330,35 +2280,17 @@ revk_web_extra (httpd_req_t * req)
 {
    void b (const char *tag, const char *field, int value, const char *desc)
    {
-      httpd_resp_sendstr_chunk (req, "<tr><td>");
-      httpd_resp_sendstr_chunk (req, tag);
-      httpd_resp_sendstr_chunk (req, "</td><td>");
+      revk_web_send (req, "<tr><td>%s</td><td>", tag);
       void io (const char *v, const char *t)
       {
-         httpd_resp_sendstr_chunk (req, "<label for=");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, v);
-         httpd_resp_sendstr_chunk (req, "><input type=radio value=");
-         httpd_resp_sendstr_chunk (req, v);
-         httpd_resp_sendstr_chunk (req, " id=");
-         httpd_resp_sendstr_chunk (req, field);
-         httpd_resp_sendstr_chunk (req, v);
-         httpd_resp_sendstr_chunk (req, " name=");
-         httpd_resp_sendstr_chunk (req, field);
-         if (value == atoi (v))
-            httpd_resp_sendstr_chunk (req, " checked");
-         httpd_resp_sendstr_chunk (req, ">");
-         httpd_resp_sendstr_chunk (req, t);
-         httpd_resp_sendstr_chunk (req, "</label> ");
+         revk_web_send (req, "<label for='%s%s'><input type=radio value='%s' id='%s%s' name='%s'%s>%s</label>", field, v, v, field,
+                        v, field, value == atoi (v) ? " checked" : "", t);
       }
       io ("0", "Off");
       io ("1", "On");
       if (desc && *desc)
-      {
-         httpd_resp_sendstr_chunk (req, "</td><td>");
-         httpd_resp_sendstr_chunk (req, desc);
-      }
-      httpd_resp_sendstr_chunk (req, "</td></tr>");
+         revk_web_send (req, "</td><td>%s", desc);
+      revk_web_send (req, "</td></tr>");
    }
    b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
    b ("BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
