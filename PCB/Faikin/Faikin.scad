@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2024-01-06 11:08:54
+// Generated 2024-01-06 11:13:36
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -34,22 +34,22 @@ translate([17.325000,11.200000,1.200000])rotate([0,0,-135.000000])m2(part,hole,b
 translate([20.925000,15.100000,1.200000])rotate([0,0,-90.000000])m3(part,hole,block,casetop); // RevK:DFN1006-2L C_0402_1005Metric (back)
 translate([16.525000,14.800000,1.200000])rotate([0,0,-90.000000])m3(part,hole,block,casetop); // RevK:DFN1006-2L C_0402_1005Metric (back)
 translate([16.825000,1.000000,1.200000])rotate([0,0,180.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
-// Missing model Q1.1 SOT-363_SC-70-6
-translate([18.625000,2.885000,1.200000])rotate([0,0,180.000000])m4(part,hole,block,casetop); // RevK:SOT-23-6-MD8942 SOT-23-6 (back)
+translate([18.725000,13.900000,1.200000])rotate([0,0,180.000000])m4(part,hole,block,casetop); // Q1 (back)
+translate([18.625000,2.885000,1.200000])rotate([0,0,180.000000])m5(part,hole,block,casetop); // RevK:SOT-23-6-MD8942 SOT-23-6 (back)
 translate([19.225000,11.650000,1.200000])rotate([0,0,90.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 translate([20.825000,13.400000,1.200000])rotate([0,0,90.000000])m3(part,hole,block,casetop); // RevK:DFN1006-2L C_0402_1005Metric (back)
 translate([20.425000,1.000000,1.200000])rotate([0,0,180.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 translate([20.575000,11.200000,1.200000])m3(part,hole,block,casetop); // RevK:DFN1006-2L C_0402_1005Metric (back)
-translate([7.725000,8.000000,1.200000])rotate([0,0,90.000000])m5(part,hole,block,casetop); // U4 (back)
+translate([7.725000,8.000000,1.200000])rotate([0,0,90.000000])m6(part,hole,block,casetop); // U4 (back)
 translate([18.625000,4.885000,1.200000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
-// Missing model J1.1 JST_EH_S5B-EH_1x05_P2.50mm_Horizontal
+translate([23.450000,13.000000,1.200000])rotate([0,0,-90.000000])m7(part,hole,block,casetop,05); // J1 (back)
 translate([20.325000,10.150000,1.200000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
-translate([18.625000,7.485000,1.200000])rotate([-0.000000,-0.000000,-90.000000])m6(part,hole,block,casetop); // RevK:L_4x4_ TYA4020 (back)
+translate([18.625000,7.485000,1.200000])rotate([-0.000000,-0.000000,-90.000000])m8(part,hole,block,casetop); // RevK:L_4x4_ TYA4020 (back)
 translate([16.125000,4.185000,1.200000])rotate([0,0,-90.000000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
 translate([18.625000,0.985000,1.200000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 }
 
-parts_top=2;
+parts_top=4;
 // Parts to go on PCB (bottom)
 module parts_bottom(part=false,hole=false,block=false){
 }
@@ -112,6 +112,15 @@ if(part)
 }
 
 module m4(part=false,hole=false,block=false,height)
+{ // Q1
+if(part)
+{
+	b(0,0,0,1.15,2.0,1.1);
+	b(0,0,0,2.1,2.0,0.6);
+}
+}
+
+module m5(part=false,hole=false,block=false,height)
 { // RevK:SOT-23-6-MD8942 SOT-23-6
 // SOT-23-6
 if(part)
@@ -121,7 +130,7 @@ if(part)
 }
 }
 
-module m5(part=false,hole=false,block=false,height)
+module m6(part=false,hole=false,block=false,height)
 { // U4
 // ESP32-S3-MINI-1
 translate([-15.4/2,-15.45/2,0])
@@ -138,7 +147,17 @@ translate([-15.4/2,-15.45/2,0])
 }
 }
 
-module m6(part=false,hole=false,block=false,height)
+module m7(part=false,hole=false,block=false,height,N=0)
+{ // J1
+if(part)
+{
+	b(2.5*(N/2)-1.25,5+3.6,0,2.5*N+2.5,6+10,4);
+	b(2.5*(N/2)-1.25,0,0,2.5*N+2.5,3.2,1.5);
+	for(a=[0:1:N-1])translate([2.5*a,0,-3])cylinder(d1=0.5,d2=2.5,h=3,$fn=12);
+}
+}
+
+module m8(part=false,hole=false,block=false,height)
 { // RevK:L_4x4_ TYA4020
 // 4x4 Inductor
 if(part)
