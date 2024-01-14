@@ -37,7 +37,7 @@ It is worth noting that the library includes settings to control over the air up
 
 ### External/automatic controls
 
-An external unit can set external *min*/*max* controls and reference temperature. This is planned to be made an internal feature for automatic control in future.
+An external unit can set external *min*/*max* controls and reference temperature.
 
 |Setting|Meaning|
 |-------|-------|
