@@ -68,7 +68,7 @@ static void serial_write(int p, const unsigned char *response, unsigned int pkt_
    }
 }
 
-static void s21_nak(int p, char *buf)
+static void s21_nak(int p, unsigned char *buf)
 {
    static unsigned char response = NAK;
 

@@ -1873,7 +1873,7 @@
   )
 
   (symbol (lib_id "RevK:USB-PROG") (at 107.315 137.16 0) (unit 1)
-    (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
+    (in_bom no) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid 37ed2a5a-417c-4851-8019-5460a1995cec)
     (property "Reference" "J3" (at 107.315 125.3957 0)
       (effects (font (size 1.27 1.27)))
