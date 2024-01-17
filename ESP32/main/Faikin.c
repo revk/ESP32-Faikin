@@ -1588,7 +1588,7 @@ web_root (httpd_req_t * req)
                   "function n(n,v){var d=g(n);if(d)d.value=v;}" //
                   "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"  //
                   "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"      //
-                  "function t(n,v){s(n,v?v+'℃':'---');}"      //
+                  "function t(n,v){s(n,v!=undefined?v+'℃':'---');}"      //
                   "function c(){"       //
                   "ws=new WebSocket('ws://'+window.location.host+'/status');"   //
                   "ws.onopen=function(v){g('top').className='on';};"    //
@@ -1626,8 +1626,6 @@ web_root (httpd_req_t * req)
                   "n('auto0',o.auto0);" //
                   "n('auto1',o.auto1);" //
                   "s('Tautot',(o.autot?o.autot+'℃':''));"     //
-                  "s('Coil',(o.liquid?o.liquid+'℃':'---'));"  //
-                  "s('Outside',(o.outside?o.outside+'℃':'---'));"     //
                   "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"        //
                   "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));" //
                   "e('fan',o.fan);"     //
