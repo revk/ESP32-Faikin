@@ -2276,24 +2276,10 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 void
 revk_web_extra (httpd_req_t * req)
 {
-   void b (const char *tag, const char *field, int value, const char *desc)
-   {
-      revk_web_send (req, "<tr><td>%s</td><td>", tag);
-      void io (const char *v, const char *t)
-      {
-         revk_web_send (req, "<label for='%s%s'><input type=radio value='%s' id='%s%s' name='%s'%s>%s</label>", field, v, v, field,
-                        v, field, value == atoi (v) ? " checked" : "", t);
-      }
-      io ("0", "Off");
-      io ("1", "On");
-      if (desc && *desc)
-         revk_web_send (req, "</td><td>%s", desc);
-      revk_web_send (req, "</td></tr>");
-   }
-   b ("Home Assistant", "ha", ha, "Announces HA config via MQTT");
-   b ("BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
-   b ("Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
-   b ("Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
+   revk_setting_b (req,"Home Assistant", "ha", ha, "Announces HA config via MQTT");
+   revk_setting_b (req,"BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
+   revk_setting_b (req,"Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
+   revk_setting_b (req,"Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
 }
 
 // --------------------------------------------------------------------------------
