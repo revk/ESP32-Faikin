@@ -2109,11 +2109,11 @@ send_ha_config (void)
          {
             jo_array (j, "fan_modes");
             jo_string (j, NULL, "Auto");
-            jo_string (j, NULL, "Low");
-            jo_string (j, NULL, "lowMedium");
-            jo_string (j, NULL, "Medium");
-            jo_string (j, NULL, "mediumHigh");
-            jo_string (j, NULL, "High");
+            jo_string (j, NULL, "1");
+            jo_string (j, NULL, "2");
+            jo_string (j, NULL, "3");
+            jo_string (j, NULL, "4");
+            jo_string (j, NULL, "5");
             jo_string (j, NULL, "Night");
             jo_close (j);
          }
