@@ -81,6 +81,7 @@ static const char TAG[] = "Faikin";
 	u32(tcontrol,600)	\
 	u8(fanstep,0)		\
 	u32(reporting,60)	\
+	s(model)		\
 	gpio			\
 
 #define u32(n,d) uint32_t n;
@@ -137,7 +138,17 @@ enum
    PROTO_TYPE_CN_WIRED,
    PROTO_TYPE_MAX = PROTO_TYPE_CN_WIRED,        // Fudge, don't scan CN_WIRED for now
 };
-const char *prototype[] = { "S21", "X50A", "CN_WIRED" };
+const char *const prototype[] = { "S21", "X50A", "CN_WIRED" };
+
+const char *const fans[] = {    // mapping A12345Q
+   "auto",
+   "low",
+   "lowMedium",
+   "medium",
+   "mediumHigh",
+   "high",
+   "night",
+};
 
 #define	PROTO_TXINVERT	1
 #define	PROTO_RXINVERT	2
@@ -1286,8 +1297,14 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
             jo_stringf (s, "mode", "%c", toupper (*value));
       }
       if (!strcmp (suffix, "fan"))
-         jo_stringf (s, "fan", "%c",
-                     *value == 'l' ? '1' : *value == 'm' ? '3' : *value == 'h' ? '5' : *value == 'n' ? 'Q' : toupper (*value));
+      {
+         int f;
+         for (f = 0; f < sizeof (fans) / sizeof (*fans) && strcmp (fans[f], value); f++);
+         if (f < sizeof (fans) / sizeof (*fans))
+            jo_stringf (s, "fan", "%c", CONTROL_fan_VALUES[f]);
+         else
+            jo_stringf (s, "fan", "%c", *value);
+      }
       if (!strcmp (suffix, "swing"))
       {
          if (*value == 'C')
@@ -2108,13 +2125,8 @@ send_ha_config (void)
          if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
          {
             jo_array (j, "fan_modes");
-            jo_string (j, NULL, "Auto");
-            jo_string (j, NULL, "1");
-            jo_string (j, NULL, "2");
-            jo_string (j, NULL, "3");
-            jo_string (j, NULL, "4");
-            jo_string (j, NULL, "5");
-            jo_string (j, NULL, "Night");
+            for (int f = 0; f < sizeof (fans) / sizeof (*fans); f++)
+               jo_string (j, NULL, fans[f]);
             jo_close (j);
          }
       }
@@ -2225,17 +2237,7 @@ ha_status (void)
       jo_string (j, "mode", daikin.power ? autor ? "auto" : modes[daikin.mode] : "off");        // If we are controlling, it is auto
    }
    if (daikin.status_known & CONTROL_fan)
-   {
-      if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
-      {
-         const char *fans[] = { "auto", "1", "2", "3", "4", "5", "night" };     // A12345Q
-         jo_string (j, "fan", fans[daikin.fan]);
-      } else
-      {
-         const char *fans[] = { "auto", "low", "low", "medium", "high", "high", "auto" };       // A12345Q
-         jo_string (j, "fan", fans[daikin.fan]);
-      }
-   }
+      jo_string (j, "fan", fans[daikin.fan]);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
@@ -2498,7 +2500,7 @@ app_main ()
       daikin.mode = 1;
       daikin.temp = 20.0;
    }
-
+   strncpy (daikin.model, model, sizeof (daikin.model)); // Default model
    proto = protocol;
    if (protofix)
       protocol_set = 1;         // Fixed protocol - do not change
