@@ -46,6 +46,7 @@ static const char TAG[] = "Faikin";
 #endif
 
 #define	settings		\
+	u8(swingmodes,3)	\
 	u8(webcontrol,2)	\
 	u8(protocol,0)		\
 	b(protofix,false)	\
@@ -1494,9 +1495,9 @@ web_root (httpd_req_t * req)
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh | CONTROL_comfort))
    {
       revk_web_send (req, "<tr>");
-      if (daikin.status_known & CONTROL_swingv)
+      if ((swingmodes & 2) && (daikin.status_known & CONTROL_swingv))
          addb ("↕", "swingv", "Vertical Swing");
-      if (daikin.status_known & CONTROL_swingh)
+      if ((swingmodes & 1) && (daikin.status_known & CONTROL_swingh))
          addb ("↔", "swingh", "Horizontal Swing");
       if (daikin.status_known & CONTROL_comfort)
          addb ("🧸", "comfort", "Comfort mode");
@@ -1588,7 +1589,7 @@ web_root (httpd_req_t * req)
                   "function n(n,v){var d=g(n);if(d)d.value=v;}" //
                   "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"  //
                   "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"      //
-                  "function t(n,v){s(n,v!=undefined?v+'℃':'---');}"      //
+                  "function t(n,v){s(n,v!=undefined?v+'℃':'---');}"   //
                   "function c(){"       //
                   "ws=new WebSocket('ws://'+window.location.host+'/status');"   //
                   "ws.onopen=function(v){g('top').className='on';};"    //
@@ -2107,26 +2108,29 @@ send_ha_config (void)
          if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
          {
             jo_array (j, "fan_modes");
-            jo_string (j, NULL, "auto");
-            jo_string (j, NULL, "1");
-            jo_string (j, NULL, "2");
-            jo_string (j, NULL, "3");
-            jo_string (j, NULL, "4");
-            jo_string (j, NULL, "5");
-            jo_string (j, NULL, "night");
+            jo_string (j, NULL, "Auto");
+            jo_string (j, NULL, "Low");
+            jo_string (j, NULL, "lowMedium");
+            jo_string (j, NULL, "Medium");
+            jo_string (j, NULL, "mediumHigh");
+            jo_string (j, NULL, "High");
+            jo_string (j, NULL, "Night");
             jo_close (j);
          }
       }
-      if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
+      if (swingmodes && (daikin.status_known & (CONTROL_swingh | CONTROL_swingv)))
       {
          jo_string (j, "swing_mode_cmd_t", "~/swing");
          jo_string (j, "swing_mode_stat_t", revk_id);
          jo_string (j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array (j, "swing_modes");
          jo_string (j, NULL, "off");
-         jo_string (j, NULL, "H");
-         jo_string (j, NULL, "V");
-         jo_string (j, NULL, "H+V");
+         if (swingmodes & 1)
+            jo_string (j, NULL, "H");
+         if (swingmodes & 2)
+            jo_string (j, NULL, "V");
+         if ((swingmodes & 3) == 3)
+            jo_string (j, NULL, "H+V");
          if (daikin.status_known & CONTROL_comfort)
             jo_string (j, NULL, "C");
          jo_close (j);
@@ -2276,10 +2280,10 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 void
 revk_web_extra (httpd_req_t * req)
 {
-   revk_web_setting_b (req,"Home Assistant", "ha", ha, "Announces HA config via MQTT");
-   revk_web_setting_b (req,"BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
-   revk_web_setting_b (req,"Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
-   revk_web_setting_b (req,"Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
+   revk_web_setting_b (req, "Home Assistant", "ha", ha, "Announces HA config via MQTT");
+   revk_web_setting_b (req, "BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
+   revk_web_setting_b (req, "Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
+   revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
 }
 
 // --------------------------------------------------------------------------------

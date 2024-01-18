@@ -62,6 +62,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 |`autop`|Boolean, if we automatically turn on/off power based on temperature|
 |`autop10`|Temperature offset for auto turn on with `autop` x 10|
+|`swingmodes`|Defaults to 3, which is 1 for `H` and 2 for `V`. This can limits modes shown|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 
