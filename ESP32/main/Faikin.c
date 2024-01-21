@@ -216,6 +216,7 @@ struct
    uint8_t ha_send:1;           // Send HA config
    uint8_t remote:1;            // Remote control via MQTT
    uint8_t seq:1;               // Data sequence (CN_WIRED)
+   uint8_t thermostat:1;        // Thermostat hysteresis state
 } daikin = { 0 };
 
 const char *
@@ -2845,6 +2846,7 @@ app_main ()
          {                      // Start controlling
             if (daikin.control)
                return;
+            daikin.thermostat = 0;
             set_val (control, 1);
             samplestart ();
             if (!lockmode)
@@ -3017,8 +3019,7 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
                // Temp set
                float set = min + reference - current;   // Where we will set the temperature
-               static uint8_t flip = 0; // This for thermostat mode, flip min/max to create hyterises
-               if ((hot && current < (flip ? max : min)) || (!hot && current > (flip ? min : max)))
+               if ((hot && current < (daikin.thermostat ? max : min)) || (!hot && current > (daikin.thermostat ? min : max)))
                {                // Apply heat/cool
                   if (hot)
                      set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
@@ -3027,7 +3028,7 @@ app_main ()
                } else
                {                // At or beyond temp - stop heat/cool
                   if (thermostat)
-                     flip = 1 - flip;
+                     daikin.thermostat = 1 - daikin.thermostat;
                   if (daikin.fansaved)
                   {
                      daikin_set_v (fan, daikin.fansaved);       // revert fan speed
