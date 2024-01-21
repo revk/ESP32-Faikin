@@ -64,6 +64,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`autop10`|Temperature offset for auto turn on with `autop` x 10|
 |`swingmodes`|Defaults to 3, which is 1 for `H` and 2 for `V`. This can limits modes shown|
 |`model`|Default model name for HA info|
+|`thermostat`|Experimental flag - if set, heat to `max`, allow to cool to `min`, etc, thermostat style|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 

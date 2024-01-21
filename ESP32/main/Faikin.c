@@ -71,6 +71,7 @@ static const char TAG[] = "Faikin";
 	u16l(auto1,0)		\
 	u16l(autot,0)		\
 	u8l(autor,0)		\
+	b(thermostat)		\
 	bl(autop)		\
 	sl(autob)		\
 	u8(tmin,16)		\
@@ -2500,7 +2501,7 @@ app_main ()
       daikin.mode = 1;
       daikin.temp = 20.0;
    }
-   strncpy (daikin.model, model, sizeof (daikin.model)); // Default model
+   strncpy (daikin.model, model, sizeof (daikin.model));        // Default model
    proto = protocol;
    if (protofix)
       protocol_set = 1;         // Fixed protocol - do not change
@@ -2823,7 +2824,7 @@ app_main ()
             if ((daikin.envdelta <= 0 && daikin.envdelta2 <= 0) || (daikin.envdelta >= 0 && daikin.envdelta2 >= 0))
                current += (daikin.envdelta + daikin.envdelta2) * tpredictt / (tpredicts * 2);   // Predict
          }
-         // Apply hysteresis
+         // Apply adjustment
          if (daikin.control && daikin.power && !isnan (min) && !isnan (max))
          {
             if (hot)
@@ -3016,14 +3017,17 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
                // Temp set
                float set = min + reference - current;   // Where we will set the temperature
-               if ((hot && current < min) || (!hot && current > max))
-               {
+               static uint8_t flip = 0; // This for thermostat mode, flip min/max to create hyterises
+               if ((hot && current < (flip ? max : min)) || (!hot && current > (flip ? min : max)))
+               {                // Apply heat/cool
                   if (hot)
                      set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
                } else
-               {                // At or beyond temp
+               {                // At or beyond temp - stop heat/cool
+                  if (thermostat)
+                     flip = 1 - flip;
                   if (daikin.fansaved)
                   {
                      daikin_set_v (fan, daikin.fansaved);       // revert fan speed
