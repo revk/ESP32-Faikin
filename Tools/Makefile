@@ -25,8 +25,8 @@ endif
 tools:	$(TOOLS)
 
 ifeq ($(shell uname),Darwin)
-INCLUDES=-I/usr/local/include/ -I../ESP32/main
-LIBS=-L/usr/local/Cellar/popt/1.18/lib/
+INCLUDES=-I/usr/local/include/ -I$(shell brew --prefix)/include/ -I../ESP32/main
+LIBS=-L$(shell brew --prefix)/lib/
 else
 LIBS=
 INCLUDES=-I../ESP32/main
