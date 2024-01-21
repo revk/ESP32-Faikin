@@ -15,20 +15,21 @@ SQLLIB=$(shell mariadb_config --libs)
 SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
 endif
 
+TOOLS := faikin faikin-s21
 ifdef	SQLINC
-TOOLS := faikin faikinlog faikingraph
+TOOLS += faikinlog faikingraph
 else
-$(error Warning - mariadb/mysql not installed, needed if you want to build tools)
+$(warning Warning - mariadb/mysql not installed, needed if you want to build tools)
 endif
 
 tools:	$(TOOLS)
 
 ifeq ($(shell uname),Darwin)
-INCLUDES=-I/usr/local/include/ -I../ESP32/main
-LIBS=-L/usr/local/Cellar/popt/1.18/lib/
+INCLUDES=-I/usr/local/include/ -I$(shell brew --prefix)/include/ -I../ESP32/
+LIBS=-L$(shell brew --prefix)/lib/
 else
 LIBS=
-INCLUDES=-I../ESP32/main
+INCLUDES=-I../ESP32/
 endif
 
 SQLlib/sqllib.o: SQLlib/sqllib.c
@@ -45,7 +46,7 @@ faikin: faikin.c
 	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
 
 faikin-s21: faikin-s21.c ../ESP32/main/daikin_s21.h ../ESP32/main/faikin_enums.h
-	gcc -O0 -g -o $@ $< -lpopt ${INCLUDES} ${LIBS}
+	gcc -O0 -g -o $@ $< -lpopt -lm ${INCLUDES} ${LIBS}
 
 faikinlog: faikinlog.c SQLlib/sqllib.o AJL/ajl.o ../ESP32/main/acextras.m ../ESP32/main/acfields.m ../ESP32/main/accontrols.m
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAJL AJL/ajl.o ${INCLUDES} ${OPTS}
