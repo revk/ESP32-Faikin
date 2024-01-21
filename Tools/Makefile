@@ -18,7 +18,7 @@ endif
 ifdef	SQLINC
 TOOLS := faikin faikinlog faikingraph
 else
-$(error Warning - mariadb/mysql not installed, needed if you want to build tools)
+$(warning Warning - mariadb/mysql not installed, needed if you want to build tools)
 endif
 
 tools:	$(TOOLS)
