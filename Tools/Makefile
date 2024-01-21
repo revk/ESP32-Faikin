@@ -15,8 +15,9 @@ SQLLIB=$(shell mariadb_config --libs)
 SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
 endif
 
+TOOLS := faikin faikin-s21
 ifdef	SQLINC
-TOOLS := faikin faikinlog faikingraph
+TOOLS += faikinlog faikingraph
 else
 $(warning Warning - mariadb/mysql not installed, needed if you want to build tools)
 endif
