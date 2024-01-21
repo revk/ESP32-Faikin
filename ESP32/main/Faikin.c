@@ -71,7 +71,7 @@ static const char TAG[] = "Faikin";
 	u16l(auto1,0)		\
 	u16l(autot,0)		\
 	u8l(autor,0)		\
-	b(thermostat)		\
+	b(thermostat,false)	\
 	bl(autop)		\
 	sl(autob)		\
 	u8(tmin,16)		\
