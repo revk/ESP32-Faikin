@@ -25,11 +25,11 @@ endif
 tools:	$(TOOLS)
 
 ifeq ($(shell uname),Darwin)
-INCLUDES=-I/usr/local/include/ -I$(shell brew --prefix)/include/ -I../ESP32/main
+INCLUDES=-I/usr/local/include/ -I$(shell brew --prefix)/include/ -I../ESP32/
 LIBS=-L$(shell brew --prefix)/lib/
 else
 LIBS=
-INCLUDES=-I../ESP32/main
+INCLUDES=-I../ESP32/
 endif
 
 SQLlib/sqllib.o: SQLlib/sqllib.c
