@@ -216,7 +216,7 @@ struct
    uint8_t ha_send:1;           // Send HA config
    uint8_t remote:1;            // Remote control via MQTT
    uint8_t seq:1;               // Data sequence (CN_WIRED)
-   uint8_t thermostat:1;        // Thermostat hysteresis state
+   uint8_t hysteresis:1;        // Thermostat hysteresis state
 } daikin = { 0 };
 
 const char *
@@ -2846,7 +2846,7 @@ app_main ()
          {                      // Start controlling
             if (daikin.control)
                return;
-            daikin.thermostat = 0;
+            daikin.hysteresis = 0;
             set_val (control, 1);
             samplestart ();
             if (!lockmode)
@@ -3019,16 +3019,17 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
                // Temp set
                float set = min + reference - current;   // Where we will set the temperature
-               if ((hot && current < (daikin.thermostat ? max : min)) || (!hot && current > (daikin.thermostat ? min : max)))
+               if ((hot && current < (daikin.hysteresis ? max : min)) || (!hot && current > (daikin.hysteresis ? min : max)))
                {                // Apply heat/cool
+                  if (thermostat)
+                     daikin.hysteresis = 1;     // We're on, so keep going to "beyond"
                   if (hot)
                      set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
                   else
                      set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
                } else
                {                // At or beyond temp - stop heat/cool
-                  if (thermostat)
-                     daikin.thermostat = 1 - daikin.thermostat;
+                  daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
                      daikin_set_v (fan, daikin.fansaved);       // revert fan speed
