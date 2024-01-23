@@ -52,6 +52,7 @@ static const char TAG[] = "Faikin";
 	b(protofix,false)	\
 	bl(debug)		\
 	bl(dump)		\
+	bl(snoop)		\
 	bl(livestatus)		\
 	b(dark,false)		\
 	b(ble,false)		\
@@ -665,22 +666,25 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return S21_WAIT;          // Failed
    uint8_t buf[256],
      temp;
-   buf[0] = STX;
-   buf[1] = cmd;
-   buf[2] = cmd2;
-   if (txlen)
-      memcpy (buf + 3, payload, txlen);
-   buf[3 + txlen] = s21_checksum (buf, S21_MIN_PKT_LEN + txlen);
-   buf[4 + txlen] = ETX;
-   if (dump)
-   {
-      jo_t j = jo_comms_alloc ();
-      jo_base16 (j, "dump", buf, txlen + S21_MIN_PKT_LEN);
-      char c[3] = { cmd, cmd2 };
-      jo_stringn (j, c, payload, txlen);
-      revk_info ("tx", &j);
+   if (!snoop)
+   { // Send
+      buf[0] = STX;
+      buf[1] = cmd;
+      buf[2] = cmd2;
+      if (txlen)
+         memcpy (buf + 3, payload, txlen);
+      buf[3 + txlen] = s21_checksum (buf, S21_MIN_PKT_LEN + txlen);
+      buf[4 + txlen] = ETX;
+      if (dump)
+      {
+         jo_t j = jo_comms_alloc ();
+         jo_base16 (j, "dump", buf, txlen + S21_MIN_PKT_LEN);
+         char c[3] = { cmd, cmd2 };
+         jo_stringn (j, c, payload, txlen);
+         revk_info ("tx", &j);
+      }
+      uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
    }
-   uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
    // Wait ACK
    int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
    if (rxlen != 1 || (temp != ACK && temp != STX))
@@ -757,7 +761,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    // Note not all ACs do that. My FTXF20D doesn't - Sonic-Amiga
    temp = ACK;
    uart_write_bytes (uart, &temp, 1);
-   if (dump)
+   if (dump || snoop)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, rxlen);
@@ -784,7 +788,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       jo_stringf (j, "badsum", "%02X", c);
       return s21_bad (j);
    }
-   if (rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
+   if (!snoop && rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
    {                            // Loop back
       daikin.talking = 0;
       if (!loopback)
@@ -804,8 +808,8 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       protocol_found ();
    // An expected S21 reply contains the first character of the command
    // incremented by 1, the second character is left intact
-   if (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1
-       || buf[S21_CMD1_OFFSET] != cmd2)
+   if (!snoop && (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1
+                  || buf[S21_CMD1_OFFSET] != cmd2))
    {
       // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
