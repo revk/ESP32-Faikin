@@ -1643,6 +1643,7 @@ web_root (httpd_req_t * req)
                   "if(o.ble)t('BLE',o.ble.temp);"       //
                   "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
                   "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
+		  "n('temp',o.temp);" //
                   "b('autop',o.autop);" //
                   "n('autot',o.autot);" //
                   "e('autor',o.autor);" //
