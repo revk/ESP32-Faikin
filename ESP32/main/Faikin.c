@@ -1642,14 +1642,14 @@ web_root (httpd_req_t * req)
                   "t('Liquid',o.liquid);"       //
                   "if(o.ble)t('BLE',o.ble.temp);"       //
                   "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
-                  "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
 		  "n('temp',o.temp);" //
+                  "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
                   "b('autop',o.autop);" //
-                  "n('autot',o.autot);" //
                   "e('autor',o.autor);" //
                   "n('autob',o.autob);" //
                   "n('auto0',o.auto0);" //
                   "n('auto1',o.auto1);" //
+                  "n('autot',o.autot);" //
                   "s('Tautot',(o.autot?o.autot+'℃':''));"     //
                   "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"        //
                   "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));" //
