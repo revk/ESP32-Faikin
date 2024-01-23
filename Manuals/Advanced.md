@@ -27,6 +27,7 @@ There are a number of standard settings as per the [RevK library](https://github
 |`fixstatus`|Make status messages always use array format rather than single values|
 |`tmin`|Min temperature|
 |`tmax`|Max temperature|
+|`fmaxauto`|Max fan setting for auto mode (normally 5)|
 
 It is worth noting that the library includes settings to control over the air updates. By default the Faikin module does automatic updates.
 

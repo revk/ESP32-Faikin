@@ -77,6 +77,7 @@ static const char TAG[] = "Faikin";
 	sl(autob)		\
 	u8(tmin,16)		\
 	u8(tmax,32)		\
+	u8(fmaxauto,5)		\
 	u32(tpredicts,30)	\
 	u32(tpredictt,120)	\
 	u32(tsample,900)	\
@@ -2869,7 +2870,7 @@ app_main ()
             if (daikin.fan && ((hot && current < min - 2 * switch10 * 0.1) || (!hot && current > max + 2 * switch10 * 0.1)))
             {                   // Not in auto mode, and not close to target temp - force a high fan to get there
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
-               daikin_set_v (fan, 5);   // Max fan at start
+               daikin_set_v (fan, fmaxauto);   // Max fan at start
             }
          }
          void controlstop (void)
@@ -2959,7 +2960,7 @@ app_main ()
                      {
                         jo_int (j, "set-fan", daikin.fan - step);
                         daikin_set_v (fan, daikin.fan - step);  // Reduce fan
-                     } else if (!daikin.slave && a * 10 > t * 9 && step && daikin.fan >= 1 && daikin.fan < 5)
+                     } else if (!daikin.slave && a * 10 > t * 9 && step && daikin.fan >= 1 && daikin.fan < fmaxauto)
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
