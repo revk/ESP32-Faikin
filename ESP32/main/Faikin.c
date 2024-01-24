@@ -1789,7 +1789,7 @@ legacy_send (httpd_req_t * req, jo_t * jp)
             if (jo_next (j) < JO_STRING)
                break;
             l = jo_strlen (j);
-	    *p=0;
+            *p = 0;
             if (p - buf + l + 2 > len)
                break;
             jo_strncpy (j, p, l + 1);
@@ -1807,18 +1807,18 @@ legacy_send (httpd_req_t * req, jo_t * jp)
 static esp_err_t
 legacy_simple_response (httpd_req_t * req, const char *err)
 {
-	 jo_t j = jo_object_alloc ();
-   if (err)
+   jo_t j = jo_object_alloc ();
+   if (err && *err)
    {
-	   jo_string(j,"ret","PARAM NG");
-	   jo_string(j,"adv",err);
+      jo_string (j, "ret", "PARAM NG");
+      jo_string (j, "adv", err);
    } else
    {
 
-	   jo_string(j,"ret","OK");
-	   jo_string(j,"adv","");
+      jo_string (j, "ret", "OK");
+      jo_string (j, "adv", "");
    }
-   return legacy_send(req,&j);
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
@@ -1904,7 +1904,7 @@ legacy_web_get_control_info (httpd_req_t * req)
       }
    jo_int (j, "dfdh", 0);
    jo_int (j, "dmnd_run", 0);
-   jo_int (j, "en_demand", 0); // TODO demand control
+   jo_int (j, "en_demand", 0);  // TODO demand control
    return legacy_send (req, &j);
 }
 
@@ -1995,12 +1995,8 @@ legacy_web_register_terminal (httpd_req_t * req)
    // responds with 403. It's supposed that we remember our client and enable access.
    // We don't support authentication currently, so let's just return OK
    // However, it could be a nice idea to have in future
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
-   o += sprintf (o, "ret=OK");
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+   jo_t j = legacy_ok ();
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
