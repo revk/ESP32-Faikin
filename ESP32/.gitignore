@@ -3,6 +3,7 @@ build
 *.old
 *.pem
 sdkconfig
+idfmon
 dependencies.lock
 managed_components
 *.bin

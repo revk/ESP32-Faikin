@@ -1,5 +1,10 @@
 #!/bin/csh
-set d=(/dev/cu.usbmodem61*)
+if("$1" != "") then
+	set d=($1)
+else
+	set d=(/dev/cu.usbmodem61*)
+endif
+
 if($#d == 0) then
 	echo No device
 	exit 0
@@ -7,5 +12,6 @@ endif
 again:
 idf.py flash --port $d[1]
 if($status) goto again
-idf.py monitor --port $d[1]
+
+./idfmon $d[1]
 goto again
