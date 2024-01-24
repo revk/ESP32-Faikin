@@ -1671,23 +1671,6 @@ get_query (httpd_req_t * req, char *buf, size_t buf_len)
       return "Required arguments missing";
 }
 
-static void
-simple_response (httpd_req_t * req, const char *err)
-{
-   httpd_resp_set_type (req, "text/plain");
-   if (err)
-   {
-      char resp[1000];
-      // This "ret" value is reported by my BRP on malformed request
-      // Error text after 'adv' is my addition; assuming 'advisory'
-      snprintf (resp, sizeof (resp), "ret=PARAM NG,adv=%s", err);
-      httpd_resp_sendstr (req, resp);
-   } else
-   {
-      httpd_resp_sendstr (req, "ret=OK,adv=");
-   }
-}
-
 // Macros with error collection for HTTP
 #define	daikin_set_v_e(err,name,value) {      \
    const char * e = daikin_set_v(name, value); \
@@ -1711,7 +1694,6 @@ simple_response (httpd_req_t * req, const char *err)
 static esp_err_t
 legacy_web_status (httpd_req_t * req)
 {                               // Web socket status report
-   // TODO cookies
    int fd = httpd_req_to_sockfd (req);
    void wsend (jo_t * jp)
    {
@@ -1767,6 +1749,7 @@ legacy_web_status (httpd_req_t * req)
    return status ();
 }
 
+
 // Legacy API
 // The following handlers provide web-based control protocol, compatible
 // with original Daikin BRP series online controllers.
@@ -1819,6 +1802,23 @@ legacy_send (httpd_req_t * req, jo_t * jp)
       jo_free (jp);
    }
    return ESP_OK;
+}
+
+static esp_err_t
+legacy_simple_response (httpd_req_t * req, const char *err)
+{
+	 jo_t j = jo_object_alloc ();
+   if (err)
+   {
+	   jo_string(j,"ret","PARAM NG");
+	   jo_string(j,"adv",err);
+   } else
+   {
+
+	   jo_string(j,"ret","OK");
+	   jo_string(j,"adv","");
+   }
+   return legacy_send(req,&j);
 }
 
 static esp_err_t
@@ -1960,8 +1960,7 @@ legacy_web_set_control_info (httpd_req_t * req)
       }
    }
 
-   simple_response (req, err);
-   return ESP_OK;
+   return legacy_simple_response (req, err);
 }
 
 static esp_err_t
@@ -2066,8 +2065,7 @@ legacy_web_set_special_mode (httpd_req_t * req)
       }
    }
 
-   simple_response (req, err);
-   return ESP_OK;
+   return legacy_simple_response (req, err);
 }
 
 static void
