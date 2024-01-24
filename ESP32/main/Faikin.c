@@ -1749,7 +1749,6 @@ legacy_web_status (httpd_req_t * req)
    return status ();
 }
 
-
 // Legacy API
 // The following handlers provide web-based control protocol, compatible
 // with original Daikin BRP series online controllers.
@@ -1843,15 +1842,6 @@ legacy_web_get_basic_info (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static char
-brp_mode ()
-{
-   // Mapped from FHCA456D. Verified against original BRP069A41 controller,
-   // which uses 7 for 'Auto'. This may vary across different controller
-   // versions, see a comment in web_set_control_info()
-   return "64370002"[daikin.mode];
-}
-
 static esp_err_t
 legacy_web_get_model_info (httpd_req_t * req)
 {
@@ -1866,7 +1856,7 @@ legacy_web_get_control_info (httpd_req_t * req)
    jo_t j = legacy_ok ();
    jo_int (j, "pow", daikin.power);
    if (daikin.mode <= 7)
-      jo_stringf (j, "mode", "%c", brp_mode ());
+      jo_stringf (j, "mode", "%c", "64370002"[daikin.mode]);
    jo_string (j, "adv", daikin.powerful ? "2" : "");
    jo_litf (j, "stemp", "%.1f", daikin.temp);
    jo_int (j, "shum", 0);
@@ -2003,30 +1993,22 @@ static esp_err_t
 legacy_web_get_year_power (httpd_req_t * req)
 {
    // ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
    // For now let's just prevent errors in OpenHAB and return an empty OK response
    // Note all zeroes from my BRP
-   o += sprintf (o, "ret=OK");
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+   jo_t j = legacy_ok ();
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
 legacy_web_get_week_power (httpd_req_t * req)
 {
    // ret=OK,s_dayw=2,week_heat=0/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
    // For now let's just prevent errors in OpenHAB and return an empty OK response
    // Note all zeroes from my BRP
-   o += sprintf (o, "ret=OK");
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+   jo_t j = legacy_ok ();
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
@@ -2042,15 +2024,11 @@ legacy_web_set_special_mode (httpd_req_t * req)
           !httpd_query_key_value (query, "set_spmode", value, sizeof (value)))
       {
          if (!strcmp (mode, "12"))
-         {
             err = daikin_set_v (econo, *value == '1');
-         } else if (!strcmp (mode, "2"))
-         {
+          else if (!strcmp (mode, "2"))
             err = daikin_set_v (powerful, *value == '1');
-         } else
-         {
+          else
             err = "Unsupported spmode_kind value";
-         }
          // TODO comfort/streamer/sensor/quiet
 
          // The following other modes are known from OpenHAB sources:
