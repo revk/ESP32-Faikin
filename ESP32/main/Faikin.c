@@ -1787,7 +1787,6 @@ legacy_send (httpd_req_t * req, jo_t * jp)
    if (jp && *jp)
    {
       jo_t j = *jp;
-      ESP_LOGE (TAG, "JSON %s", jo_debug (j));;
       int len = jo_len (j);
       char *buf = mallocspi (len + 40),
          *p = buf;;
@@ -1808,14 +1807,12 @@ legacy_send (httpd_req_t * req, jo_t * jp)
                break;
             l = jo_strlen (j);
 	    *p=0;
-	    ESP_LOGE(TAG,"So far %s len %d",buf,l);
             if (p - buf + l + 2 > len)
                break;
             jo_strncpy (j, p, l + 1);
             p += l;
          }
          *p = 0;
-         ESP_LOGE (TAG, "Send %s", buf);
          httpd_resp_sendstr (req, buf);
          free (buf);
       }
