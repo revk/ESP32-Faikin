@@ -668,7 +668,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    uint8_t buf[256],
      temp;
    if (!snoop)
-   { // Send
+   {                            // Send
       buf[0] = STX;
       buf[1] = cmd;
       buf[2] = cmd2;
@@ -1643,7 +1643,7 @@ web_root (httpd_req_t * req)
                   "t('Liquid',o.liquid);"       //
                   "if(o.ble)t('BLE',o.ble.temp);"       //
                   "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
-		  "n('temp',o.temp);" //
+                  "n('temp',o.temp);"   //
                   "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
                   "b('autop',o.autop);" //
                   "e('autor',o.autor);" //
@@ -1709,7 +1709,7 @@ simple_response (httpd_req_t * req, const char *err)
 // Our own JSON-based control interface starts here
 
 static esp_err_t
-web_status (httpd_req_t * req)
+legacy_web_status (httpd_req_t * req)
 {                               // Web socket status report
    // TODO cookies
    int fd = httpd_req_to_sockfd (req);
@@ -1767,26 +1767,83 @@ web_status (httpd_req_t * req)
    return status ();
 }
 
-// The following handlers provide web-based control potocol, compatible
+// Legacy API
+// The following handlers provide web-based control protocol, compatible
 // with original Daikin BRP series online controllers.
+// These functions make use of the JSON library, even though the requests are query form formatted, and replies are comma formatted
+
+static jo_t
+legacy_ok (void)
+{
+   jo_t j = jo_object_alloc ();
+   jo_string (j, "ret", "ok");
+   return j;
+}
 
 static esp_err_t
-web_get_basic_info (httpd_req_t * req)
+legacy_send (httpd_req_t * req, jo_t * jp)
+{
+   httpd_resp_set_type (req, "text/plain");
+   if (jp && *jp)
+   {
+      jo_t j = *jp;
+      ESP_LOGE (TAG, "JSON %s", jo_debug (j));;
+      int len = jo_len (j);
+      char *buf = mallocspi (len + 40),
+         *p = buf;;
+      if (buf)
+      {
+         jo_rewind (j);
+         while (jo_next (j) == JO_TAG && p + 3 - buf < len)
+         {
+            if (p > buf)
+               *p++ = ',';
+            int l = jo_strlen (j);
+            if (p - buf + l + 2 > len)
+               break;
+            jo_strncpy (j, p, l + 1);
+            p += l;
+            *p++ = '=';
+            if (jo_next (j) < JO_STRING)
+               break;
+            l = jo_strlen (j);
+	    *p=0;
+	    ESP_LOGE(TAG,"So far %s len %d",buf,l);
+            if (p - buf + l + 2 > len)
+               break;
+            jo_strncpy (j, p, l + 1);
+            p += l;
+         }
+         *p = 0;
+         ESP_LOGE (TAG, "Send %s", buf);
+         httpd_resp_sendstr (req, buf);
+         free (buf);
+      }
+      jo_free (jp);
+   }
+   return ESP_OK;
+}
+
+static esp_err_t
+legacy_web_set_demand_control (httpd_req_t * req)
+{
+   // TODO
+   return ESP_OK;
+}
+
+static esp_err_t
+legacy_web_get_basic_info (httpd_req_t * req)
 {
    // Full string from my BRP module:
    // ret=OK,type=aircon,reg=eu,dst=0,ver=3_3_9,pow=0,err=0,location=0,name=%4c%69%76%69%6e%67%20%72%6f%6f%6d,
    // icon=2,method=home only,port=30050,id=,pw=,lpw_flag=0,adp_kind=2,pv=2,cpv=2,cpv_minor=00,led=1,en_setzone=1,
    // mac=<my_mac>,adp_mode=run,en_hol=0,ssid1=<my_ssid>,radio1=-60,grp_name=,en_grp=0
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
-   // Report something. In fact OpenHAB only uses this URL for discovery,
-   // and only checks for ret=OK.
-   o += sprintf (o, "ret=OK,type=aircon,reg=eu");
-   o += sprintf (o, ",mac=%02X%02X%02X%02X%02X%02X", revk_mac[0], revk_mac[1], revk_mac[2], revk_mac[3], revk_mac[4], revk_mac[5]);
-   o += sprintf (o, ",ssid1=%s", revk_wifi ());
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+   jo_t j = legacy_ok ();
+   jo_string (j, "type", "aircon");
+   jo_string (j, "reg", "eu");
+   jo_string (j, "mac", revk_id);
+   jo_string (j, "ssid", revk_wifi ());
+   return legacy_send (req, &j);
 }
 
 static char
@@ -1799,61 +1856,63 @@ brp_mode ()
 }
 
 static esp_err_t
-web_get_model_info (httpd_req_t * req)
+legacy_web_get_model_info (httpd_req_t * req)
 {
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
-   o += sprintf (o, "ret=OK");
-   o += sprintf (o, ",model=0000");     // Don't know it
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+   jo_t j = legacy_ok ();
+   jo_string (j, "model", daikin.model);
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
-web_get_control_info (httpd_req_t * req)
+legacy_web_get_control_info (httpd_req_t * req)
 {
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
-   o += sprintf (o, "ret=OK");
-   o += sprintf (o, ",pow=%d", daikin.power);
+   jo_t j = legacy_ok ();
+   jo_int (j, "pow", daikin.power);
    if (daikin.mode <= 7)
-      o += sprintf (o, ",mode=%c", brp_mode ());
-   o += sprintf (o, ",adv=%s", daikin.powerful ? "2" : "");     // TODO comfort/streamer/sensor/quiet
-   o += sprintf (o, ",stemp=%.1f", daikin.temp);
-   o += sprintf (o, ",shum=0");
+      jo_stringf (j, "mode", "%c", brp_mode ());
+   jo_string (j, "adv", daikin.powerful ? "2" : "");
+   jo_litf (j, "stemp", "%.1f", daikin.temp);
+   jo_int (j, "shum", 0);
    for (int i = 1; i <= 7; i++)
       if (i != 6)
-         o += sprintf (o, ",dt%d=%.1f", i, daikin.temp);
+      {
+         char tag[4] = { 'd', 't', '0' + i };
+         jo_litf (j, tag, "%.1f", daikin.temp);
+      }
    for (int i = 1; i <= 7; i++)
       if (i != 6)
-         o += sprintf (o, ",dh%d=0", i);
-   o += sprintf (o, ",dhh=0");
-   if (daikin.mode <= 7)
-      o += sprintf (o, ",b_mode=%c", brp_mode ());
-   o += sprintf (o, ",b_stemp=%.1f", daikin.temp);
-   o += sprintf (o, ",b_shum=0");
-   o += sprintf (o, ",alert=255");
+      {
+         char tag[4] = { 'd', 'h', '0' + i };
+         jo_int (j, tag, 0);
+      }
+   jo_int (j, "dhh", 0);
+   jo_litf (j, "b_stemp", "%.1f", daikin.temp);
+   jo_int (j, "b_shum", 0);
+   jo_int (j, "alert", 255);
    if (daikin.fan <= 6)
-      o += sprintf (o, ",f_rate=%c", "A34567B"[daikin.fan]);
-   o += sprintf (o, ",f_dir=%d", daikin.swingh * 2 + daikin.swingv);
+      jo_stringf (j, "f_rate", "%c", "A34567B"[daikin.fan]);
+   jo_int (j, "f_dir", daikin.swingh * 2 + daikin.swingv);
    for (int i = 1; i <= 7; i++)
       if (i != 6)
-         o += sprintf (o, ",dfr%d=0", i);
-   o += sprintf (o, ",dfrh=0");
+      {
+         char tag[5] = { 'd', 'f', 'r', '0' + i };
+         jo_int (j, tag, 0);
+      }
+   jo_int (j, "dfrh", 0);
    for (int i = 1; i <= 7; i++)
       if (i != 6)
-         o += sprintf (o, ",dfd%d=0", i);
-   o += sprintf (o, ",dfdh=0");
-   o += sprintf (o, ",dmnd_run=0");
-   o += sprintf (o, ",en_demand=0");
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+      {
+         char tag[5] = { 'd', 'f', 'd', '0' + i };
+         jo_int (j, tag, 0);
+      }
+   jo_int (j, "dfdh", 0);
+   jo_int (j, "dmnd_run", 0);
+   jo_int (j, "en_demand", 0);
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
-web_set_control_info (httpd_req_t * req)
+legacy_web_set_control_info (httpd_req_t * req)
 {
    char query[1000];
    const char *err = get_query (req, query, sizeof (query));
@@ -1909,7 +1968,7 @@ web_set_control_info (httpd_req_t * req)
 }
 
 static esp_err_t
-web_get_sensor_info (httpd_req_t * req)
+legacy_web_get_sensor_info (httpd_req_t * req)
 {
    // ret=OK,htemp=23.0,hhum=-,otemp=17.0,err=0,cmpfreq=0
    httpd_resp_set_type (req, "text/plain");
@@ -1934,7 +1993,7 @@ web_get_sensor_info (httpd_req_t * req)
 }
 
 static esp_err_t
-web_register_terminal (httpd_req_t * req)
+legacy_web_register_terminal (httpd_req_t * req)
 {
    // This is called with "?key=<security_key>" parameter if any other URL
    // responds with 403. It's supposed that we remember our client and enable access.
@@ -1949,7 +2008,7 @@ web_register_terminal (httpd_req_t * req)
 }
 
 static esp_err_t
-web_get_year_power (httpd_req_t * req)
+legacy_web_get_year_power (httpd_req_t * req)
 {
    // ret=OK,curr_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_heat=0/0/0/0/0/0/0/0/0/0/0/0,curr_year_cool=0/0/0/0/0/0/0/0/0/0/0/0,prev_year_cool=0/0/0/0/0/0/0/0/0/0/0/0
    httpd_resp_set_type (req, "text/plain");
@@ -1964,7 +2023,7 @@ web_get_year_power (httpd_req_t * req)
 }
 
 static esp_err_t
-web_get_week_power (httpd_req_t * req)
+legacy_web_get_week_power (httpd_req_t * req)
 {
    // ret=OK,s_dayw=2,week_heat=0/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
    httpd_resp_set_type (req, "text/plain");
@@ -1979,7 +2038,7 @@ web_get_week_power (httpd_req_t * req)
 }
 
 static esp_err_t
-web_set_special_mode (httpd_req_t * req)
+legacy_web_set_special_mode (httpd_req_t * req)
 {
    char query[200];
    const char *err = get_query (req, query, sizeof (query));
@@ -2472,23 +2531,24 @@ app_main ()
       config.stack_size += 1024;        // All the legacy stuff has a 1k buffer for reply, messy, but allow for it
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
-      config.max_uri_handlers = 12 + revk_num_web_handlers ();
+      config.max_uri_handlers = 13 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
          if (webcontrol >= 2)
             revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
          register_get_uri ("/apple-touch-icon.png", web_icon);
-         register_ws_uri ("/status", web_status);
-         register_get_uri ("/common/basic_info", web_get_basic_info);
-         register_get_uri ("/aircon/get_model_info", web_get_model_info);
-         register_get_uri ("/aircon/get_control_info", web_get_control_info);
-         register_get_uri ("/aircon/set_control_info", web_set_control_info);
-         register_get_uri ("/aircon/get_sensor_info", web_get_sensor_info);
-         register_get_uri ("/common/register_terminal", web_register_terminal);
-         register_get_uri ("/aircon/get_year_power_ex", web_get_year_power);
-         register_get_uri ("/aircon/get_week_power_ex", web_get_week_power);
-         register_get_uri ("/aircon/set_special_mode", web_set_special_mode);
+         register_ws_uri ("/status", legacy_web_status);
+         register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
+         register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
+         register_get_uri ("/aircon/get_control_info", legacy_web_get_control_info);
+         register_get_uri ("/aircon/set_control_info", legacy_web_set_control_info);
+         register_get_uri ("/aircon/get_sensor_info", legacy_web_get_sensor_info);
+         register_get_uri ("/common/register_terminal", legacy_web_register_terminal);
+         register_get_uri ("/aircon/get_year_power_ex", legacy_web_get_year_power);
+         register_get_uri ("/aircon/get_week_power_ex", legacy_web_get_week_power);
+         register_get_uri ("/aircon/set_special_mode", legacy_web_set_special_mode);
+         register_get_uri ("/aircon/set_demand_control", legacy_web_set_demand_control);
          // When adding, update config.max_uri_handlers
       }
    }
@@ -2870,7 +2930,7 @@ app_main ()
             if (daikin.fan && ((hot && current < min - 2 * switch10 * 0.1) || (!hot && current > max + 2 * switch10 * 0.1)))
             {                   // Not in auto mode, and not close to target temp - force a high fan to get there
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
-               daikin_set_v (fan, fmaxauto);   // Max fan at start
+               daikin_set_v (fan, fmaxauto);    // Max fan at start
             }
          }
          void controlstop (void)
