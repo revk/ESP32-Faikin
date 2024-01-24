@@ -1904,7 +1904,7 @@ legacy_web_get_control_info (httpd_req_t * req)
       }
    jo_int (j, "dfdh", 0);
    jo_int (j, "dmnd_run", 0);
-   jo_int (j, "en_demand", 0);
+   jo_int (j, "en_demand", 0); // TODO demand control
    return legacy_send (req, &j);
 }
 
