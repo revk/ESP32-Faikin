@@ -459,9 +459,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_val (sensor, payload[3] & 0x08 ? 1 : 0);
          }
          break;
-      case '7':                // 'G7' - "eco" mode
+      case '7':                // 'G7' - "demand" and "eco" mode
          if (check_length (cmd, cmd2, len, 2, payload))
          {
+            set_int (demand, 100 - (payload[0] - '0'));
             set_val (econo, payload[1] & 0x02 ? 1 : 0);
          }
          break;
@@ -546,8 +547,8 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    if (!(daikin.status_known & CONTROL_temp))
       daikin.temp = daikin.home;        // Cannot actually read temp target - use current temp first time
    daikin.status_known |=
-      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_econo | CONTROL_powerful | CONTROL_comfort |
-      CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
+      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_demand | CONTROL_econo | CONTROL_powerful |
+      CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
 }
 
 void
@@ -1467,14 +1468,12 @@ web_root (httpd_req_t * req)
                      "<td align=right>%s</td><td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
                      tag, help, field, field);
    }
-   void addtemp (const char *tag, const char *field)
+   void addtemp (const char *tag, const char *field, int min, int max, const char *step)
    {
       addh (tag);
       revk_web_send (req,
                      "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
-                     tmin, tmax,
-                     proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1", field,
-                     field, field);
+                     min, max, step, field, field, field);
       addf (tag);
    }
    revk_web_send (req, "<tr>");
@@ -1485,7 +1484,8 @@ web_root (httpd_req_t * req)
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addtemp ("Set", "temp");
+   addtemp ("Set", "temp", tmin, tmax,
+            proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
    void addt (const char *tag, const char *help)
    {
       revk_web_send (req, "<td title=\"%s\" align=right>%s<br><span id=\"%s\"></span></td>", help, tag, tag);
@@ -1507,6 +1507,8 @@ web_root (httpd_req_t * req)
       addt ("Hum", "External BLE humidity");
    }
    revk_web_send (req, "</tr>");
+   if (daikin.status_known & CONTROL_demand)
+      addtemp ("Demand", "demand", 0, 100, "1");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
       revk_web_send (req, "<tr>");
@@ -1562,7 +1564,8 @@ web_root (httpd_req_t * req)
       revk_web_send (req,
                      "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
       add ("Enable", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
-      addtemp ("Target", "autot");
+      addtemp ("Target", "autot", tmin, tmax,
+               proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
@@ -1643,6 +1646,8 @@ web_root (httpd_req_t * req)
                   "t('Liquid',o.liquid);"       //
                   "if(o.ble)t('BLE',o.ble.temp);"       //
                   "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
+                  "n('demand',o.demand);"       //
+                  "s('Tdemand',(o.demand!=undefined?o.demand+'%%':'---'));"     //
                   "n('temp',o.temp);"   //
                   "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
                   "b('autop',o.autop);" //
@@ -1692,7 +1697,7 @@ get_query (httpd_req_t * req, char *buf, size_t buf_len)
 // Our own JSON-based control interface starts here
 
 static esp_err_t
-legacy_web_status (httpd_req_t * req)
+web_status (httpd_req_t * req)
 {                               // Web socket status report
    int fd = httpd_req_to_sockfd (req);
    void wsend (jo_t * jp)
@@ -1823,8 +1828,32 @@ legacy_simple_response (httpd_req_t * req, const char *err)
 static esp_err_t
 legacy_web_set_demand_control (httpd_req_t * req)
 {
-   // TODO
-   return ESP_OK;
+   const char *err = NULL;
+   jo_t j = revk_web_query (req);
+   if (!j)
+      err = "Query failed";
+   else
+   {
+      int on = 0,
+         demand = 100;
+      if (jo_find (j, "en_demand"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+            on = atoi (v);
+         free (v);
+      }
+      if (jo_find (j, "max_pow"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+            demand = atoi (v);
+         free (v);
+      }
+      daikin_set_i_e (err, demand, on ? demand : 100);
+      jo_free (&j);
+   }
+   return legacy_simple_response (req, err);
 }
 
 static esp_err_t
@@ -1901,81 +1930,96 @@ legacy_web_get_control_info (httpd_req_t * req)
 static esp_err_t
 legacy_web_set_control_info (httpd_req_t * req)
 {
-   char query[1000];
-   const char *err = get_query (req, query, sizeof (query));
-   if (!err)
+   const char *err = NULL;
+   jo_t j = revk_web_query (req);
+   if (!j)
+      err = "Query failed";
+   else
    {
-      char value[10];
-      if (!httpd_query_key_value (query, "pow", value, sizeof (value)) && *value)
-         daikin_set_v_e (err, power, *value == '1');
-      if (!httpd_query_key_value (query, "mode", value, sizeof (value)) && *value)
+      if (jo_find (j, "pow"))
       {
-         // Orifinal Faikin-ESP32 code uses 1 for 'Auto` mode
-         // OpenHAB uses value of 0
-         // My original Daikin BRP069A41 controller reports 7. I tried writing '1' there,
-         // it starts replying back with this value, but there's no way to see what
-         // the AC does. Probably nothing.
-         // Here we promote all three values as 'Auto'. Just in case.
-         static int8_t modes[] = { 3, 3, 7, 2, 1, -1, 0, 3 };   // AADCH-FA
-         int8_t setval = (*value >= '0' && *value <= '7') ? modes[*value - '0'] : -1;
-         if (setval == -1)
-            err = "Invalid mode value";
-         else
-            daikin_set_v_e (err, mode, setval);
+         char *v = jo_strdup (j);
+         if (v)
+            daikin_set_v_e (err, power, atoi (v));
+         free (v);
       }
-      if (!httpd_query_key_value (query, "stemp", value, sizeof (value)) && *value)
-         daikin_set_t_e (err, temp, strtof (value, NULL));
-      if (!httpd_query_key_value (query, "f_rate", value, sizeof (value)) && *value)
+      if (jo_find (j, "mode"))
       {
-         int8_t setval;
-         if (*value == 'A')
-            setval = 0;
-         else if (*value == 'B')
-            setval = 6;
-         else if (*value >= '3' && *value <= '7')
-            setval = *value - '2';
-         else
-            setval = -1;
-         if (setval == -1)
-            err = "Invalid f_rate value";
-         else
-            daikin_set_v_e (err, fan, setval);
+         char *v = jo_strdup (j);
+         if (v)
+         {
+		 int n=atoi(v);
+            static int8_t modes[] = { 3, 3, 7, 2, 1, -1, 0, 3 };        // AADCH-FA
+            int8_t setval = (n >= 0 && n <= 7) ? modes[n] : -1;
+            if (setval == -1)
+               err = "Invalid mode value";
+            else
+               daikin_set_v_e (err, mode, setval);
+         }
+         free (v);
       }
-      if (!httpd_query_key_value (query, "f_dir", value, sizeof (value)) && *value)
+      if (jo_find (j, "stemp"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+            daikin_set_t_e (err, temp, strtof (v, NULL));
+         free (v);
+      }
+      if (jo_find (j, "f_rate"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+         {
+            int8_t setval;
+            if (*v == 'A')
+               setval = 0;
+            else if (*v == 'B')
+               setval = 6;
+            else if (*v >= '3' && *v <= '7')
+               setval = *v - '2';
+            else
+               setval = -1;
+            if (setval == -1)
+               err = "Invalid f_rate value";
+            else
+               daikin_set_v_e (err, fan, setval);
+         }
+         free (v);
+      }
+      if (jo_find (j, "f_dir"))
       {
          // *value is a bitfield, expressed as a single ASCII digit '0' - '3'
          // Since '0' is 0x30, we don't bother, bit checks work as they should
-         daikin_set_v_e (err, swingv, *value & 1);
-         daikin_set_v_e (err, swingh, !!(*value & 2));
+         char *v = jo_strdup (j);
+         if (v)
+         {
+            int n = atoi (v);
+            daikin_set_v_e (err, swingv, n);
+            daikin_set_v_e (err, swingh, !!(n & 2));
+         }
+         free (v);
       }
+      jo_free (&j);
    }
-
    return legacy_simple_response (req, err);
 }
 
 static esp_err_t
 legacy_web_get_sensor_info (httpd_req_t * req)
 {
-   // ret=OK,htemp=23.0,hhum=-,otemp=17.0,err=0,cmpfreq=0
-   httpd_resp_set_type (req, "text/plain");
-   char resp[1000],
-    *o = resp;
-   o += sprintf (o, "ret=OK");
-   o += sprintf (o, ",htemp="); // Indoor temperature
+   jo_t j = legacy_ok ();
    if (daikin.status_known & CONTROL_home)
-      o += sprintf (o, "%.2f", daikin.home);
+      jo_litf (j, "htemp", "%.2f", daikin.home);
    else
-      *o++ = '-';
-   o += sprintf (o, ",hhum=-"); // Indoor humidity, not supported (yet)
-   o += sprintf (o, ",otemp="); // Outdoor temperature
+      jo_string (j, "htemp", "-");
+   jo_string (j, "hhum", "-");
    if (daikin.status_known & CONTROL_outside)
-      o += sprintf (o, "%.2f", daikin.outside);
+      jo_litf (j, "otemp", "%.2f", daikin.outside);
    else
-      *o++ = '-';
-   o += sprintf (o, ",err=0");  // Just for completeness
-   o += sprintf (o, ",cmpfreq=-");      // Compressor frequency, not supported (yet)
-   httpd_resp_sendstr (req, resp);
-   return ESP_OK;
+      jo_string (j, "otemp", "-");
+   jo_int (j, "err", 0);
+   jo_string (j, "cmpfreq", "-");
+   return legacy_send (req, &j);
 }
 
 static esp_err_t
@@ -2025,9 +2069,9 @@ legacy_web_set_special_mode (httpd_req_t * req)
       {
          if (!strcmp (mode, "12"))
             err = daikin_set_v (econo, *value == '1');
-          else if (!strcmp (mode, "2"))
+         else if (!strcmp (mode, "2"))
             err = daikin_set_v (powerful, *value == '1');
-          else
+         else
             err = "Unsupported spmode_kind value";
          // TODO comfort/streamer/sensor/quiet
 
@@ -2251,6 +2295,8 @@ ha_status (void)
       jo_litf (j, "liquid", "%.2f", daikin.liquid);
    if (daikin.status_known & CONTROL_comp)
       jo_int (j, "comp", daikin.comp);
+   if (daikin.status_known & CONTROL_demand)
+      jo_int (j, "demand", daikin.demand);
 #if 0
    if (daikin.status_known & CONTROL_fanrpm)
       jo_int (j, "fanrpm", daikin.fanrpm);
@@ -2321,7 +2367,7 @@ revk_web_extra (httpd_req_t * req)
    revk_web_setting_b (req, "Home Assistant", "ha", ha, "Announces HA config via MQTT");
    revk_web_setting_b (req, "BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    revk_web_setting_b (req, "Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
-   revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
+   revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes (unless slaved)");
 }
 
 // --------------------------------------------------------------------------------
@@ -2507,7 +2553,7 @@ app_main ()
             revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
          register_get_uri ("/apple-touch-icon.png", web_icon);
-         register_ws_uri ("/status", legacy_web_status);
+         register_ws_uri ("/status", web_status);
          register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
          register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
          register_get_uri ("/aircon/get_control_info", legacy_web_get_control_info);
@@ -2754,10 +2800,10 @@ app_main ()
                   }
                   xSemaphoreGive (daikin.mutex);
                }
-               if (daikin.control_changed & CONTROL_econo)
+               if (daikin.control_changed & (CONTROL_demand | CONTROL_econo))
                {                // D7
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  temp[0] = '0';
+                  temp[0] = '0' + 100 - daikin.demand;
                   temp[1] = '0' + (daikin.econo ? 2 : 0);
                   temp[2] = '0';
                   temp[3] = '0';
@@ -2975,7 +3021,7 @@ app_main ()
                      int step = (fanstep ? : (proto_type (proto) == PROTO_TYPE_S21) ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
-                        if (!lockmode)
+                        if (!lockmode || daikin.slave)
                         {
                            jo_string (j, "set-mode", hot ? "C" : "H");
                            daikin_set_e (mode, hot ? "C" : "H");        // Swap mode
