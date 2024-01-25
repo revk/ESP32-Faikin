@@ -1923,7 +1923,7 @@ legacy_web_get_control_info (httpd_req_t * req)
       }
    jo_int (j, "dfdh", 0);
    jo_int (j, "dmnd_run", 0);
-   jo_int (j, "en_demand", 0);  // TODO demand control
+   jo_int (j, "en_demand", (daikin.status_known & CONTROL_demand) && daikin.demand < 100 ? 1 : 0);
    return legacy_send (req, &j);
 }
 
@@ -1948,7 +1948,7 @@ legacy_web_set_control_info (httpd_req_t * req)
          char *v = jo_strdup (j);
          if (v)
          {
-		 int n=atoi(v);
+            int n = atoi (v);
             static int8_t modes[] = { 3, 3, 7, 2, 1, -1, 0, 3 };        // AADCH-FA
             int8_t setval = (n >= 0 && n <= 7) ? modes[n] : -1;
             if (setval == -1)
