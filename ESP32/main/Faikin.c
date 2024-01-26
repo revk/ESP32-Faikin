@@ -164,7 +164,9 @@ static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
-#define	CN_WIRED_SYNC	2600    // Timings uS
+#define	CN_WIRED_ACK	2000    // Timings uS
+#define	CN_WIRED_GAP	9000
+#define	CN_WIRED_SYNC	2600
 #define	CN_WIRED_START	1000
 #define	CN_WIRED_SPACE	300
 #define	CN_WIRED_0	400
@@ -230,8 +232,7 @@ daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
-   if (!daikin.control_changed)
-      daikin.seq ^= 1;
+   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -246,8 +247,7 @@ daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
    if (!(daikin.status_known & flag))
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-   if (!daikin.control_changed)
-      daikin.seq ^= 1;
+   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    *ptr = value;
@@ -280,8 +280,7 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
       value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
-   if (!daikin.control_changed)
-      daikin.seq ^= 1;
+   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -539,8 +538,8 @@ daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
-   if ((payload[7] & 0xF) == daikin.seq)
-      daikin.control_changed = 0;
+   //if ((payload[7] & 0xF) == daikin.seq)
+   daikin.control_changed = 0; // TODO for now
    // Values
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
    // TODO
@@ -836,7 +835,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    void send (void)
    {
       // Checksum (LOL)
-      buf[len - 1] = daikin.seq;
+      //buf[len - 1] = daikin.seq;
       uint8_t sum = (buf[len - 1] & 0x0F);
       for (int i = 0; i < len - 1; i++)
          sum += (buf[i] >> 4) + buf[i];
@@ -852,9 +851,13 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          .flags.eot_level = 1,
       };
       // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-      rmt_symbol_word_t seq[2 + len * 8 + 1];
+      rmt_symbol_word_t seq[3 + len * 8 + 1];
       int p = 0;
-      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts?
+      seq[p].duration0 = CN_WIRED_ACK;	// ACK Rx
+      seq[p].level0 = 0;
+      seq[p].duration1 = CN_WIRED_GAP;
+      seq[p++].level1 = 1;
+      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
       seq[p].level0 = 0;
       seq[p].duration1 = 1000;
       seq[p++].level1 = 0;
