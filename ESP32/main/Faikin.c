@@ -1328,6 +1328,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          jo_bool (s, "econo", *value == 'e');
          jo_bool (s, "powerful", *value == 'b');
       }
+      if (!strcmp (suffix, "demand"))
+         jo_int (s, "demand", atoi (value));
       // TODO comfort/streamer/sensor/quiet
    }
 
@@ -2316,7 +2318,7 @@ ha_status (void)
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
-      jo_string (j, "mode", daikin.power ? autor&&lockmode ? "auto" : modes[daikin.mode] : "off");        // If we are controlling, it is auto
+      jo_string (j, "mode", daikin.power ? autor && lockmode ? "auto" : modes[daikin.mode] : "off");    // If we are controlling, it is auto
    }
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
