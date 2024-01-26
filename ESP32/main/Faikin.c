@@ -2316,7 +2316,7 @@ ha_status (void)
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
-      jo_string (j, "mode", daikin.power ? autor ? "auto" : modes[daikin.mode] : "off");        // If we are controlling, it is auto
+      jo_string (j, "mode", daikin.power ? autor&&lockmode ? "auto" : modes[daikin.mode] : "off");        // If we are controlling, it is auto
    }
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
@@ -2367,7 +2367,7 @@ revk_web_extra (httpd_req_t * req)
    revk_web_setting_b (req, "Home Assistant", "ha", ha, "Announces HA config via MQTT");
    revk_web_setting_b (req, "BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    revk_web_setting_b (req, "Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
-   revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes (unless slaved)");
+   revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
 }
 
 // --------------------------------------------------------------------------------
@@ -3021,7 +3021,7 @@ app_main ()
                      int step = (fanstep ? : (proto_type (proto) == PROTO_TYPE_S21) ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
-                        if (!lockmode || daikin.slave)
+                        if (!lockmode)
                         {
                            jo_string (j, "set-mode", hot ? "C" : "H");
                            daikin_set_e (mode, hot ? "C" : "H");        // Swap mode
