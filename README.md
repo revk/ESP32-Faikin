@@ -18,7 +18,7 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 ## Cabling
 
-If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit.
+If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit. The S21 cable is *one to one* wired, i.e. pin 1 to pin 1. Note that Pin 5 is ⏚.
 
 **WARNING** Messing about in your air-con unit can be dangerous with live power, and could damage the unit. Take all precautions necessary and you mess with your air-con unit at your own risk!
 
