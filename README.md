@@ -10,6 +10,8 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 
 Support is provided here ([issues](issues) and [discussions](discussions)).
 
+See [Work in progress and releases](Work-in-progress) for details of changes and pre-release test.
+
 ## PCB
 
 The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this. See wiki [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units).
