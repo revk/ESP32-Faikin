@@ -13,5 +13,5 @@ again:
 idf.py flash --port $d[1]
 if($status) goto again
 
-./idfmon $d[1]
+components/ESP32-RevK/idfmon $d[1]
 goto again
