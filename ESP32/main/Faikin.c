@@ -2392,6 +2392,7 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 void
 revk_web_extra (httpd_req_t * req)
 {
+   revk_web_setting_b (req, "Beta software", "otabeta", otabeta, "Load early release beta software");
    revk_web_setting_b (req, "Home Assistant", "ha", ha, "Announces HA config via MQTT");
    revk_web_setting_b (req, "BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    revk_web_setting_b (req, "Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
