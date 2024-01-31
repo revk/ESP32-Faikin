@@ -31,6 +31,7 @@ static const char TAG[] = "Faikin";
 
 // Settings (RevK library used by MQTT setting command)
 
+extern	uint8_t otabeta;
 #ifdef	CONFIG_IDF_TARGET_ESP32S3
 #define	gpio			\
 	io(tx,-48)		\
