@@ -22,10 +22,21 @@ issue:
 	-git submodule update --recursive
 	-git commit -a -m checkpoint
 	@make set
+	cp $(PROJECT_NAME)*.bin beta
 	cp $(PROJECT_NAME)*.bin release
 	git commit -a -m release
 	git push
 
+test:	
+	-git pull
+	-git submodule update --recursive
+	-git commit -a -m checkpoint
+	@make set
+	cp $(PROJECT_NAME)*.bin beta
+	git commit -a -m beta
+	git push
+
+set:    wroom1 wroom solo pico s3
 set:    wroom1 wroom solo pico s3
 
 s3:
