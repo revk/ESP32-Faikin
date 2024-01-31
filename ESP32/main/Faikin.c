@@ -2281,23 +2281,25 @@ send_ha_config (void)
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
    addtemp (ble && bletemp && bletemp->tempset, "bletemp", "mdi:thermometer");
-   addhum (ble && bletemp && bletemp->humse, "blehum", "mdi:water-percent");
+   addhum (ble && bletemp && bletemp->humset, "blehum", "mdi:water-percent");
    addbat (ble && bletemp && bletemp->batset, "blebat", "mdi:battery-bluetooth-variant");
 #if 0
-   if (daikin.status_known & CONTROL_demand)
+   if (asprintf (&topic, "homeassistant/select/%sdemand/config", revk_id) >= 0)
    {
-      if (asprintf (&topic, "homeassistant/select/%sdemand/config", revk_id) >= 0)
+      if (!(daikin.status_known & CONTROL_demand))
+         revk_mqtt_send_str (topic);
+      else
       {
          jo_t j = make ("demand", NULL);
          jo_string (j, "name", "Demand control");
-         jo_string (j, "command_topic", revk_id);
+         jo_stringf (j, "command_topic", "%s/demand", revk_id);
          jo_array (j, "options");
          for (int i = 0; i <= 100; i += 5)
             jo_int (j, NULL, i);
          jo_close (j);
          revk_mqtt_send (NULL, 1, topic, &j);
-         free (topic);
       }
+      free (topic);
    }
 #endif
 }
