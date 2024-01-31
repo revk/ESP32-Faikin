@@ -31,7 +31,7 @@ static const char TAG[] = "Faikin";
 
 // Settings (RevK library used by MQTT setting command)
 
-extern	uint8_t otabeta;
+extern uint8_t otabeta;
 #ifdef	CONFIG_IDF_TARGET_ESP32S3
 #define	gpio			\
 	io(tx,-48)		\
@@ -1494,7 +1494,7 @@ web_root (httpd_req_t * req)
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addslider ("Set", "temp", tmin, tmax,
-            proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
+              proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
    void addt (const char *tag, const char *help)
    {
       revk_web_send (req, "<td title=\"%s\" align=right>%s<br><span id=\"%s\"></span></td>", help, tag, tag);
@@ -1575,7 +1575,7 @@ web_root (httpd_req_t * req)
       add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
            fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
       addslider ("Target", "autot", tmin, tmax,
-               proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
+                 proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
@@ -2121,59 +2121,79 @@ send_ha_config (void)
          jo_string (j, "icon", icon);
       return j;
    }
-   void addtemp (const char *tag, const char *icon)
+   void addtemp (uint64_t ok, const char *tag, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag, icon);
-         jo_string (j, "name", tag);
-         jo_string (j, "dev_cla", "temperature");
-         jo_string (j, "stat_t", revk_id);
-         jo_string (j, "unit_of_meas", "°C");
-         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-         revk_mqtt_send (NULL, 1, topic, &j);
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "temperature");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", "°C");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
          free (topic);
       }
    }
-   void addhum (const char *tag, const char *icon)
+   void addhum (uint64_t ok, const char *tag, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag, icon);
-         jo_string (j, "name", tag);
-         jo_string (j, "dev_cla", "humidity");
-         jo_string (j, "stat_t", revk_id);
-         jo_string (j, "unit_of_meas", "%");
-         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-         revk_mqtt_send (NULL, 1, topic, &j);
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "humidity");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
          free (topic);
       }
    }
-   void addfreq (const char *tag, const char *unit, const char *icon)
+   void addfreq (uint64_t ok, const char *tag, const char *unit, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag, icon);
-         jo_string (j, "name", tag);
-         jo_string (j, "dev_cla", "frequency");
-         jo_string (j, "stat_t", revk_id);
-         jo_string (j, "unit_of_meas", unit);
-         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-         revk_mqtt_send (NULL, 1, topic, &j);
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "frequency");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", unit);
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
          free (topic);
       }
    }
-   void addbat (const char *tag, const char *icon)
+   void addbat (uint64_t ok, const char *tag, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
       {
-         jo_t j = make (tag, icon);
-         jo_string (j, "name", tag);
-         jo_string (j, "dev_cla", "battery");
-         jo_string (j, "stat_t", revk_id);
-         jo_string (j, "unit_of_meas", "%");
-         jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-         revk_mqtt_send (NULL, 1, topic, &j);
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "battery");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
          free (topic);
       }
    }
@@ -2255,30 +2275,14 @@ send_ha_config (void)
       revk_mqtt_send (NULL, 1, topic, &j);
       free (topic);
    }
-   if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
-      addtemp ("inlet", "mdi:thermometer");     // Both defined so we used home as temp, so lets add inlet here
-   if (daikin.status_known & CONTROL_outside)
-      addtemp ("outside", "mdi:thermometer");
-   if (daikin.status_known & CONTROL_liquid)
-      addtemp ("liquid", "mdi:coolant-temperature");
-   if (daikin.status_known & CONTROL_comp)
-      addfreq ("comp", "Hz", "mdi:sine-wave");
-#if 0
-   if (daikin.status_known & CONTROL_fanrpm)
-      addfreq ("fanrpm", "rpm", "mdi:fan");
-#else
-   if (daikin.status_known & CONTROL_fanrpm)
-      addfreq ("fanfreq", "Hz", "mdi:fan");
-#endif
-   if (ble && bletemp)
-   {
-      if (bletemp->tempset)
-         addtemp ("bletemp", "mdi:thermometer");
-      if (bletemp->humset)
-         addhum ("blehum", "mdi:water-percent");
-      if (bletemp->batset)
-         addbat ("blebat", "mdi:battery-bluetooth-variant");
-   }
+   addtemp ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet), "inlet", "mdi:thermometer"); // Both defined so we used home as temp, so lets add inlet here
+   addtemp (daikin.status_known & CONTROL_outside, "outside", "mdi:thermometer");
+   addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
+   addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
+   addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
+   addtemp (ble && bletemp && bletemp->tempset, "bletemp", "mdi:thermometer");
+   addhum (ble && bletemp && bletemp->humse, "blehum", "mdi:water-percent");
+   addbat (ble && bletemp && bletemp->batset, "blebat", "mdi:battery-bluetooth-variant");
 #if 0
    if (daikin.status_known & CONTROL_demand)
    {
