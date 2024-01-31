@@ -46,6 +46,8 @@ static const char TAG[] = "Faikin";
 #endif
 
 #define	settings		\
+	bl(fahrenheit)		\
+	b(nodemand,false)	\
 	u8(swingmodes,3)	\
 	u8(webcontrol,2)	\
 	u8(protocol,0)		\
@@ -461,7 +463,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '7':                // 'G7' - "demand" and "eco" mode
          if (check_length (cmd, cmd2, len, 2, payload))
          {
-            set_int (demand, 100 - (payload[0] - '0'));
+            if (!nodemand && payload[0] != '1')
+               set_int (demand, 100 - (payload[0] - '0'));
             set_val (econo, payload[1] & 0x02 ? 1 : 0);
          }
          break;
@@ -539,7 +542,7 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    if (len != CN_WIRED_LEN)
       return;
    //if ((payload[7] & 0xF) == daikin.seq)
-   daikin.control_changed = 0; // TODO for now
+   daikin.control_changed = 0;  // TODO for now
    // Values
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
    // TODO
@@ -853,7 +856,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
       rmt_symbol_word_t seq[3 + len * 8 + 1];
       int p = 0;
-      seq[p].duration0 = CN_WIRED_ACK;	// ACK Rx
+      seq[p].duration0 = CN_WIRED_ACK;  // ACK Rx
       seq[p].level0 = 0;
       seq[p].duration1 = CN_WIRED_GAP;
       seq[p++].level1 = 1;
@@ -1473,7 +1476,7 @@ web_root (httpd_req_t * req)
                      "<td align=right>%s</td><td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
                      tag, help, field, field);
    }
-   void addtemp (const char *tag, const char *field, int min, int max, const char *step)
+   void addslider (const char *tag, const char *field, int min, int max, const char *step)
    {
       addh (tag);
       revk_web_send (req,
@@ -1489,7 +1492,7 @@ web_root (httpd_req_t * req)
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addtemp ("Set", "temp", tmin, tmax,
+   addslider ("Set", "temp", tmin, tmax,
             proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
    void addt (const char *tag, const char *help)
    {
@@ -1513,7 +1516,7 @@ web_root (httpd_req_t * req)
    }
    revk_web_send (req, "</tr>");
    if (daikin.status_known & CONTROL_demand)
-      addtemp ("Demand", "demand", 0, 100, "1");
+      addslider ("Demand", "demand", 0, 100, "5");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
       revk_web_send (req, "<tr>");
@@ -1568,8 +1571,9 @@ web_root (httpd_req_t * req)
       }
       revk_web_send (req,
                      "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
-      add ("Enable", "autor", "Off", "0", "±½℃", "0.5", "±1℃", "1", "±2℃", "2", NULL);
-      addtemp ("Target", "autot", tmin, tmax,
+      add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
+           fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
+      addslider ("Target", "autot", tmin, tmax,
                proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       revk_web_send (req, "<tr>");
@@ -1614,6 +1618,7 @@ web_root (httpd_req_t * req)
                   "<script>"    //
                   "var ws=0;"   //
                   "var reboot=0;"       //
+                  "function cf(v){return %s;}"  //
                   "function g(n){return document.getElementById(n);};"  //
                   "function b(n,v){var d=g(n);if(d)d.checked=v;}"       //
                   "function h(n,v){var d=g(n);if(d)d.style.display=v?'block':'none';}"  //
@@ -1621,7 +1626,7 @@ web_root (httpd_req_t * req)
                   "function n(n,v){var d=g(n);if(d)d.value=v;}" //
                   "function e(n,v){var d=g(n+v);if(d)d.checked=true;}"  //
                   "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"      //
-                  "function t(n,v){s(n,v!=undefined?v+'℃':'---');}"   //
+                  "function t(n,v){s(n,v!=undefined?cf(v):'---');}"     //
                   "function c(){"       //
                   "ws=new WebSocket('ws://'+window.location.host+'/status');"   //
                   "ws.onopen=function(v){g('top').className='on';};"    //
@@ -1654,21 +1659,21 @@ web_root (httpd_req_t * req)
                   "n('demand',o.demand);"       //
                   "s('Tdemand',(o.demand!=undefined?o.demand+'%%':'---'));"     //
                   "n('temp',o.temp);"   //
-                  "s('Ttemp',(o.temp?o.temp+'℃':'---')+(o.control?'✷':''));"        //
+                  "s('Ttemp',(o.temp?cf(o.temp):'---')+(o.control?'✷':''));"  //
                   "b('autop',o.autop);" //
                   "e('autor',o.autor);" //
                   "n('autob',o.autob);" //
                   "n('auto0',o.auto0);" //
                   "n('auto1',o.auto1);" //
                   "n('autot',o.autot);" //
-                  "s('Tautot',(o.autot?o.autot+'℃':''));"     //
+                  "s('Tautot',(o.autot?cf(o.autot):''));"       //
                   "s('0/1',(o.slave?'❋':'')+(o.antifreeze?'❄':''));"        //
                   "s('Fan',(o.fanrpm?o.fanrpm+'RPM':'')+(o.antifreeze?'❄':'')+(o.control?'✷':''));" //
                   "e('fan',o.fan);"     //
                   "if(o.shutdown){reboot=true;s('shutdown','Restarting: '+o.shutdown);h('shutdown',true);};"    //
                   "};};c();"    //
                   "setInterval(function() {if(!ws)c();else ws.send('');},1000);"        //
-                  "</script>");
+                  "</script>", fahrenheit ? "Math.round(10*((v*9/5)+32))/10+'℉'" : "v+'℃'");
    return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, protocol_set ? prototype[proto_type (proto)] : NULL);
 }
 
@@ -2111,7 +2116,8 @@ send_ha_config (void)
       jo_string (j, "mf", "RevK");
       jo_stringf (j, "cu", "http://%s.local/", hostname);
       jo_close (j);
-      jo_string (j, "icon", icon);
+      if (icon)
+         jo_string (j, "icon", icon);
       return j;
    }
    void addtemp (const char *tag, const char *icon)
@@ -2272,6 +2278,23 @@ send_ha_config (void)
       if (bletemp->batset)
          addbat ("blebat", "mdi:battery-bluetooth-variant");
    }
+#if 0
+   if (daikin.status_known & CONTROL_demand)
+   {
+      if (asprintf (&topic, "homeassistant/select/%sdemand/config", revk_id) >= 0)
+      {
+         jo_t j = make ("demand", NULL);
+         jo_string (j, "name", "Demand control");
+         jo_string (j, "command_topic", revk_id);
+         jo_array (j, "options");
+         for (int i = 0; i <= 100; i += 5)
+            jo_int (j, NULL, i);
+         jo_close (j);
+         revk_mqtt_send (NULL, 1, topic, &j);
+         free (topic);
+      }
+   }
+#endif
 }
 
 static void
@@ -2373,6 +2396,10 @@ revk_web_extra (httpd_req_t * req)
    revk_web_setting_b (req, "BLE Sensors", "ble", ble, "Remote BLE temperature sensor");
    revk_web_setting_b (req, "Dark mode", "dark", dark, "Dark mode means on-board LED is normally switched off");
    revk_web_setting_b (req, "Lock mode", "lockmode", lockmode, "Don't auto switch heat/cool modes");
+   revk_web_setting_b (req, "Fahrenheit", "fahrenheit", fahrenheit, "Show ℉ on web controls");
+   if (nodemand || (daikin.status_known & CONTROL_demand))
+      revk_web_setting_b (req, "No demand", "nodemand", nodemand, "Disable demand control feature");
+   revk_web_setting_b (req, "Fahrenheit", "fahrenheit", fahrenheit, "Show ℉ on web controls");
 }
 
 // --------------------------------------------------------------------------------
