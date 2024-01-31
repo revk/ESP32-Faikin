@@ -10,7 +10,7 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 
 Support is provided here ([issues](issues) and [discussions](discussions)).
 
-See [Work in progress and releases](wiki/Work-in-progress) for details of changes and pre-release test.
+See [wiki/Work-in-progress](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress) for details of changes and pre-release test.
 
 ## PCB
 
