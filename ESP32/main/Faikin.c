@@ -2401,7 +2401,6 @@ revk_web_extra (httpd_req_t * req)
    revk_web_setting_b (req, "Fahrenheit", "fahrenheit", fahrenheit, "Show ℉ on web controls");
    if (nodemand || (daikin.status_known & CONTROL_demand))
       revk_web_setting_b (req, "No demand", "nodemand", nodemand, "Disable demand control feature");
-   revk_web_setting_b (req, "Fahrenheit", "fahrenheit", fahrenheit, "Show ℉ on web controls");
 }
 
 // --------------------------------------------------------------------------------
