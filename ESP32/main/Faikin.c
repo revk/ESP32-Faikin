@@ -2363,15 +2363,19 @@ blink_task (void *p)
    {
       usleep (100000);
       uint32_t rgb = revk_blinker ();
+      ESP_LOGE (TAG, "RGB %06lX", rgb);
       if (!blink[1].set)
          gpio_set_level (blink[0].num, (rgb ? 1 : 0) ^ blink[0].invert);        // Single LED on
       else if (blink[0].num != blink[1].num)
       {                         // Separate RGB on
-         gpio_set_level (blink[0].num, ((rgb >> 31) ^ blink[0].invert) & 1);
-         gpio_set_level (blink[1].num, ((rgb >> 15) ^ blink[1].invert) & 1);
-         gpio_set_level (blink[2].num, ((rgb >> 7) ^ blink[2].invert) & 1);
+	                  revk_gpio_set (blink[0], (rgb >> 24) & 0xF0 ? 1 : 0);
+                 revk_gpio_set (blink[1], (rgb >> 16) & 0xF0 ? 1 : 0);
+                 revk_gpio_set (blink[2], rgb & 0xF0 ? 1 : 0);
       } else
+      {
          revk_led (strip, 0, 255, rgb);
+         led_strip_refresh (strip);
+      }
    }
 }
 #endif
