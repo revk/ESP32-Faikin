@@ -2363,7 +2363,6 @@ blink_task (void *p)
    {
       usleep (100000);
       uint32_t rgb = revk_blinker ();
-      ESP_LOGE (TAG, "%08lX", rgb);
       if (!blink[1].set)
          revk_gpio_set (blink[0], (rgb >> 31) & 1);
       else if (blink[0].num != blink[1].num)
