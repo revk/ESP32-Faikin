@@ -2326,6 +2326,50 @@ revk_web_extra (httpd_req_t * req)
       revk_web_setting_b (req, "No demand", "nodemand", nodemand, "Disable demand control feature");
 }
 
+#ifndef	CONFIG_REVK_BLINK_LIB
+void
+blink_task (void *p)
+{
+   led_strip_handle_t strip = NULL;
+   if (blink[0].set && blink[0].num == blink[1].num)
+   {                            // Initialise the LED strip for one LED. This can, however, be pre-set by the app where we will refresh every 10th second and set 1st LED for status
+      led_strip_config_t strip_config = {
+         .strip_gpio_num = (blink[0].num),
+         .max_leds = 1,         // The number of LEDs in the strip,
+         .led_pixel_format = LED_PIXEL_FORMAT_GRB,      // Pixel format of your LED strip
+         .led_model = LED_MODEL_WS2812, // LED strip model
+         .flags.invert_out = blink[0].invert,   // whether to invert the output signal (useful when your hardware has a level inverter)
+      };
+      led_strip_rmt_config_t rmt_config = {
+         .clk_src = RMT_CLK_SRC_DEFAULT,        // different clock source can lead to different power consumption
+         .resolution_hz = 10 * 1000 * 1000,     // 10MHz
+         // One LED so no need for DMA
+      };
+      REVK_ERR_CHECK (led_strip_new_rmt_device (&strip_config, &rmt_config, &strip));
+   }
+   if (blink[0].set && blink[0].num != blink[1].num)
+   {
+      revk_gpio_output (blink[0]);
+      revk_gpio_output (blink[1]);
+      revk_gpio_output (blink[2]);
+   }
+   while (1)
+   {
+      usleep (100000);
+      uint32_t rgb = revk_blinker ();
+      if (!blink[1].set)
+         gpio_set_level (blink[0].num, (rgb ? 1 : 0) ^ blink[0].invert);        // Single LED on
+      else if (blink[0].num != blink[1].num)
+      {                         // Separate RGB on
+         gpio_set_level (blink[0].num, ((rgb >> 31) ^ blink[0].invert) & 1);
+         gpio_set_level (blink[1].num, ((rgb >> 15) ^ blink[1].invert) & 1);
+         gpio_set_level (blink[2].num, ((rgb >> 7) ^ blink[2].invert) & 1);
+      } else
+         revk_led (strip, 0, 255, rgb);
+   }
+}
+#endif
+
 // --------------------------------------------------------------------------------
 // Main
 void
@@ -2347,6 +2391,9 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
+#ifndef	CONFIG_REVK_BLINK_LIB
+   revk_task ("blink", blink_task, NULL, 4);
+#endif
    b.dumping = dump;
    revk_blink (0, 0, "");
    void uart_setup (void)
