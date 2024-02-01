@@ -1,11 +1,11 @@
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
 gpio	tx	-48
 gpio	rx	-34
-gpio	blink	47,47,47	.array=3
+gpio	blink	47,47,47		.array=3	.revk=1
 #else
 gpio	tx	-26
 gpio	rx	-27
-gpio	blink	-8,-19,-7	.array=3
+gpio	blink	-8,-19,-7		.array=3	.revk=1
 #endif
 
 bit	fahrenheit			.live=1
