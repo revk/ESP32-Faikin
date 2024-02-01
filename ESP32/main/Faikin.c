@@ -2333,6 +2333,7 @@ blink_task (void *p)
    led_strip_handle_t strip = NULL;
    if (blink[0].set && blink[0].num == blink[1].num)
    {                            // Initialise the LED strip for one LED. This can, however, be pre-set by the app where we will refresh every 10th second and set 1st LED for status
+      ESP_LOGE (TAG, "RGB %d", blink[0].num);
       led_strip_config_t strip_config = {
          .strip_gpio_num = (blink[0].num),
          .max_leds = 1,         // The number of LEDs in the strip,
@@ -2350,8 +2351,13 @@ blink_task (void *p)
    if (blink[0].set && blink[0].num != blink[1].num)
    {
       revk_gpio_output (blink[0]);
-      revk_gpio_output (blink[1]);
-      revk_gpio_output (blink[2]);
+      if (blink[1].set)
+      {
+         ESP_LOGE (TAG, "Discrete RGB %d/%d/%d", blink[0].num, blink[1].num, blink[2].num);
+         revk_gpio_output (blink[1]);
+         revk_gpio_output (blink[2]);
+      } else
+         ESP_LOGE (TAG, "Single LED %d", blink[0].num);
    }
    while (1)
    {
