@@ -1,0 +1,49 @@
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+gpio	tx	-48
+gpio	rx	-34
+#else
+gpio	tx	-26
+gpio	rx	-27
+#endif
+
+bit	fahrenheit			.live=1
+bit	nodemand
+u8	swingmodes	3
+u8	webcontrol	2
+u8	protocol
+bit	protofix
+bit	debug				.live=1
+bit	dump
+bit	snoop
+bit	livestatus			.live=1
+bit	dark
+bit	ble
+bit	ha		1
+bit	lockmode
+bit	fixstatus
+u8	uart		1		.fix=1
+u8	thermref	50		.live=1
+u8	autoptemp	0.5		.live=1	.decimal=1	.old="autop10"
+u8	coolover	6		.live=1
+u8	coolback	6		.live=1
+u8	heatover	6		.live=1
+u8	heatback	6		.live=1
+u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"
+u8	pushtemp	0.1		.live=1	.decimal=1	.old="push"
+u16	auto0				.live=1
+u16	auto1				.live=1
+u16	autot				.live=1	.decimal=1
+u8	autor				.live=1	.decimal=1
+bit	thermostat			.live=1
+bit	autop				.live=1
+s	autob				.live=1
+u8	tmin		16		.live=1
+u8	tmax		32		.live=1
+u8	fmaxauto	5		.live=1
+u32	tpredicts	30
+u32	tpredictt	120
+u32	tsample		900
+u32	tcontrol	600
+u8	fanstep
+u32	reporting	60
+s	model
