@@ -10,7 +10,7 @@ ifeq ($(wildcard /bin/csh),)
 $(error	Please install /bin/csh or equivalent)
 endif
 
-all:	
+all:	settings.h
 	@echo Make: $(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
@@ -36,8 +36,16 @@ test:
 	git commit -a -m beta
 	git push
 
-set:    wroom1 wroom solo pico s3
-set:    wroom1 wroom solo pico s3
+settings.h:     components/ESP32-RevK/revk_settings settings.def components/ESP32-RevK/settings.def
+	components/ESP32-RevK/revk_settings $^
+
+components/ESP32-RevK/revk_settings: components/ESP32-RevK/revk_settings.c
+	make -C components/ESP32-RevK revk_settings
+
+components/ESP32-RevK/idfmon: components/ESP32-RevK/idfmon.c
+	make -C components/ESP32-RevK idfmon
+
+set:    settings.h wroom1 wroom solo pico s3
 
 s3:
 	components/ESP32-RevK/setbuildsuffix -S3-MINI-N4-R2

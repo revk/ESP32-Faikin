@@ -48,7 +48,7 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`tsample`|Automation sampling time period (seconds), usually `900`|
 |`tpredicts`|Sample time (seconds) for predictive adjustment|
 |`tprecictt`|Total prediction time (seconds) for predictive adjustment|
-|`switch10` `push10`|This is our own hysteresis - it applies to min/max settings to allow for overshoot on heating/cooling.|
+|`switchtemp` `pushtemp`|This is our own hysteresis - it applies to min/max settings to allow for overshoot on heating/cooling.|
 |`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
 |`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
 |`autotime`|This is the time the auto command is considered valid after which we revert to simply setting auto mode on the aircon unit itself. You need to ensure the external control (environmental monitor) sends the auto command more often than this.|
@@ -62,14 +62,14 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`auto0`|Numeric in format HHMM, time to automatically turn off (0000 means don't turn off)|
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 |`autop`|Boolean, if we automatically turn on/off power based on temperature|
-|`autop10`|Temperature offset for auto turn on with `autop` x 10|
+|`autoptemp`|Temperature offset for auto turn on with `autop`|
 |`swingmodes`|Defaults to 3, which is 1 for `H` and 2 for `V`. This can limits modes shown|
 |`model`|Default model name for HA info|
 |`thermostat`|Experimental flag - if set, heat to `max`, allow to cool to `min`, etc, thermostat style|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 
-The automation works based on the current *min* and *max* target and *current* temperature. However, *min* and *max* are adjusted by `push10` and `switch10`. The *current* temperature is also adjusted based on `tpredict` settings. These show on the `automation` status report. These are then used to set a target tempurature on the aircon itself that is higher or lower than the unit thinks the current temperature is based on `coolover`/`heatover`, effectively turning it on/off.
+The automation works based on the current *min* and *max* target and *current* temperature. However, *min* and *max* are adjusted by `push` and `switchtemp`. The *current* temperature is also adjusted based on `tpredict` settings. These show on the `automation` status report. These are then used to set a target tempurature on the aircon itself that is higher or lower than the unit thinks the current temperature is based on `coolover`/`heatover`, effectively turning it on/off.
 
 ### Automatic on/off
 
@@ -77,13 +77,13 @@ Every `tsample` seconds the relationship of the adjusted *min*, *max* and *curre
 
 If `auto1` is set, the power on at start of that minute. If `auto0` is set, the power off at start of that minute.
 
-If `autop` is set, and the last sample period is entirely outside the target band, and the current temperature is more than `autop10`/10 degrees above or below the target band, then automatic power on.
+If `autop` is set, and the last sample period is entirely outside the target band, and the current temperature is more than `autoptemp` degrees above or below the target band, then automatic power on.
 
 If `autop` is set, and the last two sample periods are entirely inside the target band, then automatic power off.
 
 ### Remote
 
-The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autop10` is not `0`.
+The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autoptemp` is not `0`.
 
 ### Special settings
 

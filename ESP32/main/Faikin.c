@@ -31,95 +31,7 @@ static const char TAG[] = "Faikin";
 
 // Settings (RevK library used by MQTT setting command)
 
-extern uint8_t otabeta;
-#ifdef	CONFIG_IDF_TARGET_ESP32S3
-#define	gpio			\
-	io(tx,-48)		\
-	io(rx,-34)		\
-	led(blink,3,47 47 47)	\
-
-#else
-#define	gpio			\
-	io(tx,-26)		\
-	io(rx,-27)		\
-	led(blink,3,-8 -19 -7)	\
-
-#endif
-
-#define	settings		\
-	bl(fahrenheit)		\
-	b(nodemand,false)	\
-	u8(swingmodes,3)	\
-	u8(webcontrol,2)	\
-	u8(protocol,0)		\
-	b(protofix,false)	\
-	bl(debug)		\
-	bl(dump)		\
-	bl(snoop)		\
-	bl(livestatus)		\
-	b(dark,false)		\
-	b(ble,false)		\
-	b(ha,true)		\
-	b(lockmode,false)	\
-	b(fixstatus,false)	\
-	u8(uart,1)		\
-	u8l(thermref,50)	\
-	u8l(autop10,5)		\
-	u8l(coolover,6)		\
-	u8l(coolback,6)		\
-	u8l(heatover,6)		\
-	u8l(heatback,6)		\
-	u8l(switch10,5)		\
-	u8l(push10,1)		\
-	u16l(auto0,0)		\
-	u16l(auto1,0)		\
-	u16l(autot,0)		\
-	u8l(autor,0)		\
-	b(thermostat,false)	\
-	bl(autop)		\
-	sl(autob)		\
-	u8(tmin,16)		\
-	u8(tmax,32)		\
-	u8(fmaxauto,5)		\
-	u32(tpredicts,30)	\
-	u32(tpredictt,120)	\
-	u32(tsample,900)	\
-	u32(tcontrol,600)	\
-	u8(fanstep,0)		\
-	u32(reporting,60)	\
-	s(model)		\
-	gpio			\
-
-#define u32(n,d) uint32_t n;
-#define s8(n,d) int8_t n;
-#define u8(n,d) uint8_t n;
-#define u8l(n,d) uint8_t n;
-#define u16l(n,d) uint16_t n;
-#define b(n,d) uint8_t n;
-#define bl(n) uint8_t n;
-#define s(n) char * n;
-#define sl(n) char * n;
-#define io(n,d)           uint8_t n;
-#ifdef  CONFIG_REVK_BLINK
-#define led(n,a,d)      extern uint8_t n[a];
-#else
-#define led(n,a,d)      uint8_t n[a];
-#endif
-settings
-#undef io
-#undef led
-#undef u32
-#undef s8
-#undef u8
-#undef u8l
-#undef u16l
-#undef b
-#undef bl
-#undef s
-#undef sl
-#define PORT_INV 0x40
-#define port_mask(p) ((p)&0x3F)
-   enum
+enum
 {                               // Number the control fields
 #define	b(name)		CONTROL_##name##_pos,
 #define	t(name)		b(name)
@@ -162,9 +74,14 @@ const char *const fans[] = {    // mapping A12345Q
 #define	proto_type(p)	((p)/PROTO_SCALE)
 
 // Globals
+struct
+{
+   uint8_t loopback:1;
+   uint8_t dumping:1;
+} b = { 0 };
+
 static httpd_handle_t webserver = NULL;
 static uint8_t protocol_set = 0;        // protocol confirmed
-static uint8_t loopback = 0;    // Loopback detected
 static uint8_t proto = 0;
 #define	CN_WIRED_LEN	8
 #define	CN_WIRED_ACK	2000    // Timings uS
@@ -374,7 +291,7 @@ jo_t
 jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_stringf (j, "protocol", "%s%s%s", loopback ? "loopback" : prototype[proto_type (proto)],
+   jo_stringf (j, "protocol", "%s%s%s", b.loopback ? "loopback" : prototype[proto_type (proto)],
                (proto & PROTO_TXINVERT) ? "¬Tx" : "", (proto & PROTO_RXINVERT) ? "¬Rx" : "");
    return j;
 }
@@ -656,7 +573,7 @@ protocol_found (void)
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
-   if (debug && txlen > 2 && !dump)
+   if (debug && txlen > 2 && !b.dumping)
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
@@ -680,7 +597,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          memcpy (buf + 3, payload, txlen);
       buf[3 + txlen] = s21_checksum (buf, S21_MIN_PKT_LEN + txlen);
       buf[4 + txlen] = ETX;
-      if (dump)
+      if (b.dumping)
       {
          jo_t j = jo_comms_alloc ();
          jo_base16 (j, "dump", buf, txlen + S21_MIN_PKT_LEN);
@@ -733,7 +650,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          if (rxlen != 1)
          {
             daikin.talking = 0;
-            loopback = 0;
+            b.loopback = 0;
             jo_t j = jo_comms_alloc ();
             jo_bool (j, "timeout", 1);
             revk_error ("comms", &j);
@@ -749,7 +666,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
       {
          daikin.talking = 0;
-         loopback = 0;
+         b.loopback = 0;
          jo_t j = jo_comms_alloc ();
          jo_bool (j, "timeout", 1);
          jo_base16 (j, "data", buf, rxlen);
@@ -766,7 +683,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    // Note not all ACs do that. My FTXF20D doesn't - Sonic-Amiga
    temp = ACK;
    uart_write_bytes (uart, &temp, 1);
-   if (dump || snoop)
+   if (b.dumping || snoop)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, rxlen);
@@ -796,10 +713,10 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    if (!snoop && rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
    {                            // Loop back
       daikin.talking = 0;
-      if (!loopback)
+      if (!b.loopback)
       {
          ESP_LOGE (TAG, "Loopback");
-         loopback = 1;
+         b.loopback = 1;
          revk_blink (0, 0, "RGB");
       }
       jo_t j = jo_comms_alloc ();
@@ -807,7 +724,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_error ("comms", &j);
       return S21_OK;
    }
-   loopback = 0;
+   b.loopback = 0;
    // If we've got an STX, S21 protocol is now confirmed; we won't change it any more
    if (buf[0] == STX && !protocol_set)
       protocol_found ();
@@ -844,7 +761,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       for (int i = 0; i < len - 1; i++)
          sum += (buf[i] >> 4) + buf[i];
       buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
-      if (dump)
+      if (b.dumping)
       {
          jo_t j = jo_comms_alloc ();
          jo_int (j, "ts", esp_timer_get_time ());
@@ -963,10 +880,10 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          if (len == sizeof (rx) && !memcmp (rx, buf, sizeof (rx)))
          {                      // Exact match of what we sent...
             daikin.talking = 0;
-            if (!loopback)
+            if (!b.loopback)
             {
                ESP_LOGE (TAG, "Loopback");
-               loopback = 1;
+               b.loopback = 1;
                revk_blink (0, 0, "RGB");
             }
             jo_t j = jo_comms_alloc ();
@@ -977,7 +894,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          {
             if (!protocol_set)
                protocol_found ();
-            if (dump)
+            if (b.dumping)
             {
                jo_t j = jo_comms_alloc ();
                jo_int (j, "ts", esp_timer_get_time ());
@@ -1026,7 +943,7 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    for (int i = 0; i < 5 + txlen; i++)
       c += buf[i];
    buf[5 + txlen] = 0xFF - c;
-   if (dump)
+   if (b.dumping)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, txlen + 6);
@@ -1038,13 +955,13 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    if (rxlen <= 0)
    {
       daikin.talking = 0;
-      loopback = 0;
+      b.loopback = 0;
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "timeout", 1);
       revk_error ("comms", &j);
       return;
    }
-   if (dump)
+   if (b.dumping)
    {
       jo_t j = jo_comms_alloc ();
       jo_base16 (j, "dump", buf, rxlen);
@@ -1083,10 +1000,10 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    if (!buf[4])
    {                            // Tx sends 00 here, rx is 06
       daikin.talking = 0;
-      if (!loopback)
+      if (!b.loopback)
       {
          ESP_LOGE (TAG, "Loopback");
-         loopback = 1;
+         b.loopback = 1;
          revk_blink (0, 0, "RGB");
       }
       jo_t j = jo_comms_alloc ();
@@ -1094,7 +1011,7 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
       revk_error ("comms", &j);
       return;
    }
-   loopback = 0;
+   b.loopback = 0;
    if (buf[0] == 0x06 && !protocol_set && (buf[1] != 0xFF || (proto & PROTO_TXINVERT)))
       protocol_found ();
    if (buf[1] == 0xFF)
@@ -1146,7 +1063,7 @@ daikin_control (jo_t j)
       {                         // Stored settings
          if (!s)
             s = jo_object_alloc ();
-         jo_int (s, tag, lroundf (strtof (val, NULL) * 10.0));
+         jo_lit (s, tag, val);
          daikin.status_changed = 1;
       }
       if (!strcmp (tag, "autob"))
@@ -1298,7 +1215,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          if (autor)
          {                      // Setting the control
             jo_t s = jo_object_alloc ();
-            jo_int (s, "autot", lroundf (strtof (value, NULL) * 10.0));
+            jo_lit (s, "autot", value);
             revk_setting (s);
             jo_free (&s);
          } else
@@ -1383,8 +1300,8 @@ daikin_status (void)
       jo_bool (j, "remote", 1);
    else
    {
-      jo_litf (j, "autor", "%.1f", autor / 10.0);
-      jo_litf (j, "autot", "%.1f", autot / 10.0);
+      jo_litf (j, "autor", "%.1f", (float) autor / autor_scale);
+      jo_litf (j, "autot", "%.1f", (float) autot / autot_scale);
       jo_stringf (j, "auto0", "%02d:%02d", auto0 / 100, auto0 % 100);
       jo_stringf (j, "auto1", "%02d:%02d", auto1 / 100, auto1 % 100);
       jo_bool (j, "autop", autop);
@@ -2310,12 +2227,12 @@ ha_status (void)
    if (!ha)
       return;
    jo_t j = jo_object_alloc ();
-   if (loopback)
+   if (b.loopback)
       jo_bool (j, "loopback", 1);
    else if (daikin.status_known & CONTROL_online)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_temp)
-      jo_litf (j, "target", "%.2f", autor ? autot / 10.0 : daikin.temp);        // Target - either internal or what we are using as reference
+      jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp); // Target - either internal or what we are using as reference
    if (daikin.status_known & CONTROL_env)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
    else if (daikin.status_known & CONTROL_home)
@@ -2351,7 +2268,7 @@ ha_status (void)
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
-      jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");    // If we are controlling, it is auto
+      jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
    }
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
@@ -2429,51 +2346,24 @@ app_main ()
 #define	r(name)	daikin.min##name=NAN;daikin.max##name=NAN;
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
-#define str(x) #x
-#define io(n,d)           revk_register(#n,0,sizeof(n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#ifndef CONFIG_REVK_BLINK
-#define led(n,a,d)      revk_register(#n,a,sizeof(*n),&n,"- "str(d),SETTING_SET|SETTING_BITFIELD|SETTING_FIX);
-#else
-#define	led(n,a,d)
-#endif
-#define b(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_BOOLEAN);
-#define bl(n) revk_register(#n,0,sizeof(n),&n,NULL,SETTING_BOOLEAN|SETTING_LIVE);
-#define u32(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
-#define s8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_SIGNED);
-#define u8(n,d) revk_register(#n,0,sizeof(n),&n,str(d),0);
-#define u8l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
-#define u16l(n,d) revk_register(#n,0,sizeof(n),&n,str(d),SETTING_LIVE);
-#define s(n) revk_register(#n,0,0,&n,NULL,0);
-#define sl(n) revk_register(#n,0,0,&n,NULL,SETTING_LIVE);
-   settings
-#undef led
-#undef io
-#undef u32
-#undef s8
-#undef u8
-#undef u8l
-#undef u16l
-#undef b
-#undef bl
-#undef s
-#undef sl
-      revk_start ();
+   revk_start ();
+   b.dumping = dump;
    revk_blink (0, 0, "");
    void uart_setup (void)
    {
       esp_err_t err = 0;
-      if (!protocol_set && !loopback)
+      if (!protocol_set && !b.loopback)
       {
          proto++;
          if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
             proto = 0;
       }
       ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", prototype[proto_type (proto)], (proto & PROTO_TXINVERT) ? "¬" : "",
-                port_mask (tx), (proto & PROTO_RXINVERT) ? "¬" : "", port_mask (rx));
+                tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
       if (!err)
-         err = gpio_reset_pin (port_mask (rx));
+         err = gpio_reset_pin (rx.num);
       if (!err)
-         err = gpio_reset_pin (port_mask (tx));
+         err = gpio_reset_pin (tx.num);
       if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
       {
          if (!rmt_encoder)
@@ -2486,11 +2376,11 @@ app_main ()
          {                      // Create rmt_tx
             rmt_tx_channel_config_t tx_chan_config = {
                .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
-               .gpio_num = port_mask (tx),      // GPIO number
+               .gpio_num = tx.num,      // GPIO number
                .mem_block_symbols = 72, // symbols
                .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
                .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
-               .flags.invert_out = (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
+               .flags.invert_out = (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
                .flags.with_dma = true,
 #endif
@@ -2505,8 +2395,8 @@ app_main ()
                .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
                .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
                .mem_block_symbols = 72, // 
-               .gpio_num = port_mask (rx),      // GPIO number
-               .flags.invert_in = (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
+               .gpio_num = rx.num,      // GPIO number
+               .flags.invert_in = (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
                .flags.with_dma = true,
 #endif
@@ -2547,15 +2437,15 @@ app_main ()
          if (!err)
             err = uart_param_config (uart, &uart_config);
          if (!err)
-            err = uart_set_pin (uart, port_mask (tx), port_mask (rx), -1, -1);
+            err = uart_set_pin (uart, tx.num, rx.num, -1, -1);
          if (!err)
-            err = gpio_pullup_en (port_mask (rx));
+            err = gpio_pullup_en (rx.num);
          if (!err)
          {
             uint8_t i = 0;
-            if (((rx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
+            if (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
                i |= UART_SIGNAL_RXD_INV;
-            if (((tx & PORT_INV) ? 1 : 0) ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
+            if (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
                i |= UART_SIGNAL_TXD_INV;
             err = uart_set_line_inverse (uart, i);
          }
@@ -2568,7 +2458,7 @@ app_main ()
             jo_t j = jo_object_alloc ();
             jo_string (j, "error", "Failed to uart");
             jo_int (j, "uart", uart);
-            jo_int (j, "gpio", port_mask (rx));
+            jo_int (j, "gpio", rx.num);
             jo_string (j, "description", esp_err_to_name (err));
             revk_error ("uart", &j);
             return;
@@ -2612,7 +2502,7 @@ app_main ()
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
-   if (!tx && !rx)
+   if (!tx.set && !rx.set)
    {                            // Mock for interface development and testing
       ESP_LOGE (TAG, "Dummy operational mode (no tx/rx set)");
       daikin.status_known |=
@@ -2636,7 +2526,7 @@ app_main ()
       // We're (re)starting comms from scratch, so set "talking" flag.
       // This signals protocol integrity and actually enables communicating with the AC.
       daikin.talking = 1;
-      if (tx || rx)
+      if (tx.set && rx.set)
       {
          // Poke UART
          uart_setup ();
@@ -2694,13 +2584,13 @@ app_main ()
          }
 #endif
          if (autor && autot)
-         {                      // Automatic setting of "external" controls, autot is temp(*10), autor is range(*10), autob is BLE name
+         {                      // Automatic setting of "external" controls, autot is temp(*autot_scale), autor is range(*autor_scale), autob is BLE name
             daikin.controlvalid = uptime () + 10;
-            daikin.mintarget = (autot - autor) / 10.0;
-            daikin.maxtarget = (autot + autor) / 10.0;
+            daikin.mintarget = (float) autot / autot_scale - (float) autor / autor_scale;
+            daikin.maxtarget = (float) autot / autot_scale + (float) autor / autor_scale;
          }
          // Talk to the AC
-         if (tx || rx)
+         if (tx.set && rx.set)
          {
             if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
@@ -2782,13 +2672,11 @@ app_main ()
                   F9 = 0;       // Don't use F9
                if (*debugsend)
                {
-                  if (!dump)
-                     dump = 2;  // Debug anyway
+                  b.dumping = 1;        // Force dumping
                   if (debugsend[1])
                      daikin_s21_command (debugsend[0], debugsend[1], strlen (debugsend + 2), debugsend + 2);
                   *debugsend = 0;
-                  if (dump == 2)
-                     dump = 0;
+                  b.dumping = dump;     // Back to setting
                }
 #undef poll
                if (debug)
@@ -2920,7 +2808,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");       // FHCA456D
+         revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");     // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
@@ -2950,12 +2838,12 @@ app_main ()
          {
             if (hot)
             {
-               max += switch10 / 10.0;  // Overshoot for switching (heating)
-               min += push10 / 10.0;    // Adjust target
+               max += (float) switchtemp / switchtemp_scale;    // Overshoot for switching (heating)
+               min += (float) pushtemp / pushtemp_scale;        // Adjust target
             } else
             {
-               min -= switch10 / 10.0;  // Overshoot for switching (cooling)
-               max -= push10 / 10.0;    // Adjust target
+               min -= (float) switchtemp / switchtemp_scale;    // Overshoot for switching (cooling)
+               max -= (float) pushtemp / pushtemp_scale;        // Adjust target
             }
          }
          void samplestart (void)
@@ -2981,7 +2869,9 @@ app_main ()
                   daikin_set_e (mode, "H");     // Set heating as under temp
                }
             }
-            if (daikin.fan && ((hot && current < min - 2 * switch10 * 0.1) || (!hot && current > max + 2 * switch10 * 0.1)))
+            if (daikin.fan
+                && ((hot && current < min - 2 * (float) switchtemp / switchtemp_scale)
+                    || (!hot && current > max + 2 * (float) switchtemp / switchtemp_scale)))
             {                   // Not in auto mode, and not close to target temp - force a high fan to get there
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
                daikin_set_v (fan, fmaxauto);    // Max fan at start
@@ -3078,15 +2968,16 @@ app_main ()
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
-                     } else if ((autop || (daikin.remote && autop10)) && !a && !b)
+                     } else if ((autop || (daikin.remote && autoptemp)) && !a && !b)
                      {          // Auto off
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
                   } else
-                     if ((autop || (daikin.remote && autop10))
+                     if ((autop || (daikin.remote && autoptemp))
                          && (daikin.counta == daikin.countt || daikin.countb == daikin.countt)
-                         && (current >= max + autop10 / 10.0 || current <= min - autop10 / 10.0) && (!lockmode || b != t))
+                         && (current >= max + (float) autoptemp / autoptemp_scale
+                             || current <= min - (float) autoptemp / autoptemp_scale) && (!lockmode || b != t))
                   {             // Auto on (don't auto on if would reverse mode and lockmode)
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
