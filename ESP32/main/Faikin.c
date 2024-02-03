@@ -15,6 +15,9 @@ static const char TAG[] = "Faikin";
 #include "mdns.h"
 #include "bleenv.h"
 #include "daikin_s21.h"
+#ifndef	CONFIG_REVK_BLINK_LIB
+#include <led_strip.h>
+#endif
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
 #error Need CONFIG_HTTPD_WS_SUPPORT
