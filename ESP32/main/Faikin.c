@@ -139,7 +139,6 @@ struct
    uint8_t status_report:1;     // Send status report
    uint8_t ha_send:1;           // Send HA config
    uint8_t remote:1;            // Remote control via MQTT
-   uint8_t seq:1;               // Data sequence (CN_WIRED)
    uint8_t hysteresis:1;        // Thermostat hysteresis state
 } daikin = { 0 };
 
@@ -152,7 +151,6 @@ daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
-   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -167,7 +165,6 @@ daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
    if (!(daikin.status_known & flag))
       return "Setting cannot be controlled";
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    *ptr = value;
@@ -200,7 +197,6 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
       value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
-   //if (!daikin.control_changed) daikin.seq ^= 1;
    daikin.control_changed |= flag;
    daikin.mode_changed = 1;
    xSemaphoreGive (daikin.mutex);
@@ -459,7 +455,6 @@ daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
-   //if ((payload[7] & 0xF) == daikin.seq)
    daikin.control_changed = 0;  // TODO for now
    // Values
    set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
@@ -756,7 +751,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    void send (void)
    {
       // Checksum (LOL)
-      //buf[len - 1] = daikin.seq;
       uint8_t sum = (buf[len - 1] & 0x0F);
       for (int i = 0; i < len - 1; i++)
          sum += (buf[i] >> 4) + buf[i];
@@ -2317,59 +2311,6 @@ revk_web_extra (httpd_req_t * req)
       revk_web_setting (req, "No demand", "nodemand", NULL, "Disable demand control feature");
 }
 
-#ifndef	CONFIG_REVK_BLINK_LIB
-void
-blink_task (void *p)
-{
-   led_strip_handle_t strip = NULL;
-   if (blink[0].set && blink[0].num == blink[1].num)
-   {                            // Initialise the LED strip for one LED. This can, however, be pre-set by the app where we will refresh every 10th second and set 1st LED for status
-      //ESP_LOGE (TAG, "RGB %d", blink[0].num);
-      led_strip_config_t strip_config = {
-         .strip_gpio_num = (blink[0].num),
-         .max_leds = 1,         // The number of LEDs in the strip,
-         .led_pixel_format = LED_PIXEL_FORMAT_GRB,      // Pixel format of your LED strip
-         .led_model = LED_MODEL_WS2812, // LED strip model
-         .flags.invert_out = blink[0].invert,   // whether to invert the output signal (useful when your hardware has a level inverter)
-      };
-      led_strip_rmt_config_t rmt_config = {
-         .clk_src = RMT_CLK_SRC_DEFAULT,        // different clock source can lead to different power consumption
-         .resolution_hz = 10 * 1000 * 1000,     // 10MHz
-         // One LED so no need for DMA
-      };
-      REVK_ERR_CHECK (led_strip_new_rmt_device (&strip_config, &rmt_config, &strip));
-   }
-   if (blink[0].set && blink[0].num != blink[1].num)
-   {
-      revk_gpio_output (blink[0]);
-      if (blink[1].set)
-      {
-         //ESP_LOGE (TAG, "Discrete RGB %d/%d/%d", blink[0].num, blink[1].num, blink[2].num);
-         revk_gpio_output (blink[1]);
-         revk_gpio_output (blink[2]);
-      }
-      //else ESP_LOGE (TAG, "Single LED %d", blink[0].num);
-   }
-   while (1)
-   {
-      usleep (100000);
-      uint32_t rgb = revk_blinker ();
-      if (!blink[1].set)
-         revk_gpio_set (blink[0], (rgb >> 31) & 1);
-      else if (blink[0].num != blink[1].num)
-      {                         // Separate RGB on
-         revk_gpio_set (blink[0], (rgb >> 29) & 1);
-         revk_gpio_set (blink[1], (rgb >> 27) & 1);
-         revk_gpio_set (blink[2], (rgb >> 25) & 1);
-      } else
-      {
-         revk_led (strip, 0, 255, rgb);
-         led_strip_refresh (strip);
-      }
-   }
-}
-#endif
-
 // --------------------------------------------------------------------------------
 // Main
 void
@@ -2391,9 +2332,6 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
-#ifndef	CONFIG_REVK_BLINK_LIB
-   revk_task ("blink", blink_task, NULL, 4);
-#endif
    b.dumping = dump;
    revk_blink (0, 0, "");
    void uart_setup (void)
