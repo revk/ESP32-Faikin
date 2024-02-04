@@ -7,8 +7,16 @@ gpio	rx	-27
 #endif
 
 bit	fahrenheit			.live=1
+
 bit	nodemand
-u8	swingmodes	3
+bit	noswingw
+bit 	noswingh
+bit	nocomfort
+bit	nostreamer
+bit	nopowerful
+bit	nosensor
+bit	noquiet
+
 u8	webcontrol	2
 u8	protocol
 bit	protofix

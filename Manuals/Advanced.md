@@ -63,9 +63,16 @@ An external unit can set external *min*/*max* controls and reference temperature
 |`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
 |`autop`|Boolean, if we automatically turn on/off power based on temperature|
 |`autoptemp`|Temperature offset for auto turn on with `autop`|
-|`swingmodes`|Defaults to 3, which is 1 for `H` and 2 for `V`. This can limits modes shown|
 |`model`|Default model name for HA info|
 |`thermostat`|Experimental flag - if set, heat to `max`, allow to cool to `min`, etc, thermostat style|
+|`nodemand`|No demand control|
+|`noswingh`|No swing (H)|
+|`noswingv`|No swing (V)|
+|`noquiet`|No quiet mode|
+|`nocomfort`|No comfort mode|
+|`nosensor`|No sensor mode|
+|`nopowerful`|No powerful mode|
+|`noquiet`|No quiet mode|
 
 An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
 

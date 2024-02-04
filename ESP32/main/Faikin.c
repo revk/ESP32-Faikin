@@ -381,18 +381,18 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '5':                // 'G5' - swing status
          if (check_length (cmd, cmd2, len, 1, payload))
          {
-            set_val (swingv, (payload[0] & 1) ? 1 : 0);
-            set_val (swingh, (payload[0] & 2) ? 1 : 0);
+            if(!noswingw)set_val (swingv, (payload[0] & 1) ? 1 : 0);
+            if(!noswingh)set_val (swingh, (payload[0] & 2) ? 1 : 0);
          }
          break;
       case '6':                // 'G6' - "powerful" mode and some others
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
-            set_val (powerful, payload[0] & 0x02 ? 1 : 0);
-            set_val (comfort, payload[0] & 0x40 ? 1 : 0);
-            set_val (quiet, payload[0] & 0x80 ? 1 : 0);
-            set_val (streamer, payload[1] & 0x80 ? 1 : 0);
-            set_val (sensor, payload[3] & 0x08 ? 1 : 0);
+            if(!nopowerful)set_val (powerful, payload[0] & 0x02 ? 1 : 0);
+            if(!nocomfort)set_val (comfort, payload[0] & 0x40 ? 1 : 0);
+            if(!noquiet)set_val (quiet, payload[0] & 0x80 ? 1 : 0);
+            if(!nostreamer)set_val (streamer, payload[1] & 0x80 ? 1 : 0);
+            if(!nosensor)set_val (sensor, payload[3] & 0x08 ? 1 : 0);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
@@ -1456,9 +1456,9 @@ web_root (httpd_req_t * req)
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh | CONTROL_comfort))
    {
       revk_web_send (req, "<tr>");
-      if ((swingmodes & 2) && (daikin.status_known & CONTROL_swingv))
+      if (daikin.status_known & CONTROL_swingv)
          addb ("↕", "swingv", "Vertical Swing");
-      if ((swingmodes & 1) && (daikin.status_known & CONTROL_swingh))
+      if (daikin.status_known & CONTROL_swingh)
          addb ("↔", "swingh", "Horizontal Swing");
       if (daikin.status_known & CONTROL_comfort)
          addb ("🧸", "comfort", "Comfort mode");
@@ -2168,18 +2168,18 @@ send_ha_config (void)
             jo_close (j);
          }
       }
-      if (swingmodes && (daikin.status_known & (CONTROL_swingh | CONTROL_swingv)))
+      if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv|CONTROL_comfort))
       {
          jo_string (j, "swing_mode_cmd_t", "~/swing");
          jo_string (j, "swing_mode_stat_t", revk_id);
          jo_string (j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array (j, "swing_modes");
          jo_string (j, NULL, "off");
-         if (swingmodes & 1)
+         if (daikin.status_known &CONTROL_swingh)
             jo_string (j, NULL, "H");
-         if (swingmodes & 2)
+         if (daikin.status_known &CONTROL_swingv)
             jo_string (j, NULL, "V");
-         if ((swingmodes & 3) == 3)
+         if ((daikin.status_known & (CONTROL_swingh | CONTROL_swingv))==(CONTROL_swingh | CONTROL_swingv))
             jo_string (j, NULL, "H+V");
          if (daikin.status_known & CONTROL_comfort)
             jo_string (j, NULL, "C");
