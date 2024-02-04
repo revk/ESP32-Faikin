@@ -15,6 +15,9 @@ static const char TAG[] = "Faikin";
 #include "mdns.h"
 #include "bleenv.h"
 #include "daikin_s21.h"
+#ifndef	CONFIG_REVK_BLINK_LIB
+#include <led_strip.h>
+#endif
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
 #error Need CONFIG_HTTPD_WS_SUPPORT
@@ -71,7 +74,6 @@ const char *const fans[] = {    // mapping A12345Q
 #define	PROTO_TXINVERT	1
 #define	PROTO_RXINVERT	2
 #define	PROTO_SCALE	4
-#define	proto_type(p)	((p)/PROTO_SCALE)
 
 // Globals
 struct
@@ -83,6 +85,28 @@ struct
 static httpd_handle_t webserver = NULL;
 static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t proto = 0;
+
+static uint8_t
+proto_type (void)
+{
+   return proto / PROTO_SCALE;
+}
+
+static const char *
+proto_name (void)
+{
+   return prototype[proto_type()];
+}
+
+// 'fanstep' setting overrides number of available fan speeds
+// 1 = force 5 speeds; 2 = force 3 speeds; 0 = default
+// For experiments only !
+static int
+have_5_fan_speeds (void)
+{
+   return fanstep == 1 || (!fanstep && proto_type () == PROTO_TYPE_S21);
+}
+
 #define	CN_WIRED_LEN	8
 #define	CN_WIRED_ACK	2000    // Timings uS
 #define	CN_WIRED_GAP	9000
@@ -191,9 +215,9 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
 {                               // Setting a value (float)
    if (*ptr == value)
       return NULL;              // No change
-   if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+   if (proto_type () == PROTO_TYPE_CN_WIRED)
       value = roundf (value);   // CN_WIRED only does 1C steps
-   else if (proto_type (proto) == PROTO_TYPE_S21)
+   else if (proto_type () == PROTO_TYPE_S21)
       value = roundf (value * 2.0) / 2.0;       // S21 only does 0.5C steps
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    *ptr = value;
@@ -287,7 +311,7 @@ jo_t
 jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_stringf (j, "protocol", "%s%s%s", b.loopback ? "loopback" : prototype[proto_type (proto)],
+   jo_stringf (j, "protocol", "%s%s%s", b.loopback ? "loopback" : proto_name (),
                (proto & PROTO_TXINVERT) ? "¬Tx" : "", (proto & PROTO_RXINVERT) ? "¬Rx" : "");
    return j;
 }
@@ -1392,12 +1416,14 @@ web_root (httpd_req_t * req)
    addb ("0/1", "power", "Main power");
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
-   if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
+   if (have_5_fan_speeds ())
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
+   else if (proto_type () == PROTO_TYPE_CN_WIRED)
+      add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addslider ("Set", "temp", tmin, tmax,
-              proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
+              proto_type () == PROTO_TYPE_CN_WIRED ? "1" : proto_type () == PROTO_TYPE_S21 ? "0.5" : "0.1");
    void addt (const char *tag, const char *help)
    {
       revk_web_send (req, "<td title=\"%s\" align=right>%s<br><span id=\"%s\"></span></td>", help, tag, tag);
@@ -1478,7 +1504,7 @@ web_root (httpd_req_t * req)
       add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
            fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
       addslider ("Target", "autot", tmin, tmax,
-                 proto_type (proto) == PROTO_TYPE_CN_WIRED ? "1" : proto_type (proto) == PROTO_TYPE_S21 ? "0.5" : "0.1");
+                 proto_type () == PROTO_TYPE_CN_WIRED ? "1" : proto_type () == PROTO_TYPE_S21 ? "0.5" : "0.1");
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
@@ -1578,7 +1604,7 @@ web_root (httpd_req_t * req)
                   "};};c();"    //
                   "setInterval(function() {if(!ws)c();else ws.send('');},1000);"        //
                   "</script>", fahrenheit ? "Math.round(10*((v*9/5)+32))/10+'℉'" : "v+'℃'");
-   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, protocol_set ? prototype[proto_type (proto)] : NULL);
+   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, protocol_set ? proto_name () : NULL);
 }
 
 static const char *
@@ -2137,7 +2163,7 @@ send_ha_config (void)
          jo_string (j, "fan_mode_cmd_t", "~/fan");
          jo_string (j, "fan_mode_stat_t", revk_id);
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
-         if (fanstep == 1 || (!fanstep && (proto_type (proto) == PROTO_TYPE_S21)))
+         if (have_5_fan_speeds ())
          {
             jo_array (j, "fan_modes");
             for (int f = 0; f < sizeof (fans) / sizeof (*fans); f++)
@@ -2343,13 +2369,13 @@ app_main ()
          if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
             proto = 0;
       }
-      ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", prototype[proto_type (proto)], (proto & PROTO_TXINVERT) ? "¬" : "",
+      ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
                 tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
       if (!err)
          err = gpio_reset_pin (rx.num);
       if (!err)
          err = gpio_reset_pin (tx.num);
-      if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+      if (proto_type () == PROTO_TYPE_CN_WIRED)
       {
          if (!rmt_encoder)
          {
@@ -2412,10 +2438,10 @@ app_main ()
          }
          uart_driver_delete (uart);
          uart_config_t uart_config = {
-            .baud_rate = (proto_type (proto) == PROTO_TYPE_S21) ? 2400 : 9600,
+            .baud_rate = (proto_type () == PROTO_TYPE_S21) ? 2400 : 9600,
             .data_bits = UART_DATA_8_BITS,
             .parity = UART_PARITY_EVEN,
-            .stop_bits = (proto_type (proto) == PROTO_TYPE_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
+            .stop_bits = (proto_type () == PROTO_TYPE_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
             .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
             .source_clk = UART_SCLK_DEFAULT,
          };
@@ -2501,7 +2527,7 @@ app_main ()
    proto = protocol;
    if (protofix)
       protocol_set = 1;         // Fixed protocol - do not change
-   else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type (proto) < sizeof (prototype) / sizeof (*prototype))
+   else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type () < sizeof (prototype) / sizeof (*prototype))
    {                            // Manually set protocol above the auto scanning range
       protocol_set = 1;
    } else
@@ -2515,7 +2541,7 @@ app_main ()
       {
          // Poke UART
          uart_setup ();
-         if ((proto_type (proto) == PROTO_TYPE_X50A))
+         if ((proto_type () == PROTO_TYPE_X50A))
          {                      // Startup X50A
             daikin_x50a_command (0xAA, 1, (uint8_t[])
                                  {
@@ -2541,7 +2567,7 @@ app_main ()
       do
       {
          // Polling loop. We exit from here only if we get a protocol error
-         if (proto_type (proto) != PROTO_TYPE_CN_WIRED)
+         if (proto_type () != PROTO_TYPE_CN_WIRED)
             usleep (1000000LL - (esp_timer_get_time () % 1000000LL));   /* wait for next second  - CN_WIRED has built in wait */
 #ifdef ELA
          if (ble && *autob)
@@ -2577,7 +2603,7 @@ app_main ()
          // Talk to the AC
          if (tx.set && rx.set)
          {
-            if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+            if (proto_type () == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
@@ -2589,7 +2615,7 @@ app_main ()
                cmd[5] = daikin.swingv ? 0xF0 : 0x00;
                cmd[6] = daikin.swingv ? 0x11 : 0x10;    // ??
                daikin_cn_wired_command (sizeof (cmd), cmd);
-            } else if (proto_type (proto) == PROTO_TYPE_S21)
+            } else if (proto_type () == PROTO_TYPE_S21)
             {                   // Older S21
                char temp[5];
                if (debug)
@@ -2722,7 +2748,7 @@ app_main ()
                   daikin_s21_command ('D', '7', S21_PAYLOAD_LEN, temp);
                   xSemaphoreGive (daikin.mutex);
                }
-            } else if (proto_type (proto) == PROTO_TYPE_X50A)
+            } else if (proto_type () == PROTO_TYPE_X50A)
             {                   // Newer protocol
                //daikin_x50a_command(0xB7, 0, NULL);       // Not sure this is actually meaningful
                daikin_x50a_command (0xBD, 0, NULL);
@@ -2932,7 +2958,7 @@ app_main ()
                {                // Power, mode, fan, automation
                   if (daikin.power)
                   {
-                     int step = (fanstep ? : (proto_type (proto) == PROTO_TYPE_S21) ? 1 : 2);
+                     int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2);
                      if ((b * 2 > t || daikin.slave) && !a)
                      {          // Mode switch
                         if (!lockmode)
@@ -3038,9 +3064,9 @@ app_main ()
                      set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                }
                // Limit settings to acceptable values
-               if (proto_type (proto) == PROTO_TYPE_CN_WIRED)
+               if (proto_type () == PROTO_TYPE_CN_WIRED)
                   set = roundf (set);   // CN_WIRED only does 1C steps
-               else if (proto_type (proto) == PROTO_TYPE_S21)
+               else if (proto_type () == PROTO_TYPE_S21)
                   set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
                if (set < tmin)
                   set = tmin;
