@@ -20,9 +20,9 @@ bit	no.quiet
 u8	webcontrol	2
 u8	protocol
 bit	protofix
-bit	debug				.live=1
-bit	dump
-bit	snoop
+bit	debug				.live=1					// Debug (extra messages and dump)
+bit	dump									// Dump protocol
+bit	snoop									// Listen only 
 bit	livestatus			.live=1
 bit	dark
 bit	ble
