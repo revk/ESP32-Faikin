@@ -2471,7 +2471,7 @@ app_main ()
    {
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
-      config.stack_size += 1024;        // All the legacy stuff has a 1k buffer for reply, messy, but allow for it
+      config.stack_size += 2048;	// Being on the safe side
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
       config.max_uri_handlers = 13 + revk_num_web_handlers ();
