@@ -8,14 +8,14 @@ gpio	rx	-27
 
 bit	fahrenheit			.live=1
 
-bit	nodemand
-bit	noswingw
-bit 	noswingh
-bit	nocomfort
-bit	nostreamer
-bit	nopowerful
-bit	nosensor
-bit	noquiet
+bit	no.demand
+bit	no.swingw
+bit 	no.swingh
+bit	no.comfort
+bit	no.streamer
+bit	no.powerful
+bit	no.sensor
+bit	no.quiet
 
 u8	webcontrol	2
 u8	protocol

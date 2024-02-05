@@ -1443,7 +1443,7 @@ web_root (httpd_req_t * req)
    }
    revk_web_send (req, "</tr>");
    if (daikin.status_known & CONTROL_demand)
-      addslider ("Demand", "demand", 0, 100, "5");
+      addslider ("Demand", "demand", 30, 100, "5");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
    {
       revk_web_send (req, "<tr>");
@@ -2129,15 +2129,6 @@ send_ha_config (void)
       //jo_string (j, "name", hostname);
       //jo_null(j,"name");
       jo_stringf (j, "~", "command/%s", hostname);      // Prefix for command
-#if 0                           // Cannot get this logic working
-      if (daikin.status_known & CONTROL_online)
-      {
-         jo_object (j, "avty");
-         jo_string (j, "t", revk_id);
-         jo_string (j, "val_tpl", "{{value_json.online}}");
-         jo_close (j);
-      }
-#endif
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
@@ -2209,7 +2200,7 @@ send_ha_config (void)
    addtemp (ble && bletemp && bletemp->tempset, "bletemp", "mdi:thermometer");
    addhum (ble && bletemp && bletemp->humset, "blehum", "mdi:water-percent");
    addbat (ble && bletemp && bletemp->batset, "blebat", "mdi:battery-bluetooth-variant");
-#if 0
+#if 1
    if (asprintf (&topic, "homeassistant/select/%sdemand/config", revk_id) >= 0)
    {
       if (!(daikin.status_known & CONTROL_demand))
@@ -2220,7 +2211,7 @@ send_ha_config (void)
          jo_string (j, "name", "Demand control");
          jo_stringf (j, "command_topic", "%s/demand", revk_id);
          jo_array (j, "options");
-         for (int i = 0; i <= 100; i += 5)
+         for (int i = 30; i <= 100; i += 5)
             jo_int (j, NULL, i);
          jo_close (j);
          revk_mqtt_send (NULL, 1, topic, &j);
