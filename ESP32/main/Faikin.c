@@ -2326,10 +2326,7 @@ revk_web_extra (httpd_req_t * req)
    revk_web_setting (req, "Home Assistant", "ha");
    revk_web_setting (req, "BLE Sensors", "ble");
    revk_web_setting (req, "Dark mode", "dark");
-   revk_web_setting (req, "Lock mode", "lockmode");
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
-   if (nodemand || (daikin.status_known & CONTROL_demand))
-      revk_web_setting (req, "No demand", "nodemand");
 }
 
 // --------------------------------------------------------------------------------
