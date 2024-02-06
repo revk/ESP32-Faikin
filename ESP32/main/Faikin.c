@@ -400,6 +400,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                set_val (streamer, payload[1] & 0x80 ? 1 : 0);
             if (!nosensor)
                set_val (sensor, payload[3] & 0x08 ? 1 : 0);
+            if (!noled)
+               set_val (led, payload[3] & 0x04 ? 1 : 0);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
@@ -491,7 +493,7 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       daikin.temp = daikin.home;        // Cannot actually read temp target - use current temp first time
    daikin.status_known |=
       CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_demand | CONTROL_econo | CONTROL_powerful |
-      CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh;
+      CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh | CONTROL_led;
 }
 
 void
@@ -1451,13 +1453,15 @@ web_root (httpd_req_t * req)
    revk_web_send (req, "</tr>");
    if (daikin.status_known & CONTROL_demand)
       addslider ("Demand", "demand", 30, 100, "5");
-   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
+   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful|CONTROL_led))
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_econo)
          addb ("Eco", "econo", "Eco mode");
       if (daikin.status_known & CONTROL_powerful)
          addb ("💪", "powerful", "Powerful mode");
+      if (daikin.status_known & CONTROL_led)
+         addb ("💡", "led", "LED high");
       revk_web_send (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh | CONTROL_comfort))
@@ -1580,6 +1584,7 @@ web_root (httpd_req_t * req)
                   "b('powerful',o.powerful);"   //
                   "b('comfort',o.comfort);"     //
                   "b('sensor',o.sensor);"       //
+                  "b('led',o.led);"       //
                   "b('quiet',o.quiet);" //
                   "b('streamer',o.streamer);"   //
                   "e('mode',o.mode);"   //
@@ -2725,7 +2730,7 @@ app_main ()
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
                      temp[2] = '0';
-                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0);
+                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0)+(daikin.led?0x40:0);;
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
                   }
                   xSemaphoreGive (daikin.mutex);

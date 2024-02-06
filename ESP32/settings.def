@@ -20,7 +20,7 @@ bit	no.streamer								// Unit does not have streamer mode
 bit	no.powerful								// Unit does not have powerful mode
 bit	no.sensor								// Unit does not have sensor mode
 bit	no.quiet								// Unit does not have quiet mode
-bit	no.led									// Unit does not have LED control
+bit	no.led		1							// Unit does not have LED control
 
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
@@ -54,7 +54,7 @@ u16	autot				.live=1	.decimal=1			//
 u8	autor				.live=1	.decimal=1			//
 bit	thermostat			.live=1					//
 bit	autop				.live=1					//
-s	autob				.live=1					//
+s	autob				.live=1					// BLE sensor ID
 u8	tmin		16		.live=1					//
 u8	tmax		32		.live=1					//
 u8	fmaxauto	5		.live=1					//

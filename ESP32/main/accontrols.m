@@ -36,6 +36,7 @@ b(powerful)
 b(comfort)
 b(streamer)
 b(sensor)
+b(led)
 b(quiet)
 
 #undef	e
