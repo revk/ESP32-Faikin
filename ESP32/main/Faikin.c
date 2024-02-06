@@ -3058,7 +3058,7 @@ app_main ()
                   if (hot)
                      set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
                   else
-                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
+                     set = min + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                }
                // Limit settings to acceptable values
                if (proto_type () == PROTO_TYPE_CN_WIRED)
