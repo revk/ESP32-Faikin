@@ -1,57 +1,65 @@
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
-gpio	tx	-48
-gpio	rx	-34
+gpio	tx	-48								// Tx GPIO
+gpio	rx	-34								// Rx GPIO
 #else
-gpio	tx	-26
-gpio	rx	-27
+gpio	tx	-26								// Tx GPIO
+gpio	rx	-27								// Rx GPIO
 #endif
 
-bit	fahrenheit			.live=1
+s	model									// Set model name manually
 
-bit	no.demand
-bit	no.swingw
-bit 	no.swingh
-bit	no.comfort
-bit	no.streamer
-bit	no.powerful
-bit	no.sensor
-bit	no.quiet
+u8	webcontrol	2							// Allow web control
 
-u8	webcontrol	2
-u8	protocol
-bit	protofix
+bit	fahrenheit			.live=1					// Web shows Fahrenheit
+
+bit	no.demand								// Disable demand control
+bit	no.swingw								// Unit does not have swing (W)
+bit 	no.swingh								// Unit does not have swing (H)
+bit	no.comfort								// Unit does not have comfort mode
+bit	no.streamer								// Unit does not have streamer mode
+bit	no.powerful								// Unit does not have powerful mode
+bit	no.sensor								// Unit does not have sensor mode
+bit	no.quiet								// Unit does not have quiet mode
+bit	no.led									// Unit does not have LED control
+
+bit	dark									// Dark mode
+bit	ha		1							// Home Assistance
+
 bit	debug				.live=1					// Debug (extra messages and dump)
 bit	dump									// Dump protocol
 bit	snoop									// Listen only 
-bit	livestatus			.live=1
-bit	dark
-bit	ble
-bit	ha		1
-bit	lockmode
-bit	fixstatus
+bit	livestatus			.live=1					// Send status messages in real time
+bit	fixstatus								// Send status as fixed values not array
+bit	ble									// Enable BLE
+bit	lockmode								// Lock mode in Faikin auto
+
+bit	protofix								// Fix protocol
+u8	protocol								// Protocol
+
+u32	reporting	60							// Status report period
+
 u8	uart		1		.fix=1
-u8	thermref	50		.live=1
-u8	autoptemp	0.5		.live=1	.decimal=1	.old="autop10"
-u8	coolover	6		.live=1
-u8	coolback	6		.live=1
-u8	heatover	6		.live=1
-u8	heatback	6		.live=1
-u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"
-u8	pushtemp	0.1		.live=1	.decimal=1	.old="push10"
-u16	auto0				.live=1
-u16	auto1				.live=1
-u16	autot				.live=1	.decimal=1
-u8	autor				.live=1	.decimal=1
-bit	thermostat			.live=1
-bit	autop				.live=1
-s	autob				.live=1
-u8	tmin		16		.live=1
-u8	tmax		32		.live=1
-u8	fmaxauto	5		.live=1
-u32	tpredicts	30
-u32	tpredictt	120
-u32	tsample		900
-u32	tcontrol	600
-u8	fanstep
-u32	reporting	60
-s	model
+
+u8	thermref	50		.live=1					// 
+u8	autoptemp	0.5		.live=1	.decimal=1	.old="autop10"	//
+u8	coolover	6		.live=1					//
+u8	coolback	6		.live=1					//
+u8	heatover	6		.live=1					//
+u8	heatback	6		.live=1					//
+u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"	//
+u8	pushtemp	0.1		.live=1	.decimal=1	.old="push10"	//
+u16	auto0				.live=1					//
+u16	auto1				.live=1					//
+u16	autot				.live=1	.decimal=1			//
+u8	autor				.live=1	.decimal=1			//
+bit	thermostat			.live=1					//
+bit	autop				.live=1					//
+s	autob				.live=1					//
+u8	tmin		16		.live=1					//
+u8	tmax		32		.live=1					//
+u8	fmaxauto	5		.live=1					//
+u32	tpredicts	30							//
+u32	tpredictt	120							//
+u32	tsample		900							//
+u32	tcontrol	600							//
+u8	fanstep									//

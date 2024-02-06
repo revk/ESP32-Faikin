@@ -2323,13 +2323,13 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 void
 revk_web_extra (httpd_req_t * req)
 {
-   revk_web_setting (req, "Home Assistant", "ha", NULL, "Announces HA config via MQTT");
-   revk_web_setting (req, "BLE Sensors", "ble", NULL, "Remote BLE temperature sensor");
-   revk_web_setting (req, "Dark mode", "dark", NULL, "Dark mode means on-board LED is normally switched off");
-   revk_web_setting (req, "Lock mode", "lockmode", NULL, "Don't auto switch heat/cool modes");
-   revk_web_setting (req, "Fahrenheit", "fahrenheit", NULL, "Show ℉ on web controls");
+   revk_web_setting (req, "Home Assistant", "ha");
+   revk_web_setting (req, "BLE Sensors", "ble");
+   revk_web_setting (req, "Dark mode", "dark");
+   revk_web_setting (req, "Lock mode", "lockmode");
+   revk_web_setting (req, "Fahrenheit", "fahrenheit");
    if (nodemand || (daikin.status_known & CONTROL_demand))
-      revk_web_setting (req, "No demand", "nodemand", NULL, "Disable demand control feature");
+      revk_web_setting (req, "No demand", "nodemand");
 }
 
 // --------------------------------------------------------------------------------
