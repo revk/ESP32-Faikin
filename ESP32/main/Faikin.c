@@ -2324,10 +2324,16 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 void
 revk_web_extra (httpd_req_t * req)
 {
-   revk_web_setting (req, "Home Assistant", "ha");
-   revk_web_setting (req, "BLE Sensors", "ble");
-   revk_web_setting (req, "Dark mode", "dark");
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
+   revk_web_setting (req, "Home Assistant", "ha");
+   revk_web_setting (req, "Dark mode LED", "dark");
+   if (!daikin.remote)
+   {
+      revk_web_setting (req, "No Faikin auto mode", "nofaikinauto");
+      if (!nofaikinauto)
+         revk_web_setting (req, "BLE Sensors", "ble");
+   }
+   revk_web_setting (req, "Dump protocol over MQTT", "dump");
 }
 
 // --------------------------------------------------------------------------------
