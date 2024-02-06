@@ -3045,7 +3045,7 @@ app_main ()
                   if (hot)
                      set = max + reference - current + heatover;        // Ensure heating by applying A/C offset to force it
                   else
-                     set = max + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
+                     set = min + reference - current - coolover;        // Ensure cooling by applying A/C offset to force it
                } else
                {                // At or beyond temp - stop heat/cool
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
@@ -3058,7 +3058,7 @@ app_main ()
                   if (hot)
                      set = min + reference - current - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
                   else
-                     set = min + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
+                     set = max + reference - current + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
                }
                // Limit settings to acceptable values
                if (proto_type () == PROTO_TYPE_CN_WIRED)
