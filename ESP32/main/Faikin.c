@@ -1363,11 +1363,7 @@ web_icon (httpd_req_t * req)
 static esp_err_t
 web_root (httpd_req_t * req)
 {
-   // TODO cookies
-   // webcontrol=0 means no web
-   // webcontrol=1 means user settings, not wifi settings
-   // webcontrol=2 means all
-   if (revk_link_down () && webcontrol >= 2)
+   if ((!webcontrol || revk_link_down ()) && websettings)
       return revk_web_settings (req);   // Direct to web set up
    web_head (req, hostname == revk_id ? appname : hostname);
    revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
@@ -1613,7 +1609,7 @@ web_root (httpd_req_t * req)
                   "};};c();"    //
                   "setInterval(function() {if(!ws)c();else ws.send('');},1000);"        //
                   "</script>", fahrenheit ? "Math.round(10*((v*9/5)+32))/10+'℉'" : "v+'℃'");
-   return revk_web_foot (req, 0, webcontrol >= 2 ? 1 : 0, protocol_set ? proto_name () : NULL);
+   return revk_web_foot (req, 0, websettings, protocol_set ? proto_name () : NULL);
 }
 
 static const char *
@@ -2476,7 +2472,7 @@ app_main ()
       }
    }
 
-   if (webcontrol)
+   if (webcontrol || websettings)
    {
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
@@ -2486,21 +2482,24 @@ app_main ()
       config.max_uri_handlers = 13 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
-         if (webcontrol >= 2)
+         if (websettings)
             revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
-         register_get_uri ("/apple-touch-icon.png", web_icon);
-         register_ws_uri ("/status", web_status);
-         register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
-         register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
-         register_get_uri ("/aircon/get_control_info", legacy_web_get_control_info);
-         register_get_uri ("/aircon/set_control_info", legacy_web_set_control_info);
-         register_get_uri ("/aircon/get_sensor_info", legacy_web_get_sensor_info);
-         register_get_uri ("/common/register_terminal", legacy_web_register_terminal);
-         register_get_uri ("/aircon/get_year_power_ex", legacy_web_get_year_power);
-         register_get_uri ("/aircon/get_week_power_ex", legacy_web_get_week_power);
-         register_get_uri ("/aircon/set_special_mode", legacy_web_set_special_mode);
-         register_get_uri ("/aircon/set_demand_control", legacy_web_set_demand_control);
+         if (webcontrol)
+         {
+            register_get_uri ("/apple-touch-icon.png", web_icon);
+            register_ws_uri ("/status", web_status);
+            register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
+            register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
+            register_get_uri ("/aircon/get_control_info", legacy_web_get_control_info);
+            register_get_uri ("/aircon/set_control_info", legacy_web_set_control_info);
+            register_get_uri ("/aircon/get_sensor_info", legacy_web_get_sensor_info);
+            register_get_uri ("/common/register_terminal", legacy_web_register_terminal);
+            register_get_uri ("/aircon/get_year_power_ex", legacy_web_get_year_power);
+            register_get_uri ("/aircon/get_week_power_ex", legacy_web_get_week_power);
+            register_get_uri ("/aircon/set_special_mode", legacy_web_set_special_mode);
+            register_get_uri ("/aircon/set_demand_control", legacy_web_set_demand_control);
+         }
          // When adding, update config.max_uri_handlers
       }
    }
@@ -2714,7 +2713,7 @@ app_main ()
                   xSemaphoreGive (daikin.mutex);
                }
                if (daikin.control_changed & (CONTROL_powerful | CONTROL_comfort | CONTROL_streamer |
-                                             CONTROL_sensor | CONTROL_quiet))
+                                             CONTROL_sensor | CONTROL_quiet | CONTROL_led))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
                   if (F3)
@@ -2730,7 +2729,7 @@ app_main ()
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
                      temp[2] = '0';
-                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x40 : 0);;
+                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x04 : 0);;
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
                   }
                   xSemaphoreGive (daikin.mutex);

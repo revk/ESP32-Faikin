@@ -18,65 +18,9 @@ The *hostname* you picked is used for these messages. The format for commands an
 
 There are a number of standard settings as per the [RevK library](https://github.com/revk/ESP32-RevK), including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikin module are as follows.
 
-|Setting|Meaning|
-|-------|-------|
-|`webcontrol`|`0` means no web access, `1` means just aircon settings not WiFI, etc. `2` means all controls|
-|`ha`|`true` (default) means work with Home Assistant via MQTT|
-|`reporting`|Interval for reporting state (seconds)|
-|`dark`|If set, LED to be off unless something non normal happening|
-|`fixstatus`|Make status messages always use array format rather than single values|
-|`tmin`|Min temperature|
-|`tmax`|Max temperature|
-|`fmaxauto`|Max fan setting for auto mode (normally 5)|
+The web pages provide settings for the basic WiFi/MQTT, the Faikin specific settings, and an Advanced settings page listing a lot of more detailed settings.
 
-It is worth noting that the library includes settings to control over the air updates. By default the Faikin module does automatic updates.
-
-|Setting|Meaning|
-|-------|-------|
-|`otahost`|The host from which to fetch updates|
-|`otaauto`|If not `0` then this is how many days between checks for an automatic update (done over night, or and hour or two after restart)|
-
-### External/automatic controls
-
-An external unit can set external *min*/*max* controls and reference temperature.
-
-|Setting|Meaning|
-|-------|-------|
-|`lockmode`|Disable auto change heat/cool mode|
-|`coolover` `heatover`|When we want to turn on heating or cooling the temperature is set to the target, adjusted for the temperature the air-con unit is seeing. To encourage the air-con to actually apply the heating/cooling this has a number of degrees added (for heat) or reduced (for cool) as set by these settings.
-|`coolback` `heatback`|When we want to turn off the heating or cooling, we set a temperature that backs away from the target temperature by this many degrees.|
-|`tsample`|Automation sampling time period (seconds), usually `900`|
-|`tpredicts`|Sample time (seconds) for predictive adjustment|
-|`tprecictt`|Total prediction time (seconds) for predictive adjustment|
-|`switchtemp` `pushtemp`|This is our own hysteresis - it applies to min/max settings to allow for overshoot on heating/cooling.|
-|`switchtime`|This is a minimum time in heat/cool mode before allowing switching|
-|`switchdelay`|This is a minimum time that we have to have been beyond the target before switching is allowed - it is to allow for an initial overshoot typically when direct turned on and reaching target temperature the first time.|
-|`autotime`|This is the time the auto command is considered valid after which we revert to simply setting auto mode on the aircon unit itself. You need to ensure the external control (environmental monitor) sends the auto command more often than this.|
-|`fantime`|This is how long we wait before changing fan - i.e. if we are not able to reach target temperature in this time the fan is increased.|
-|`fanstep`|Usually worked out automatically, but this says if internally the fan settings are 1/3/5 (Low/medium/high) or 1/2/3/4/5. `2` for the 1/3/5 mode. `0` for automatic.|
-|`thermref`|A percentage, `0` means reference is `inlet` temperature, `100` means reference is `home` temperature.|
-|`ble`|Boolean, if set then enable BLE working for external BlueCoinT device|
-|`autor`|A range value in 0.1C, `0` means disable local automation, `5` means ±0.5C automated controls|
-|`autot`|When `autor` is not `0` this is the target, with `autor` setting the range|
-|`autob`|When set this is the name of a BlueCoinT temperature sensor to use as the reference temperature|
-|`auto0`|Numeric in format HHMM, time to automatically turn off (0000 means don't turn off)|
-|`auto1`|Numeric in format HHMM, time to automatically turn on (0000 means don't turn on)|
-|`autop`|Boolean, if we automatically turn on/off power based on temperature|
-|`autoptemp`|Temperature offset for auto turn on with `autop`|
-|`model`|Default model name for HA info|
-|`thermostat`|Experimental flag - if set, heat to `max`, allow to cool to `min`, etc, thermostat style|
-|`nodemand`|No demand control|
-|`noswingh`|No swing (H)|
-|`noswingv`|No swing (V)|
-|`noquiet`|No quiet mode|
-|`nocomfort`|No comfort mode|
-|`nosensor`|No sensor mode|
-|`nopowerful`|No powerful mode|
-|`noquiet`|No quiet mode|
-
-An `info` update `automation` is sent every `tsample` seconds whilst automatic control is in place.
-
-The automation works based on the current *min* and *max* target and *current* temperature. However, *min* and *max* are adjusted by `push` and `switchtemp`. The *current* temperature is also adjusted based on `tpredict` settings. These show on the `automation` status report. These are then used to set a target tempurature on the aircon itself that is higher or lower than the unit thinks the current temperature is based on `coolover`/`heatover`, effectively turning it on/off.
+Note that web settings can be disabled with `websettings`, and the web based control pages can be disabled with `webcontrol`. It is also possible to apply a password for the web settings 9this is not sent security, so use with care on a local network which you control).
 
 ### Automatic on/off
 

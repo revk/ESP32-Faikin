@@ -1,14 +1,10 @@
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-gpio	tx	-48								// Tx GPIO
-gpio	rx	-34								// Rx GPIO
-#else
-gpio	tx	-26								// Tx GPIO
-gpio	rx	-27								// Rx GPIO
-#endif
+bit	dump									// Dump protocol
+bit	snoop									// Listen only 
+
+bit	web.control	1							// Web based controls
+bit	web.settings	1							// Web based settings
 
 s	model									// Set model name manually
-
-u8	webcontrol	2							// Allow web control
 
 bit	fahrenheit			.live=1					// Web shows Fahrenheit
 
@@ -28,8 +24,6 @@ bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 
 bit	debug				.live=1					// Debug (extra messages and dump)
-bit	dump									// Dump protocol
-bit	snoop									// Listen only 
 bit	livestatus			.live=1					// Send status messages in real time
 bit	fixstatus								// Send status as fixed values not array
 bit	ble									// Enable BLE
@@ -66,3 +60,12 @@ u32	tpredicts	30							// Temp prediction sample time
 u32	tpredictt	120							// Temp prediction total time factor
 u32	tsample		900							// Sample period for making adjustments
 u32	tcontrol	600							// Control messages timeout
+
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+gpio	tx	-48								// Tx GPIO
+gpio	rx	-34								// Rx GPIO
+#else
+gpio	tx	-26								// Tx GPIO
+gpio	rx	-27								// Rx GPIO
+#endif
+
