@@ -1453,7 +1453,7 @@ web_root (httpd_req_t * req)
    revk_web_send (req, "</tr>");
    if (daikin.status_known & CONTROL_demand)
       addslider ("Demand", "demand", 30, 100, "5");
-   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful|CONTROL_led))
+   if (daikin.status_known & (CONTROL_econo | CONTROL_powerful | CONTROL_led))
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_econo)
@@ -1494,7 +1494,7 @@ web_root (httpd_req_t * req)
                   "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
                   "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 #ifdef ELA
-   if (autor || (ble && *autob) || !daikin.remote)
+   if (autor || (ble && *autob) || (!nofaikinauto && !daikin.remote))
    {
       void addnote (const char *note)
       {
@@ -1584,7 +1584,7 @@ web_root (httpd_req_t * req)
                   "b('powerful',o.powerful);"   //
                   "b('comfort',o.comfort);"     //
                   "b('sensor',o.sensor);"       //
-                  "b('led',o.led);"       //
+                  "b('led',o.led);"     //
                   "b('quiet',o.quiet);" //
                   "b('streamer',o.streamer);"   //
                   "e('mode',o.mode);"   //
@@ -2730,7 +2730,7 @@ app_main ()
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
                      temp[2] = '0';
-                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0)+(daikin.led?0x40:0);;
+                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x40 : 0);;
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
                   }
                   xSemaphoreGive (daikin.mutex);

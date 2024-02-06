@@ -22,6 +22,8 @@ bit	no.sensor								// Unit does not have sensor mode
 bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 
+bit	no.faikinauto								// No not show faikin auto controls
+
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 
