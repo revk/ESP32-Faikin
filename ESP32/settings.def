@@ -46,10 +46,10 @@ u8	thermref	50		.live=1					// Percentage inlet rather than home temp used by yo
 u8	autoptemp	0.5		.live=1	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
 u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"	// Increase max (heating) or decrease min (cooling)
 u8	pushtemp	0.1		.live=1	.decimal=1	.old="push10"	// Increase min (heating) or decrease max (cooling)
-u8	cool.over	6		.live=1					// For cooling, push (decrease) target sent to aircon by this to force cooling
-u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to aircon by this to stop cooling
-u8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this to force heating
-u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this to stop heating
+u8	cool.over	6		.live=1					// For cooling, push (decrease) target sent to aircon by this from min to force cooling
+u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to aircon by this from max to stop cooling
+u8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating
+u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating
 u16	auto0				.live=1					// HHMM format turn off time
 u16	auto1				.live=1					// HHMM format turn on time
 u16	autot				.live=1	.decimal=1			// Faikin auto target temperature
