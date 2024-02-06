@@ -92,7 +92,7 @@ proto_type (void)
 static const char *
 proto_name (void)
 {
-   return prototype[proto_type()];
+   return prototype[proto_type ()];
 }
 
 // 'fanstep' setting overrides number of available fan speeds
@@ -381,18 +381,25 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '5':                // 'G5' - swing status
          if (check_length (cmd, cmd2, len, 1, payload))
          {
-            if(!noswingw)set_val (swingv, (payload[0] & 1) ? 1 : 0);
-            if(!noswingh)set_val (swingh, (payload[0] & 2) ? 1 : 0);
+            if (!noswingw)
+               set_val (swingv, (payload[0] & 1) ? 1 : 0);
+            if (!noswingh)
+               set_val (swingh, (payload[0] & 2) ? 1 : 0);
          }
          break;
       case '6':                // 'G6' - "powerful" mode and some others
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
-            if(!nopowerful)set_val (powerful, payload[0] & 0x02 ? 1 : 0);
-            if(!nocomfort)set_val (comfort, payload[0] & 0x40 ? 1 : 0);
-            if(!noquiet)set_val (quiet, payload[0] & 0x80 ? 1 : 0);
-            if(!nostreamer)set_val (streamer, payload[1] & 0x80 ? 1 : 0);
-            if(!nosensor)set_val (sensor, payload[3] & 0x08 ? 1 : 0);
+            if (!nopowerful)
+               set_val (powerful, payload[0] & 0x02 ? 1 : 0);
+            if (!nocomfort)
+               set_val (comfort, payload[0] & 0x40 ? 1 : 0);
+            if (!noquiet)
+               set_val (quiet, payload[0] & 0x80 ? 1 : 0);
+            if (!nostreamer)
+               set_val (streamer, payload[1] & 0x80 ? 1 : 0);
+            if (!nosensor)
+               set_val (sensor, payload[3] & 0x08 ? 1 : 0);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
@@ -2159,18 +2166,18 @@ send_ha_config (void)
             jo_close (j);
          }
       }
-      if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv|CONTROL_comfort))
+      if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       {
          jo_string (j, "swing_mode_cmd_t", "~/swing");
          jo_string (j, "swing_mode_stat_t", revk_id);
          jo_string (j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array (j, "swing_modes");
          jo_string (j, NULL, "off");
-         if (daikin.status_known &CONTROL_swingh)
+         if (daikin.status_known & CONTROL_swingh)
             jo_string (j, NULL, "H");
-         if (daikin.status_known &CONTROL_swingv)
+         if (daikin.status_known & CONTROL_swingv)
             jo_string (j, NULL, "V");
-         if ((daikin.status_known & (CONTROL_swingh | CONTROL_swingv))==(CONTROL_swingh | CONTROL_swingv))
+         if ((daikin.status_known & (CONTROL_swingh | CONTROL_swingv)) == (CONTROL_swingh | CONTROL_swingv))
             jo_string (j, NULL, "H+V");
          if (daikin.status_known & CONTROL_comfort)
             jo_string (j, NULL, "C");
@@ -2212,7 +2219,7 @@ send_ha_config (void)
          jo_stringf (j, "command_topic", "%s/demand", revk_id);
          jo_array (j, "options");
          for (int i = 30; i <= 100; i += 5)
-            jo_int (j, NULL, i);
+            jo_stringf (j, NULL, "%d", i);
          jo_close (j);
          revk_mqtt_send (NULL, 1, topic, &j);
       }
@@ -2471,7 +2478,7 @@ app_main ()
    {
       // Web interface
       httpd_config_t config = HTTPD_DEFAULT_CONFIG ();
-      config.stack_size += 2048;	// Being on the safe side
+      config.stack_size += 2048;        // Being on the safe side
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
       config.max_uri_handlers = 13 + revk_num_web_handlers ();
@@ -2807,7 +2814,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");     // FHCA456D
+         revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");    // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
