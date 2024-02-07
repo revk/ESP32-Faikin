@@ -882,7 +882,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       }
    }
 
-   if (daikin.status_changed)
+   if (daikin.status_changed || !(daikin.status_known & CONTROL_power))
    {                            // Send response
       // Checksum (LOL)
       uint8_t sum = (buf[len - 1] & 0x0F);
