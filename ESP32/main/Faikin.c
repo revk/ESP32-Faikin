@@ -105,13 +105,13 @@ have_5_fan_speeds (void)
 }
 
 #define	CN_WIRED_LEN	8
-#define	CN_WIRED_SYNC	2600	// uS
-#define	CN_WIRED_START	1000	// uS
-#define	CN_WIRED_SPACE	300	// uS
-#define	CN_WIRED_0	400	// uS
-#define	CN_WIRED_1	1000	// uS
-#define	CN_WIRED_IDLE	16000	// uS
-#define	CN_WIRED_TERM	2000	// uS
+#define	CN_WIRED_SYNC	2600    // uS
+#define	CN_WIRED_START	1000    // uS
+#define	CN_WIRED_SPACE	300     // uS
+#define	CN_WIRED_0	400     // uS
+#define	CN_WIRED_1	1000    // uS
+#define	CN_WIRED_IDLE	16000   // uS
+#define	CN_WIRED_TERM	2000    // uS
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -786,9 +786,9 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
 
    {                            // Wait rx
-      int wait = 2000;
+      int wait = 5000;
       while (!rmt_rx_len && --wait)
-         usleep (2000);
+         usleep (1000);
    }
 
    if (rmt_rx_len)
@@ -803,32 +803,33 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          start = 0;
       uint8_t rx[CN_WIRED_LEN] = { 0 };
       const char *e = NULL;
-      int p = 0,dur=0;
+      int p = 0,
+         dur = 0;
       // Sanity checking
       if (!e && rmt_rx_len != sizeof (rx) * 8 + 2)
          e = "Wrong length";
       if (!e && rmt_rx_raw[p].level0)
          e = "Bad start polarity";
-      if (!e && ((dur=rmt_rx_raw[p].duration0) < CN_WIRED_SYNC - 200 || dur > CN_WIRED_SYNC + 200))
+      if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SYNC - 200 || dur > CN_WIRED_SYNC + 200))
          e = "Bad start duration";
       sync = rmt_rx_raw[p].duration0;
-      if (!e && ((dur=rmt_rx_raw[p].duration1) < CN_WIRED_START - 200 ||dur > CN_WIRED_START + 200))
+      if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_START - 200 || dur > CN_WIRED_START + 200))
          e = "Bad start bit";
       start = rmt_rx_raw[p].duration1;
       p++;
       for (int i = 0; !e && i < sizeof (rx); i++)
          for (uint8_t b = 0x01; !e && b; b <<= 1)
          {
-            if (!e && ((dur=rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - 100 || dur > CN_WIRED_SPACE + 100))
+            if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - 100 || dur > CN_WIRED_SPACE + 100))
                e = "Bad space duration";
             sums += rmt_rx_raw[p].duration0;
             cnts++;
-            if (!e && (dur=rmt_rx_raw[p].duration1) > CN_WIRED_1 - 100 && dur < CN_WIRED_1 + 100)
+            if (!e && (dur = rmt_rx_raw[p].duration1) > CN_WIRED_1 - 100 && dur < CN_WIRED_1 + 100)
             {
                rx[i] |= b;
                sum1 += rmt_rx_raw[p].duration1;
                cnt1++;
-            } else if (!e && ((dur=rmt_rx_raw[p].duration1) < CN_WIRED_0 - 100 || dur > CN_WIRED_1 + 100))
+            } else if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_0 - 100 || dur > CN_WIRED_1 + 100))
                e = "Bad bit duration";
             else
             {
@@ -839,7 +840,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          }
       if (!e)
       {
-	      dur=0; // Not a duration error
+         dur = 0;               // Not a duration error
          uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
          for (int i = 0; i < sizeof (rx) - 1; i++)
             sum += (rx[i] >> 4) + rx[i];
@@ -850,7 +851,8 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       {
          jo_t j = jo_comms_alloc ();
          jo_string (j, "error", e);
-	 if(dur)jo_int(j,"duration",dur);
+         if (dur)
+            jo_int (j, "duration", dur);
          jo_int (j, "ts", esp_timer_get_time ());
          if (p > 1)
             jo_base16 (j, "data", rx, (p - 1) / 8);
