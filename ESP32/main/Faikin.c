@@ -120,7 +120,7 @@ rmt_symbol_word_t rmt_rx_raw[128];
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   .signal_range_max_ns = 5000000,      // longest - needs to be over the 2600uS sync pulse...
+   .signal_range_max_ns = 10000000,      // longest - needs to be over the 2600uS sync pulse...
 };
 
 const rmt_transmit_config_t rmt_tx_config = {
