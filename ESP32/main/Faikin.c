@@ -498,6 +498,7 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    } else
    {                            // Temp
       set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      daikin.status_known |= (CONTROL_temp | CONTROL_mode | CONTROL_power | CONTROL_fan | CONTROL_powerful | CONTROL_swingv);   // Bodge as we may not see a type 1 for some time|
    }
 }
 
