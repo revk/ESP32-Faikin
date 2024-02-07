@@ -401,7 +401,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             if (!nosensor)
                set_val (sensor, payload[3] & 0x08 ? 1 : 0);
             if (!noled)
-               set_val (led, payload[3] & 0x04 ? 1 : 0);
+               set_val (led, (payload[3] & 0x0C) != 0x0C);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
@@ -2735,7 +2735,11 @@ app_main ()
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
                      temp[2] = '0';
-                     temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x04 : 0);;
+                     // If sensor, the 8 is sensor, if not, then 4 and 8 are LED, with 4=high, 8=low, 12=off
+                     if (noled || !nosensor)
+                        temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x04 : 0);   // Messy but gives some controls
+                     else
+                        temp[3] = '0' + (daikin.led ? dark ? 8 : 4 : 12);
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
                   }
                   xSemaphoreGive (daikin.mutex);
