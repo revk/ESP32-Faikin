@@ -896,9 +896,9 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    rmt_rx_len = 0;
    REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
 
-   if (daikin.status_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
+   if (daikin.control_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
-      if (daikin.status_changed)
+      if (daikin.control_changed)
          daikin.cnresend = 3;
       else if (daikin.cnresend)
          daikin.cnresend--;
