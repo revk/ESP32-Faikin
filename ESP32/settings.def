@@ -29,6 +29,8 @@ bit	fixstatus								// Send status as fixed values not array
 bit	ble									// Enable BLE
 bit	lockmode								// Lock mode in Faikin auto
 
+bit isFTXM      0       .live=1         // Use control for FTXM Perfera Units (Experimental)
+
 u8	fanstep									// Fan steps
 
 bit	protofix								// Fix protocol
