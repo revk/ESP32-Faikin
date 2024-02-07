@@ -122,6 +122,9 @@ const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
    .signal_range_max_ns = 5000000,      // longest - needs to be over the 2600uS sync pulse...
 };
+      const rmt_transmit_config_t rmt_tx_config = {
+         .flags.eot_level = 1,
+      };
 
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
@@ -852,9 +855,9 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       {
          jo_t j = jo_comms_alloc ();
          jo_string (j, "error", e);
+         jo_int (j, "ts", esp_timer_get_time ());
          if (dur)
             jo_int (j, "duration", dur);
-         jo_int (j, "ts", esp_timer_get_time ());
          if (p > 1)
             jo_base16 (j, "data", rx, (p - 1) / 8);
          jo_int (j, "sync", sync);
@@ -910,9 +913,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          jo_base16 (j, "dump", buf, len);
          revk_info ("tx", &j);
       }
-      rmt_transmit_config_t config = {
-         .flags.eot_level = 1,
-      };
       // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
       rmt_symbol_word_t seq[3 + len * 8 + 1];
       int p = 0;
@@ -936,7 +936,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       seq[p].duration1 = CN_WIRED_TERM;
       seq[p++].level1 = 0;
 
-      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
+      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &rmt_tx_config));
       REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
    }
 }
