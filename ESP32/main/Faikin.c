@@ -491,7 +491,6 @@ daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
-   daikin.control_changed = 0;  // Assume all handled
    if (payload[7] & 1)
    {                            // Mode change
       set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
@@ -903,6 +902,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          daikin.cnresend = 3;
       else if (daikin.cnresend)
          daikin.cnresend--;
+      daikin.control_changed = 0;       // Assume all handled
       // Checksum (LOL)
       uint8_t sum = (buf[len - 1] & 0x0F);
       for (int i = 0; i < len - 1; i++)
