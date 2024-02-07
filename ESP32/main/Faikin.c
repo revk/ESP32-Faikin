@@ -120,7 +120,7 @@ rmt_symbol_word_t rmt_rx_raw[128];
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   .signal_range_max_ns = 10000000,      // longest - needs to be over the 2600uS sync pulse...
+   .signal_range_max_ns = 10000000,     // longest - needs to be over the 2600uS sync pulse...
 };
 
 const rmt_transmit_config_t rmt_tx_config = {
@@ -891,7 +891,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
             revk_info ("rx", &j);
          }
          daikin_cn_wired_response (sizeof (rx), rx);
-         buf[1] = rx[1];        // TODO try that
       }
    }
    // Next Rx
@@ -2612,7 +2611,8 @@ app_main ()
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
                if (cmd[0] == 0xC7)
                   cmd[0] = 0x20;        // temp was not set
-               cmd[1] = cmd[0]; // Unknown why
+               cmd[1] = 0x04;   // ?
+               cmd[2] = 0x50;   // ?
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
                cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
