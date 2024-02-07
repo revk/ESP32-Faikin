@@ -1,5 +1,8 @@
 bit	dump									// Dump protocol on MQTT
+bit	debug				.live=1					// Debug (extra messages and list replies)
 bit	snoop									// Listen only (for debugging)
+bit	livestatus			.live=1					// Send status messages in real time
+bit	fixstatus								// Send status as fixed values not array
 
 bit	web.control	1							// Web based controls
 bit	web.settings	1							// Web based settings
@@ -23,15 +26,12 @@ bit	no.faikinauto								// Do not show faikin auto controls
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 
-bit	debug				.live=1					// Debug (extra messages and dump)
-bit	livestatus			.live=1					// Send status messages in real time
-bit	fixstatus								// Send status as fixed values not array
 bit	ble									// Enable BLE
-bit	lockmode								// Lock mode in Faikin auto
 
 u8	fanstep									// Fan steps
 
 bit	protofix								// Fix protocol
+bit	lockmode								// Lock mode in Faikin auto
 u8	protocol								// Protocol
 
 u32	reporting	60							// Status report period
