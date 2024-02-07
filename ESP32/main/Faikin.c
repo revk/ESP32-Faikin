@@ -880,7 +880,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
             revk_info ("rx", &j);
          }
          daikin_cn_wired_response (sizeof (rx), rx);
-         buf[1] = rx[1];        // TODO is this sensible
       }
    }
    // Next Rx
