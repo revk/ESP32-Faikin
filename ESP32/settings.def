@@ -28,6 +28,8 @@ bit	ha		1							// Home Assistance
 
 bit	ble									// Enable BLE
 
+bit isFTXM      0       .live=1         // Use control for FTXM Perfera Units (Experimental)
+
 u8	fanstep									// Fan steps
 
 bit	protofix								// Fix protocol
