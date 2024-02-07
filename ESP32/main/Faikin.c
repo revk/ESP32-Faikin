@@ -882,10 +882,10 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          daikin_cn_wired_response (sizeof (rx), rx);
          buf[1] = rx[1];        // TODO is this sensible
       }
-      // Next Rx
-      rmt_rx_len = 0;
-      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
    }
+   // Next Rx
+   rmt_rx_len = 0;
+   REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
 
    if (daikin.status_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
