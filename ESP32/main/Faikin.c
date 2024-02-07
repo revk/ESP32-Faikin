@@ -777,7 +777,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 
 void
 daikin_cn_wired_command (int len, uint8_t * buf)
-{
+{                               // Waits rx and sends command/response to it
    if (!rmt_tx || !rmt_encoder || !rmt_rx)
    {
       daikin.talking = 0;       // Not ready?
@@ -880,6 +880,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
             revk_info ("rx", &j);
          }
          daikin_cn_wired_response (sizeof (rx), rx);
+         buf[1] = rx[1];        // TODO is this sensible
       }
       // Next Rx
       rmt_rx_len = 0;
@@ -2601,6 +2602,8 @@ app_main ()
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
+               if (cmd[0] == 0xC7)
+                  cmd[0] = 0x20;        // temp was not set
                cmd[1] = cmd[0]; // Unknown why
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
