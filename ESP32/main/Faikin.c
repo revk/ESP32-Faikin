@@ -441,6 +441,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             case 'd':          // Compressor
                set_int (comp, v);
                break;
+	    case 'M':	// Andle vertical swing
+	       set_int(anglev,v);
+	       break;
             }
          }
       } else if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
@@ -2678,6 +2681,7 @@ app_main ()
                poll (R, a, 0,);
                poll (R, L, 0,); // Fan speed
                poll (R, d, 0,); // Compressor
+               poll (R, M, 0,); // Swing V angle
                if (debug)
                {
                   poll (R, N, 0,);
