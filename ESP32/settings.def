@@ -1,5 +1,5 @@
-bit	dump									// Dump protocol
-bit	snoop									// Listen only 
+bit	dump									// Dump protocol on MQTT
+bit	snoop									// Listen only (for debugging)
 
 bit	web.control	1							// Web based controls
 bit	web.settings	1							// Web based settings

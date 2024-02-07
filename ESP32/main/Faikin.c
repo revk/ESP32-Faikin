@@ -2333,7 +2333,7 @@ revk_web_extra (httpd_req_t * req)
       if (!nofaikinauto)
          revk_web_setting (req, "BLE Sensors", "ble");
    }
-   revk_web_setting (req, "Dump protocol over MQTT", "dump");
+   revk_web_setting (req, "Dump", "dump");
 }
 
 // --------------------------------------------------------------------------------
