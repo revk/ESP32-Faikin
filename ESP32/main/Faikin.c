@@ -886,7 +886,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    if (daikin.status_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
       if (daikin.status_changed)
-         daikin.cnresend;
+         daikin.cnresend = 3;
       else if (daikin.cnresend)
          daikin.cnresend--;
       // Checksum (LOL)
