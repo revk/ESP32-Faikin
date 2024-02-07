@@ -112,6 +112,7 @@ have_5_fan_speeds (void)
 #define	CN_WIRED_1	1000    // uS
 #define	CN_WIRED_IDLE	16000   // uS
 #define	CN_WIRED_TERM	2000    // uS
+#define	CN_WIRED_MARGIN	200	// uS
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -810,26 +811,26 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          e = "Wrong length";
       if (!e && rmt_rx_raw[p].level0)
          e = "Bad start polarity";
-      if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SYNC - 200 || dur > CN_WIRED_SYNC + 200))
+      if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SYNC - CN_WIRED_MARGIN || dur > CN_WIRED_SYNC + CN_WIRED_MARGIN))
          e = "Bad start duration";
       sync = rmt_rx_raw[p].duration0;
-      if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_START - 200 || dur > CN_WIRED_START + 200))
+      if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_START - CN_WIRED_MARGIN || dur > CN_WIRED_START + CN_WIRED_MARGIN))
          e = "Bad start bit";
       start = rmt_rx_raw[p].duration1;
       p++;
       for (int i = 0; !e && i < sizeof (rx); i++)
          for (uint8_t b = 0x01; !e && b; b <<= 1)
          {
-            if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - 100 || dur > CN_WIRED_SPACE + 100))
+            if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - CN_WIRED_MARGIN || dur > CN_WIRED_SPACE + CN_WIRED_MARGIN))
                e = "Bad space duration";
             sums += rmt_rx_raw[p].duration0;
             cnts++;
-            if (!e && (dur = rmt_rx_raw[p].duration1) > CN_WIRED_1 - 100 && dur < CN_WIRED_1 + 100)
+            if (!e && (dur = rmt_rx_raw[p].duration1) > CN_WIRED_1 - CN_WIRED_MARGIN && dur < CN_WIRED_1 + CN_WIRED_MARGIN)
             {
                rx[i] |= b;
                sum1 += rmt_rx_raw[p].duration1;
                cnt1++;
-            } else if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_0 - 100 || dur > CN_WIRED_1 + 100))
+            } else if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_0 - CN_WIRED_MARGIN || dur > CN_WIRED_1 + CN_WIRED_MARGIN))
                e = "Bad bit duration";
             else
             {
