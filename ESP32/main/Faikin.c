@@ -881,6 +881,9 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          }
          daikin_cn_wired_response (sizeof (rx), rx);
       }
+      // Next Rx
+      rmt_rx_len = 0;
+      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
    }
 
    if (daikin.status_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
@@ -930,9 +933,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
       REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
    }
-   // Next Rx
-   rmt_rx_len = 0;
-   REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
 }
 
 void
