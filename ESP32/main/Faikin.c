@@ -112,7 +112,7 @@ have_5_fan_speeds (void)
 #define	CN_WIRED_1	1000    // uS
 #define	CN_WIRED_IDLE	16000   // uS
 #define	CN_WIRED_TERM	2000    // uS
-#define	CN_WIRED_MARGIN	200	// uS
+#define	CN_WIRED_MARGIN	200     // uS
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -122,9 +122,10 @@ const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
    .signal_range_max_ns = 5000000,      // longest - needs to be over the 2600uS sync pulse...
 };
-      const rmt_transmit_config_t rmt_tx_config = {
-         .flags.eot_level = 1,
-      };
+
+const rmt_transmit_config_t rmt_tx_config = {
+   .flags.eot_level = 1,
+};
 
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
@@ -824,7 +825,8 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       for (int i = 0; !e && i < sizeof (rx); i++)
          for (uint8_t b = 0x01; !e && b; b <<= 1)
          {
-            if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - CN_WIRED_MARGIN || dur > CN_WIRED_SPACE + CN_WIRED_MARGIN))
+            if (!e
+                && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - CN_WIRED_MARGIN || dur > CN_WIRED_SPACE + CN_WIRED_MARGIN))
                e = "Bad space duration";
             sums += rmt_rx_raw[p].duration0;
             cnts++;
@@ -889,6 +891,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
             revk_info ("rx", &j);
          }
          daikin_cn_wired_response (sizeof (rx), rx);
+         buf[1] = rx[1];        // TODO try that
       }
    }
    // Next Rx
