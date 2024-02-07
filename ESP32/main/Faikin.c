@@ -428,7 +428,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       }
    if (cmd == 'S')
    {
-      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D' || cmd2 == 'M')
+      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D' || cmd2 == 'N' || cmd2 == 'M')
       {                         // These responses are always only 3 bytes long
          if (check_length (cmd, cmd2, len, 3, payload))
          {
@@ -441,7 +441,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             case 'd':          // Compressor
                set_int (comp, v);
                break;
-            case 'M':          // Andle vertical swing
+            case 'N':          // Angle vertical swing
                set_int (anglev, v);
                break;
             }
@@ -2681,10 +2681,10 @@ app_main ()
                poll (R, a, 0,);
                poll (R, L, 0,); // Fan speed
                poll (R, d, 0,); // Compressor
-               poll (R, M, 0,); // Swing V angle
+               poll (R, N, 0,); // Angle
                if (debug)
                {
-                  poll (R, N, 0,);
+                  poll (R, M, 0,);
                   poll (R, X, 0,);
                   poll (R, D, 0,);
                }
