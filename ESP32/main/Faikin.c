@@ -428,7 +428,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       }
    if (cmd == 'S')
    {
-      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D')
+      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D' || cmd2 == 'M')
       {                         // These responses are always only 3 bytes long
          if (check_length (cmd, cmd2, len, 3, payload))
          {
@@ -441,9 +441,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             case 'd':          // Compressor
                set_int (comp, v);
                break;
-	    case 'M':	// Andle vertical swing
-	       set_int(anglev,v);
-	       break;
+            case 'M':          // Andle vertical swing
+               set_int (anglev, v);
+               break;
             }
          }
       } else if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
