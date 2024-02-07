@@ -161,6 +161,7 @@ struct
    uint8_t ha_send:1;           // Send HA config
    uint8_t remote:1;            // Remote control via MQTT
    uint8_t hysteresis:1;        // Thermostat hysteresis state
+   uint8_t cnresend:2;          // Resends
 } daikin = { 0 };
 
 const char *
@@ -882,8 +883,12 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       }
    }
 
-   if (daikin.status_changed || !(daikin.status_known & CONTROL_power))
+   if (daikin.status_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
+      if (daikin.status_changed)
+         daikin.cnresend;
+      else if (daikin.cnresend)
+         daikin.cnresend--;
       // Checksum (LOL)
       uint8_t sum = (buf[len - 1] & 0x0F);
       for (int i = 0; i < len - 1; i++)
