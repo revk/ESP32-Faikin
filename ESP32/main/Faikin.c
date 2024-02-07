@@ -105,13 +105,13 @@ have_5_fan_speeds (void)
 }
 
 #define	CN_WIRED_LEN	8
-#define	CN_WIRED_ACK	2000    // Timings uS
-#define	CN_WIRED_GAP	9000
 #define	CN_WIRED_SYNC	2600
 #define	CN_WIRED_START	1000
 #define	CN_WIRED_SPACE	300
 #define	CN_WIRED_0	400
 #define	CN_WIRED_1	1000
+#define	CN_WIRED_IDLE	16000
+#define	CN_WIRED_TERM	2000
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
@@ -485,15 +485,19 @@ daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
-   daikin.control_changed = 0;  // TODO for now
-   // Values
-   set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
-   // TODO
-   if (!(daikin.status_known & CONTROL_temp))
-      daikin.temp = daikin.home;        // Cannot actually read temp target - use current temp first time
-   daikin.status_known |=
-      CONTROL_power | CONTROL_fan | CONTROL_temp | CONTROL_mode | CONTROL_demand | CONTROL_econo | CONTROL_powerful |
-      CONTROL_comfort | CONTROL_streamer | CONTROL_sensor | CONTROL_quiet | CONTROL_swingv | CONTROL_swingh | CONTROL_led;
+   daikin.control_changed = 0;  // Assume all handled
+   if (payload[7] & 1)
+   {                            // Mode change
+      set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      set_val (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
+      set_val (power, (payload[3] & 0x10) ? 0 : 1);
+      set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
+      set_val (powerful, (payload[4] == 3) ? 1 : 0);
+      set_val (swingv, (payload[5] & 0x20) ? 1 : 0);
+   } else
+   {                            // Temp
+      set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+   }
 }
 
 void
@@ -778,49 +782,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       daikin.talking = 0;       // Not ready?
       return;
    }
-   void send (void)
-   {
-      // Checksum (LOL)
-      uint8_t sum = (buf[len - 1] & 0x0F);
-      for (int i = 0; i < len - 1; i++)
-         sum += (buf[i] >> 4) + buf[i];
-      buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
-      if (b.dumping)
-      {
-         jo_t j = jo_comms_alloc ();
-         jo_int (j, "ts", esp_timer_get_time ());
-         jo_base16 (j, "dump", buf, len);
-         revk_info ("tx", &j);
-      }
-      rmt_transmit_config_t config = {
-         .flags.eot_level = 1,
-      };
-      // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-      rmt_symbol_word_t seq[3 + len * 8 + 1];
-      int p = 0;
-      seq[p].duration0 = CN_WIRED_ACK;  // ACK Rx
-      seq[p].level0 = 0;
-      seq[p].duration1 = CN_WIRED_GAP;
-      seq[p++].level1 = 1;
-      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
-      seq[p].level0 = 0;
-      seq[p].duration1 = 1000;
-      seq[p++].level1 = 0;
-      void add (int d)
-      {
-         seq[p].duration0 = d;
-         seq[p].level0 = 1;
-         seq[p].duration1 = CN_WIRED_SPACE;
-         seq[p++].level1 = 0;
-      }
-      add (CN_WIRED_START);
-      for (int i = 0; i < len; i++)
-         for (uint8_t b = 0x01; b; b <<= 1)
-            add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
-      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
-      REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
-   }
-
 
    {                            // Wait rx
       int wait = 2000;
@@ -900,47 +861,73 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          revk_error ("comms", &j);
       } else
       {                         // Got a message, yay!
-#if 0                           // If we can ever be sure the response is not an exact match, needs checking
-         if (len == sizeof (rx) && !memcmp (rx, buf, sizeof (rx)))
-         {                      // Exact match of what we sent...
-            daikin.talking = 0;
-            if (!b.loopback)
-            {
-               ESP_LOGE (TAG, "Loopback");
-               b.loopback = 1;
-               revk_blink (0, 0, "RGB");
-            }
-            jo_t j = jo_comms_alloc ();
-            jo_bool (j, "loopback", 1);
-            revk_error ("comms", &j);
-         } else
-#endif
+         if (!protocol_set)
+            protocol_found ();
+         if (b.dumping)
          {
-            if (!protocol_set)
-               protocol_found ();
-            if (b.dumping)
-            {
-               jo_t j = jo_comms_alloc ();
-               jo_int (j, "ts", esp_timer_get_time ());
-               jo_base16 (j, "dump", rx, sizeof (rx));
-               jo_int (j, "sync", sync);
-               jo_int (j, "start", start);
-               if (cnts)
-                  jo_int (j, "space", sums / cnts);
-               if (cnt0)
-                  jo_int (j, "0", sum0 / cnt0);
-               if (cnt1)
-                  jo_int (j, "1", sum1 / cnt1);
-               revk_info ("rx", &j);
-            }
-            daikin_cn_wired_response (sizeof (rx), rx);
+            jo_t j = jo_comms_alloc ();
+            jo_int (j, "ts", esp_timer_get_time ());
+            jo_base16 (j, "dump", rx, sizeof (rx));
+            jo_int (j, "sync", sync);
+            jo_int (j, "start", start);
+            if (cnts)
+               jo_int (j, "space", sums / cnts);
+            if (cnt0)
+               jo_int (j, "0", sum0 / cnt0);
+            if (cnt1)
+               jo_int (j, "1", sum1 / cnt1);
+            revk_info ("rx", &j);
          }
+         daikin_cn_wired_response (sizeof (rx), rx);
       }
    }
+
+   if (daikin.status_changed)
+   {                            // Send response
+      // Checksum (LOL)
+      uint8_t sum = (buf[len - 1] & 0x0F);
+      for (int i = 0; i < len - 1; i++)
+         sum += (buf[i] >> 4) + buf[i];
+      buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
+      if (b.dumping)
+      {
+         jo_t j = jo_comms_alloc ();
+         jo_int (j, "ts", esp_timer_get_time ());
+         jo_base16 (j, "dump", buf, len);
+         revk_info ("tx", &j);
+      }
+      rmt_transmit_config_t config = {
+         .flags.eot_level = 1,
+      };
+      // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
+      rmt_symbol_word_t seq[3 + len * 8 + 1];
+      int p = 0;
+      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
+      seq[p].level0 = 0;
+      seq[p].duration1 = 1000;
+      seq[p++].level1 = 0;
+      void add (int d)
+      {
+         seq[p].duration0 = d;
+         seq[p].level0 = 1;
+         seq[p].duration1 = CN_WIRED_SPACE;
+         seq[p++].level1 = 0;
+      }
+      add (CN_WIRED_START);
+      for (int i = 0; i < len; i++)
+         for (uint8_t b = 0x01; b; b <<= 1)
+            add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
+      seq[p].duration0 = CN_WIRED_IDLE;
+      seq[p].level0 = 1;
+      seq[p].duration1 = CN_WIRED_TERM;
+      seq[p++].level1 = 0;
+
+      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &config));
+      REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
+   }
+   // Next Rx
    rmt_rx_len = 0;
    REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
-
-   send ();
 }
 
 void
@@ -2609,13 +2596,12 @@ app_main ()
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
-               cmd[1] = 0xC4;   // Unknown
+               cmd[1] = cmd[0]; // Unknown why
                cmd[3] = ((const uint8_t[])
-                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x20 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
+                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
                cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
-                                                  { 0x01, 0x01, 0x01, 0x04, 0x04, 0x02, 0x08 }[daikin.fan]);    // A12345Q mapped
-               cmd[5] = daikin.swingv ? 0xF0 : 0x00;
-               cmd[6] = daikin.swingv ? 0x11 : 0x10;    // ??
+                                                  { 0x01, 0x08, 0x04, 0x04, 0x02, 0x02, 0x09 }[daikin.fan]);    // A12345Q mapped
+               cmd[5] = daikin.swingv ? 0x20 : 0x00;
                daikin_cn_wired_command (sizeof (cmd), cmd);
             } else if (proto_type () == PROTO_TYPE_S21)
             {                   // Older S21
@@ -2784,7 +2770,6 @@ app_main ()
                daikin_x50a_command (0xCB, sizeof (cb), cb);
             }
          }
-
          // Report status changes if happen on AC side. Ignore if we've just sent
          // some new control values
          if (!daikin.control_changed && (daikin.status_changed || daikin.status_report || daikin.mode_changed))
