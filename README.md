@@ -1,9 +1,6 @@
 # Stock
 
-- Yes, I have splashed out on 500 boards in one go, and managed to bugger up a resistor, so paying for rework.
-- Yes, I ordered 100 more so I had some to restock amazon, but Chinese new year, bugger.
-- In summary, I expect to have a shit load this week.
-- UPDATE: 500 boards expected today (8th), expect to have programmed and labelled for shipping to Amazon 9th.
+Lots of boards leaving for Amazon tomorrow (9th Feb) so should be listed next week.
 
 # ESP32-Faikin
 
