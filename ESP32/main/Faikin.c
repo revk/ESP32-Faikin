@@ -116,7 +116,7 @@ have_5_fan_speeds (void)
 rmt_channel_handle_t rmt_tx = NULL,
    rmt_rx = NULL;
 rmt_encoder_handle_t rmt_encoder = NULL;
-rmt_symbol_word_t rmt_rx_raw[128];
+rmt_symbol_word_t rmt_rx_raw[70];       // Needs to allow for 66, extra is to spot longer messages
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
@@ -490,10 +490,36 @@ rmt_rx_callback (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * 
 }
 
 void
+protocol_found (void)
+{
+   protocol_set = 1;
+   if (proto != protocol)
+   {
+      jo_t j = jo_object_alloc ();
+      jo_int (j, "protocol", proto);
+      revk_setting (j);
+      jo_free (&j);
+   }
+}
+
+void
 daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
+   if (!protocol_set)
+   {
+      protocol_found ();
+      // Defaults, as we cannot read them
+      set_val (power, 0);
+      set_val (mode, 3);
+      set_val (heat, 0);
+      set_temp (temp, 20);
+      set_val (fan, 0);
+      set_val (econo, 0);
+      set_val (powerful, 0);
+      set_val (swingv, 0);
+   }
    if (payload[7] & 1)
    {                            // Mode change
       set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
@@ -501,12 +527,13 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       set_val (power, (payload[3] & 0x10) ? 0 : 1);
       set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
       set_val (powerful, (payload[4] == 3) ? 1 : 0);
-      set_val (swingv, (payload[5] & 0x20) ? 1 : 0);
+      set_val (swingv, (payload[5] & 0x10) ? 1 : 0);
    } else
    {                            // Temp
       set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
-      daikin.status_known |= (CONTROL_temp | CONTROL_mode | CONTROL_power | CONTROL_fan | CONTROL_powerful | CONTROL_swingv);   // Bodge as we may not see a type 1 for some time|
    }
+   daikin.control_changed = 0;  // Assume all updated
+
 }
 
 void
@@ -589,19 +616,6 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
       revk_info ("rx", &j);
 #endif
       return;
-   }
-}
-
-void
-protocol_found (void)
-{
-   protocol_set = 1;
-   if (proto != protocol)
-   {
-      jo_t j = jo_object_alloc ();
-      jo_int (j, "protocol", proto);
-      revk_setting (j);
-      jo_free (&j);
    }
 }
 
@@ -770,8 +784,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    // incremented by 1, the second character is left intact
    if (!snoop && (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1
                   || buf[S21_CMD1_OFFSET] != cmd2))
-   {
-      // Malformed response, no proper S21
+   {                            // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
       jo_t j = jo_comms_alloc ();
       if (buf[0] != STX)
@@ -875,8 +888,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          revk_error ("comms", &j);
       } else
       {                         // Got a message, yay!
-         if (!protocol_set)
-            protocol_found ();
          if (b.dumping)
          {
             jo_t j = jo_comms_alloc ();
