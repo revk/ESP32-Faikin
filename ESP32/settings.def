@@ -51,6 +51,7 @@ u16	auto1				.live=1					// HHMM format turn on time
 u16	autot				.live=1	.decimal=1			// Faikin auto target temperature
 u8	autor				.live=1	.decimal=1			// Faikin auto margin either side of autot
 bit	thermostat			.live=1					// Faikin auto simple thermostat mode (heat to max, cool to min)
+bit isFTXM      0       .live=1         // Use control for FTXM Perfera Units (Experimental)
 bit	autop				.live=1					// Enable auto power on/off
 s	autob				.live=1					// BLE sensor ID
 u8	tmin		16		.live=1					// Min temp setting of system
