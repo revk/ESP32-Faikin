@@ -520,20 +520,27 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       set_val (powerful, 0);
       set_val (swingv, 0);
    }
-   if (payload[7] & 1)
+   switch (payload[7] & 0xF)
    {                            // Mode change
+   case 0:                     // temp
+      set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      break;
+   case 1:
       set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
       set_val (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
       set_val (power, (payload[3] & 0x10) ? 0 : 1);
       set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
       set_val (powerful, (payload[4] == 3) ? 1 : 0);
       set_val (swingv, (payload[5] & 0x10) ? 1 : 0);
-   } else
-   {                            // Temp
-      set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      break;
+   default:
+      jo_t j = jo_comms_alloc ();
+      jo_string (j, "error", "Unknown message type");
+      //jo_int (j, "ts", esp_timer_get_time ());
+      jo_base16 (j, "dump", payload, len);
+      revk_error ("rx", &j);
    }
    daikin.control_changed = 0;  // Assume all updated
-
 }
 
 void
@@ -863,16 +870,26 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       {
          dur = 0;               // Not a duration error
          uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
-         for (int i = 0; i < sizeof (rx) - 1; i++)
-            sum += (rx[i] >> 4) + rx[i];
-         if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
-            e = "Bad checksum";
+         if (sum >= 2)
+         {                      // All nibbles must add to F
+            sum = 0;
+            for (int i = 0; i < sizeof (rx); i++)
+               sum += (rx[i] >> 4) + rx[i];
+            if ((sum & 0xF) != 0xF)
+               e = "Bad checksum";
+         } else
+         {                      // Checksum is sum of all nibbles
+            for (int i = 0; i < sizeof (rx) - 1; i++)
+               sum += (rx[i] >> 4) + rx[i];
+            if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
+               e = "Bad checksum";
+         }
       }
       if (e)
       {
          jo_t j = jo_comms_alloc ();
          jo_string (j, "error", e);
-         jo_int (j, "ts", esp_timer_get_time ());
+         //jo_int (j, "ts", esp_timer_get_time ());
          if (dur)
             jo_int (j, "duration", dur);
          if (p > 1)
@@ -891,7 +908,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          if (b.dumping)
          {
             jo_t j = jo_comms_alloc ();
-            jo_int (j, "ts", esp_timer_get_time ());
+            //jo_int (j, "ts", esp_timer_get_time ());
             jo_base16 (j, "dump", rx, sizeof (rx));
             jo_int (j, "sync", sync);
             jo_int (j, "start", start);
@@ -919,8 +936,11 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       daikin.control_changed = 0;       // Assume all handled
       // Checksum (LOL)
       uint8_t sum = (buf[len - 1] & 0x0F);
+      buf[len - 1] &= 0xF0;
       for (int i = 0; i < len - 1; i++)
          sum += (buf[i] >> 4) + buf[i];
+      if ((buf[len - 1] & 0x0F) >= 2)
+         sum = 0xF - sum;       // All add to F
       buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
       if (b.dumping)
       {
