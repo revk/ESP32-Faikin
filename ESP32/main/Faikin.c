@@ -146,17 +146,17 @@ struct
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
 #include "acextras.m"
-   float envPrev;               // Predictive, last period value
-   float envDelta;              // Predictive, diff to last
-   float envDeltaPrev;          // Predictive, previous diff
+   float env_prev;              // Predictive, last period value
+   float env_delta;             // Predictive, diff to last
+   float env_delta_prev;        // Predictive, previous diff
    uint32_t controlvalid;       // uptime to which auto mode is valid
    uint32_t sample;             // Last uptime sampled
    uint32_t countApproaching,
-     countApproachingPrev;                   // Count of "approaching temp", and previous sample
+     countApproachingPrev;      // Count of "approaching temp", and previous sample
    uint32_t countBeyond,
-     countBeyondPrev;                   // Count of "beyond temp", and previous sample
+     countBeyondPrev;           // Count of "beyond temp", and previous sample
    uint32_t countTotal,
-     countTotalPrev;                   // Count total, and previous sample
+     countTotalPrev;            // Count total, and previous sample
    uint8_t fansaved;            // Saved fan we override at start
    uint8_t talking:1;           // We are getting answers
    uint8_t lastheat:1;          // Last heat mode
@@ -2869,9 +2869,9 @@ app_main ()
          uint8_t hot = daikin.heat;     // Are we in heating mode?
          float min = daikin.mintarget;
          float max = daikin.maxtarget;
-         float measuredTemp = daikin.env;
-         if (isnan (measuredTemp))   // No env temp available, so use A/C internal temp
-            measuredTemp = daikin.home;
+         float measured_temp = daikin.env;
+         if (isnan (measured_temp))     // No env temp available, so use A/C internal temp
+            measured_temp = daikin.home;
          xSemaphoreGive (daikin.mutex);
 
          // Predict temperature changes
@@ -2885,22 +2885,21 @@ app_main ()
          //       new "predicted" env temp is (19.8+(0.1+0.2)*2)=20.4 (*2 is calculated from tpredictt and tpredicts)
          // tpredicts is the "sample time" for the calculation (it must be taken *2, because the deltas are calculated over 2 cycles)
          // tpredictt is the time in the future where the predicted env temp would be reached.
-         if (tpredicts && !isnan (measuredTemp))
+         if (tpredicts && !isnan (measured_temp))
          {
             static uint32_t lasttime = 0;
             if (now / tpredicts != lasttime / tpredicts)
             {                   // Every minute - predictive
                lasttime = now;
-               daikin.envDeltaPrev = daikin.envDelta; // Save last delta
-               daikin.envDelta = measuredTemp - daikin.envPrev; // Delta from currently measured temperature and previously measured temperature
-               // daikin.envDelta < 0 means the room is cooling down
-               // daikin.envDelta > 0 means the room is heating up
-               daikin.envPrev = measuredTemp; // Save current temperature for next cycle
+               daikin.env_delta_prev = daikin.env_delta;        // Save last delta
+               daikin.env_delta = measured_temp - daikin.env_prev;      // Delta from currently measured temperature and previously measured temperature
+               // daikin.env_delta < 0 means the room is cooling down
+               // daikin.env_delta > 0 means the room is heating up
+               daikin.env_prev = measured_temp; // Save current temperature for next cycle
             }
             // Two subsequent temperature changes in the same direction ("no change" is ok as well)
-            if ((daikin.envDelta <= 0 && daikin.envDeltaPrev <= 0) 
-               || (daikin.envDelta >= 0 && daikin.envDeltaPrev >= 0))
-               measuredTemp += (daikin.envDelta + daikin.envDeltaPrev) * tpredictt / (tpredicts * 2);   // Predict
+            if ((daikin.env_delta <= 0 && daikin.env_delta_prev <= 0) || (daikin.env_delta >= 0 && daikin.env_delta_prev >= 0))
+               measured_temp += (daikin.env_delta + daikin.env_delta_prev) * tpredictt / (tpredicts * 2);       // Predict
          }
 
          // Apply adjustment
@@ -2936,11 +2935,11 @@ app_main ()
             //  temperature related to min/max
             if (!lockmode)
             {
-               if (hot && measuredTemp > max)
+               if (hot && measured_temp > max)
                {
                   hot = 0;
                   daikin_set_e (mode, "C");     // Set cooling as over temp
-               } else if (!hot && measuredTemp < min)
+               } else if (!hot && measured_temp < min)
                {
                   hot = 1;
                   daikin_set_e (mode, "H");     // Set heating as under temp
@@ -2951,9 +2950,9 @@ app_main ()
             //  and temperatur not close to target temp
             // TODO: Use of switchtemp for different purposes is confusing (ref. min/max a couple of lines above)
             if (daikin.fan
-                && ((hot && measuredTemp < min - 2 * (float) switchtemp / switchtemp_scale)
-                    || (!hot && measuredTemp > max + 2 * (float) switchtemp / switchtemp_scale)))
-            {                   
+                && ((hot && measured_temp < min - 2 * (float) switchtemp / switchtemp_scale)
+                    || (!hot && measured_temp > max + 2 * (float) switchtemp / switchtemp_scale)))
+            {
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
                daikin_set_v (fan, fmaxauto);    // Max fan at start
             }
@@ -2992,33 +2991,32 @@ app_main ()
             if (auto1 && last < auto1 && hhmm >= auto1)
             {                   // Auto on - and consider mode change is not on Auto
                daikin_set_v (power, 1);
-               if (!lockmode && daikin.mode != 3 && !isnan (measuredTemp) && !isnan (min) && !isnan (max)
-                   && ((hot && measuredTemp > max) || (!hot && measuredTemp < min)))
+               if (!lockmode && daikin.mode != 3 && !isnan (measured_temp) && !isnan (min) && !isnan (max)
+                   && ((hot && measured_temp > max) || (!hot && measured_temp < min)))
                   daikin_set_e (mode, hot ? "C" : "H"); // Swap mode
             }
             last = hhmm;
          }
 
          // Monitoring and automation
-         if (!isnan (measuredTemp) && !isnan (min) && !isnan (max) && tsample)
+         if (!isnan (measured_temp) && !isnan (min) && !isnan (max) && tsample)
          {                      // Monitoring and automation
             if (daikin.power && daikin.lastheat != hot)
             {                   // If we change mode, start samples again
                daikin.lastheat = hot;
                samplestart ();
             }
-            
+
             if (!daikin.sample)
             {
                // TODO: Wouldn't this be better in samplestart()?
-               daikin.countApproaching = daikin.countApproachingPrev = daikin.countBeyond = daikin.countBeyondPrev = daikin.countTotal = daikin.countTotalPrev = 0;    // Reset sample counts
-            }
-            else
+               daikin.countApproaching = daikin.countApproachingPrev = daikin.countBeyond = daikin.countBeyondPrev = daikin.countTotal = daikin.countTotalPrev = 0;     // Reset sample counts
+            } else
             {
-               daikin.countTotal++;    // Total
-               if ((hot && measuredTemp < min) || (!hot && measuredTemp > max))
-                  daikin.countApproaching++; // Approaching temp
-               else if ((hot && measuredTemp > max) || (!hot && measuredTemp < min))
+               daikin.countTotal++;     // Total
+               if ((hot && measured_temp < min) || (!hot && measured_temp > max))
+                  daikin.countApproaching++;    // Approaching temp
+               else if ((hot && measured_temp > max) || (!hot && measured_temp < min))
                   daikin.countBeyond++; // Beyond
             }
 
@@ -3026,35 +3024,34 @@ app_main ()
             if (daikin.sample <= now)
             {                   // New sample, consider some changes
                // daikin.countTotalPrev is Total Counter of previous cycle
-               int countApproaching2Samples = daikin.countApproaching + daikin.countApproachingPrev;  // Approaching counter of this and previous cycle
-               int countBeyond2Samples      = daikin.countBeyond      + daikin.countBeyondPrev;       // Beyond counter of this and previous cycle
-               int countTotal2Samples       = daikin.countTotal       + daikin.countTotalPrev;        // Total counter of this and previous cycle (includes neither approaching or beyond, i.e. in range)
+               int count_approaching_2_samples = daikin.countApproaching + daikin.countApproachingPrev; // Approaching counter of this and previous cycle
+               int countBeyond2Samples = daikin.countBeyond + daikin.countBeyondPrev;   // Beyond counter of this and previous cycle
+               int count_total_2_samples = daikin.countTotal + daikin.countTotalPrev;   // Total counter of this and previous cycle (includes neither approaching or beyond, i.e. in range)
 
                // Prepare reporting structure for "automation"
                jo_t j = jo_object_alloc ();
                jo_bool (j, "hot", hot);
-               if (t)
+               if (count_total_2_samples)
                {
-                  jo_int (j, "approaching", a);
+                  jo_int (j, "approaching", count_approaching_2_samples);
                   jo_int (j, "beyond", countBeyond2Samples);
-                  jo_int (j, daikin.countTotalPrev ? "samples" : "initial-samples", countTotal2Samples);
+                  jo_int (j, daikin.countTotalPrev ? "samples" : "initial-samples", count_total_2_samples);
                }
                jo_int (j, "period", tsample);
-               jo_litf (j, "temp", "%.2f", measuredTemp);
+               jo_litf (j, "temp", "%.2f", measured_temp);
                jo_litf (j, "min", "%.2f", min);
                jo_litf (j, "max", "%.2f", max);
-               
-               if (daikin.countTotalPrev) // Skip first cycle
+
+               if (daikin.countTotalPrev)       // Skip first cycle
                {                // Power, mode, fan, automation
-                  if (daikin.power) // Daikin is on
+                  if (daikin.power)     // Daikin is on
                   {
-                     int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2); // TODO: What does "fanstep ? : (pro..."? What if fanstep==0?
+                     int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2);        // TODO: What does "fanstep ? : (pro..."? What if fanstep==0?
 
                      // A lot more beyond than total counts and no approaching in the last two cycles
                      // Time to switch modes (heating/cooling) and reduce fan to minimum
                      // TODO: Smells like too much overshoot...
-                     if ((countBeyond2Samples * 2 > countTotal2Samples || daikin.slave) 
-                         && !countApproaching2Samples)
+                     if ((countBeyond2Samples * 2 > count_total_2_samples || daikin.slave) && !count_approaching_2_samples)
                      {          // Mode switch
                         if (!lockmode)
                         {
@@ -3072,54 +3069,49 @@ app_main ()
                      // Time to reduce the fan a bit
                      // TODO: Better wait until at the desired temp instead of tickeling the limits?
                      // TODO: Not sure about the purpose of daikin.slave 
-                     else if (countApproaching2Samples * 10 < countTotal2Samples * 7 
-                              && step 
-                              && daikin.fan > 1 && daikin.fan <= 5)
+                     else if (count_approaching_2_samples * 10 < count_total_2_samples * 7
+                              && step && daikin.fan > 1 && daikin.fan <= 5)
                      {
                         jo_int (j, "set-fan", daikin.fan - step);
                         daikin_set_v (fan, daikin.fan - step);  // Reduce fan
                         // TODO: Why not use quit mode as lowest fan step?
-                     } 
+                     }
                      // A lot of approaching means still far away from desired temp
                      // Time to increase the fan speed
                      // TODO: Not sure about the purpose of daikin.slave 
-                     else if (!daikin.slave 
-                             && countApproaching2Samples * 10 > countTotal2Samples * 9 
-                             && step 
-                             && daikin.fan >= 1 && daikin.fan < fmaxauto)
+                     else if (!daikin.slave
+                              && count_approaching_2_samples * 10 > count_total_2_samples * 9
+                              && step && daikin.fan >= 1 && daikin.fan < fmaxauto)
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
-                     } 
+                     }
                      // No Approaching and no Beyond, so it's in desired range (autot +/- autor)
                      // Only affects if autop is active
                      // Turn off as 100% in band for last two period
-                     else if ((autop || (daikin.remote && autoptemp)) 
-                             && !countApproaching2Samples 
-                             && !countBeyond2Samples)
+                     else if ((autop || (daikin.remote && autoptemp)) && !count_approaching_2_samples && !countBeyond2Samples)
                      {          // Auto off
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
-                  } 
+                  }
                   // Daikin is off
                   // TODO: What's the purpose of daikin.remote?
-                  else if ((autop || (daikin.remote && autoptemp)) // AutoP Mode only
-                         && (daikin.countApproaching == daikin.countTotal || daikin.countBeyond == daikin.countTotal) // full cycle approaching or full cycle beyond
-                         && (measuredTemp >= max + (float) autoptemp / autoptemp_scale // temp out of desired range
-                             || measuredTemp <= min - (float) autoptemp / autoptemp_scale) 
-                         && (!lockmode || countBeyond2Samples != countTotal2Samples)) // temp out of desired range
+                  else if ((autop || (daikin.remote && autoptemp))      // AutoP Mode only
+                           && (daikin.countApproaching == daikin.countTotal || daikin.countBeyond == daikin.countTotal) // full cycle approaching or full cycle beyond
+                           && (measured_temp >= max + (float) autoptemp / autoptemp_scale       // temp out of desired range
+                               || measured_temp <= min - (float) autoptemp / autoptemp_scale) && (!lockmode || countBeyond2Samples != count_total_2_samples))   // temp out of desired range
                   {             // Auto on (don't auto on if would reverse mode and lockmode)
                      jo_bool (j, "set-power", 1);
                      daikin_set_v (power, 1);   // Turn on as 100% out of band for last two period
-                     if (b == t)
+                     if (countBeyond2Samples == count_total_2_samples)
                      {
                         jo_string (j, "set-mode", hot ? "C" : "H");
                         daikin_set_e (mode, hot ? "C" : "H");   // Swap mode
                      }
                   }
                }
-               if (countTotal2Samples) // after a cycle, send automation data   // TODO: Isn't this always the case?
+               if (count_total_2_samples)       // after a cycle, send automation data   // TODO: Isn't this always the case?
                   revk_info ("automation", &j);
                else
                   jo_free (&j);
@@ -3128,8 +3120,8 @@ app_main ()
                daikin.countApproachingPrev = daikin.countApproaching;
                daikin.countBeyondPrev = daikin.countBeyond;
                daikin.countTotalPrev = daikin.countTotal;
-               daikin.countApproaching = daikin.countBeyond = daikin.countTotal = 0; // Reset counter
-               daikin.sample = now + tsample; // Set time for next sample cycle
+               daikin.countApproaching = daikin.countBeyond = daikin.countTotal = 0;    // Reset counter
+               daikin.sample = now + tsample;   // Set time for next sample cycle
             }
          }
 
@@ -3155,7 +3147,7 @@ app_main ()
 
                // What the A/C is using as current temperature
                float reference = NAN;
-               if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet)) // Both values are known
+               if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))    // Both values are known
                   reference = (daikin.home * thermref + daikin.inlet * (100 - thermref)) / 100; // thermref is how much inlet and home are used as reference
                else if (daikin.status_known & CONTROL_home)
                   reference = daikin.home;
@@ -3166,15 +3158,16 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
 
                // Temp set
-               float set = min + reference - measuredTemp;   // Where we will set the temperature << WHY? IT WILL BE OVERWRITTEN 
-               if ((hot && measuredTemp < (daikin.hysteresis ? max : min)) || (!hot && measuredTemp > (daikin.hysteresis ? min : max)))
+               float set = min + reference - measured_temp;     // Where we will set the temperature << WHY? IT WILL BE OVERWRITTEN 
+               if ((hot && measured_temp < (daikin.hysteresis ? max : min))
+                   || (!hot && measured_temp > (daikin.hysteresis ? min : max)))
                {                // Apply heat/cool
                   if (thermostat)
                      daikin.hysteresis = 1;     // We're on, so keep going to "beyond"
                   if (hot)
-                     set = max + reference - measuredTemp + heatover;        // Ensure heating by applying A/C offset to force it
+                     set = max + reference - measured_temp + heatover;  // Ensure heating by applying A/C offset to force it
                   else
-                     set = min + reference - measuredTemp - coolover;        // Ensure cooling by applying A/C offset to force it
+                     set = min + reference - measured_temp - coolover;  // Ensure cooling by applying A/C offset to force it
                } else
                {                // At or beyond temp - stop heat/cool
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
@@ -3185,9 +3178,9 @@ app_main ()
                      samplestart ();    // Initial phase complete, start samples again.
                   }
                   if (hot)
-                     set = min + reference - measuredTemp - heatback;        // Heating mode but apply negative offset to not actually heat any more than this
+                     set = min + reference - measured_temp - heatback;  // Heating mode but apply negative offset to not actually heat any more than this
                   else
-                     set = max + reference - measuredTemp + coolback;        // Cooling mode but apply positive offset to not actually cool any more than this
+                     set = max + reference - measured_temp + coolback;  // Cooling mode but apply positive offset to not actually cool any more than this
                }
 
                // Limit settings to acceptable values
@@ -3202,8 +3195,7 @@ app_main ()
                if (!isnan (reference))
                   daikin_set_t (temp, set);     // Apply temperature setting
             }
-         } 
-         else
+         } else
          {
             controlstop ();
          }
