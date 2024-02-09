@@ -1742,7 +1742,7 @@ static jo_t
 legacy_ok (void)
 {
    jo_t j = jo_object_alloc ();
-   jo_string (j, "ret", "ok");
+   jo_string (j, "ret", "OK");
    return j;
 }
 
