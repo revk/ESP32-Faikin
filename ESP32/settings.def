@@ -8,6 +8,7 @@ bit	web.control	1							// Web based controls
 bit	web.settings	1							// Web based settings
 
 s	model									// Set model name manually
+s	region		eu							// Region (legacy URLs)
 
 bit	fahrenheit			.live=1					// Web shows Fahrenheit
 
