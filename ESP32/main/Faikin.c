@@ -372,7 +372,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                set_temp (temp, daikin.temp);    // Does not have temp in other modes
             if (payload[3] != 'A')      // Set fan speed
                set_val (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
-            else if (daikin.fan == 6 && daikin.power && daikin.famrpm < 750)
+            else if (daikin.fan == 6 && daikin.power && daikin.fanrpm < 750)
                set_val (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
             else
                set_val (fan, 0);        // Auto as fan too fast to be quiet mode
