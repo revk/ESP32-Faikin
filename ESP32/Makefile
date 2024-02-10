@@ -24,7 +24,7 @@ beta:
 	@make set
 	cp $(PROJECT_NAME)*.bin betarelease
 	cp $(PROJECT_NAME)*.bin release
-	git commit -a -m beta
+	git commit -a -m betarelease release
 	git push
 
 issue:	
