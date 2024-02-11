@@ -23,7 +23,7 @@ beta:
 	-git commit -a -m checkpoint
 	@make set
 	cp $(PROJECT_NAME)*.bin betarelease
-	git commit -a -m release
+	git commit -a -m Beta
 	git push
 
 issue:	
@@ -33,7 +33,7 @@ issue:
 	@make set
 	cp $(PROJECT_NAME)*.bin betarelease
 	cp $(PROJECT_NAME)*.bin release
-	git commit -a -m betarelease release
+	git commit -a -m Release
 	git push
 
 settings.h:     components/ESP32-RevK/revk_settings settings.def components/ESP32-RevK/settings.def
