@@ -1,7 +1,3 @@
-# Stock
-
-Lots of boards leaving for Amazon tomorrow (9th Feb) so should be listed next week.
-
 # ESP32-Faikin
 
 Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. Sadly their WiFi control modules are not so good, especially the latest models which are all cloud based, require an internet connection to even work, and are slow.
