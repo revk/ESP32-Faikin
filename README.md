@@ -22,7 +22,7 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit. The S21 cable is *one to one* wired, i.e. pin 1 to pin 1. Note that Pin 5 is ⏚.
 
-[JST, EH Female Connector Housing, 2.5mm Pitch, 5 Way, 1 Row](https://uk.rs-online.com/web/p/wire-housings-plugs/3116237)
+The S21 plug neede is [JST, EH Female Connector Housing, 2.5mm Pitch, 5 Way, 1 Row](https://uk.rs-online.com/web/p/wire-housings-plugs/3116237), which needs pins and crimps as well.
 
 **WARNING** Messing about in your air-con unit can be dangerous with live power, and could damage the unit. Take all precautions necessary and you mess with your air-con unit at your own risk! Note, `X403` is a non isolated version of `S21` so if you wire to that your Faikin will be live, so needs to be inside the case somewhere, and don't wire anything while the power is on... See [X403](https://github.com/revk/ESP32-Faikin/issues/208).
 
