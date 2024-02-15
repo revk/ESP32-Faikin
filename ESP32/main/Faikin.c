@@ -813,7 +813,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
 
    {                            // Wait rx
-      int wait = 5000;
+      int wait = (protofix ? 20000 : 5000);
       while (!rmt_rx_len && --wait)
          usleep (1000);
    }
