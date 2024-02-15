@@ -37,6 +37,7 @@ bit	ha		1							// Home Assistance
 bit	ble									// Enable BLE
 
 bit	cn.send4	1		.live=1					// CN_WIRED, send packet 4 times
+bit	cn.mark900			.live=1					// CN_WIRED. mark using 900uS not 1000uS
 u8	cn.byte1	00		.live=1	.hex=1				// Byte 1 of CN_WIRED send
 u8	cn.byte2	23		.live=1	.hex=1				// Byte 2 of CN_WIRED send
 

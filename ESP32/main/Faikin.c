@@ -106,7 +106,7 @@ have_5_fan_speeds (void)
 
 #define	CN_WIRED_LEN	8
 #define	CN_WIRED_SYNC	2600    // uS
-#define	CN_WIRED_START	1000    // uS
+#define	CN_WIRED_START	(cnmark900?900:1000)    // uS
 #define	CN_WIRED_SPACE	300     // uS
 #define	CN_WIRED_0	400     // uS
 #define	CN_WIRED_1	1000    // uS
