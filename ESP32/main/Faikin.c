@@ -2455,8 +2455,6 @@ app_main ()
             REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
             if (rmt_tx)
                REVK_ERR_CHECK (rmt_enable (rmt_tx));
-            rmt_rx_len = 0;
-            REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
          }
          if (!rmt_rx)
          {                      // Create rmt_rx
@@ -2480,6 +2478,8 @@ app_main ()
                REVK_ERR_CHECK (rmt_enable (rmt_rx));
             }
          }
+         rmt_rx_len = 0;
+         REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
       } else
       {
          if (rmt_tx)
