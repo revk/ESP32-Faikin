@@ -12,6 +12,12 @@ s	region		eu							// Region (legacy URLs)
 
 bit	fahrenheit			.live=1					// Web shows Fahrenheit
 
+bit	no.s21				.live=1					// Do not try S21 protocol
+bit	no.x50a				.live=1					// Do not try X50A protocol
+bit	no.cnwired	1		.live=1					// Do not try CN_WIRED protocol
+bit	no.swaptx			.live=1					// Do not try inverted Tx (use GPIO setting only)
+bit	no.swaprx			.live=1					// Do not try inverted Rx (use GPIO setting only)
+
 bit	no.demand								// Disable demand control
 bit	no.swingw								// Unit does not have swing (W)
 bit 	no.swingh								// Unit does not have swing (H)
@@ -24,14 +30,19 @@ bit	no.led		1							// Unit does not have LED control
 
 bit	no.faikinauto								// Do not show faikin auto controls
 
+
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 
 bit	ble									// Enable BLE
 
+bit	cn.send4	1		.live=1					// CN_WIRED, send packet 4 times
+u8	cn.byte1	00		.live=1	.hex=1				// Byte 1 of CN_WIRED send
+u8	cn.byte2	23		.live=1	.hex=1				// Byte 2 of CN_WIRED send
+
 u8	fanstep									// Fan steps
 
-bit	protofix								// Fix protocol
+bit	protofix								// Fix protocol (for debugging, normally use no21, nox50a, etc)
 bit	lockmode								// Lock mode in Faikin auto
 u8	protocol								// Protocol
 

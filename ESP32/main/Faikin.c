@@ -54,7 +54,7 @@ enum
    PROTO_TYPE_S21,
    PROTO_TYPE_X50A,
    PROTO_TYPE_CN_WIRED,
-   PROTO_TYPE_MAX = PROTO_TYPE_CN_WIRED,        // Fudge, don't scan CN_WIRED for now
+   PROTO_TYPE_MAX
 };
 const char *const prototype[] = { "S21", "X50A", "CN_WIRED" };
 
@@ -817,8 +817,17 @@ daikin_cn_wired_command (int len, uint8_t * buf)
       while (!rmt_rx_len && --wait)
          usleep (1000);
    }
-
-   if (rmt_rx_len)
+   if (!rmt_rx_len)
+   {
+      rmt_rx_len = 0;
+      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
+      daikin.talking = 0;
+      b.loopback = 0;
+      jo_t j = jo_comms_alloc ();
+      jo_bool (j, "timeout", 1);
+      revk_error ("comms", &j);
+      return;
+   }
    {                            // Process receive
       uint32_t sum0 = 0,
          sum1 = 0,
@@ -929,8 +938,8 @@ daikin_cn_wired_command (int len, uint8_t * buf)
 
    if (daikin.control_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
-      if (daikin.control_changed)
-         daikin.cnresend = 3;
+      if (daikin.control_changed && cnsend4)
+         daikin.cnresend = 3;   // Send 3 more times
       else if (daikin.cnresend)
          daikin.cnresend--;
       daikin.control_changed = 0;       // Assume all handled
@@ -2418,12 +2427,6 @@ app_main ()
    void uart_setup (void)
    {
       esp_err_t err = 0;
-      if (!protocol_set && !b.loopback)
-      {
-         proto++;
-         if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
-            proto = 0;
-      }
       ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
                 tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
       if (!err)
@@ -2585,19 +2588,30 @@ app_main ()
    proto = protocol;
    if (protofix)
       protocol_set = 1;         // Fixed protocol - do not change
-   else if (proto >= PROTO_TYPE_MAX * PROTO_SCALE && proto_type () < sizeof (prototype) / sizeof (*prototype))
-   {                            // Manually set protocol above the auto scanning range
-      protocol_set = 1;
-   } else
-      proto--;
+   else
+      proto--;                  // We start by moving forward if protocol not set
    while (1)
    {                            // Main loop
       // We're (re)starting comms from scratch, so set "talking" flag.
       // This signals protocol integrity and actually enables communicating with the AC.
+      if (!protocol_set && !b.loopback)
+      {                         // Scanning protocols - more to next protocol
+         proto++;
+         if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
+            proto = 0;
+         if ((proto_type () == PROTO_TYPE_CN_WIRED && nocnwired) ||     //
+             (proto_type () == PROTO_TYPE_S21 && nos21) ||      //
+             (proto_type () == PROTO_TYPE_X50A && nox50a) ||    //
+             ((proto & PROTO_TXINVERT) && noswaptx) ||  //
+             ((proto & PROTO_RXINVERT) && noswaprx))
+         {                      // not a protocol we want to scan, so try again
+            usleep (1000);      // Yeh, silly, but someone could configure to do nothing
+            continue;
+         }
+      }
       daikin.talking = 1;
       if (tx.set && rx.set)
-      {
-         // Poke UART
+      {                         // Poke UART
          uart_setup ();
          if ((proto_type () == PROTO_TYPE_X50A))
          {                      // Startup X50A
@@ -2667,8 +2681,8 @@ app_main ()
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
                if (cmd[0] == 0xC7)
                   cmd[0] = 0x20;        // temp was not set
-               cmd[1] = 0x04;   // ?
-               cmd[2] = 0x50;   // ?
+               cmd[1] = cnbyte1;        // ?
+               cmd[2] = cnbyte2;        // ?
                cmd[3] = ((const uint8_t[])
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
                cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
