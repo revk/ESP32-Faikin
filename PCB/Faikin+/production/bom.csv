@@ -1,6 +1,6 @@
 ﻿Designator,Footprint,Quantity,Value,LCSC Part #
+"C1, C2, C3",C_0402,3,100nF,
 C10,C_0603_,1,100nF,
-C2,C_0402,1,100nF,
 C5,C_0603,1,22uF,
 C6,C_0402,1,1uF,
 C8,C_0603_,1,10uF 35V,C194427
