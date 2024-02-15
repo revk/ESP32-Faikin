@@ -819,8 +819,6 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
    if (!rmt_rx_len)
    {
-      rmt_rx_len = 0;
-      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
       daikin.talking = 0;
       b.loopback = 0;
       jo_t j = jo_comms_alloc ();
@@ -2457,6 +2455,8 @@ app_main ()
             REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
             if (rmt_tx)
                REVK_ERR_CHECK (rmt_enable (rmt_tx));
+            rmt_rx_len = 0;
+            REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
          }
          if (!rmt_rx)
          {                      // Create rmt_rx
@@ -3271,7 +3271,7 @@ app_main ()
                }
             }
          }
-         if (daikin.ha_send && protocol_set)
+         if (daikin.ha_send && protocol_set && daikin.talking)
          {
             send_ha_config ();
             ha_status ();       // Update status now sent
