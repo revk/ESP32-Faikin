@@ -2990,7 +2990,7 @@ app_main ()
                     || (!hot && measured_temp > max + 2 * (float) switchtemp / switchtemp_scale)))
             {
                daikin.fansaved = daikin.fan;    // Save for when we get to temp
-               daikin_set_v (fan, fmaxauto);    // Max fan at start
+               daikin_set_v (fan, autofmax);    // Max fan at start
             }
          }
          // END OF controlstart()
@@ -3117,7 +3117,7 @@ app_main ()
                      // TODO: Not sure about the purpose of daikin.slave 
                      else if (!daikin.slave
                               && count_approaching_2_samples * 10 > count_total_2_samples * 9
-                              && step && daikin.fan >= 1 && daikin.fan < fmaxauto)
+                              && step && daikin.fan >= 1 && daikin.fan < autofmax)
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
