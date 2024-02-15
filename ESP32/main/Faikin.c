@@ -497,7 +497,7 @@ protocol_found (void)
    {
       jo_t j = jo_object_alloc ();
       jo_int (j, "protocol", proto);
-      revk_setting (j);
+      revk_settings_store (j, NULL, 1);
       jo_free (&j);
    }
 }
@@ -1151,7 +1151,7 @@ daikin_control (jo_t j)
    }
    if (s)
    {
-      revk_setting (s);
+      revk_settings_store (s, NULL, 1);
       jo_free (&s);
    }
    return "";
@@ -1283,7 +1283,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          {                      // Setting the control
             jo_t s = jo_object_alloc ();
             jo_lit (s, "autot", value);
-            revk_setting (s);
+            revk_settings_store (s, NULL, 1);
             jo_free (&s);
          } else
             jo_lit (s, "temp", value);  // Direct controls
