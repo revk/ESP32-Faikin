@@ -2278,7 +2278,7 @@ send_ha_config (void)
       {
          jo_t j = make ("demand", NULL);
          jo_string (j, "name", "Demand control");
-         jo_stringf (j, "cmd_t", "%s/demand", revk_id);
+         jo_stringf (j, "cmd_t", "command/%s/demand", revk_id);
          jo_stringf (j, "stat_t", "%s", revk_id);
          jo_string (j, "val_tpl", "{{value_json.demand}}");
          jo_array (j, "options");
