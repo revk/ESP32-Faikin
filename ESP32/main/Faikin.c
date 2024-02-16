@@ -2985,7 +2985,7 @@ app_main ()
             // Force high fan at the beginning if not fan in AUTO 
             //  and temperatur not close to target temp
             // TODO: Use of switchtemp for different purposes is confusing (ref. min/max a couple of lines above)
-            if (daikin.fan
+            if (!nofanauto && daikin.fan
                 && ((hot && measured_temp < min - 2 * (float) switchtemp / switchtemp_scale)
                     || (!hot && measured_temp > max + 2 * (float) switchtemp / switchtemp_scale)))
             {
@@ -3002,7 +3002,7 @@ app_main ()
                return;
             set_val (control, 0);
             if (daikin.fansaved)
-            {                   // Restore saved fan setting
+            {                   // Restore saved fan setting (if was set, which nofanauto would not do)
                daikin_set_v (fan, daikin.fansaved);
                daikin.fansaved = 0;
             }
@@ -3094,7 +3094,7 @@ app_main ()
                            jo_string (j, "set-mode", hot ? "C" : "H");
                            daikin_set_e (mode, hot ? "C" : "H");        // Swap mode
 
-                           if (step && daikin.fan > 1 && daikin.fan <= 5)
+                           if (!nofanauto && step && daikin.fan > 1 && daikin.fan <= 5)
                            {
                               jo_int (j, "set-fan", 1);
                               daikin_set_v (fan, 1);
@@ -3105,7 +3105,7 @@ app_main ()
                      // Time to reduce the fan a bit
                      // TODO: Better wait until at the desired temp instead of tickeling the limits?
                      // TODO: Not sure about the purpose of daikin.slave 
-                     else if (count_approaching_2_samples * 10 < count_total_2_samples * 7
+                     else if (!nofanauto && count_approaching_2_samples * 10 < count_total_2_samples * 7
                               && step && daikin.fan > 1 && daikin.fan <= 5)
                      {
                         jo_int (j, "set-fan", daikin.fan - step);
@@ -3115,7 +3115,7 @@ app_main ()
                      // A lot of approaching means still far away from desired temp
                      // Time to increase the fan speed
                      // TODO: Not sure about the purpose of daikin.slave 
-                     else if (!daikin.slave
+                     else if (!nofanauto && !daikin.slave
                               && count_approaching_2_samples * 10 > count_total_2_samples * 9
                               && step && daikin.fan >= 1 && daikin.fan < autofmax)
                      {
@@ -3209,7 +3209,7 @@ app_main ()
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
-                     daikin_set_v (fan, daikin.fansaved);       // revert fan speed
+                     daikin_set_v (fan, daikin.fansaved);       // revert fan speed (if set, which nofanauto would not do)
                      daikin.fansaved = 0;
                      samplestart ();    // Initial phase complete, start samples again.
                   }

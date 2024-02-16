@@ -29,6 +29,7 @@ bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 
 bit	no.faikinauto								// Do not show faikin auto controls
+bit	no.fanauto								// Do not control fan in faikin auto mode
 
 
 bit	dark									// Dark mode
