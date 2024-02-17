@@ -1137,13 +1137,6 @@ daikin_control (jo_t j)
             s = jo_object_alloc ();
          jo_string (s, tag, val);       // Set BLE value
       }
-      if (autor && !strcmp (tag, "temp"))
-      {                         // Remote control is trying to change the faikin auto temp
-         if (!s)
-            s = jo_object_alloc ();
-         jo_lit (s, "autot", val);
-         daikin.status_changed = 1;
-      }
       if (err)
       {                         // Error report
          jo_t j = jo_object_alloc ();
@@ -1326,9 +1319,11 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       if (!strcmp (suffix, "demand"))
          jo_int (s, "demand", atoi (value));
-      // TODO comfort/streamer/sensor/quiet
+      if (!strcmp (suffix, "streamer"))
+         jo_int (s, "streamer", atoi (value));
+      if (!strcmp (suffix, "sensor"))
+         jo_int (s, "sensor", atoi (value));
    }
-
    jo_close (s);
    jo_rewind (s);
    if (jo_next (s) == JO_TAG)
