@@ -1137,6 +1137,13 @@ daikin_control (jo_t j)
             s = jo_object_alloc ();
          jo_string (s, tag, val);       // Set BLE value
       }
+      if (autor && !strcmp (tag, "temp"))
+      {                         // Remote control is trying to change the faikin auto temp
+         if (!s)
+            s = jo_object_alloc ();
+         jo_lit (s, "autot", val);
+         daikin.status_changed = 1;
+      }
       if (err)
       {                         // Error report
          jo_t j = jo_object_alloc ();
