@@ -1280,7 +1280,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          if (autor)
          {                      // Setting the control
             jo_t s = jo_object_alloc ();
-            jo_lit (s, "autot", value);
+            jo_litf (s, "autot", "%.1f", atof (value));
             revk_settings_store (s, NULL, 1);
             jo_free (&s);
          } else
