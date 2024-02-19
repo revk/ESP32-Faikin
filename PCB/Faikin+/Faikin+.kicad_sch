@@ -2301,10 +2301,7 @@
     (property "Datasheet" "~" (at 151.13 50.8 0)
       (effects (font (size 1.27 1.27)) hide)
     )
-    (property "Part No" "" (at 151.13 50.8 0)
-      (effects (font (size 1.27 1.27)) hide)
-    )
-    (property "Note" "" (at 151.13 50.8 0)
+    (property "LCSC Part #" "C138062" (at 151.13 50.8 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (instances
