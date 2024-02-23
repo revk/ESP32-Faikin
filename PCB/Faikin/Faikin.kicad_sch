@@ -2750,7 +2750,7 @@
     (property "Value" "XL-1010RGBC-WS2812B" (at 145.415 129.54 0)
       (effects (font (size 1 1)) (justify left top) hide)
     )
-    (property "Footprint" "RevK:SMD1010" (at 145.415 127.635 0)
+    (property "Footprint" "RevK:SMD1010+" (at 145.415 127.635 0)
       (effects (font (size 1 1)) (justify left top) hide)
     )
     (property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf" (at 145.415 125.73 0)
