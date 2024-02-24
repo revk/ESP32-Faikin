@@ -18,6 +18,10 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
+Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes.
+
+![Faikin](https://github.com/revk/ESP32-Faikin/assets/996983/bc167f6e-4991-4f35-9b31-4791a57e6e8e)
+
 ## Cabling
 
 If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit. The S21 cable is *one to one* wired, i.e. pin 1 to pin 1. Note that Pin 5 is ⏚.
