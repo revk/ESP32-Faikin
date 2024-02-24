@@ -20,7 +20,7 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes.
 
-![Faikin](https://github.com/revk/ESP32-Faikin/assets/996983/bc167f6e-4991-4f35-9b31-4791a57e6e8e)
+![Faikin](https://github.com/revk/ESP32-Faikin/assets/996983/fa01b0e1-a6e1-4b71-9f5f-688fb9a61192)
 
 ## Cabling
 
