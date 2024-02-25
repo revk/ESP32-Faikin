@@ -5745,15 +5745,6 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C138062"
-			(at 151.13 50.165 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6706,24 +6697,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 151.13 52.07 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Part No" ""
-			(at 151.13 52.07 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Note" ""
 			(at 151.13 52.07 0)
 			(effects
 				(font
@@ -7708,7 +7681,7 @@
 				(hide yes)
 			)
 		)
-		(property "JLCPCB Position Offset" "5,0"
+		(property "JLCPCB Position Offset" "0,-2.61"
 			(at 166.37 88.265 0)
 			(effects
 				(font
