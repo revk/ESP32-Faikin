@@ -532,6 +532,7 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
       set_val (powerful, (payload[4] == 3) ? 1 : 0);
       set_val (swingv, (payload[5] & 0x10) ? 1 : 0);
+      set_val (led, (payload[5] & 0x80) ? 1 : 0);
       break;
    default:
       jo_t j = jo_comms_alloc ();
@@ -2689,7 +2690,7 @@ app_main ()
                          { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
                cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
                                                   { 0x01, 0x08, 0x04, 0x04, 0x02, 0x02, 0x09 }[daikin.fan]);    // A12345Q mapped
-               cmd[5] = daikin.swingv ? 0x1F : 0x0A;
+               cmd[5] = (daikin.led ? 0x80 : 0) | (daikin.swingv ? 0x1F : 0x0A);
                cmd[6] = 0x10;   // ?
                daikin_cn_wired_command (sizeof (cmd), cmd);
             } else if (proto_type () == PROTO_TYPE_S21)
