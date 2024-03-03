@@ -18,11 +18,15 @@ A 3D prinabale case design is included on GitHub.
 
 There is an LED on the module. It is possible to disable it with a setting, e.g. `setting/GuestAC {"blink":[0,0,0]}`. Otherwise it blinks a colour.
 
+If `dark` is set, then only loopback or offline show, otherwise the LED is off.
+
 |Colour|Meaning|
 |----|-----|
-|Red|Heating (heat or auto mode), unless `dark` set|
-|Blue|Cooling (cool or auto mode), unless `dark` set|
-|None|Power off|
+|Red|Heating (heat or auto mode)|
+|Blue|Cooling (cool or auto mode)|
+|Orange|Fan mode|
+|Cyan|Dry mode|
+|Yellow|Power off|
 |Magenta|Daikin is off line|
 |Red/Green/Blue|Loopback test|
 |White|Rebooting|
