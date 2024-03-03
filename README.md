@@ -4,17 +4,22 @@ Everyone knows Daikin make some of the best air conditioners out there, mechanic
 
 This code/module provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
-This is all ESP32 based, but there is also an [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
-
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
-Support is provided here ([issues](issues) and [discussions](discussions)).
+## Further manuals / links
 
-See [wiki/Work-in-progress](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress) for details of changes and pre-release test.
+- [Work in progress / release notes](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress)
+- [Setup](Manuals/Setup.md) Manual
+- [Controls](Manuals/Controls.md) Manual
+- [Advanced](Manuals/Advanced.md) Manual
+- [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
+- [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi
+
+For support, see issues and discussions.
 
 ## PCB
 
-The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this. See wiki [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units).
+The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
