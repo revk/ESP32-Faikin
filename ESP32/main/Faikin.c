@@ -3227,10 +3227,10 @@ app_main ()
                   set = roundf (set);   // CN_WIRED only does 1C steps
                else if (proto_type () == PROTO_TYPE_S21)
                   set = roundf (set * 2.0) / 2.0;       // S21 only does 0.5C steps
-               if (set < tmin)
-                  set = tmin;
-               if (set > tmax)
-                  set = tmax;
+               if (set < (hot ? tmin : tcoolmin))
+                  set = (hot ? tmin : tcoolmin);
+               if (set > (hot ? theatmax : tmax))
+                  set = (hot ? theatmax : tmax);
                if (!isnan (reference))
                   daikin_set_t (temp, set);     // Apply temperature setting
             }

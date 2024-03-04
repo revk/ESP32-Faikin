@@ -79,7 +79,9 @@ bit	thermostat			.live=1					// Faikin auto simple thermostat mode (heat to max,
 
 
 u8	t.min		16		.live=1					// Min temp setting of system
+u8	t.coolmin	16		.live=1					// Min temp setting for Faikin auto when cooling
 u8	t.max		32		.live=1					// Max temp setting of system
+u8	t.heatmax	32		.live=1					// Max temp setting for Faikin auto when heating
 u32	t.predicts	30							// Temp prediction sample time
 u32	t.predictt	120							// Temp prediction total time factor
 u32	t.sample		900							// Sample period for making adjustments
