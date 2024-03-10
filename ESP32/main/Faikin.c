@@ -54,9 +54,10 @@ enum
    PROTO_TYPE_S21,
    PROTO_TYPE_X50A,
    PROTO_TYPE_CN_WIRED,
+   PROTO_TYPE_ALTHERMA_S,
    PROTO_TYPE_MAX
 };
-const char *const prototype[] = { "S21", "X50A", "CN_WIRED" };
+const char *const prototype[] = { "S21", "X50A", "CN_WIRED", "Altherma_S" };
 
 const char *const fans[] = {    // mapping A12345Q
    "auto",
@@ -2605,6 +2606,7 @@ app_main ()
          if ((proto_type () == PROTO_TYPE_CN_WIRED && nocnwired) ||     //
              (proto_type () == PROTO_TYPE_S21 && nos21) ||      //
              (proto_type () == PROTO_TYPE_X50A && nox50a) ||    //
+             (proto_type () == PROTO_TYPE_ALTHERMA_S && noas) ||        //
              ((proto & PROTO_TXINVERT) && noswaptx) ||  //
              ((proto & PROTO_RXINVERT) && noswaprx))
          {                      // not a protocol we want to scan, so try again
@@ -2678,7 +2680,10 @@ app_main ()
          // Talk to the AC
          if (tx.set && rx.set)
          {
-            if (proto_type () == PROTO_TYPE_CN_WIRED)
+            if (proto_type () == PROTO_TYPE_ALTHERMA_S)
+            {
+               // TODO
+            } else if (proto_type () == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
                cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
