@@ -17,7 +17,7 @@ As the Faikin hardware is a general purpose module / circuit, it only really mak
 
 So the statement relates to the Faikin software from this repository, on the Faikin hardware.
 
-It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear with countries laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
+It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear with country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
 
 # Type/batch
 
