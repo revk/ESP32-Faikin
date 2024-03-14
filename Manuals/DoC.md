@@ -5,9 +5,9 @@ The Faikin hardware is an open source PCB design in this repository, and so you 
 
 # Not a product
 
-CE/UKCA: What we sell is very specifically an "assembled PCB", a "component", and not itself a "finished product". It has no case, leads, or power supply. You need to snap out of the PCB panel. Whilst the system on chip has a CE mark in itself, we don't make any CE/UKCA conformance statement for this as a product as it is not a product. If someone sells/installs air conditioning units with these modules then the whole thing is a product and they need to ensure compliance with legislation.
+*CE/UKCA*: What we sell is very specifically an "assembled PCB", a "component", and not itself a "finished product". It has no case, leads, or power supply. You need to snap out of the PCB panel. Whilst the system on chip has a CE mark in itself, we don't make any CE/UKCA conformance statement for this as a product as it is not a product. If someone sells/installs air conditioning units with these modules then the whole thing is a product and they need to ensure compliance with legislation.
 
-Other regulations: It is unclear if the UK law: The Product Security and Telecommunications Infrastructure Act 2022, and  The Product Security and Telecommunications Infrastructure (Security Requirements for Relevant Connectable Products) Regulations 2023 apply here or not. As we say, it is not a "finished product". However, just in case it does apply, this statement is an attempt to meet the requirements.
+*Other regulations*: It is unclear if the UK law: The Product Security and Telecommunications Infrastructure Act 2022, and  The Product Security and Telecommunications Infrastructure (Security Requirements for Relevant Connectable Products) Regulations 2023 apply here or not. As we say, it is not a "finished product". However, just in case it does apply, this statement is an attempt to meet the requirements.
 
 As the Faikin hardware can be made by anyone, obviously, if they make it, they have to consider compliance, so this statement only applies to cases where we have made the Faikin hardware.
 
