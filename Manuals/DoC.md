@@ -42,7 +42,7 @@ I believe we have complied with Schedule 1 & 2, and 5.1-1 of ETSI EN 303 645. Sp
 
 # Vulnerability disclosure policy
 
-Please raise any issue on this github respository. I would expect to reply promptly but at the very least within one month, and will provide any status updates on the issue. As this is free software with no contract or warranty, saying I'll reply in a month is not a contractual statement. In practice I usually reply within hours.
+Please raise any issue on this GitHub respository. I would expect to reply promptly but at the very least within one month, and will provide any status updates on the GitHub issue. As this is free software with no contract or warranty, saying I'll reply in a month is not a contractual statement. In practice I usually reply within hours.
 
 # Support / updates
 
