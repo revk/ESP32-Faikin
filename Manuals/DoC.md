@@ -1,7 +1,7 @@
 
 # Compliance statement
 
-The Faikin hardware is an open source PCB design in this repository, and so you can make it yourself. However, we (Andrews & Arnold Ltd) do have the boards made and imported and we sell them.
+The Faikin hardware is an open source PCB design in this repository, and so you can make it yourself. However, we (Andrews & Arnold) do have the boards made and imported and we sell them.
 
 # Not a product
 
@@ -23,17 +23,17 @@ The code is also in a fork built for ESP8266, and may be in any number of other 
 
 # Type/batch
 
-So, the "product" (if it is one) is the software on this repository, all batches and builds, on the Faikin hardware "as supplied", or as updated from this repository or OTA server.
+So, the "product" (if it is one) is the software on this repository, all batches and builds, on the Faikin hardware made and supplied by Andrews & Arnold, and "as supplied", or as updated from this repository or OTA server.
 
 # Who
 
 The software is made by Adrian Kennard, and other contributors. However, I can only speak for me (Adrian Kennard), I have no idea if any and all contributors also need to make a compliance statement, sorry.
 
-When Andrews & Arnold manufactures and distributes boards, its name is "Andrews & Arnold Limited", and its registered office address is Enterprise Court, Downmill Road, Bracknell, Berkshire, RG12 1QS.
+When Andrews & Arnold manufactures and distributes boards, its name is "Andrews & Arnold Ltd", and its registered office address is Enterprise Court, Downmill Road, Bracknell, Berkshire, RG12 1QS.
 
 # Statement made by manufacturer
 
-The hardware covered here is made by/for Andrews & Arnold Ltd. This statement is prepared by Adrian Kennard, director Andrews & Arnold Ltd, on behalf of the "manufacturer".
+The hardware covered here is made by/for Andrews & Arnold. This statement is prepared by Adrian Kennard, director Andrews & Arnold, on behalf of the "manufacturer".
 
 # Compliance
 
