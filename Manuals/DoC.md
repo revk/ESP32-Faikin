@@ -48,7 +48,7 @@ Please raise any issue on this github respository. I would expect to reply promp
 
 # Support / updates
 
-Updates are made available via this repository. I also provide an OTA server, with beta releases. SOme older code did not auto update but allowed manual updates, however, these days, auto updates are enabled by default.
+Updates are made available via this repository. I also provide an OTA server, with beta releases. Some older code did not auto update but allowed manual updates, however, these days, auto updates are enabled by default.
 
 The ultimate place to get the latest code, with any security updates, is this repository.
 
@@ -62,7 +62,7 @@ I plan to continue to support this product until I get bored, or drop dead, whic
 
 # Issued
 
-The place this was issued? Well, err, this repository, issued on 2024-03-14 (Pi day). Though check the GPG signature for definitave date/time.
+The place this was issued? Well, err, this repository, issued on 2024-03-14 (Pi day). Though check the GPG signature for definitive date/time.
 
 # Signed
 
