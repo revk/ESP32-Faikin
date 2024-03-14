@@ -13,7 +13,9 @@ As the Faikin hardware can be made by anyone, obviously, if they make it, they h
 
 # The product (if somehow it is deemed a product)
 
-As the Faikin hardware is a general purpose module / circuit, it only really makes sense to make any statement about it "as supplied", which is with the Faikin software pre-loaded for your convenience. If you choose to load any other software, or even build a variation of the Faikin software with your own (or someone else's) changes, then it is no longer "as supplied", and you now have a different "product" (if it is a "product") that you have made, so compliance is then up to you.
+As the Faikin hardware is a general purpose module / circuit, it only really makes sense to make any statement about it "as supplied", which is with the Faikin software pre-loaded for your convenience.
+
+If you choose to load any other software, or even build a variation of the Faikin software with your own (or someone else's) changes, then it is no longer "as supplied", and you now have a different "product" (if it is a "product") that you have made, so compliance is then up to you.
 
 So the statement relates to the Faikin software from this repository, on the Faikin hardware.
 
@@ -44,7 +46,9 @@ Please raise any issue on this github respository. I would expect to reply promp
 
 # Support / updates
 
-Updates are made available via this repository. I also provide an OTA server, with beta releases, but the ultimate place to get the latest code, with any security updates, is this repository.
+Updates are made available via this repository. I also provide an OTA server, with beta releases. SOme older code did not auto update but allowed manual updates, however, these days, auto updates are enabled by default.
+
+The ultimate place to get the latest code, with any security updates, is this repository.
 
 # You can help
 
