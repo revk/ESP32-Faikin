@@ -14,6 +14,7 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 - [Advanced](Manuals/Advanced.md) Manual
 - [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
 - [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi
+- [DoC](Manuals/DoC.md)
 
 For support, see issues and discussions.
 
