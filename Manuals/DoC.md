@@ -21,7 +21,7 @@ So the statement relates to the Faikin software from this repository, on the Fai
 
 It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear with country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
 
-The code is also in a fork built for ESP8266, and may be in any number of other forks. Obviously I cannot make any statement for those forks.
+The code is also in a fork built for ESP8266, and may be in any number of other forks. Obviously I cannot make any statement for those forks, or clones, or copies based on this code.
 
 # Type/batch
 
