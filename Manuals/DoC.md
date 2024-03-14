@@ -25,7 +25,7 @@ The code is also in a fork built for ESP8266, and may be in any number of other 
 
 # Type/batch
 
-So, the "product" (if it is one) is the software on this repository, all batches and builds.
+So, the "product" (if it is one) is the software on this repository, all batches and builds, on the Faikin hardware, "as supplied" or updated from this repository.
 
 # Who
 
