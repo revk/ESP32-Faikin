@@ -29,7 +29,7 @@ So, the "product" (if it is one) is the software on this repository, all batches
 
 The software is made by Adrian Kennard, and other contributors. However, I can only speak for me (Adrian Kennard), I have no idea if any and all contributors also need to make a compliance statement, sorry.
 
-When Andrews & Arnold manufactures and distributes boards, its name is "Andrews & Arnold Ltd", and its registered office address is Enterprise Court, Downmill Road, Bracknell, Berkshire, RG12 1QS.
+When Andrews & Arnold manufactures and distributes boards, its name is "Andrews & Arnold Ltd", UK company 3342760, and its registered office address is Enterprise Court, Downmill Road, Bracknell, Berkshire, RG12 1QS.
 
 # Statement made by manufacturer
 
