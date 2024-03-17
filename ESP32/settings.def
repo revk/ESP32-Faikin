@@ -61,11 +61,11 @@ u8	thermref	50		.live=1					// Percentage inlet rather than home temp used by yo
 u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"	// Increase max (heating) or decrease min (cooling)
 u8	pushtemp	0.1		.live=1	.decimal=1	.old="push10"	// Increase min (heating) or decrease max (cooling)
 
-u8	cool.over	6		.live=1					// For cooling, push (decrease) target sent to aircon by this from min to force cooling
-u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to aircon by this from max to stop cooling
+s8	cool.over	6		.live=1					// For cooling, push (decrease) target sent to aircon by this from min to force cooling before reaching target
+u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to aircon by this from max to stop cooling after reaching target
 
-u8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating
-u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating
+s8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating before reaching target
+u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating after reaching target
 
 u16	auto.0				.live=1					// HHMM format turn off time
 u16	auto.1				.live=1					// HHMM format turn on time
