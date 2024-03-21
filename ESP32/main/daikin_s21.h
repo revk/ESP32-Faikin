@@ -44,7 +44,8 @@
 #define AC_FAN_5     '7'
 
 // Calculate packet checksum
-static inline uint8_t s21_checksum(uint8_t *buf, int len)
+static inline uint8_t
+s21_checksum (uint8_t * buf, int len)
 {
    uint8_t c = 0;
 
@@ -57,54 +58,63 @@ static inline uint8_t s21_checksum(uint8_t *buf, int len)
 }
 
 // Target temperature is encoded as one character
-static inline float s21_decode_target_temp(unsigned char v)
+static inline float
+s21_decode_target_temp (unsigned char v)
 {
-   return 18.0 + 0.5 * ((signed)v - AC_MIN_TEMP_VALUE);
+   return 18.0 + 0.5 * ((signed) v - AC_MIN_TEMP_VALUE);
 }
 
-static inline float s21_encode_target_temp(float temp)
+static inline float
+s21_encode_target_temp (float temp)
 {
-   return lroundf((temp - 18.0) * 2) + AC_MIN_TEMP_VALUE;
+   return lroundf ((temp - 18.0) * 2) + AC_MIN_TEMP_VALUE;
 }
 
-static inline int s21_decode_int_sensor(const unsigned char * payload)
+static inline int
+s21_decode_int_sensor (const unsigned char *payload)
 {
    return (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
 }
 
-static inline uint16_t s21_decode_hex_sensor(const unsigned char * payload)
+static inline uint16_t
+s21_decode_hex_sensor (const unsigned char *payload)
 {
 #define hex(c)	(((c)&0xF)+((c)>'9'?9:0))
-   return (hex(payload[3])<<12)|hex(payload[2]<<8)|hex(payload[1]<<4)|hex(payload[0]);
+   return (hex (payload[3]) << 12) | (hex (payload[2]) << 8) | (hex (payload[1]) << 4) | hex (payload[0]);
 #undef hex
 }
 
-static inline float s21_decode_float_sensor(const unsigned char * payload)
+static inline float
+s21_decode_float_sensor (const unsigned char *payload)
 {
-   float v = s21_decode_int_sensor(payload) * 0.1;
+   float v = s21_decode_int_sensor (payload) * 0.1;
    return payload[3] == '-' ? -v : v;
 }
 
 // Convert between Daikin and Faikin fan speed enums
-static inline unsigned char s21_encode_fan(int speed)
+static inline unsigned char
+s21_encode_fan (int speed)
 {
-   switch (speed) {
+   switch (speed)
+   {
    case FAIKIN_FAN_AUTO:
-	  return AC_FAN_AUTO;
+      return AC_FAN_AUTO;
    case FAIKIN_FAN_QUIET:
-	  return AC_FAN_QUIET;
+      return AC_FAN_QUIET;
    default:
       return speed - FAIKIN_FAN_1 + AC_FAN_1;
    }
 }
 
-static inline int s21_decode_fan(unsigned char v)
+static inline int
+s21_decode_fan (unsigned char v)
 {
-   switch (v) {
+   switch (v)
+   {
    case AC_FAN_AUTO:
-	  return FAIKIN_FAN_AUTO;
+      return FAIKIN_FAN_AUTO;
    case AC_FAN_QUIET:
-	  return FAIKIN_FAN_QUIET;
+      return FAIKIN_FAN_QUIET;
    default:
       return v - AC_FAN_1 + FAIKIN_FAN_1;
    }
