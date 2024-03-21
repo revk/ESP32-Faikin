@@ -431,7 +431,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          daikin.pulse = s21_decode_hex_sensor (payload);
          break;
       case 'M':                // Power meter
-         daikin.Wh = (uint32_t) daikin.pulse * s21_decode_hex_sensor (payload);
+         set_int(Wh,(uint32_t) daikin.pulse * s21_decode_hex_sensor (payload));
          break;
       }
    if (cmd == 'S')
