@@ -72,6 +72,13 @@ static inline int s21_decode_int_sensor(const unsigned char * payload)
    return (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
 }
 
+static inline uint16_t s21_decode_hex_sensor(const unsigned char * payload)
+{
+#define hex(c)	(((c)&0xF)+((c)>'9'?9:0))
+   return (hex(payload[3])<<12)|hex(payload[2]<<8)|hex(payload[1]<<4)|hex(payload[0]);
+#undef hex
+}
+
 static inline float s21_decode_float_sensor(const unsigned char * payload)
 {
    float v = s21_decode_int_sensor(payload) * 0.1;

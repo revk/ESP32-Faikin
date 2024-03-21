@@ -38,5 +38,6 @@ t(outside)
 t(inlet)
 t(liquid)
 i(anglev)
+i(Wh)
 
 #include "accontrols.m"
