@@ -431,7 +431,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          daikin.pulse = s21_decode_hex_sensor (payload);
          break;
       case 'M':                // Power meter
-         set_int(Wh,(uint32_t) daikin.pulse * s21_decode_hex_sensor (payload));
+         set_int (Wh, (uint32_t) daikin.pulse * s21_decode_hex_sensor (payload));
          break;
       }
    if (cmd == 'S')
@@ -2331,7 +2331,7 @@ ha_status (void)
       jo_int (j, "comp", daikin.comp);
    if (daikin.status_known & CONTROL_demand)
       jo_int (j, "demand", daikin.demand);
-   if ((daikin.status_known & CONTROL_Wh)&&daikin.Wh)
+   if ((daikin.status_known & CONTROL_Wh) && daikin.Wh)
       jo_int (j, "Wh", daikin.Wh);
 #if 0
    if (daikin.status_known & CONTROL_fanrpm)
@@ -2752,7 +2752,7 @@ app_main ()
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                }
-               if (daikin.pulse)
+               if (daikin.pulse || debug)
                {
                   poll (F, M, 0,);
                }
@@ -2760,7 +2760,7 @@ app_main ()
                {
                   poll (F, N, 0,);
                }
-               if (!daikin.pulse)
+               if (!daikin.pulse || debug)
                {
                   poll (F, P, 0,);
                }
