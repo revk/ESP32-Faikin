@@ -73,7 +73,10 @@ s21_encode_target_temp (float temp)
 static inline int
 s21_decode_int_sensor (const unsigned char *payload)
 {
-   return (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
+   int v = (payload[0] - '0') + (payload[1] - '0') * 10 + (payload[2] - '0') * 100;
+   if (payload[3] == '-')
+      v = -v;
+   return v;
 }
 
 static inline uint16_t
@@ -87,8 +90,7 @@ s21_decode_hex_sensor (const unsigned char *payload)
 static inline float
 s21_decode_float_sensor (const unsigned char *payload)
 {
-   float v = s21_decode_int_sensor (payload) * 0.1;
-   return payload[3] == '-' ? -v : v;
+   return (float) s21_decode_int_sensor (payload) * 0.1;
 }
 
 // Convert between Daikin and Faikin fan speed enums
