@@ -158,7 +158,6 @@ struct
      countBeyondPrev;           // Count of "beyond temp", and previous sample
    uint32_t countTotal,
      countTotalPrev;            // Count total, and previous sample
-   uint16_t pulse;              // S21 power pulse size
    uint8_t fansaved;            // Saved fan we override at start
    uint8_t talking:1;           // We are getting answers
    uint8_t lastheat:1;          // Last heat mode
@@ -427,11 +426,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_temp (outside, (float) ((signed) payload[1] - 0x80) / 2);
          }
          break;
-      case 'P':                // Power meter pulse size
-         daikin.pulse = s21_decode_hex_sensor (payload);
-         break;
       case 'M':                // Power meter
-         set_int (Wh, (uint32_t) daikin.pulse * s21_decode_hex_sensor (payload));
+         set_int (Wh, s21_decode_hex_sensor (payload))*100; // 100Wh units
          break;
       }
    if (cmd == 'S')
@@ -2752,7 +2748,7 @@ app_main ()
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                }
-               if (daikin.pulse || debug)
+               if (debug)
                {
                   poll (F, M, 0,);
                }
@@ -2760,10 +2756,7 @@ app_main ()
                {
                   poll (F, N, 0,);
                }
-               if (!daikin.pulse || debug)
-               {
-                  poll (F, P, 0,);
-               }
+               poll (F, P, 0,);
                if (debug)
                {
                   poll (F, Q, 0,);
