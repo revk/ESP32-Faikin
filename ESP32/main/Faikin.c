@@ -427,7 +427,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
          break;
       case 'M':                // Power meter
-         set_int (Wh, s21_decode_hex_sensor (payload))*100; // 100Wh units
+         set_int (Wh, s21_decode_hex_sensor (payload) * 100);   // 100Wh units
          break;
       }
    if (cmd == 'S')
