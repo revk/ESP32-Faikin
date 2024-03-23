@@ -324,11 +324,11 @@ jo_t s21debug = NULL;
 
 enum
 {
-   S21_OK,
-   S21_NAK,
-   S21_NOACK,
-   S21_BAD,
-   S21_WAIT,
+   RES_OK,
+   RES_NAK,
+   RES_NOACK,
+   RES_BAD,
+   RES_WAIT,
 };
 
 static int
@@ -475,7 +475,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
       }
    }
-   return S21_OK;
+   return RES_OK;
 }
 
 
@@ -634,6 +634,88 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 // Timeout value for serial port read
 #define READ_TIMEOUT (500 / portTICK_PERIOD_MS)
 
+void
+daikin_as_response (int len, uint8_t * res)
+{
+   set_val (online, 1);
+   switch (*res)
+   {
+   case 'U':
+      // TODO
+      break;
+   case 'T':
+      // TODO
+      break;
+   case 'P':
+      // TODO
+      break;
+   case 'S':
+      // TODO
+      break;
+   }
+}
+
+int
+daikin_as_command (int len, uint8_t * buf)
+{
+   uint8_t cs = 0;
+   for (int i = 0; i < len; i++)
+      cs += buf[i];
+   buf[len++] = ~cs;
+   if (b.dumping)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_stringf (j, "cmd", "%c", buf[1]);
+      jo_base16 (j, "dump", buf, len);
+      revk_info ("tx", &j);
+   }
+   uart_write_bytes (uart, buf, len);
+   uint8_t res[18];
+   len = uart_read_bytes (uart, res, sizeof (res), READ_TIMEOUT);
+   if (len < 0)
+   {
+      daikin.talking = 0;
+      return RES_NOACK;
+   }
+   cs = 0;
+   for (int i = 0; i < len - 1; i++)
+      cs += res[i];
+   cs = ~cs;
+   if (b.dumping && len > 0)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_stringf (j, "cmd", "%c", buf[1]);
+      jo_base16 (j, "dump", res, len);
+      revk_info ("rx", &j);
+   }
+   if (len != sizeof (res) || cs != res[len - 1] || *res != buf[1])
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "payload", res, len);
+      if (cs != res[len - 1])
+         jo_stringf (j, "bad-cs", "%02X", cs);
+      if (*res != 0x15 && *res != buf[1])
+         jo_stringf (j, "bad-cmd", "%c", buf[1]);
+      revk_error ("comms", &j);
+      if (*res == 0x15 && cs == res[len - 1])
+         return RES_NAK;
+      return RES_BAD;
+   }
+   if (*res == buf[1] && !protocol_set)
+      protocol_found ();
+   daikin_as_response (len, res);
+   return RES_OK;
+}
+
+int
+daikin_as_poll (char reg)
+{
+   uint8_t temp[3];
+   temp[0] = 0x02;
+   temp[1] = reg;
+   return daikin_as_command (2, temp);
+}
+
 int
 daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 {
@@ -649,7 +731,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking && !protofix)
-      return S21_WAIT;          // Failed
+      return RES_WAIT;          // Failed
    uint8_t buf[256],
      temp;
    if (!snoop)
@@ -692,7 +774,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
             revk_error ("comms", &j);
          } else
             jo_free (&j);
-         return S21_NAK;
+         return RES_NAK;
       }
       // Unexpected reply, protocol broken
       daikin.talking = 0;
@@ -700,14 +782,14 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       if (rxlen)
          jo_stringf (j, "value", "%02X", temp);
       revk_error ("comms", &j);
-      return S21_NOACK;
+      return RES_NOACK;
    }
    if (temp == STX)
       *buf = temp;
    else
    {
       if (cmd == 'D')
-         return S21_OK;         // No response expected
+         return RES_OK;         // No response expected
       while (1)
       {
          rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
@@ -718,7 +800,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
             jo_t j = jo_comms_alloc ();
             jo_bool (j, "timeout", 1);
             revk_error ("comms", &j);
-            return S21_NOACK;
+            return RES_NOACK;
          }
          if (*buf == STX)
             break;
@@ -735,7 +817,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          jo_bool (j, "timeout", 1);
          jo_base16 (j, "data", buf, rxlen);
          revk_error ("comms", &j);
-         return S21_NOACK;
+         return RES_NOACK;
       }
       rxlen++;
       if (buf[rxlen - 1] == ETX)
@@ -756,7 +838,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       revk_info ("rx", &j);
    }
    int s21_bad (jo_t j)
-   {                            // Report error and return S21_BAD - also pause/flush
+   {                            // Report error and return RES_BAD - also pause/flush
       jo_base16 (j, "data", buf, rxlen);
       revk_error ("comms", &j);
       if (!protocol_set)
@@ -764,7 +846,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          sleep (1);
          uart_flush (uart);
       }
-      return S21_BAD;
+      return RES_BAD;
    }
    // Check checksum
    uint8_t c = s21_checksum (buf, rxlen);
@@ -786,7 +868,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       jo_t j = jo_comms_alloc ();
       jo_bool (j, "loopback", 1);
       revk_error ("comms", &j);
-      return S21_OK;
+      return RES_OK;
    }
    b.loopback = 0;
    // If we've got an STX, S21 protocol is now confirmed; we won't change it any more
@@ -1012,7 +1094,7 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    uint8_t c = 0;
    for (int i = 0; i < 5 + txlen; i++)
       c += buf[i];
-   buf[5 + txlen] = 0xFF - c;
+   buf[5 + txlen] = ~c;
    if (b.dumping)
    {
       jo_t j = jo_comms_alloc ();
@@ -2687,7 +2769,22 @@ app_main ()
          {
             if (proto_type () == PROTO_TYPE_ALTHERMA_S)
             {
-               // TODO
+#define poll(a)                         \
+   static uint8_t a=2;                  \
+   if(a){                               \
+      int r=daikin_as_poll(*#a); \
+      if (r==RES_OK)                          \
+         a=100;                         \
+      else if(r==RES_NAK)                     \
+         a--;                           \
+   }                                          \
+   if(!daikin.talking)                        \
+      a=2;
+               poll (U);
+               poll (T);
+               poll (P);
+               poll (S);
+#undef poll
             } else if (proto_type () == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t cmd[CN_WIRED_LEN] = { 0 };
@@ -2715,9 +2812,9 @@ app_main ()
    static uint8_t a##b##d=2;                  \
    if(a##b##d){                               \
       int r=daikin_s21_command(*#a,*#b,c,#d); \
-      if (r==S21_OK)                          \
+      if (r==RES_OK)                          \
          a##b##d=100;                         \
-      else if(r==S21_NAK)                     \
+      else if(r==RES_NAK)                     \
          a##b##d--;                           \
    }                                          \
    if(!daikin.talking)                        \
