@@ -2845,15 +2845,12 @@ app_main ()
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                }
-               if (debug)
-               {
-                  poll (F, M, 0,);
-               }
+               poll (F, M, 0,);
                if (debug)
                {
                   poll (F, N, 0,);
-               }
-               poll (F, P, 0,);
+                  poll (F, P, 0,);
+	       }
                if (debug)
                {
                   poll (F, Q, 0,);
