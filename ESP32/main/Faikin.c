@@ -2304,8 +2304,8 @@ send_ha_config (void)
          jo_string (j, "mode_cmd_t", "~/mode");
          jo_string (j, "mode_stat_t", revk_id);
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
-         jo_string (j, "hvac_action_stat_t", revk_id);
-         jo_string (j, "hvac_action_stat_tpl", "{{value_json.action}}");
+         jo_string (j, "action_t", revk_id);
+         jo_string (j, "action_tpl", "{{value_json.action}}");
       }
       if (daikin.status_known & CONTROL_fan)
       {
