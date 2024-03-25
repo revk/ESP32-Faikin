@@ -147,6 +147,7 @@ struct
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
 #include "acextras.m"
+   const char *action;          // HA hvac_action
    float env_prev;              // Predictive, last period value
    float env_delta;             // Predictive, diff to last
    float env_delta_prev;        // Predictive, previous diff
@@ -2303,6 +2304,8 @@ send_ha_config (void)
          jo_string (j, "mode_cmd_t", "~/mode");
          jo_string (j, "mode_stat_t", revk_id);
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
+         jo_string (j, "hvac_action_stat_t", revk_id);
+         jo_string (j, "hvac_action_stat_tpl", "{{value_json.action}}");
       }
       if (daikin.status_known & CONTROL_fan)
       {
@@ -2432,6 +2435,8 @@ ha_status (void)
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
       jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
    }
+   if (daikin.action)
+      jo_string (j, "action", daikin.action);
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
@@ -2850,7 +2855,7 @@ app_main ()
                {
                   poll (F, N, 0,);
                   poll (F, P, 0,);
-	       }
+               }
                if (debug)
                {
                   poll (F, Q, 0,);
@@ -3317,11 +3322,17 @@ app_main ()
                   if (thermostat)
                      daikin.hysteresis = 1;     // We're on, so keep going to "beyond"
                   if (hot)
+                  {
                      set = max + reference - measured_temp + heatover;  // Ensure heating by applying A/C offset to force it
-                  else
+                     daikin.action = "HEATING";
+                  } else
+                  {
                      set = min + reference - measured_temp - coolover;  // Ensure cooling by applying A/C offset to force it
+                     daikin.action = "COOLING";
+                  }
                } else
                {                // At or beyond temp - stop heat/cool
+                  daikin.action = "IDLE";
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
@@ -3350,6 +3361,7 @@ app_main ()
          } else
          {
             controlstop ();
+            daikin.action = (daikin.power ? NULL : "OFF");      // Only reporting action for Faikin auto mode
          }
          // End of local auto controls
 
