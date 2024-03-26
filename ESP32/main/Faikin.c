@@ -2304,8 +2304,8 @@ send_ha_config (void)
          jo_string (j, "mode_cmd_t", "~/mode");
          jo_string (j, "mode_stat_t", revk_id);
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
-         jo_string (j, "action_t", revk_id);
-         jo_string (j, "action_tpl", "{{value_json.action}}");
+         jo_string (j, "action_topic", revk_id);
+         jo_string (j, "action_template", "{{value_json.action}}");
       }
       if (daikin.status_known & CONTROL_fan)
       {
@@ -3324,15 +3324,15 @@ app_main ()
                   if (hot)
                   {
                      set = max + reference - measured_temp + heatover;  // Ensure heating by applying A/C offset to force it
-                     daikin.action = "HEATING";
+                     daikin.action = "heating";
                   } else
                   {
                      set = min + reference - measured_temp - coolover;  // Ensure cooling by applying A/C offset to force it
-                     daikin.action = "COOLING";
+                     daikin.action = "cooling";
                   }
                } else
                {                // At or beyond temp - stop heat/cool
-                  daikin.action = "IDLE";
+                  daikin.action = "idle";
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
@@ -3361,7 +3361,7 @@ app_main ()
          } else
          {
             controlstop ();
-            daikin.action = (daikin.power ? NULL : "OFF");      // Only reporting action for Faikin auto mode
+            daikin.action = (daikin.power ? NULL : "off");      // Only reporting action for Faikin auto mode
          }
          // End of local auto controls
 
