@@ -3357,8 +3357,12 @@ app_main ()
                   set = (hot ? tmin : tcoolmin);
                if (set > (hot ? theatmax : tmax))
                   set = (hot ? theatmax : tmax);
-               if (!isnan (reference))
+               static uint32_t flap = 0;
+               if (!isnan (set) && now > flap)
+               {
+                  flap = now + tempnoflap;     // Hold off changes for preset time
                   daikin_set_t (temp, set);     // Apply temperature setting
+               }
             }
          } else
          {
