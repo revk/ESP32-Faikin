@@ -6,7 +6,7 @@ This code/module provides local control via web interface, MQTT, and HomeAssista
 
 PCB designs are included, and also available to buy on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). Note, whilst Amazon have done some export, some people have used a parcel forwarder for non UK, such as [Forward2Me](https://forward2me.com).
 
-I'd like to thank the contributrors, but contributions are made and accepted on basis that you issue your contribution under the same, perpetual, GPL licence as the project.
+I'd like to thank the contributrors, but contributions are made and accepted on basis that you issue your contribution under the same, perpetual, GPL licence as the project. Forks are allowed on the basis that your forks are on the same, perpetual, GPL licence as the project.
 
 ## Further manuals / links
 
