@@ -3315,24 +3315,24 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
 
                // Temp set
-               float set = min + reference - measured_temp;     // Where we will set the temperature << WHY? IT WILL BE OVERWRITTEN 
+               float set;       // Target temp we will be setting (before adjust for reference error and before limiting)
                if ((hot && measured_temp < (daikin.hysteresis ? max : min))
                    || (!hot && measured_temp > (daikin.hysteresis ? min : max)))
-               {                // Apply heat/cool
+               {                // Apply heat/cool - i.e. force heating or cooling to definitely happen
                   if (thermostat)
                      daikin.hysteresis = 1;     // We're on, so keep going to "beyond"
                   if (hot)
                   {
-                     set = max + reference - measured_temp + heatover;  // Ensure heating by applying A/C offset to force it
-                     daikin.action = "heating";
+                     set = max + heatover;      // Ensure heating by applying A/C offset to force it
+                     daikin.action = "heating"; // Heating
                   } else
                   {
-                     set = min + reference - measured_temp - coolover;  // Ensure cooling by applying A/C offset to force it
-                     daikin.action = "cooling";
+                     set = min - coolover;      // Ensure cooling by applying A/C offset to force it
+                     daikin.action = "cooling"; // Cooling
                   }
                } else
-               {                // At or beyond temp - stop heat/cool
-                  daikin.action = "idle";
+               {                // At or beyond temp - stop heat/cool - try and ensure it stops heating or cooling
+                  daikin.action = "idle";       // Not heating/cooling
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
@@ -3341,10 +3341,12 @@ app_main ()
                      samplestart ();    // Initial phase complete, start samples again.
                   }
                   if (hot)
-                     set = min + reference - measured_temp - heatback;  // Heating mode but apply negative offset to not actually heat any more than this
+                     set = min - heatback;      // Heating mode but apply negative offset to not actually heat any more than this
                   else
-                     set = max + reference - measured_temp + coolback;  // Cooling mode but apply positive offset to not actually cool any more than this
+                     set = max + coolback;      // Cooling mode but apply positive offset to not actually cool any more than this
                }
+               if (temp.track)
+                  set += reference - measured_temp;     // Adjust for reference not being measured_temp
 
                // Limit settings to acceptable values
                if (proto_type () == PROTO_TYPE_CN_WIRED)

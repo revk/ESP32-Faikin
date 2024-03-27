@@ -67,6 +67,8 @@ u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to airco
 s8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating before reaching target
 u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating after reaching target
 
+b	temp.track	1		.live=1					// Adjust target temp tracking difference to (possibly external) measured temp
+
 u16	auto.0				.live=1					// HHMM format turn off time
 u16	auto.1				.live=1					// HHMM format turn on time
 u16	auto.t				.live=1	.decimal=1			// Faikin auto target temperature
