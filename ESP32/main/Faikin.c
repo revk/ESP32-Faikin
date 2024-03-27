@@ -147,7 +147,6 @@ struct
 #define	e(name,values)	uint8_t name;
 #define	s(name,len)	char name[len];
 #include "acextras.m"
-   const char *action;          // HA hvac_action
    float env_prev;              // Predictive, last period value
    float env_delta;             // Predictive, diff to last
    float env_delta_prev;        // Predictive, previous diff
@@ -169,7 +168,17 @@ struct
    uint8_t remote:1;            // Remote control via MQTT
    uint8_t hysteresis:1;        // Thermostat hysteresis state
    uint8_t cnresend:2;          // Resends
+   uint8_t action:2;            // hvac_action
 } daikin = { 0 };
+
+enum
+{
+   HVAC_OFF,
+   HVAC_IDLE,
+   HVAC_HEATING,
+   HVAC_COOLING,
+};
+const char *const hvac_action[] = { "off", "idle", "heating", "cooling" };
 
 const char *
 daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -2436,7 +2445,7 @@ ha_status (void)
       jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
    }
    if (daikin.action)
-      jo_string (j, "action", daikin.action);
+      jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
@@ -3324,15 +3333,15 @@ app_main ()
                   if (hot)
                   {
                      set += heatover;   // Ensure heating by applying A/C offset to force it
-                     daikin.action = "heating"; // Heating
+                     daikin.action = HVAC_HEATING;
                   } else
                   {
                      set -= coolover;   // Ensure cooling by applying A/C offset to force it
-                     daikin.action = "cooling"; // Cooling
+                     daikin.action = HVAC_COOLING;
                   }
                } else
                {                // At or beyond temp - stop heat/cool - try and ensure it stops heating or cooling
-                  daikin.action = "idle";       // Not heating/cooling
+                  daikin.action = HVAC_IDLE;
                   daikin.hysteresis = 0;        // We're off, so keep falling back until "approaching" (default when thermostat not set)
                   if (daikin.fansaved)
                   {
@@ -3358,10 +3367,12 @@ app_main ()
                if (set > (hot ? theatmax : tmax))
                   set = (hot ? theatmax : tmax);
                static uint32_t flap = 0;
+               static uint8_t lastaction = 0;
                static float lastset = 0;
-               if (!isnan (set) && set != lastset && now > flap)
+               if (!isnan (set) && (daikin.action != lastaction || (set != lastset && now > flap)))
                {
-                  flap = now + tempnoflap;      // Hold off changes for preset time
+                  flap = now + tempnoflap;      // Hold off changes for preset time, unless change of mode
+                  lastaction = daikin.action;
                   lastset = set;
                   daikin_set_t (temp, set);     // Apply temperature setting
                }
@@ -3369,7 +3380,7 @@ app_main ()
          } else
          {
             controlstop ();
-            daikin.action = (daikin.power ? NULL : "off");      // Only reporting action for Faikin auto mode
+            daikin.action = (daikin.power ? HVAC_IDLE : HVAC_OFF);
          }
          // End of local auto controls
 
