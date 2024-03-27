@@ -3345,7 +3345,7 @@ app_main ()
                   else
                      set = max + coolback;      // Cooling mode but apply positive offset to not actually cool any more than this
                }
-               if (temp.track)
+               if (temptrack)
                   set += reference - measured_temp;     // Adjust for reference not being measured_temp
 
                // Limit settings to acceptable values
