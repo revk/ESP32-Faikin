@@ -3315,7 +3315,7 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
 
                // Temp set
-               float set;       // Target temp we will be setting (before adjust for reference error and before limiting)
+               float set = (min + max) / 2.0;   // Target temp we will be setting (before adjust for reference error and before limiting)
                if ((hot && measured_temp < (daikin.hysteresis ? max : min))
                    || (!hot && measured_temp > (daikin.hysteresis ? min : max)))
                {                // Apply heat/cool - i.e. force heating or cooling to definitely happen
@@ -3323,11 +3323,11 @@ app_main ()
                      daikin.hysteresis = 1;     // We're on, so keep going to "beyond"
                   if (hot)
                   {
-                     set = max + heatover;      // Ensure heating by applying A/C offset to force it
+                     set += heatover;   // Ensure heating by applying A/C offset to force it
                      daikin.action = "heating"; // Heating
                   } else
                   {
-                     set = min - coolover;      // Ensure cooling by applying A/C offset to force it
+                     set -= coolover;   // Ensure cooling by applying A/C offset to force it
                      daikin.action = "cooling"; // Cooling
                   }
                } else
@@ -3341,9 +3341,9 @@ app_main ()
                      samplestart ();    // Initial phase complete, start samples again.
                   }
                   if (hot)
-                     set = min - heatback;      // Heating mode but apply negative offset to not actually heat any more than this
+                     set -= heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                   else
-                     set = max + coolback;      // Cooling mode but apply positive offset to not actually cool any more than this
+                     set += coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
                }
                if (temptrack)
                   set += reference - measured_temp;     // Adjust for reference not being measured_temp
