@@ -3322,9 +3322,12 @@ app_main ()
                // It looks like the ducted units are using inlet in some way, even when field settings say controller.
                if (daikin.mode == 3)
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
-
                // Temp set
                float set = (min + max) / 2.0;   // Target temp we will be setting (before adjust for reference error and before limiting)
+               if (temptrack)
+                  set = reference;      // Base target on current Daikin measured temp instead.
+               else if (tempadjust)
+                  set += reference - measured_temp;     // Adjust for reference not being measured_temp
                if ((hot && measured_temp < (daikin.hysteresis ? max : min))
                    || (!hot && measured_temp > (daikin.hysteresis ? min : max)))
                {                // Apply heat/cool - i.e. force heating or cooling to definitely happen
@@ -3354,8 +3357,6 @@ app_main ()
                   else
                      set += coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
                }
-               if (temptrack)
-                  set += reference - measured_temp;     // Adjust for reference not being measured_temp
 
                // Limit settings to acceptable values
                if (proto_type () == PROTO_TYPE_CN_WIRED)

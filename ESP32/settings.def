@@ -67,7 +67,8 @@ u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to airco
 s8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating before reaching target
 u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating after reaching target
 
-bit	temp.track	1		.live=1					// Adjust target temp tracking difference to (possibly external) measured temp
+bit	temp.track	1		.live=1					// Set target temp based on Daikin measured temp not required target
+bit	temp.adjust	1		.live=1					// Adjust target temp allowing for different Daikin measure to external measure
 u16	temp.noflap	0		.live=1					// Min time between target temp changes (seconds).
 
 u16	auto.0				.live=1					// HHMM format turn off time
