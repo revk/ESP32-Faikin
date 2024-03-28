@@ -4117,10 +4117,6 @@
 		(uuid "b9807546-6834-4cc1-a8fb-d79d18f6f5c2")
 	)
 	(no_connect
-		(at 48.895 98.425)
-		(uuid "c4791df0-2847-438f-ae33-7f00121518f0")
-	)
-	(no_connect
 		(at 79.375 93.345)
 		(uuid "cfeacc9a-066a-4b36-8d9f-1f5e1b2e98a9")
 	)
@@ -4131,10 +4127,6 @@
 	(no_connect
 		(at 79.375 73.025)
 		(uuid "e7ac75be-4954-4ddf-bceb-4f3e5377eaeb")
-	)
-	(no_connect
-		(at 79.375 62.865)
-		(uuid "e954b784-8d6b-4152-ad26-69bc2017e29f")
 	)
 	(no_connect
 		(at 48.895 73.025)
@@ -6311,6 +6303,73 @@
 		)
 	)
 	(symbol
+		(lib_id "power:GND")
+		(at 48.895 98.425 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "76185512-a354-4459-aaa3-4fd796bd5987")
+		(property "Reference" "#PWR026"
+			(at 42.545 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 45.7201 98.425 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 48.895 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 48.895 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 48.895 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "32f38435-54fc-4be6-9e3c-22dbd2be71b4")
+		)
+		(instances
+			(project "Faikin"
+				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+					(reference "#PWR026")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "RevK:VCUT")
 		(at 262.255 176.53 0)
 		(unit 1)
@@ -7144,6 +7203,73 @@
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
 					(reference "V1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 79.375 62.865 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "9351e407-1827-40a8-9ff3-d7b5b5171bde")
+		(property "Reference" "#PWR025"
+			(at 85.725 62.865 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND"
+			(at 82.55 62.865 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify right)
+			)
+		)
+		(property "Footprint" ""
+			(at 79.375 62.865 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 79.375 62.865 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 79.375 62.865 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "db8e89f0-9f39-48b8-8a93-ee0cb166148b")
+		)
+		(instances
+			(project "Faikin"
+				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+					(reference "#PWR025")
 					(unit 1)
 				)
 			)
