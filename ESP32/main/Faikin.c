@@ -2010,12 +2010,17 @@ legacy_web_get_control_info (httpd_req_t * req)
          jo_int (j, tag, 0);
       }
    jo_int (j, "dhh", 0);
+   if (daikin.mode <= 7)
+      jo_stringf (j, "b_mode", "%c", "64370002"[daikin.mode]);
    jo_litf (j, "b_stemp", "%.1f", daikin.temp);
    jo_int (j, "b_shum", 0);
    jo_int (j, "alert", 255);
    if (daikin.fan <= 6)
       jo_stringf (j, "f_rate", "%c", "A34567B"[daikin.fan]);
    jo_int (j, "f_dir", daikin.swingh * 2 + daikin.swingv);
+   if (daikin.fan <= 6)
+      jo_stringf (j, "b_f_rate", "%c", "A34567B"[daikin.fan]);
+   jo_int (j, "b_f_dir", daikin.swingh * 2 + daikin.swingv);
    for (int i = 1; i <= 7; i++)
       if (i != 6)
       {
