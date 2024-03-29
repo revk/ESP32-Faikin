@@ -168,17 +168,20 @@ struct
    uint8_t remote:1;            // Remote control via MQTT
    uint8_t hysteresis:1;        // Thermostat hysteresis state
    uint8_t cnresend:2;          // Resends
-   uint8_t action:2;            // hvac_action
+   uint8_t action:3;            // hvac_action
 } daikin = { 0 };
 
 enum
 {
    HVAC_OFF,
-   HVAC_IDLE,
+   HVAC_PREHEATING,
    HVAC_HEATING,
    HVAC_COOLING,
+   HVAC_DRYING,
+   HVAC_FAN,
+   HVAC_IDLE,
 };
-const char *const hvac_action[] = { "off", "idle", "heating", "cooling" };
+const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle" };
 
 const char *
 daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -2444,8 +2447,7 @@ ha_status (void)
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
       jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
    }
-   if (daikin.action)
-      jo_string (j, "action", hvac_action[daikin.action]);
+   jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
