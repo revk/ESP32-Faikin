@@ -11,6 +11,7 @@ I'd like to thank the contributors, but contributions are made and accepted on b
 ## Further manuals / links
 
 - [Work in progress / release notes](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress)
+- [Wiring](https://github.com/revk/ESP32-Faikin/wiki/Wiring)
 - [Setup](Manuals/Setup.md) Manual
 - [Controls](Manuals/Controls.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
@@ -29,28 +30,6 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes.
 
 ![Faikin](https://github.com/revk/ESP32-Faikin/assets/996983/fa01b0e1-a6e1-4b71-9f5f-688fb9a61192)
-
-## Cabling
-
-If you have the existing Daikin wifi unit on a cable with 5 pin `S21` plug, it is simply a matter of changing it to the `Faikin` module. However, in other cases you may need to obtain a cable and connect to your air-con unit. The S21 cable is *one to one* wired, i.e. pin 1 to pin 1. Note that Pin 5 is ⏚.
-
-The S21 plug neede is [JST, EH Female Connector Housing, 2.5mm Pitch, 5 Way, 1 Row](https://uk.rs-online.com/web/p/wire-housings-plugs/3116237), which needs pins and crimps as well.
-
-**WARNING** Messing about in your air-con unit can be dangerous with live power, and could damage the unit. Take all precautions necessary and you mess with your air-con unit at your own risk! Note, `X403` is a non isolated version of `S21` so if you wire to that your Faikin will be live, so needs to be inside the case somewhere, and don't wire anything while the power is on... See [X403](https://github.com/revk/ESP32-Faikin/issues/208).
-
-There have been various discussions on this - Daikin appear to have a *standard* connector that is `S21`. They seem to have this in models that even have build in WiFi modules (see image). You need a JST-EH 5 way connector for `S21`. However the module can also be wired to units that have an `X50A` connector, with slightly different cabling. The discussions have various comments on this, but please do ask.
-
-Another approach is "jumper wires" using header pins or sockets, e.g
-
-<img src=https://github.com/revk/ESP32-Faikin/assets/996983/45a4cb59-da3f-47ab-9d0b-f99bdbcca763 width=50%><img src=https://github.com/revk/ESP32-Faikin/assets/996983/6e062178-7fac-4f75-885e-fb7f1060f89e width=50%>
-
-It is also possible to connect to the `S403` connector. The proper way to do this is with a Daikin `S21` adapter board, as the `S403` is not isolated, and use directly could be dangerous. This [link](https://community.openenergymonitor.org/t/hack-my-heat-pump-and-publish-data-onto-emoncms/2551/99) has some more details of the `S403` connector, as well as [issue 134](https://github.com/revk/ESP32-Faikin/issues/134).
-
-<img src=https://github.com/revk/ESP32-Faikin/assets/996983/992e6057-9ac9-4c6b-abab-93d5e45aa2b0 width=35% align=right>
-
-For `X50A` you need power from `X35A` as well.
-
-<img src=https://github.com/revk/ESP32-Faikin/assets/996983/ab18e1a4-45ad-4b61-9ce7-5dfeefffdfa1 width=55%>
 
 ## Why I made this
 
