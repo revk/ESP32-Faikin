@@ -17,7 +17,7 @@ As the Faikin hardware is a general purpose module / circuit, it only really mak
 
 If you choose to load any other software, or even build a variation of the Faikin software with your own (or someone else's) changes, then it is no longer "as supplied", and you now have a different "product" (if it is a "product") that you have made, so compliance is then up to you.
 
-It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear with country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
+It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear which country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
 
 The code is also in a fork built for ESP8266, and may be in any number of other forks. Obviously I cannot make any statement for those forks, or clones, or copies based on this code.
 
