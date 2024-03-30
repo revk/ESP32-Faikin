@@ -50,7 +50,7 @@ Please note that not all *issues* are *security issues*, and this policy applies
 
 # Support / updates
 
-Updates are made available via this repository. I also provide an OTA server, with beta releases. Some older code did not auto update but allowed manual updates, however, these days, auto updates are enabled by default.
+Updates are made available via this repository. I also provide an OTA server, with full and beta releases. Some older code did not auto update but allowed manual updates, however, these days, auto updates are enabled by default.
 
 The ultimate place to get the latest code, with any security updates, is this repository.
 
