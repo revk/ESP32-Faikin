@@ -14,6 +14,20 @@ The *hostname* you picked is used for these messages. The format for commands an
 |Info|`info/GuestAC/whatever`|Info messages are informational, and don't relate to a specific event happening.|
 |Error|`error/GuestAC/whatever`|Errors are reported using this.|
 
+## Faikin auto
+
+The *Faikin auto* logic allows a set point (with a margin) and a reference to external temperature. It uses simple prediction to see if we are going to exceed the maximum or minimum or be within range, and aims to stay in range by basically turning the aircon just *on* or *off*. It does the *on* or *off* by changing the set point given to the air con to be *higher* or *lower*, in simplest terms.
+
+However there are a few settings to control what *on* and *off* mean in this case. the simplest, default, is *much higher* than current temperature or *much lower* than current temperature, i.e. around ±6℃.
+
+The actual set point logic set a set point, and adds `heatover` or subtracts `heatback` adjustment for *heating* or subtracts `coolover` or adds `coolback` for *cooling*. The basis for these is one of there options.
+
+1. The default (`temptrack` off, `tempadjust` on) is your requested set point, adjusted for the air con temperature not matching your external temperature.
+2. Non adjusted (`temptrack` off, `tempadjust` off) just uses the set point you have asked for as a basis.
+3. Tracking (`temptrack` on) uses what the air con sees as the current temperature, allowing you to constantly nudge the aircon towards the target you want
+
+There is also a setting hold off adjustments (e.g. when tracking) for a time period (`tempnoflap`).
+
 ## Settings
 
 There are a number of standard settings as per the [RevK library](https://github.com/revk/ESP32-RevK), including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikin module are as follows.
