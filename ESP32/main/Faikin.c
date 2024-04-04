@@ -1545,9 +1545,13 @@ web_root (httpd_req_t * req)
    }
    void addb (const char *tag, const char *field, const char *help)
    {
+      if (noicons)
+         revk_web_send (req, "<td align=right style='vertical-align: middle;'>%s</td>", help);
+      else if (noicons)
+         revk_web_send (req, "<td align=right>%s</td>", tag);
       revk_web_send (req,
-                     "<td align=right>%s</td><td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
-                     tag, help, field, field);
+                     "<td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
+                     help, field, field);
    }
    void addslider (const char *tag, const char *field, int min, int max, const char *step)
    {
@@ -1558,7 +1562,7 @@ web_root (httpd_req_t * req)
       addf (tag);
    }
    revk_web_send (req, "<tr>");
-   addb ("0/1", "power", "Main power");
+   addb ("⏼", "power", "Main power");
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (have_5_fan_speeds ())
@@ -1618,11 +1622,11 @@ web_root (httpd_req_t * req)
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_streamer)
-         addb ("🦠", "streamer", "Stream/filter enable");
+         addb ("🦠", "streamer", "Stream/ filter");
       if (daikin.status_known & CONTROL_sensor)
          addb ("🙆", "sensor", "Sensor mode");
       if (daikin.status_known & CONTROL_quiet)
-         addb ("🤫", "quiet", "Quiet outdoor unit");
+         addb ("🤫", "quiet", "Quiet outdoor");
       revk_web_send (req, "</tr>");
    }
    revk_web_send (req, "</table>"       //
@@ -1656,7 +1660,7 @@ web_root (httpd_req_t * req)
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      addb ("Auto", "autop", "Automatic power on/off");
+      addb ("Auto", "autop", "Auto on/off");
       revk_web_send (req, "</tr>");
       if (ble)
       {

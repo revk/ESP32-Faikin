@@ -32,6 +32,7 @@ bit	no.led		1							// Unit does not have LED control
 bit	no.faikinauto								// Do not show faikin auto controls
 bit	no.fanauto								// Do not control fan in faikin auto mode
 
+bit	no.icons			.live=1					// Don't show icons on web UI
 
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
