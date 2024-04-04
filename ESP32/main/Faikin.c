@@ -2403,6 +2403,21 @@ send_ha_config (void)
       free (topic);
    }
 #endif
+   if (asprintf (&topic, "homeassistant/sensor/%senergy/config", revk_id) >= 0)
+   {
+      if (!(daikin.status_known & CONTROL_Wh))
+         revk_mqtt_send_str (topic);
+      else
+      {
+         jo_t j = make ("energy", NULL);
+         jo_string (j, "name", "Lifetime energy");
+         jo_string (j, "stat_t", revk_id);
+         jo_string (j, "unit_of_meas", "kWh");
+         jo_stringf (j, "val_tpl", "{{(value_json.Wh|float)/1000}}");
+         revk_mqtt_send (NULL, 1, topic, &j);
+      }
+      free (topic);
+   }
 }
 
 static void
