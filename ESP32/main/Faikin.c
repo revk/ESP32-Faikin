@@ -1546,7 +1546,7 @@ web_root (httpd_req_t * req)
    void addb (const char *tag, const char *field, const char *help)
    {
       if (noicons)
-         revk_web_send (req, "<td align=right style='vertical-align: middle;'>%s</td>", help);
+         revk_web_send (req, "<td align=right style='white-space:pre;vertical-align:middle;'>%s</td>", help);
       else
          revk_web_send (req, "<td align=right>%s</td>", tag);
       revk_web_send (req,
@@ -1562,7 +1562,7 @@ web_root (httpd_req_t * req)
       addf (tag);
    }
    revk_web_send (req, "<tr>");
-   addb ("⏼", "power", "Main power");
+   addb ("⏼", "power", "Main\npower");
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (have_5_fan_speeds ())
@@ -1600,33 +1600,33 @@ web_root (httpd_req_t * req)
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_econo)
-         addb ("Eco", "econo", "Eco mode");
+         addb ("♻", "econo", "Econo\nmode");
       if (daikin.status_known & CONTROL_powerful)
-         addb ("💪", "powerful", "Powerful mode");
+         addb ("💪", "powerful", "Powerful\nmode");
       if (daikin.status_known & CONTROL_led)
-         addb ("💡", "led", "LED high");
+         addb ("💡", "led", "LED\nhigh");
       revk_web_send (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_swingv | CONTROL_swingh | CONTROL_comfort))
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_swingv)
-         addb ("↕", "swingv", "Vertical Swing");
+         addb ("↕", "swingv", "Vertical\nSwing");
       if (daikin.status_known & CONTROL_swingh)
-         addb ("↔", "swingh", "Horizontal Swing");
+         addb ("↔", "swingh", "Horizontal\nSwing");
       if (daikin.status_known & CONTROL_comfort)
-         addb ("🧸", "comfort", "Comfort mode");
+         addb ("🧸", "comfort", "Comfort\nmode");
       revk_web_send (req, "</tr>");
    }
    if (daikin.status_known & (CONTROL_streamer | CONTROL_sensor | CONTROL_quiet))
    {
       revk_web_send (req, "<tr>");
       if (daikin.status_known & CONTROL_streamer)
-         addb ("🦠", "streamer", "Stream/ filter");
+         addb ("🦠", "streamer", "Stream/\nfilter");
       if (daikin.status_known & CONTROL_sensor)
-         addb ("🙆", "sensor", "Sensor mode");
+         addb ("🙆", "sensor", "Sensor\nmode");
       if (daikin.status_known & CONTROL_quiet)
-         addb ("🤫", "quiet", "Quiet outdoor");
+         addb ("🤫", "quiet", "Quiet\noutdoor");
       revk_web_send (req, "</tr>");
    }
    revk_web_send (req, "</table>"       //
@@ -1660,7 +1660,7 @@ web_root (httpd_req_t * req)
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
       addtime ("Off", "auto0");
-      addb ("Auto", "autop", "Auto on/off");
+      addb ("Auto ⏼", "autop", "Auto\non/off");
       revk_web_send (req, "</tr>");
       if (ble)
       {
@@ -2504,6 +2504,7 @@ void
 revk_web_extra (httpd_req_t * req)
 {
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
+   revk_web_setting (req, "Text rather than icons", "noicons");
    revk_web_setting (req, "Home Assistant", "ha");
    revk_web_setting (req, "Dark mode LED", "dark");
    if (!daikin.remote)
