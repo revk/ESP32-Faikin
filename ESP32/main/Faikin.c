@@ -1547,7 +1547,7 @@ web_root (httpd_req_t * req)
    {
       if (noicons)
          revk_web_send (req, "<td align=right style='vertical-align: middle;'>%s</td>", help);
-      else if (noicons)
+      else
          revk_web_send (req, "<td align=right>%s</td>", tag);
       revk_web_send (req,
                      "<td title=\"%s\"><label class=switch><input type=checkbox id=\"%s\" onchange=\"w('%s',this.checked);\"><span class=slider></span></label></td>",
