@@ -2325,8 +2325,11 @@ send_ha_config (void)
          jo_string (j, "mode_cmd_t", "~/mode");
          jo_string (j, "mode_stat_t", revk_id);
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
-         jo_string (j, "action_topic", revk_id);
-         jo_string (j, "action_template", "{{value_json.action}}");
+         if (!nohvacaction)
+         {
+            jo_string (j, "action_topic", revk_id);
+            jo_string (j, "action_template", "{{value_json.action}}");
+         }
       }
       if (daikin.status_known & CONTROL_fan)
       {
@@ -2471,7 +2474,8 @@ ha_status (void)
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
       jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
    }
-   jo_string (j, "action", hvac_action[daikin.action]);
+   if (!nohvacaction)
+      jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))

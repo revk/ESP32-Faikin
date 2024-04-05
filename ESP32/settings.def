@@ -30,6 +30,7 @@ bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 
 bit	no.faikinauto								// Do not show faikin auto controls
+bit	no.hvacaction	1							// Do not track/report hvac_action in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
 
 bit	no.icons			.live=1					// Don't show icons on web UI
