@@ -30,19 +30,19 @@ There is also a setting hold off adjustments (e.g. when tracking) for a time per
 
 ### Staying in range
 
-The auto mode has a target range, a *min* and *max*. On the web page this is set by a target and tolerancem, so if you set 21℃ with ±1℃ that is a range of 20℃ to 22℃. This is the comfort zone, the range in which you would like the temperature to stay.
+The auto mode has a target range, a *min* and *max*. On the web page this is set by a target and tolerance, so if you set 21℃ with ±1℃ that is a range of 20℃ to 22℃. This is the comfort zone, the range in which you would like the temperature to stay.
 
 To achieve this the Faikin looks at the temperature and sets the heating/cooling *on* or *off* as explained above. When heating, it is basically looking to keep the temperature just above *min*, and for cooling just below *max*. Note, it it not *aiming* for the middle, just to be within the range.
 
 When looking at the current temperature it looks ahead, as the aircon has some inertia, it samples every `tpredicts` seconds and looks ahead `tpredictt` periods. This allows it to act before the temperature goes too far one way or the other.
 
-I simplest terms, if heating, if the termerature will be above *min* it turns off, and if it will be below *min* it turns on. However, that would simply mean a termperarture hovering around *min*. To aim for somerwhere between *min* and *max* it actually adjusts its target, increasing *min* by `pushtemp` (default 0.1℃) so it hovers a bit above *min*. For cooling this works the other way around and relates to *max*.
+I simplest terms, if heating, if the temperature will be above *min* it turns off, and if it will be below *min* it turns on. However, that would simply mean a temperature hovering around *min*. To aim for somewhere between *min* and *max* it actually adjusts its target, increasing *min* by `pushtemp` (default 0.1℃) so it hovers a bit above *min*. For cooling this works the other way around and relates to *max*.
 
-The temperature band is also used to work out if we need to reverse heating/cooling. This is where *max* comes in for heating (*min* for cooling). If we are heating but spending all the time over *max* we switch to cooling. If we are always within *min* to *max* it will turn off. Bear in mind this is based on predicted temperature, so we may be within *min* to *max* because the heatign is turned on/off to keep us there, and that does not turn off as the predicted temp will have gone out of range. There is an adjustment to the switching temperature, e.g. in heating *max* is adjusted by `switchtemp`.
+The temperature band is also used to work out if we need to reverse heating/cooling. This is where *max* comes in for heating (*min* for cooling). If we are heating but spending all the time over *max* we switch to cooling. If we are always within *min* to *max* it will turn off. Bear in mind this is based on predicted temperature, so we may be within *min* to *max* because the heating is turned on/off to keep us there, and that does not turn off as the predicted temp will have gone out of range. There is an adjustment to the switching temperature, e.g. in heating *max* is adjusted by `switchtemp`.
 
 ### Thermostat mode
 
-You can set the `thermostat` - this changes the target we use. When not in this mode, heatign aims for *min* and cooling aims for *max*. In thermostat mode heating aims for *max* until it gets there, and then lets things cool to *min* before turning back on again, adding hysteresis.
+You can set the `thermostat` - this changes the target we use. When not in this mode, heating aims for *min* and cooling aims for *max*. In thermostat mode heating aims for *max* until it gets there, and then lets things cool to *min* before turning back on again, adding hysteresis.
 
 Thermostat mode also disables the `pushtemp`/`switchtemp` adjustment, and makes the default set point reference `min` or `max` depending on the current heating mode and hysteresis.
 
