@@ -129,7 +129,7 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`power`|Boolean, if aircon powered on|
 |`mode`|One of `H` (Heat), `C` (Cool), `A` (Auto), `D` (Dry), `F` (Fan)|
 |`temp`|Temperature, in Celcius|
-|`fan`|One of `A` (Auto) and `1` to `5` for manual fan levels|
+|`fan`|One of `A` (Auto), `Q` (Night) and `1` to `5` for manual fan levels|
 |`swingh`|Boolean - horizontal louvre swing|
 |`swingv`|Boolean - vertical louvre swing|
 |`powerful`|Boolean|
