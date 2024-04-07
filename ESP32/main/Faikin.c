@@ -3100,8 +3100,7 @@ app_main ()
          }
 
          // Apply adjustment
-         // TODO: Why not minTarget and maxTarget (or OffsetHigh and OffsetLow) as setting instead of autor, switchtemp and pushtemp? 
-         if (daikin.control && daikin.power && !isnan (min) && !isnan (max))
+         if (!thermostat && daikin.control && daikin.power && !isnan (min) && !isnan (max))
          {
             if (hot)
             {
@@ -3355,6 +3354,8 @@ app_main ()
                   daikin_set_e (mode, hot ? "H" : "C"); // Out of auto
                // Temp set
                float set = (min + max) / 2.0;   // Target temp we will be setting (before adjust for reference error and before limiting)
+					if(thermostat)
+						set=(((hot&&daikin.hysteresis)||(!hot&&!daikin.hysteresis))?max:min);
                if (temptrack)
                   set = reference;      // Base target on current Daikin measured temp instead.
                else if (tempadjust)
