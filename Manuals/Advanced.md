@@ -76,7 +76,6 @@ Some more advances settings which you are unlikely to need to ever change.
 |-------|-------|
 |`debug`|`true` means output lots of debug - notable for S21 this is one line with a set of poll responses. This also causes more fields to be polled than normal, so slower response times.|
 |`dump`|`true` means output raw serial communications|
-
 |`uart`|Which internal UART to use|
 |`tx`|Which GPIO for tx, prefix `-` to invert the port|
 |`rx`|Which GPIO for rx, prefix `-` to invert the port|
