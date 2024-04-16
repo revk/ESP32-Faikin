@@ -121,7 +121,7 @@ The `fixstatus` setting forces the format as if the value had changed during the
 
 ## Aircon control
 
-The controls are things you can change. These can be sent in a JSON payload in an MQTT command (with no suffix), and are reported in the `status` MQTT JSON.
+The controls are things you can change. These can be sent in a JSON payload in an MQTT `control` command (with no suffix), and are reported in the `status` MQTT JSON.
 
 |Attribute|Meaning|
 |---------|-------|
@@ -138,6 +138,10 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`autob`|The name of the BLE device. This sets the `autob` setting|
 |`auto0`|Time to turn off HH:MM, `00:00` is don't turn off. This sets the `auto0` setting|
 |`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
+|`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikin auto mode|
+|`env`|This is the temperature reference used for the Faikin auto mode|
+
+For remote controlled Faikin auto mode, you typically send a `control` message with `target` and `env` in the JSON payload. This needs to be sent regularly to avoid it revertign to normal (not Faikin auto mode).
 
 ## Debug
 
