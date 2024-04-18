@@ -2312,6 +2312,7 @@ send_ha_config (void)
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
+      jo_lit (j, "temp_step", (proto_type () == PROTO_TYPE_S21) ? "0.5" : "0.1");
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", revk_id);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
