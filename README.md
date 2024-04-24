@@ -18,7 +18,7 @@ I'd like to thank the contributors, but contributions are made and accepted on b
 - [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
 - [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi
 - [DoC](Manuals/DoC.md) and Vulnerability disclosure policy.
-- [S21](Manuals/S21.md) reverse engineered details of `S21` protocol|
+- [S21](Manuals/S21.md) reverse engineered details of `S21` protocol.
 
 For support, see issues and discussions.
 
