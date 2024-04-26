@@ -1,5 +1,5 @@
-bit	dump									// Dump protocol on MQTT
-bit	debug				.live=1					// Debug (extra messages and list replies)
+bit	dump									// Dump protocol on MQTT for each message
+bit	debug				.live=1					// Debug (extra messages and list replies in one long message on MQTT)
 bit	snoop									// Listen only (for debugging)
 bit	livestatus			.live=1					// Send status messages in real time
 bit	fixstatus								// Send status as fixed values not array
