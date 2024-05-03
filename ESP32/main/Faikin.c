@@ -13,7 +13,9 @@ static const char TAG[] = "Faikin";
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
+#ifdef CONFIG_BT_NIMBLE_ENABLED
 #include "bleenv.h"
+#endif
 #include "daikin_s21.h"
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
@@ -130,6 +132,31 @@ const rmt_transmit_config_t rmt_tx_config = {
 
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
+
+static int
+ble_sensor_connected (void)
+{
+   return ble && *autob;
+}
+
+static int ble_sensor_enabled (void)
+{
+   return !!*autob;
+}
+
+#else
+
+static int
+ble_sensor_connected (void)
+{
+   return 0;
+}
+
+static int ble_sensor_enabled (void)
+{
+   return 0;
+}
+
 #endif
 
 // The current aircon state and stats
@@ -1336,12 +1363,12 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          daikin.mintarget = min;
          daikin.maxtarget = max;
       }
-      if (!ble || !*autob)
+      if (!ble_sensor_connected())
       {
          daikin.env = env;
          daikin.status_known |= CONTROL_env;    // So we report it
       }
-      if (!autor && !*autob)
+      if (!autor && !ble_sensor_enabled())
          daikin.remote = 1;     // Hides local automation settings
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -1586,13 +1613,15 @@ web_root (httpd_req_t * req)
       addt ("Liquid", "Liquid coolant temperature");
    if (daikin.status_known & CONTROL_outside)
       addt ("Outside", "Outside temperature");
-   if ((daikin.status_known & CONTROL_env) && (!ble || !*autob))
+   if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected())
       addt ("Env", "External reference temperature");
+#ifdef ELA
    if (ble)
    {
       addt ("BLE", "External BLE temperature");
       addt ("Hum", "External BLE humidity");
    }
+#endif
    revk_web_send (req, "</tr>");
    if (daikin.status_known & CONTROL_demand)
       addslider ("Demand", "demand", 30, 100, "5");
@@ -1636,8 +1665,8 @@ web_root (httpd_req_t * req)
                   "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>"    //
                   "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
                   "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
-#ifdef ELA
-   if (autor || (ble && *autob) || (!nofaikinauto && !daikin.remote))
+
+   if (autor || ble_sensor_connected () || (!nofaikinauto && !daikin.remote))
    {
       void addnote (const char *note)
       {
@@ -1662,6 +1691,7 @@ web_root (httpd_req_t * req)
       addtime ("Off", "auto0");
       addb ("Auto ⏼", "autop", "Auto\non/off");
       revk_web_send (req, "</tr>");
+#ifdef ELA
       if (ble)
       {
          addnote ("External temperature reference for Faikin-auto mode");
@@ -1691,9 +1721,9 @@ web_root (httpd_req_t * req)
             revk_web_send (req, " (reload to refresh list)");
          revk_web_send (req, "</td></tr>");
       }
+#endif
       revk_web_send (req, "</table></div>");
    }
-#endif
    revk_web_send (req, "</form>"        //
                   "</div>"      //
                   "<script>"    //
@@ -2247,26 +2277,6 @@ send_ha_config (void)
          free (topic);
       }
    }
-   void addhum (uint64_t ok, const char *tag, const char *icon)
-   {
-      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
-      {
-         if (!ok)
-            revk_mqtt_send_str (topic);
-         else
-         {
-            jo_t j = make (tag, icon);
-            jo_string (j, "name", tag);
-            jo_string (j, "dev_cla", "humidity");
-            jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
-            jo_string (j, "unit_of_meas", "%");
-            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-            revk_mqtt_send (NULL, 1, topic, &j);
-         }
-         free (topic);
-      }
-   }
    void addfreq (uint64_t ok, const char *tag, const char *unit, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
@@ -2281,26 +2291,6 @@ send_ha_config (void)
             jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", unit);
-            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-            revk_mqtt_send (NULL, 1, topic, &j);
-         }
-         free (topic);
-      }
-   }
-   void addbat (uint64_t ok, const char *tag, const char *icon)
-   {
-      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
-      {
-         if (!ok)
-            revk_mqtt_send_str (topic);
-         else
-         {
-            jo_t j = make (tag, icon);
-            jo_string (j, "name", tag);
-            jo_string (j, "dev_cla", "battery");
-            jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
-            jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
          }
@@ -2387,9 +2377,52 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
+#ifdef ELA
+   void addhum (uint64_t ok, const char *tag, const char *icon)
+   {
+      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "humidity");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
+         free (topic);
+      }
+   }
+   void addbat (uint64_t ok, const char *tag, const char *icon)
+   {
+      if (asprintf (&topic, "homeassistant/sensor/%s%s/config", revk_id, tag) >= 0)
+      {
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, icon);
+            jo_string (j, "name", tag);
+            jo_string (j, "dev_cla", "battery");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
+         free (topic);
+      }
+   }
+
    addtemp (ble && bletemp && bletemp->tempset, "bletemp", "mdi:thermometer");
    addhum (ble && bletemp && bletemp->humset, "blehum", "mdi:water-percent");
    addbat (ble && bletemp && bletemp->batset, "blebat", "mdi:battery-bluetooth-variant");
+#endif
 #if 1
    if (asprintf (&topic, "homeassistant/select/%sdemand/config", revk_id) >= 0)
    {
@@ -2466,6 +2499,7 @@ ha_status (void)
    if (daikin.status_known & CONTROL_fanrpm)
       jo_litf (j, "fanfreq", "%.1f", daikin.fanrpm / 60.0);
 #endif
+#ifdef ELA
    if (ble && bletemp)
    {
       if (bletemp->tempset)
@@ -2475,6 +2509,7 @@ ha_status (void)
       if (bletemp->batset)
          jo_int (j, "blebat", bletemp->bat);
    }
+#endif
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
@@ -2785,7 +2820,7 @@ app_main ()
          if (proto_type () != PROTO_TYPE_CN_WIRED)
             usleep (1000000LL - (esp_timer_get_time () % 1000000LL));   /* wait for next second  - CN_WIRED has built in wait */
 #ifdef ELA
-         if (ble && *autob)
+         if (ble_sensor_connected ())
          {                      // Automatic external temperature logic - only really useful if autor/autot set
             bleenv_expire (120);
             if (!bletemp || strcmp (bletemp->name, autob))

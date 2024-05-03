@@ -38,7 +38,9 @@ bit	no.icons			.live=1					// Don't show icons on web UI
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 
+#ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble									// Enable BLE
+#endif
 
 bit	cn.send4	1		.live=1					// CN_WIRED, send packet 4 times
 bit	cn.mark900			.live=1					// CN_WIRED. mark using 900uS not 1000uS
