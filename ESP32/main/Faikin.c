@@ -350,6 +350,7 @@ set_float (const char *name, float *ptr, uint64_t flag, float val)
 #define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
 #define set_int(name,val) set_int(#name,&daikin.name,CONTROL_##name,val)
 #define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
+#define set_bool(name,val) set_val(name, (val ? 1 : 0))
 
 jo_t
 jo_comms_alloc (void)
@@ -404,7 +405,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
             set_val (online, 1);
-            set_val (power, (payload[0] == '1') ? 1 : 0);
+            set_bool (power, payload[0] == '1');
             set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
             set_val (heat, daikin.mode == 1);   // Crude - TODO find if anything actually tells us this
             if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
@@ -422,33 +423,33 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '3':                // Seems to be an alternative to G6
          if (check_length (cmd, cmd2, len, 1, payload))
          {
-            set_val (powerful, payload[3] & 0x02 ? 1 : 0);
+            set_bool (powerful, payload[3] & 0x02);
          }
          break;
       case '5':                // 'G5' - swing status
          if (check_length (cmd, cmd2, len, 1, payload))
          {
             if (!noswingw)
-               set_val (swingv, (payload[0] & 1) ? 1 : 0);
+               set_bool (swingv, payload[0] & 1);
             if (!noswingh)
-               set_val (swingh, (payload[0] & 2) ? 1 : 0);
+               set_bool (swingh, payload[0] & 2);
          }
          break;
       case '6':                // 'G6' - "powerful" mode and some others
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
             if (!nopowerful)
-               set_val (powerful, payload[0] & 0x02 ? 1 : 0);
+               set_bool (powerful, payload[0] & 0x02);
             if (!nocomfort)
-               set_val (comfort, payload[0] & 0x40 ? 1 : 0);
+               set_bool (comfort, payload[0] & 0x40);
             if (!noquiet)
-               set_val (quiet, payload[0] & 0x80 ? 1 : 0);
+               set_bool (quiet, payload[0] & 0x80);
             if (!nostreamer)
-               set_val (streamer, payload[1] & 0x80 ? 1 : 0);
+               set_bool (streamer, payload[1] & 0x80);
             if (!nosensor)
-               set_val (sensor, payload[3] & 0x08 ? 1 : 0);
+               set_bool (sensor, payload[3] & 0x08);
             if (!noled)
-               set_val (led, (payload[3] & 0x0C) != 0x0C);
+               set_bool (led, (payload[3] & 0x0C) != 0x0C);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
@@ -456,7 +457,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          {
             if (!nodemand && payload[0] != '1')
                set_int (demand, 100 - (payload[0] - '0'));
-            set_val (econo, payload[1] & 0x02 ? 1 : 0);
+            set_bool (econo, payload[1] & 0x02);
          }
          break;
       case '9':
@@ -572,11 +573,11 @@ daikin_cn_wired_response (int len, uint8_t * payload)
    case 1:
       set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
       set_val (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
-      set_val (power, (payload[3] & 0x10) ? 0 : 1);
+      set_bool (power, !(payload[3] & 0x10));
       set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
-      set_val (powerful, (payload[4] == 3) ? 1 : 0);
-      set_val (swingv, (payload[5] & 0x10) ? 1 : 0);
-      set_val (led, (payload[5] & 0x80) ? 1 : 0);
+      set_bool (powerful, payload[4] == 3);
+      set_bool (swingv, payload[5] & 0x10);
+      set_bool (led, payload[5] & 0x80);
       break;
    default:
       jo_t j = jo_comms_alloc ();
