@@ -407,8 +407,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_val (online, 1);
             set_bool (power, payload[0] == '1');
             set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
-            set_val (heat, daikin.mode == 1);   // Crude - TODO find if anything actually tells us this
-            if (daikin.mode == 1 || daikin.mode == 2 || daikin.mode == 3)
+            set_val (heat, daikin.mode == FAIKIN_MODE_HEAT);   // Crude - TODO find if anything actually tells us this
+            if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_DRY)
                set_temp (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                set_temp (temp, daikin.temp);    // Does not have temp in other modes
@@ -554,13 +554,17 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       return;
    if (!protocol_set)
    {
+      // Protocol autodetection complete
       protocol_found ();
-      // Defaults, as we cannot read them
+
+      // The only way for us to learn actual values is to receive a CNW_MODE_CHANGED
+      // packet, which only happens if a remote control is used. So let's default
+      // to some sane values. This also sets up what UI controls we see
       set_val (power, 0);
-      set_val (mode, 3);
+      set_val (mode, FAIKIN_MODE_AUTO);
       set_val (heat, 0);
       set_temp (temp, 20);
-      set_val (fan, 0);
+      set_val (fan, FAIKIN_FAN_AUTO);
       set_val (econo, 0);
       set_val (powerful, 0);
       set_val (swingv, 0);
@@ -794,7 +798,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       }
       uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
    }
-   // Wait ACK
+   // Wait ACK. Apparently some models omit it.
    int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
    if (rxlen != 1 || (temp != ACK && temp != STX))
    {
@@ -826,7 +830,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return RES_NOACK;
    }
    if (temp == STX)
-      *buf = temp;
+      *buf = temp; // No ACK, response started instead.
    else
    {
       if (cmd == 'D')
@@ -2819,7 +2823,12 @@ app_main ()
       {
          // Polling loop. We exit from here only if we get a protocol error
          if (proto_type () != PROTO_TYPE_CN_WIRED)
-            usleep (1000000LL - (esp_timer_get_time () % 1000000LL));   /* wait for next second  - CN_WIRED has built in wait */
+         {
+            /* wait for next second. For CN_WIRED we don't need to actively poll the
+               A/C, so we don't need this delay. We just keep reading, packets should
+               come once per second, and that's our timing */
+            usleep (1000000LL - (esp_timer_get_time () % 1000000LL));
+         }
 #ifdef ELA
          if (ble_sensor_connected ())
          {                      // Automatic external temperature logic - only really useful if autor/autot set
