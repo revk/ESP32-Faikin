@@ -2238,7 +2238,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "temperature");
-            jo_string (j, "state_class", "key");
+            jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "°C");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2258,7 +2258,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "humidity");
-            jo_string (j, "state_class", "key");
+            jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2278,7 +2278,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "frequency");
-            jo_string (j, "state_class", "key");
+            jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", unit);
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2298,7 +2298,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "battery");
-            jo_string (j, "state_class", "key");
+            jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2421,6 +2421,7 @@ send_ha_config (void)
          jo_string (j, "name", "Lifetime energy");
          jo_string (j, "stat_t", revk_id);
          jo_string (j, "unit_of_meas", "kWh");
+         jo_string (j, "state_class", "total_increasing");
          jo_stringf (j, "val_tpl", "{{(value_json.Wh|float)/1000}}");
          revk_mqtt_send (NULL, 1, topic, &j);
       }
