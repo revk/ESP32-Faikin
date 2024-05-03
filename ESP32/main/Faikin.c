@@ -2532,6 +2532,121 @@ ha_status (void)
    revk_mqtt_send_clients (NULL, 1, revk_id, &j, 1);
 }
 
+void uart_setup (void)
+{
+   esp_err_t err = 0;
+   ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
+               tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
+   if (!err)
+      err = gpio_reset_pin (rx.num);
+   if (!err)
+      err = gpio_reset_pin (tx.num);
+   if (proto_type () == PROTO_TYPE_CN_WIRED)
+   {
+      if (!rmt_encoder)
+      {
+         rmt_copy_encoder_config_t encoder_config = {
+         };
+         REVK_ERR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
+      }
+      if (!rmt_tx)
+      {                      // Create rmt_tx
+         rmt_tx_channel_config_t tx_chan_config = {
+            .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
+            .gpio_num = tx.num,      // GPIO number
+            .mem_block_symbols = 72, // symbols
+            .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
+            .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
+            .flags.invert_out = (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+            .flags.with_dma = true,
+#endif
+         };
+         REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
+         if (rmt_tx)
+            REVK_ERR_CHECK (rmt_enable (rmt_tx));
+      }
+      if (!rmt_rx)
+      {                      // Create rmt_rx
+         rmt_rx_channel_config_t rx_chan_config = {
+            .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
+            .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
+            .mem_block_symbols = 72, // 
+            .gpio_num = rx.num,      // GPIO number
+            .flags.invert_in = (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+            .flags.with_dma = true,
+#endif
+         };
+         REVK_ERR_CHECK (rmt_new_rx_channel (&rx_chan_config, &rmt_rx));
+         if (rmt_rx)
+         {
+            rmt_rx_event_callbacks_t cbs = {
+               .on_recv_done = rmt_rx_callback,
+            };
+            REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
+            REVK_ERR_CHECK (rmt_enable (rmt_rx));
+         }
+      }
+      rmt_rx_len = 0;
+      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
+   } else
+   {
+      if (rmt_tx)
+      {
+         REVK_ERR_CHECK (rmt_disable (rmt_tx));
+         REVK_ERR_CHECK (rmt_del_channel (rmt_tx));
+         rmt_tx = NULL;
+      }
+      if (rmt_rx)
+      {
+         REVK_ERR_CHECK (rmt_disable (rmt_rx));
+         REVK_ERR_CHECK (rmt_del_channel (rmt_rx));
+         rmt_rx = NULL;
+      }
+      uart_driver_delete (uart);
+      uart_config_t uart_config = {
+         .baud_rate = (proto_type () == PROTO_TYPE_S21) ? 2400 : 9600,
+         .data_bits = UART_DATA_8_BITS,
+         .parity = UART_PARITY_EVEN,
+         .stop_bits = (proto_type () == PROTO_TYPE_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
+         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
+         .source_clk = UART_SCLK_DEFAULT,
+      };
+      if (!err)
+         err = uart_param_config (uart, &uart_config);
+      if (!err)
+         err = uart_set_pin (uart, tx.num, rx.num, -1, -1);
+      if (!err)
+         err = gpio_pullup_en (rx.num);
+      if (!err)
+      {
+         uint8_t i = 0;
+         if (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
+            i |= UART_SIGNAL_RXD_INV;
+         if (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
+            i |= UART_SIGNAL_TXD_INV;
+         err = uart_set_line_inverse (uart, i);
+      }
+      if (!err)
+         err = uart_driver_install (uart, 1024, 0, 0, NULL, 0);
+      if (!err)
+         err = uart_set_rx_full_threshold (uart, 1);
+      if (err)
+      {
+         jo_t j = jo_object_alloc ();
+         jo_string (j, "error", "Failed to uart");
+         jo_int (j, "uart", uart);
+         jo_int (j, "gpio", rx.num);
+         jo_string (j, "description", esp_err_to_name (err));
+         revk_error ("uart", &j);
+         return;
+      }
+      sleep (1);
+      uart_flush (uart);
+   }
+}
+
 static void
 register_uri (const httpd_uri_t * uri_struct)
 {
@@ -2604,120 +2719,6 @@ app_main ()
    revk_start ();
    b.dumping = dump;
    revk_blink (0, 0, "");
-   void uart_setup (void)
-   {
-      esp_err_t err = 0;
-      ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
-                tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
-      if (!err)
-         err = gpio_reset_pin (rx.num);
-      if (!err)
-         err = gpio_reset_pin (tx.num);
-      if (proto_type () == PROTO_TYPE_CN_WIRED)
-      {
-         if (!rmt_encoder)
-         {
-            rmt_copy_encoder_config_t encoder_config = {
-            };
-            REVK_ERR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
-         }
-         if (!rmt_tx)
-         {                      // Create rmt_tx
-            rmt_tx_channel_config_t tx_chan_config = {
-               .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
-               .gpio_num = tx.num,      // GPIO number
-               .mem_block_symbols = 72, // symbols
-               .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
-               .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
-               .flags.invert_out = (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-               .flags.with_dma = true,
-#endif
-            };
-            REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
-            if (rmt_tx)
-               REVK_ERR_CHECK (rmt_enable (rmt_tx));
-         }
-         if (!rmt_rx)
-         {                      // Create rmt_rx
-            rmt_rx_channel_config_t rx_chan_config = {
-               .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
-               .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
-               .mem_block_symbols = 72, // 
-               .gpio_num = rx.num,      // GPIO number
-               .flags.invert_in = (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-               .flags.with_dma = true,
-#endif
-            };
-            REVK_ERR_CHECK (rmt_new_rx_channel (&rx_chan_config, &rmt_rx));
-            if (rmt_rx)
-            {
-               rmt_rx_event_callbacks_t cbs = {
-                  .on_recv_done = rmt_rx_callback,
-               };
-               REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
-               REVK_ERR_CHECK (rmt_enable (rmt_rx));
-            }
-         }
-         rmt_rx_len = 0;
-         REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
-      } else
-      {
-         if (rmt_tx)
-         {
-            REVK_ERR_CHECK (rmt_disable (rmt_tx));
-            REVK_ERR_CHECK (rmt_del_channel (rmt_tx));
-            rmt_tx = NULL;
-         }
-         if (rmt_rx)
-         {
-            REVK_ERR_CHECK (rmt_disable (rmt_rx));
-            REVK_ERR_CHECK (rmt_del_channel (rmt_rx));
-            rmt_rx = NULL;
-         }
-         uart_driver_delete (uart);
-         uart_config_t uart_config = {
-            .baud_rate = (proto_type () == PROTO_TYPE_S21) ? 2400 : 9600,
-            .data_bits = UART_DATA_8_BITS,
-            .parity = UART_PARITY_EVEN,
-            .stop_bits = (proto_type () == PROTO_TYPE_S21) ? UART_STOP_BITS_2 : UART_STOP_BITS_1,
-            .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-            .source_clk = UART_SCLK_DEFAULT,
-         };
-         if (!err)
-            err = uart_param_config (uart, &uart_config);
-         if (!err)
-            err = uart_set_pin (uart, tx.num, rx.num, -1, -1);
-         if (!err)
-            err = gpio_pullup_en (rx.num);
-         if (!err)
-         {
-            uint8_t i = 0;
-            if (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
-               i |= UART_SIGNAL_RXD_INV;
-            if (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
-               i |= UART_SIGNAL_TXD_INV;
-            err = uart_set_line_inverse (uart, i);
-         }
-         if (!err)
-            err = uart_driver_install (uart, 1024, 0, 0, NULL, 0);
-         if (!err)
-            err = uart_set_rx_full_threshold (uart, 1);
-         if (err)
-         {
-            jo_t j = jo_object_alloc ();
-            jo_string (j, "error", "Failed to uart");
-            jo_int (j, "uart", uart);
-            jo_int (j, "gpio", rx.num);
-            jo_string (j, "description", esp_err_to_name (err));
-            revk_error ("uart", &j);
-            return;
-         }
-         sleep (1);
-         uart_flush (uart);
-      }
-   }
 
    if (webcontrol || websettings)
    {
