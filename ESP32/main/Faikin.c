@@ -2238,6 +2238,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "temperature");
+            jo_string (j, "state_class", "key");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "°C");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2257,6 +2258,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "humidity");
+            jo_string (j, "state_class", "key");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2276,6 +2278,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "frequency");
+            jo_string (j, "state_class", "key");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", unit);
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2295,6 +2298,7 @@ send_ha_config (void)
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "battery");
+            jo_string (j, "state_class", "key");
             jo_string (j, "stat_t", revk_id);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
