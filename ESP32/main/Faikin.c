@@ -86,6 +86,12 @@ static httpd_handle_t webserver = NULL;
 static uint8_t protocol_set = 0;        // protocol confirmed
 static uint8_t proto = 0;
 
+static int
+uart_enabled (void)
+{
+   return tx.set && rx.set;
+}
+
 static uint8_t
 proto_type (void)
 {
@@ -95,7 +101,7 @@ proto_type (void)
 static const char *
 proto_name (void)
 {
-   return prototype[proto_type ()];
+   return uart_enabled () ? prototype[proto_type ()] : "MOCK";
 }
 
 // 'fanstep' setting overrides number of available fan speeds
@@ -2757,7 +2763,7 @@ app_main ()
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
-   if (!tx.set && !rx.set)
+   if (!uart_enabled ())
    {                            // Mock for interface development and testing
       ESP_LOGE (TAG, "Dummy operational mode (no tx/rx set)");
       daikin.status_known |=
@@ -2794,7 +2800,7 @@ app_main ()
          }
       }
       daikin.talking = 1;
-      if (tx.set && rx.set)
+      if (uart_enabled ())
       {                         // Poke UART
          uart_setup ();
          if ((proto_type () == PROTO_TYPE_X50A))
@@ -2862,7 +2868,7 @@ app_main ()
             daikin.maxtarget = (float) autot / autot_scale + (float) autor / autor_scale;
          }
          // Talk to the AC
-         if (tx.set && rx.set)
+         if (uart_enabled ())
          {
             if (proto_type () == PROTO_TYPE_ALTHERMA_S)
             {
