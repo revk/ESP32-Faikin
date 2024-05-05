@@ -394,6 +394,18 @@ check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * 
    return 0;
 }
 
+static void
+comm_timeout (uint8_t* buf, int rxlen)
+{
+   daikin.talking = 0;
+   b.loopback = 0;
+   jo_t j = jo_comms_alloc ();
+   jo_bool (j, "timeout", 1);
+   if (rxlen)
+       jo_base16 (j, "data", buf, rxlen);
+   revk_error ("comms", &j);
+}
+
 // Decode S21 response payload
 int
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
@@ -846,11 +858,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
          rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
          if (rxlen != 1)
          {
-            daikin.talking = 0;
-            b.loopback = 0;
-            jo_t j = jo_comms_alloc ();
-            jo_bool (j, "timeout", 1);
-            revk_error ("comms", &j);
+            comm_timeout (NULL, 0);
             return RES_NOACK;
          }
          if (*buf == STX)
@@ -862,12 +870,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
    {
       if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
       {
-         daikin.talking = 0;
-         b.loopback = 0;
-         jo_t j = jo_comms_alloc ();
-         jo_bool (j, "timeout", 1);
-         jo_base16 (j, "data", buf, rxlen);
-         revk_error ("comms", &j);
+         comm_timeout (buf, txlen);
          return RES_NOACK;
       }
       rxlen++;
@@ -957,11 +960,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
    }
    if (!rmt_rx_len)
    {
-      daikin.talking = 0;
-      b.loopback = 0;
-      jo_t j = jo_comms_alloc ();
-      jo_bool (j, "timeout", 1);
-      revk_error ("comms", &j);
+      comm_timeout (NULL, 0);
       return;
    }
    {                            // Process receive
@@ -1157,11 +1156,7 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
    int rxlen = uart_read_bytes (uart, buf, sizeof (buf), READ_TIMEOUT);
    if (rxlen <= 0)
    {
-      daikin.talking = 0;
-      b.loopback = 0;
-      jo_t j = jo_comms_alloc ();
-      jo_bool (j, "timeout", 1);
-      revk_error ("comms", &j);
+      comm_timeout (NULL, 0);
       return;
    }
    if (b.dumping)
