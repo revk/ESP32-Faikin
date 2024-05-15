@@ -2458,6 +2458,7 @@ send_ha_config (void)
       {
          jo_t j = make ("energy", NULL);
          jo_string (j, "name", "Lifetime energy");
+         jo_string (j, "dev_cla", "energy");
          jo_string (j, "stat_t", revk_id);
          jo_string (j, "unit_of_meas", "kWh");
          jo_string (j, "state_class", "total_increasing");
