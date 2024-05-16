@@ -4322,6 +4322,16 @@
 		)
 		(uuid "f4de4092-da66-43c2-a3dc-44f2719a3e47")
 	)
+	(wire
+		(pts
+			(xy 116.205 95.25) (xy 124.46 95.25)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "fde6cb79-adf6-4689-bce0-60f7ef9d4566")
+	)
 	(text "Careful routing of Rx line\nto avoid the regulator"
 		(exclude_from_sim no)
 		(at 140.97 100.965 0)
@@ -4588,22 +4598,22 @@
 	)
 	(global_label "RX"
 		(shape output)
-		(at 124.46 95.25 90)
+		(at 116.205 95.25 180)
 		(fields_autoplaced yes)
 		(effects
 			(font
 				(size 1.27 1.27)
 			)
-			(justify left)
+			(justify right)
 		)
 		(uuid "eb503f36-06f9-429b-bfac-69b2fc2fa2db")
 		(property "Intersheetrefs" "${INTERSHEET_REFS}"
-			(at 124.46 90.4395 90)
+			(at 111.3945 95.25 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify left)
+				(justify right)
 				(hide yes)
 			)
 		)
