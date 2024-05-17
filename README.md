@@ -15,16 +15,16 @@ I'd like to thank the contributors, but contributions are made and accepted on b
 - [Setup](Manuals/Setup.md) Manual
 - [Controls](Manuals/Controls.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
-- [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code.
+- [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code
 - [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi
-- [DoC](Manuals/DoC.md) and Vulnerability disclosure policy.
-- [S21](Manuals/S21.md) reverse engineered details of `S21` protocol.
+- [DoC](Manuals/DoC.md) and Vulnerability disclosure policy
+- [S21](Manuals/S21.md) reverse engineered details of `S21` protocol
 
 For support, see issues and discussions.
 
 ## PCB
 
-The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modiles via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
+The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
@@ -66,7 +66,7 @@ Local interactive web control page using *hostname*.local, no app required, no e
 
 # Design
 
-* KiCad PCB designs included, with JLCPCB production files.
+* KiCad PCB designs included, with JLCPCB production files
 * 3D printed case STL files
 * Documentation of reverse engineered protocol included
 
@@ -74,7 +74,7 @@ Basically, Daikin have gone all cloudy with the latest WiFi controllers. This mo
 
 <img src="Manuals/MiSensor.jpg" align=right width="25%">
 
-* Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone.
+* Simple local web based control with live websocket status, easy to save as desktop icon on a mobile phone
 * MQTT reporting and controls
 * Works with Home Assistant over MQTT - note Home Assistant can work with HomeKit
 * Includes linux mysql/mariadb based logging and graphing tools
