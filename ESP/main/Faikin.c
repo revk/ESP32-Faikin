@@ -3197,7 +3197,7 @@ app_main ()
             }
 
             // Force high fan at the beginning if not fan in AUTO 
-            //  and temperatur not close to target temp
+            //  and temperature not close to target temp
             // TODO: Use of switchtemp for different purposes is confusing (ref. min/max a couple of lines above)
             if (!nofanauto && daikin.fan
                 && ((hot && measured_temp < min - 2 * (float) switchtemp / switchtemp_scale)
@@ -3296,11 +3296,10 @@ app_main ()
                {                // Power, mode, fan, automation
                   if (daikin.power)     // Daikin is on
                   {
-                     int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2);        // TODO: What does "fanstep ? : (pro..."? What if fanstep==0?
+                     int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2);
 
                      // A lot more beyond than total counts and no approaching in the last two cycles
                      // Time to switch modes (heating/cooling) and reduce fan to minimum
-                     // TODO: Smells like too much overshoot...
                      if ((countBeyond2Samples * 2 > count_total_2_samples || daikin.slave) && !count_approaching_2_samples)
                      {          // Mode switch
                         if (!lockmode)
@@ -3317,18 +3316,14 @@ app_main ()
                      }
                      // Less approaching, but still close to min in heating or max in cooling
                      // Time to reduce the fan a bit
-                     // TODO: Better wait until at the desired temp instead of tickeling the limits?
-                     // TODO: Not sure about the purpose of daikin.slave 
                      else if (!nofanauto && count_approaching_2_samples * 10 < count_total_2_samples * 7
                               && step && daikin.fan > 1 && daikin.fan <= 5)
                      {
                         jo_int (j, "set-fan", daikin.fan - step);
                         daikin_set_v (fan, daikin.fan - step);  // Reduce fan
-                        // TODO: Why not use quit mode as lowest fan step?
                      }
                      // A lot of approaching means still far away from desired temp
                      // Time to increase the fan speed
-                     // TODO: Not sure about the purpose of daikin.slave 
                      else if (!nofanauto && !daikin.slave
                               && count_approaching_2_samples * 10 > count_total_2_samples * 9
                               && step && daikin.fan >= 1 && daikin.fan < autofmax)
@@ -3346,7 +3341,6 @@ app_main ()
                      }
                   }
                   // Daikin is off
-                  // TODO: What's the purpose of daikin.remote?
                   else if ((autop || (daikin.remote && autoptemp))      // AutoP Mode only
                            && (daikin.countApproaching == daikin.countTotal || daikin.countBeyond == daikin.countTotal) // full cycle approaching or full cycle beyond
                            && (measured_temp >= max + (float) autoptemp / autoptemp_scale       // temp out of desired range
@@ -3361,7 +3355,7 @@ app_main ()
                      }
                   }
                }
-               if (count_total_2_samples)       // after a cycle, send automation data   // TODO: Isn't this always the case?
+               if (count_total_2_samples)       // after a cycle, send automation data  
                   revk_info ("automation", &j);
                else
                   jo_free (&j);
