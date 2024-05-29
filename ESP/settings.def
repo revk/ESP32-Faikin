@@ -35,6 +35,8 @@ bit	no.fanauto								// Do not control fan in faikin auto mode
 
 bit	no.icons			.live=1					// Don't show icons on web UI
 
+bit	alwaysquiet								// Always set Quiet/Night mode not Auto
+
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance
 

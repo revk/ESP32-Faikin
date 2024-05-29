@@ -101,7 +101,7 @@ proto_type (void)
 static const char *
 proto_name (void)
 {
-   return uart_enabled () ? prototype[proto_type ()] : "MOCK";
+   return uart_enabled ()? prototype[proto_type ()] : "MOCK";
 }
 
 // 'fanstep' setting overrides number of available fan speeds
@@ -145,7 +145,8 @@ ble_sensor_connected (void)
    return ble && *autob;
 }
 
-static int ble_sensor_enabled (void)
+static int
+ble_sensor_enabled (void)
 {
    return !!*autob;
 }
@@ -158,7 +159,8 @@ ble_sensor_connected (void)
    return 0;
 }
 
-static int ble_sensor_enabled (void)
+static int
+ble_sensor_enabled (void)
 {
    return 0;
 }
@@ -395,14 +397,14 @@ check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * 
 }
 
 static void
-comm_timeout (uint8_t* buf, int rxlen)
+comm_timeout (uint8_t * buf, int rxlen)
 {
    daikin.talking = 0;
    b.loopback = 0;
    jo_t j = jo_comms_alloc ();
    jo_bool (j, "timeout", 1);
    if (rxlen)
-       jo_base16 (j, "data", buf, rxlen);
+      jo_base16 (j, "data", buf, rxlen);
    revk_error ("comms", &j);
 }
 
@@ -425,7 +427,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_val (online, 1);
             set_bool (power, payload[0] == '1');
             set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
-            set_val (heat, daikin.mode == FAIKIN_MODE_HEAT);   // Crude - TODO find if anything actually tells us this
+            set_val (heat, daikin.mode == FAIKIN_MODE_HEAT);    // Crude - TODO find if anything actually tells us this
             if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_DRY)
                set_temp (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
@@ -435,7 +437,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             else if (daikin.fan == 6 && daikin.power && daikin.fanrpm < 750)
                set_val (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
             else
-               set_val (fan, 0);        // Auto as fan too fast to be quiet mode
+               set_val (fan, alwaysquiet ? 6 : 0);      // Auto as fan too fast to be quiet mode
          }
          break;
       case '3':                // Seems to be an alternative to G6
@@ -848,7 +850,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return RES_NOACK;
    }
    if (temp == STX)
-      *buf = temp; // No ACK, response started instead.
+      *buf = temp;              // No ACK, response started instead.
    else
    {
       if (cmd == 'D')
@@ -1295,7 +1297,7 @@ const char *
 mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
    const char *ret = NULL;
-   if (client || !prefix || target || strcmp (prefix, prefixcommand))
+   if (client || !prefix || target || strcmp (prefix, topiccommand))
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
       return daikin_control (j);        // General setting
@@ -1369,12 +1371,12 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          daikin.mintarget = min;
          daikin.maxtarget = max;
       }
-      if (!ble_sensor_connected())
+      if (!ble_sensor_connected ())
       {
          daikin.env = env;
          daikin.status_known |= CONTROL_env;    // So we report it
       }
-      if (!autor && !ble_sensor_enabled())
+      if (!autor && !ble_sensor_enabled ())
          daikin.remote = 1;     // Hides local automation settings
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
@@ -1599,7 +1601,7 @@ web_root (httpd_req_t * req)
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (have_5_fan_speeds ())
-      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Auto", "A", "Night", "Q", NULL);
+      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", alwaysquiet ? NULL : "Auto", "A", NULL);
    else if (proto_type () == PROTO_TYPE_CN_WIRED)
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", NULL);
    else
@@ -1619,7 +1621,7 @@ web_root (httpd_req_t * req)
       addt ("Liquid", "Liquid coolant temperature");
    if (daikin.status_known & CONTROL_outside)
       addt ("Outside", "Outside temperature");
-   if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected())
+   if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected ())
       addt ("Env", "External reference temperature");
 #ifdef ELA
    if (ble)
@@ -2125,7 +2127,7 @@ legacy_web_set_control_info (httpd_req_t * req)
          {
             int8_t setval;
             if (*v == 'A')
-               setval = 0;
+               setval = (alwaysquiet ? 6 : 0);
             else if (*v == 'B')
                setval = 6;
             else if (*v >= '3' && *v <= '7')
@@ -2341,7 +2343,8 @@ send_ha_config (void)
          {
             jo_array (j, "fan_modes");
             for (int f = 0; f < sizeof (fans) / sizeof (*fans); f++)
-               jo_string (j, NULL, fans[f]);
+               if (f || !alwaysquiet)
+                  jo_string (j, NULL, fans[f]);
             jo_close (j);
          }
       }
@@ -2534,11 +2537,12 @@ ha_status (void)
    revk_mqtt_send_clients (NULL, 1, revk_id, &j, 1);
 }
 
-void uart_setup (void)
+void
+uart_setup (void)
 {
    esp_err_t err = 0;
    ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
-               tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
+             tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
    if (!err)
       err = gpio_reset_pin (rx.num);
    if (!err)
@@ -2552,13 +2556,13 @@ void uart_setup (void)
          REVK_ERR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
       }
       if (!rmt_tx)
-      {                      // Create rmt_tx
+      {                         // Create rmt_tx
          rmt_tx_channel_config_t tx_chan_config = {
-            .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
-            .gpio_num = tx.num,      // GPIO number
-            .mem_block_symbols = 72, // symbols
-            .resolution_hz = 1 * 1000 * 1000,        // 1 MHz tick resolution, i.e., 1 tick = 1 µs
-            .trans_queue_depth = 1,  // set the number of transactions that can pend in the background
+            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
+            .gpio_num = tx.num, // GPIO number
+            .mem_block_symbols = 72,    // symbols
+            .resolution_hz = 1 * 1000 * 1000,   // 1 MHz tick resolution, i.e., 1 tick = 1 µs
+            .trans_queue_depth = 1,     // set the number of transactions that can pend in the background
             .flags.invert_out = (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
             .flags.with_dma = true,
@@ -2569,12 +2573,12 @@ void uart_setup (void)
             REVK_ERR_CHECK (rmt_enable (rmt_tx));
       }
       if (!rmt_rx)
-      {                      // Create rmt_rx
+      {                         // Create rmt_rx
          rmt_rx_channel_config_t rx_chan_config = {
-            .clk_src = RMT_CLK_SRC_DEFAULT,  // select source clock
-            .resolution_hz = 1 * 1000 * 1000,        // 1MHz tick resolution, i.e. 1 tick = 1us
-            .mem_block_symbols = 72, // 
-            .gpio_num = rx.num,      // GPIO number
+            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
+            .resolution_hz = 1 * 1000 * 1000,   // 1MHz tick resolution, i.e. 1 tick = 1us
+            .mem_block_symbols = 72,    // 
+            .gpio_num = rx.num, // GPIO number
             .flags.invert_in = (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
             .flags.with_dma = true,
