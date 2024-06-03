@@ -3498,7 +3498,7 @@ app_main ()
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;}
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
-                  revk_mqtt_send_clients ("Faikin", 0, NULL, &j, 1);
+                  revk_mqtt_send_clients (appname, 0, NULL, &j, 1);
                   daikin.statscount = 0;
                   ha_status ();
                }
