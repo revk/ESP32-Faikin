@@ -2245,7 +2245,7 @@ static void
 send_ha_config (void)
 {
    daikin.ha_send = 0;
-   char *hastatus = strdupafree (revk_topic (topicstate, hostname, "ha"));
+   char *hastatus = strdupafree (revk_topic (topicstate, NULL, "ha"));
    char *topic;
    jo_t make (const char *tag, const char *icon)
    {
@@ -2311,7 +2311,7 @@ send_ha_config (void)
       jo_t j = make ("", "mdi:thermostat");
       //jo_string (j, "name", hostname);
       //jo_null(j,"name");
-      jo_string (j, "~", strdupafree (revk_topic (topiccommand, hostname, NULL)));
+      jo_string (j, "~", strdupafree (revk_topic (topiccommand, NULL, NULL)));
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
@@ -2442,7 +2442,7 @@ send_ha_config (void)
       {
          jo_t j = make ("demand", NULL);
          jo_string (j, "name", "Demand control");
-         jo_string (j, "cmd_t", strdupafree (revk_topic (topiccommand, hostname, "demand")));
+         jo_string (j, "cmd_t", strdupafree (revk_topic (topiccommand, NULL, "demand")));
          jo_stringf (j, "stat_t", "%s", hastatus);
          jo_string (j, "val_tpl", "{{value_json.demand}}");
          jo_array (j, "options");
