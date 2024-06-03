@@ -2245,6 +2245,7 @@ static void
 send_ha_config (void)
 {
    daikin.ha_send = 0;
+   char *hastatus = strdupafree (revk_topic (topicstate, hostname, "ha"));
    char *topic;
    jo_t make (const char *tag, const char *icon)
    {
@@ -2277,7 +2278,7 @@ send_ha_config (void)
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "temperature");
             jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", "°C");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
@@ -2297,7 +2298,7 @@ send_ha_config (void)
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "frequency");
             jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", unit);
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
@@ -2310,13 +2311,13 @@ send_ha_config (void)
       jo_t j = make ("", "mdi:thermostat");
       //jo_string (j, "name", hostname);
       //jo_null(j,"name");
-      jo_stringf (j, "~", "command/%s", hostname);      // Prefix for command
+      jo_string (j, "~", strdupafree (revk_topic (topiccommand, hostname, NULL)));
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
       jo_lit (j, "temp_step", (proto_type () == PROTO_TYPE_S21) ? "0.5" : "0.1");
       jo_string (j, "temp_cmd_t", "~/temp");
-      jo_string (j, "temp_stat_t", revk_id);
+      jo_string (j, "temp_stat_t", hastatus);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
       if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
       {
@@ -2326,7 +2327,7 @@ send_ha_config (void)
       if (daikin.status_known & CONTROL_mode)
       {
          jo_string (j, "mode_cmd_t", "~/mode");
-         jo_string (j, "mode_stat_t", revk_id);
+         jo_string (j, "mode_stat_t", hastatus);
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
          if (!nohvacaction)
          {
@@ -2337,7 +2338,7 @@ send_ha_config (void)
       if (daikin.status_known & CONTROL_fan)
       {
          jo_string (j, "fan_mode_cmd_t", "~/fan");
-         jo_string (j, "fan_mode_stat_t", revk_id);
+         jo_string (j, "fan_mode_stat_t", hastatus);
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
          if (have_5_fan_speeds ())
          {
@@ -2351,7 +2352,7 @@ send_ha_config (void)
       if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       {
          jo_string (j, "swing_mode_cmd_t", "~/swing");
-         jo_string (j, "swing_mode_stat_t", revk_id);
+         jo_string (j, "swing_mode_stat_t", hastatus);
          jo_string (j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array (j, "swing_modes");
          jo_string (j, NULL, "off");
@@ -2368,7 +2369,7 @@ send_ha_config (void)
       if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       {
          jo_string (j, "pr_mode_cmd_t", "~/preset");
-         jo_string (j, "pr_mode_stat_t", revk_id);
+         jo_string (j, "pr_mode_stat_t", hastatus);
          jo_string (j, "pr_mode_val_tpl", "{{value_json.preset}}");
          jo_array (j, "pr_modes");
          if (daikin.status_known & CONTROL_econo)
@@ -2399,7 +2400,7 @@ send_ha_config (void)
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "humidity");
             jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
@@ -2419,7 +2420,7 @@ send_ha_config (void)
             jo_string (j, "name", tag);
             jo_string (j, "dev_cla", "battery");
             jo_string (j, "state_class", "measurement");
-            jo_string (j, "stat_t", revk_id);
+            jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", "%");
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
@@ -2441,8 +2442,8 @@ send_ha_config (void)
       {
          jo_t j = make ("demand", NULL);
          jo_string (j, "name", "Demand control");
-         jo_stringf (j, "cmd_t", "command/%s/demand", revk_id);
-         jo_stringf (j, "stat_t", "%s", revk_id);
+         jo_string (j, "cmd_t", strdupafree (revk_topic (topiccommand, hostname, "demand")));
+         jo_stringf (j, "stat_t", "%s", hastatus);
          jo_string (j, "val_tpl", "{{value_json.demand}}");
          jo_array (j, "options");
          for (int i = 30; i <= 100; i += 5)
@@ -2462,7 +2463,7 @@ send_ha_config (void)
          jo_t j = make ("energy", NULL);
          jo_string (j, "name", "Lifetime energy");
          jo_string (j, "dev_cla", "energy");
-         jo_string (j, "stat_t", revk_id);
+         jo_string (j, "stat_t", hastatus);
          jo_string (j, "unit_of_meas", "kWh");
          jo_string (j, "state_class", "total_increasing");
          jo_stringf (j, "val_tpl", "{{(value_json.Wh|float)/1000}}");
@@ -2534,7 +2535,7 @@ ha_status (void)
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : "home");       // Limited modes
-   revk_mqtt_send_clients (NULL, 1, revk_id, &j, 1);
+   revk_state ("ha", &j);
 }
 
 void
