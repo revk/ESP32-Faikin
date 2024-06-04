@@ -2064,14 +2064,14 @@ legacy_web_get_control_info (httpd_req_t * req)
       jo_stringf (j, "b_f_rate", "%c", "A34567B"[daikin.fan]);
    jo_int (j, "b_f_dir", daikin.swingh * 2 + daikin.swingv);
    for (int i = 1; i <= 7; i++)
-      if (i != 6)
+      //if (i != 6)
       {
          char tag[5] = { 'd', 'f', 'r', '0' + i };
          jo_int (j, tag, 0);
       }
    jo_int (j, "dfrh", 0);
    for (int i = 1; i <= 7; i++)
-      if (i != 6)
+      //if (i != 6)
       {
          char tag[5] = { 'd', 'f', 'd', '0' + i };
          jo_int (j, tag, 0);
