@@ -2123,7 +2123,7 @@ legacy_web_set_control_info (httpd_req_t * req)
       if (jo_find (j, "f_rate"))
       {
          char *v = jo_strdup (j);
-         if (v)
+         if (v && *v != '0')    // Assuming 0 means don't change (so why send it FFS)
          {
             int8_t setval;
             if (*v == 'A')
