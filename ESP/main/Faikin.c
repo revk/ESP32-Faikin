@@ -2040,17 +2040,15 @@ legacy_web_get_control_info (httpd_req_t * req)
    jo_litf (j, "stemp", "%.1f", daikin.temp);
    jo_int (j, "shum", 0);
    for (int i = 1; i <= 7; i++)
-      if (i != 6)
-      {
-         char tag[4] = { 'd', 't', '0' + i };
-         jo_litf (j, tag, "%.1f", daikin.temp);
-      }
+   {                            // Used to not send 6, but seems actual Daikin do send 6
+      char tag[4] = { 'd', 't', '0' + i };
+      jo_litf (j, tag, "%.1f", daikin.temp);
+   }
    for (int i = 1; i <= 7; i++)
-      if (i != 6)
-      {
-         char tag[4] = { 'd', 'h', '0' + i };
-         jo_int (j, tag, 0);
-      }
+   {                            // Used to not send 6, but seems actual Daikin do send 6
+      char tag[4] = { 'd', 'h', '0' + i };
+      jo_int (j, tag, 0);
+   }
    jo_int (j, "dhh", 0);
    if (daikin.mode <= 7)
       jo_stringf (j, "b_mode", "%c", "64370002"[daikin.mode]);
@@ -2064,18 +2062,16 @@ legacy_web_get_control_info (httpd_req_t * req)
       jo_stringf (j, "b_f_rate", "%c", "A34567B"[daikin.fan]);
    jo_int (j, "b_f_dir", daikin.swingh * 2 + daikin.swingv);
    for (int i = 1; i <= 7; i++)
-      //if (i != 6)
-      {
-         char tag[5] = { 'd', 'f', 'r', '0' + i };
-         jo_int (j, tag, 0);
-      }
+   {                            // Used to not send 6, but seems actual Daikin do send 6
+      char tag[5] = { 'd', 'f', 'r', '0' + i };
+      jo_int (j, tag, 0);
+   }
    jo_int (j, "dfrh", 0);
    for (int i = 1; i <= 7; i++)
-      //if (i != 6)
-      {
-         char tag[5] = { 'd', 'f', 'd', '0' + i };
-         jo_int (j, tag, 0);
-      }
+   {                            // Used to not send 6, but seems actual Daikin do send 6
+      char tag[5] = { 'd', 'f', 'd', '0' + i };
+      jo_int (j, tag, 0);
+   }
    jo_int (j, "dfdh", 0);
    jo_int (j, "dmnd_run", 0);
    jo_int (j, "en_demand", (daikin.status_known & CONTROL_demand) && daikin.demand < 100 ? 1 : 0);
