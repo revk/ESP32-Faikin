@@ -2322,7 +2322,7 @@ send_ha_config (void)
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
       if (daikin.status_known & (CONTROL_inlet | CONTROL_home))
       {
-         jo_string (j, "curr_temp_t", revk_id);
+         jo_string (j, "curr_temp_t", hastatus);
          jo_string (j, "curr_temp_tpl", "{{value_json.temp}}");
       }
       if (daikin.status_known & CONTROL_mode)
@@ -2444,7 +2444,7 @@ send_ha_config (void)
          jo_t j = make ("demand", NULL);
          jo_string (j, "name", "Demand control");
          jo_stringf (j, "cmd_t", "%s/demand", cmd);
-         jo_stringf (j, "stat_t", "%s", hastatus);
+         jo_string (j, "stat_t", hastatus);
          jo_string (j, "val_tpl", "{{value_json.demand}}");
          jo_array (j, "options");
          for (int i = 30; i <= 100; i += 5)
