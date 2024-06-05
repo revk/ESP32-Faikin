@@ -1797,15 +1797,6 @@ web_root (httpd_req_t * req)
    return revk_web_foot (req, 0, websettings, protocol_set ? proto_name () : NULL);
 }
 
-static const char *
-get_query (httpd_req_t * req, char *buf, size_t buf_len)
-{
-   if (httpd_req_get_url_query_len (req) && !httpd_req_get_url_query_str (req, buf, buf_len))
-      return NULL;
-   else
-      return "Required arguments missing";
-}
-
 // Macros with error collection for HTTP
 #define	daikin_set_v_e(err,name,value) {      \
    const char * e = daikin_set_v(name, value); \
@@ -1938,6 +1929,16 @@ legacy_send (httpd_req_t * req, jo_t * jp)
    return ESP_OK;
 }
 
+static void
+legacy_adv (jo_t j)
+{
+   jo_int (j, "adv",            //
+           daikin.powerful ? 2 :        //
+           daikin.econo ? 12 :  //
+           daikin.streamer ? 13 :       //
+           0);
+}
+
 static esp_err_t
 legacy_simple_response (httpd_req_t * req, const char *err)
 {
@@ -1950,9 +1951,23 @@ legacy_simple_response (httpd_req_t * req, const char *err)
    {
 
       jo_string (j, "ret", "OK");
-      jo_string (j, "adv", "");
+      legacy_adv (j);
    }
    return legacy_send (req, &j);
+}
+
+static esp_err_t
+legacy_web_set_holiday (httpd_req_t * req)
+{
+   const char *err = NULL;
+   jo_t j = revk_web_query (req);
+   if (!j)
+      err = "Query failed";
+   else
+   {
+      // TODO - ignore for now
+   }
+   return legacy_simple_response (req, err);
 }
 
 static esp_err_t
@@ -2032,20 +2047,26 @@ legacy_web_get_model_info (httpd_req_t * req)
 static esp_err_t
 legacy_web_get_control_info (httpd_req_t * req)
 {
+   static float dt[8] = { 20, 20, 20, 20, 20, 20, 20, 20 };     // Used for some of the status
+   static char dfr[8] = { 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A' };
+   char mode = '0';
+   if (daikin.mode <= 7)
+      mode = "64370002"[daikin.mode];
+   dfr[mode - '0'] = "A34567B"[daikin.fan];
+   dt[mode - '0'] = daikin.temp;
    jo_t j = legacy_ok ();
    jo_int (j, "pow", daikin.power);
-   if (daikin.mode <= 7)
-      jo_stringf (j, "mode", "%c", "64370002"[daikin.mode]);
-   jo_string (j, "adv", daikin.powerful ? "2" : "");
+   jo_stringf (j, "mode", "%c", mode);
+   legacy_adv (j);
    jo_litf (j, "stemp", "%.1f", daikin.temp);
    jo_int (j, "shum", 0);
    for (int i = 1; i <= 7; i++)
-   {                            // Used to not send 6, but seems actual Daikin do send 6
+   {                            // Temp setting in mode
       char tag[4] = { 'd', 't', '0' + i };
-      jo_litf (j, tag, "%.1f", daikin.temp);
+      jo_litf (j, tag, "%.1f", dt[i]);
    }
    for (int i = 1; i <= 7; i++)
-   {                            // Used to not send 6, but seems actual Daikin do send 6
+   {                            // Probably humidity, unknown
       char tag[4] = { 'd', 'h', '0' + i };
       jo_int (j, tag, 0);
    }
@@ -2062,13 +2083,13 @@ legacy_web_get_control_info (httpd_req_t * req)
       jo_stringf (j, "b_f_rate", "%c", "A34567B"[daikin.fan]);
    jo_int (j, "b_f_dir", daikin.swingh * 2 + daikin.swingv);
    for (int i = 1; i <= 7; i++)
-   {                            // Used to not send 6, but seems actual Daikin do send 6
+   {                            // Fan rate
       char tag[5] = { 'd', 'f', 'r', '0' + i };
-      jo_int (j, tag, 0);
+      jo_stringf (j, tag, "%c", dfr[i]);
    }
    jo_int (j, "dfrh", 0);
    for (int i = 1; i <= 7; i++)
-   {                            // Used to not send 6, but seems actual Daikin do send 6
+   {                            // Unknown
       char tag[5] = { 'd', 'f', 'd', '0' + i };
       jo_int (j, tag, 0);
    }
@@ -2209,31 +2230,43 @@ legacy_web_get_week_power (httpd_req_t * req)
 static esp_err_t
 legacy_web_set_special_mode (httpd_req_t * req)
 {
-   char query[200];
-   const char *err = get_query (req, query, sizeof (query));
-   if (!err)
+   const char *err = NULL;
+   jo_t j = revk_web_query (req);
+   if (!j)
+      err = "Query failed";
+   else
    {
-      char mode[6],
-        value[2];
-      if (!httpd_query_key_value (query, "spmode_kind", mode, sizeof (mode)) &&
-          !httpd_query_key_value (query, "set_spmode", value, sizeof (value)))
+      int kind = 0,
+         mode = 0;
+      if (jo_find (j, "spmode_kind"))
       {
-         if (!strcmp (mode, "12"))
-            err = daikin_set_v (econo, *value == '1');
-         else if (!strcmp (mode, "2"))
-            err = daikin_set_v (powerful, *value == '1');
-         else
-            err = "Unsupported spmode_kind value";
-         // TODO comfort/streamer/sensor/quiet
-
-         // The following other modes are known from OpenHAB sources:
-         // STREAMER "13"
-         // POWERFUL_STREAMER "2/13"
-         // ECO_STREAMER "12/13"
-         // Don't know what to do with them and my AC doesn't support them
+         char *v = jo_strdup (j);
+         if (v)
+            kind = atoi (v);
+         free (v);
+      }
+      if (jo_find (j, "set_spmode"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+            mode = atoi (v);
+         free (v);
+      }
+      switch (kind)
+      {
+      case 1:                  // powerful
+         err = daikin_set_v (powerful, mode);
+         break;
+      case 2:                  // eco
+         err = daikin_set_v (econo, mode);
+         break;
+      case 3:                  // streamer
+         err = daikin_set_v (streamer, mode);
+         break;
+      default:
+         err = "Unknown mode";
       }
    }
-
    return legacy_simple_response (req, err);
 }
 
@@ -2733,7 +2766,7 @@ app_main ()
       config.stack_size += 2048;        // Being on the safe side
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
-      config.max_uri_handlers = 13 + revk_num_web_handlers ();
+      config.max_uri_handlers = 14 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
          if (websettings)
@@ -2753,6 +2786,7 @@ app_main ()
             register_get_uri ("/aircon/get_week_power_ex", legacy_web_get_week_power);
             register_get_uri ("/aircon/set_special_mode", legacy_web_set_special_mode);
             register_get_uri ("/aircon/set_demand_control", legacy_web_set_demand_control);
+            register_get_uri ("/aircon/set_holiday", legacy_web_set_holiday);
          }
          // When adding, update config.max_uri_handlers
       }
