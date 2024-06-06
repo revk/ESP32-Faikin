@@ -75,7 +75,7 @@ u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to airco
 
 bit	temp.track	0		.live=1					// Set target temp based on Daikin measured temp not required target
 bit	temp.adjust	1		.live=1					// Adjust target temp allowing for different Daikin measure to external measure
-u16	temp.noflap	0		.live=1					// Min time between target temp changes (seconds).
+u16	temp.noflap	0		.live=1					// Min time between target temp changes (seconds)
 
 u16	auto.0				.live=1					// HHMM format turn off time
 u16	auto.1				.live=1					// HHMM format turn on time

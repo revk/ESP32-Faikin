@@ -9,7 +9,7 @@ The *hostname* you picked is used for these messages. The format for commands an
 |Command|`command/GuestAC/command`|This issues commands to the device to do something now.|
 |Setting|`setting/GuestAC`|This allows settings to be set. The payload is JSON, with one or more settings. e.g. `setting/GuestAC {"fanstep":2,"reporting":60}`. With no payload the existing settings are returned in the same format.|
 |Setting (direct)|`setting/GuestAC/thing`|This allows a single setting to be set, the payload is the value, e.g. `setting/GuestAC/debug 1`|
-|State|`state/GuestAC/whatever`|Status messages - these are normally retained and relate to specific aspects of the operation. With no paramater, e.g. `state/GuestAC` this is the state of the device itself, with `false` meaning it is now off line.|
+|State|`state/GuestAC/whatever`|Status messages - these are normally retained and relate to specific aspects of the operation. With no paramater, e.g. `state/GuestAC` this is the state of the device itself, with `false` meaning it is now offline.|
 |Event|`event/GuestAC/whatever`|Event messages are one of things that have happened and are not retained.|
 |Info|`info/GuestAC/whatever`|Info messages are informational, and don't relate to a specific event happening.|
 |Error|`error/GuestAC/whatever`|Errors are reported using this.|

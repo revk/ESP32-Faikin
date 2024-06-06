@@ -27,7 +27,7 @@ If `dark` is set, then only loopback or offline show, otherwise the LED is off.
 |Orange|Fan mode|
 |Cyan|Dry mode|
 |Yellow|Power off|
-|Magenta|Daikin is off line|
+|Magenta|Daikin is offline|
 |Red/Green/Blue|Loopback test|
 |White|Rebooting|
 |White/Red|No wifi config|
