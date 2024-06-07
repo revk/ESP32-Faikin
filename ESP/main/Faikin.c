@@ -1667,7 +1667,7 @@ web_root (httpd_req_t * req)
       revk_web_send (req, "</tr>");
    }
    revk_web_send (req, "</table>"       //
-                  "<p id=offline style='display:none'><b>System is off line.</b></p>"   //
+                  "<p id=offline style='display:none'><b>System is offline.</b></p>"   //
                   "<p id=loopback style='display:none'><b>System is in loopback test.</b></p>"  //
                   "<p id=shutdown style='display:none;color:red;'></p>" //
                   "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>"    //
