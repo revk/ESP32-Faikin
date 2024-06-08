@@ -3000,203 +3000,6 @@
 				)
 			)
 		)
-		(symbol "RevK:Shelly"
-			(exclude_from_sim no)
-			(in_bom no)
-			(on_board yes)
-			(property "Reference" "J"
-				(at 2.54 -8.255 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Value" "Shelly"
-				(at 2.54 9.525 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
-			(property "Footprint" "RevK:Shelly"
-				(at 2.54 -8.255 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Datasheet" ""
-				(at 2.54 -8.255 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Description" ""
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(symbol "Shelly_0_1"
-				(circle
-					(center 0 -2.54)
-					(radius 0.635)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0 0)
-					(radius 0.635)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0 2.54)
-					(radius 0.635)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(circle
-					(center 0 5.08)
-					(radius 0.635)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-				(rectangle
-					(start 0.635 -5.715)
-					(end -0.635 -4.445)
-					(stroke
-						(width 0.1524)
-						(type default)
-					)
-					(fill
-						(type none)
-					)
-				)
-			)
-			(symbol "Shelly_1_1"
-				(pin passive line
-					(at 0 -5.08 0)
-					(length 0.64)
-					(name "GND"
-						(effects
-							(font
-								(size 0 0)
-							)
-						)
-					)
-					(number "1"
-						(effects
-							(font
-								(size 1 1)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 -2.54 0)
-					(length 0.64)
-					(name "0"
-						(effects
-							(font
-								(size 0 0)
-							)
-						)
-					)
-					(number "2"
-						(effects
-							(font
-								(size 1 1)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 0 0)
-					(length 0.64)
-					(name "3V3"
-						(effects
-							(font
-								(size 0 0)
-							)
-						)
-					)
-					(number "3"
-						(effects
-							(font
-								(size 1 1)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 2.54 0)
-					(length 0.64)
-					(name "Rx"
-						(effects
-							(font
-								(size 0 0)
-							)
-						)
-					)
-					(number "4"
-						(effects
-							(font
-								(size 1 1)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 0 5.08 0)
-					(length 0.64)
-					(name "Tx"
-						(effects
-							(font
-								(size 0 0)
-							)
-						)
-					)
-					(number "5"
-						(effects
-							(font
-								(size 1 1)
-							)
-						)
-					)
-				)
-			)
-		)
 		(symbol "RevK:USB-PROG"
 			(pin_names
 				(offset 1.016)
@@ -4005,22 +3808,10 @@
 		(uuid "40313683-503e-42b2-9403-522c28da2747")
 	)
 	(junction
-		(at 79.375 52.705)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "597445c6-c7b2-4f37-a673-4a3def7a4455")
-	)
-	(junction
 		(at 132.08 74.93)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "62211ba8-053b-486b-90e9-93beff83ff51")
-	)
-	(junction
-		(at 79.375 57.785)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "7c81d9d4-dab7-4623-a811-d504a4aa181c")
 	)
 	(junction
 		(at 146.685 88.265)
@@ -4043,6 +3834,10 @@
 	(no_connect
 		(at 79.375 78.105)
 		(uuid "0acac22c-74a2-48e6-94fc-fa35f097f3e7")
+	)
+	(no_connect
+		(at 79.375 55.245)
+		(uuid "1967a3f1-81fd-484c-94ef-f7997c0fbc7f")
 	)
 	(no_connect
 		(at 48.895 55.245)
@@ -4081,6 +3876,10 @@
 		(uuid "5d90ee0a-ed7d-482c-a6e1-7d62495fe3db")
 	)
 	(no_connect
+		(at 79.375 47.625)
+		(uuid "5dcae9ce-99b9-423f-a8f7-db8c57a99bf5")
+	)
+	(no_connect
 		(at 79.375 67.945)
 		(uuid "5ed930a2-8913-48e1-8209-1e7b2b4fd47b")
 	)
@@ -4103,6 +3902,10 @@
 	(no_connect
 		(at 79.375 85.725)
 		(uuid "92ca7e0a-9903-4637-ad7c-ffd819d56fff")
+	)
+	(no_connect
+		(at 79.375 50.165)
+		(uuid "9a4ee16e-e4cf-4112-bd20-38cc96bbbb57")
 	)
 	(no_connect
 		(at 79.375 75.565)
@@ -4637,84 +4440,6 @@
 				)
 				(justify left)
 				(hide yes)
-			)
-		)
-	)
-	(symbol
-		(lib_id "RevK:Shelly")
-		(at 79.375 52.705 0)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom no)
-		(on_board yes)
-		(dnp no)
-		(uuid "01376d23-122a-4660-a324-5cf7c9a3dbd7")
-		(property "Reference" "J2"
-			(at 78.105 41.3908 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Value" "Shelly"
-			(at 78.105 43.815 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify left)
-			)
-		)
-		(property "Footprint" "RevK:Shelly"
-			(at 81.915 60.96 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 81.915 60.96 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" ""
-			(at 79.375 52.705 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "fffe7ccc-5a4b-4b8a-bf73-a1132b4de07b")
-		)
-		(pin "2"
-			(uuid "2de8797a-0786-4f7d-947f-5afda487aa44")
-		)
-		(pin "3"
-			(uuid "993cd4ff-ec11-4b85-89a0-066774249bad")
-		)
-		(pin "4"
-			(uuid "48b7c98c-2dee-4632-aea6-4e2e9b58f247")
-		)
-		(pin "5"
-			(uuid "f0787917-29d3-49b2-bd84-65d19ef6f452")
-		)
-		(instances
-			(project "Faikin"
-				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
-					(reference "J2")
-					(unit 1)
-				)
 			)
 		)
 	)
@@ -5429,7 +5154,7 @@
 				)
 			)
 		)
-		(property "Footprint" "RevK:USB-PROG"
+		(property "Footprint" "RevK:USB-PROG2"
 			(at 111.125 137.795 0)
 			(effects
 				(font
