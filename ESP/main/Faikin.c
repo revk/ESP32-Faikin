@@ -1459,7 +1459,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       if (!strcmp (suffix, "sensor"))
          jo_int (s, "sensor", atoi (value));
       if (!strcmp (suffix, "power"))
-         jo_bool (s, "power", atoi(value));
+         jo_bool (s, "power", atoi (value));
    }
    jo_close (s);
    jo_rewind (s);
@@ -2411,7 +2411,8 @@ send_ha_config (void)
             jo_string (j, NULL, "eco");
          if (daikin.status_known & CONTROL_powerful)
             jo_string (j, NULL, "boost");
-         jo_string (j, NULL, "home");
+         if (!nohome)
+            jo_string (j, NULL, "home");
          jo_close (j);
       }
       revk_mqtt_send (NULL, 1, topic, &j);
