@@ -2407,6 +2407,7 @@ send_ha_config (void)
          jo_string (j, "pr_mode_stat_t", hastatus);
          jo_string (j, "pr_mode_val_tpl", "{{value_json.preset}}");
          jo_array (j, "pr_modes");
+         jo_string (j, NULL, "none");
          if (daikin.status_known & CONTROL_econo)
             jo_string (j, NULL, "eco");
          if (daikin.status_known & CONTROL_powerful)
@@ -2572,7 +2573,7 @@ ha_status (void)
       jo_string (j, "swing",
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
-      jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohome ? "none" : "home");     // Limited modes
+      jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    revk_state ("ha", &j);
 }
 
