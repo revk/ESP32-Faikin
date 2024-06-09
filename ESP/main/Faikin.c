@@ -2572,7 +2572,7 @@ ha_status (void)
       jo_string (j, "swing",
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
-      jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : "home");       // Limited modes
+      jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohome ? "none" : "home");     // Limited modes
    revk_state ("ha", &j);
 }
 
