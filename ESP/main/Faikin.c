@@ -2407,7 +2407,8 @@ send_ha_config (void)
          jo_string (j, "pr_mode_stat_t", hastatus);
          jo_string (j, "pr_mode_val_tpl", "{{value_json.preset}}");
          jo_array (j, "pr_modes");
-         jo_string (j, NULL, "none");
+         if (nohomepreset)
+            jo_string (j, NULL, "none");
          if (daikin.status_known & CONTROL_econo)
             jo_string (j, NULL, "eco");
          if (daikin.status_known & CONTROL_powerful)
