@@ -32,7 +32,7 @@ bit	no.led		1							// Unit does not have LED control
 bit	no.faikinauto								// Do not show faikin auto controls
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
-bit	no.homepreset								// DO not include a home in HA preset list
+bit	no.homepreset								// Do not include a home in HA preset list
 
 bit	no.guessnight								// Do not assume someone else can set auto after we set night
 
