@@ -2411,7 +2411,7 @@ send_ha_config (void)
             jo_string (j, NULL, "eco");
          if (daikin.status_known & CONTROL_powerful)
             jo_string (j, NULL, "boost");
-         if (!nohome)
+         if (!nohomepreset)
             jo_string (j, NULL, "home");
          jo_close (j);
       }
