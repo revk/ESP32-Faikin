@@ -33,9 +33,11 @@ bit	no.faikinauto								// Do not show faikin auto controls
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
 
+bit	no.guessnight								// Do not assume someone else can set auto after we set night
+
 bit	no.icons			.live=1					// Don't show icons on web UI
 
-bit	alwaysquiet								// Always set Quiet/Night mode not Auto
+bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 
 bit	dark									// Dark mode
 bit	ha		1							// Home Assistance

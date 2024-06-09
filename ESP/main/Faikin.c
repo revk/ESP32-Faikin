@@ -434,10 +434,10 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                set_temp (temp, daikin.temp);    // Does not have temp in other modes
             if (payload[3] != 'A')      // Set fan speed
                set_val (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
-            else if (daikin.fan == 6 && daikin.power && daikin.fanrpm < 750)
+            else if (daikin.fan == 6 && (!noguessnight || (daikin.power && daikin.fanrpm < 750)))
                set_val (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
             else
-               set_val (fan, alwaysquiet ? 6 : 0);      // Auto as fan too fast to be quiet mode
+               set_val (fan, alwaysnight ? 6 : 0);      // Auto as fan too fast to be quiet mode
          }
          break;
       case '3':                // Seems to be an alternative to G6
@@ -1601,7 +1601,7 @@ web_root (httpd_req_t * req)
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (have_5_fan_speeds ())
-      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", alwaysquiet ? NULL : "Auto", "A", NULL);
+      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", alwaysnight ? NULL : "Auto", "A", NULL);
    else if (proto_type () == PROTO_TYPE_CN_WIRED)
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", NULL);
    else
@@ -1667,7 +1667,7 @@ web_root (httpd_req_t * req)
       revk_web_send (req, "</tr>");
    }
    revk_web_send (req, "</table>"       //
-                  "<p id=offline style='display:none'><b>System is offline.</b></p>"   //
+                  "<p id=offline style='display:none'><b>System is offline.</b></p>"    //
                   "<p id=loopback style='display:none'><b>System is in loopback test.</b></p>"  //
                   "<p id=shutdown style='display:none;color:red;'></p>" //
                   "<p id=slave style='display:none'>❋ Another unit is controlling the mode, so this unit is not operating at present.</p>"    //
@@ -2144,7 +2144,7 @@ legacy_web_set_control_info (httpd_req_t * req)
          {
             int8_t setval;
             if (*v == 'A')
-               setval = (alwaysquiet ? 6 : 0);
+               setval = (alwaysnight ? 6 : 0);
             else if (*v == 'B')
                setval = 6;
             else if (*v >= '3' && *v <= '7')
@@ -2374,7 +2374,7 @@ send_ha_config (void)
          {
             jo_array (j, "fan_modes");
             for (int f = 0; f < sizeof (fans) / sizeof (*fans); f++)
-               if (f || !alwaysquiet)
+               if (f || !alwaysnight)
                   jo_string (j, NULL, fans[f]);
             jo_close (j);
          }
