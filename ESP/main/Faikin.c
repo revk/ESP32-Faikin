@@ -215,8 +215,9 @@ enum
    HVAC_DRYING,
    HVAC_FAN,
    HVAC_IDLE,
+   HVAC_HEAT_COOL,
 };
-const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle" };
+const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle", "heat_cool" };
 
 const char *
 daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -3507,7 +3508,15 @@ app_main ()
          } else
          {
             controlstop ();
-            daikin.action = (daikin.power ? HVAC_IDLE : HVAC_OFF);
+	    // Just based on mode
+            daikin.action =
+               (!daikin.power ? HVAC_OFF:
+		daikin.mode == FAIKIN_MODE_HEAT ? HVAC_HEATING : //
+		daikin.mode == FAIKIN_MODE_COOL ? HVAC_COOLING : //
+		daikin.mode == FAIKIN_MODE_AUTO ? HVAC_HEAT_COOL : //
+		daikin.mode == FAIKIN_MODE_DRY ? HVAC_DRYING : //
+		daikin.mode == FAIKIN_MODE_FAN ? HVAC_FAN : //
+		HVAC_IDLE );
          }
          // End of local auto controls
 
