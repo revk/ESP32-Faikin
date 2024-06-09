@@ -1458,6 +1458,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          jo_int (s, "streamer", atoi (value));
       if (!strcmp (suffix, "sensor"))
          jo_int (s, "sensor", atoi (value));
+      if (!strcmp (suffix, "power"))
+         jo_bool (s, "power", atoi(value));
    }
    jo_close (s);
    jo_rewind (s);
