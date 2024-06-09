@@ -55,14 +55,12 @@ u8	fanstep									// Fan steps
 
 bit	lockmode								// Lock mode in Faikin auto
 
-// Internal protocol as found, saved when found, can be used with protofix
-u8	protocol
-// Protofix forces no change, use nos21, nox50a, etc instead maybe
-bit	protofix
+u8	protocol			.hide=1					// Internal protocol as found, saved when found, can be used with protofix
+bit	protofix			.hide=1					// Protofix forces no change, use nos21, nox50a, etc instead maybe
 
 u32	reporting	60							// Status report period
 
-u8	uart		1		.fix=1
+u8	uart		1		.fix=1 .hide=1				// UART number
 
 u8	thermref	50		.live=1					// Percentage inlet rather than home temp used by your aircon
 
