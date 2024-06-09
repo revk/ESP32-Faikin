@@ -2364,6 +2364,9 @@ send_ha_config (void)
             jo_string (j, "action_topic", revk_id);
             jo_string (j, "action_template", "{{value_json.action}}");
          }
+         jo_string (j, "payload_on", "1");
+         jo_string (j, "payload_off", "0");
+         jo_string (j, "power_command_topic", "~/power");
       }
       if (daikin.status_known & CONTROL_fan)
       {
