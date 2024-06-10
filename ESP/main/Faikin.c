@@ -2364,7 +2364,7 @@ send_ha_config (void)
          jo_string (j, "mode_stat_tpl", "{{value_json.mode}}");
          if (!nohvacaction)
          {
-            jo_string (j, "action_topic", revk_id);
+            jo_string (j, "action_topic", hastatus);
             jo_string (j, "action_template", "{{value_json.action}}");
          }
          jo_string (j, "payload_on", "1");
