@@ -1425,7 +1425,9 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       if (!strcmp (suffix, "mode"))
       {
          jo_bool (s, "power", *value == 'o' ? 0 : 1);
-         if (*value != 'o')
+         if (!strcmp (value, "heat_cool"))
+            jo_string (s, "mode", "A");
+         else if (*value != 'o')
             jo_stringf (s, "mode", "%c", toupper (*value));
       }
       if (!strcmp (suffix, "fan"))
@@ -2369,6 +2371,14 @@ send_ha_config (void)
          jo_string (j, "payload_on", "1");
          jo_string (j, "payload_off", "0");
          jo_string (j, "power_command_topic", "~/power");
+         jo_array (j, "modes");
+         jo_string (j, NULL, "heat_cool");
+         jo_string (j, NULL, "off");
+         jo_string (j, NULL, "cool");
+         jo_string (j, NULL, "heat");
+         jo_string (j, NULL, "dry");
+         jo_string (j, NULL, "fan_only");
+         jo_close (j);
       }
       if (daikin.status_known & CONTROL_fan)
       {
@@ -2561,8 +2571,8 @@ ha_status (void)
 #endif
    if (daikin.status_known & CONTROL_mode)
    {
-      const char *modes[] = { "fan_only", "heat", "cool", "auto", "4", "5", "6", "dry" };       // FHCA456D
-      jo_string (j, "mode", daikin.power ? autor && !lockmode ? "auto" : modes[daikin.mode] : "off");   // If we are controlling, it is auto
+      const char *modes[] = { "fan_only", "heat", "cool", "heat_cool", "4", "5", "6", "dry" };  // FHCA456D
+      jo_string (j, "mode", daikin.power ? autor && !lockmode ? "heat_cool" : modes[daikin.mode] : "off");      // If we are controlling, it is auto
    }
    if (!nohvacaction && daikin.action)
       jo_string (j, "action", hvac_action[daikin.action]);
