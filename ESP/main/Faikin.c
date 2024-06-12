@@ -428,7 +428,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             set_bool (power, payload[0] == '1');
             set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
             set_val (heat, daikin.mode == FAIKIN_MODE_HEAT);    // Crude - TODO find if anything actually tells us this
-            if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_DRY)
+            if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_AUTO)
                set_temp (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                set_temp (temp, daikin.temp);    // Does not have temp in other modes
