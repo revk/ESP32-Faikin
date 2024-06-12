@@ -2371,6 +2371,14 @@ send_ha_config (void)
          jo_string (j, "payload_on", "1");
          jo_string (j, "payload_off", "0");
          jo_string (j, "power_command_topic", "~/power");
+         jo_array (j, "modes");
+         jo_string (j, NULL, "heat_cool");
+         jo_string (j, NULL, "off");
+         jo_string (j, NULL, "cool");
+         jo_string (j, NULL, "heat");
+         jo_string (j, NULL, "dry");
+         jo_string (j, NULL, "fan_only");
+         jo_close (j);
       }
       if (daikin.status_known & CONTROL_fan)
       {
