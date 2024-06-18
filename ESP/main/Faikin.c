@@ -2303,6 +2303,8 @@ send_ha_config (void)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
       jo_string (j, "availability_topic", lwt);
+      jo_bool (j, "payload_available", 1);
+      jo_bool (j, "payload_not_available", 0);
 #endif
       return j;
    }
