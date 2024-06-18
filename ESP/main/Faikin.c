@@ -2279,6 +2279,9 @@ send_ha_config (void)
 {
    daikin.ha_send = 0;
    char *hastatus = revk_topic (topicstate, NULL, "ha");
+#ifdef  CONFIG_REVK_STATE_UP
+   char *lwt = revk_topic (topicstate, NULL, "online");
+#endif
    char *cmd = revk_topic (topiccommand, NULL, NULL);
    char *topic;
    jo_t make (const char *tag, const char *icon)
@@ -2299,7 +2302,7 @@ send_ha_config (void)
       if (icon)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
-      jo_stringf(j,"availability_topic","%s/online",hastatus);
+      jo_string (j, "availability_topic", lwt);
 #endif
       return j;
    }
@@ -2521,6 +2524,9 @@ send_ha_config (void)
       free (topic);
    }
    free (cmd);
+#ifdef	CONFIG_REVK_STATE_UP
+   free (lwt);
+#endif
    free (hastatus);
 }
 
