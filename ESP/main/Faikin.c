@@ -1424,7 +1424,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       // HA stuff
       if (!strcmp (suffix, "mode"))
       {
-         jo_bool (s, "power", *value == 'o' ? 0 : 1);
+         jo_bool (s, "power", *value == 'o' || *value == 'f' || *value == '0' ? 0 : 1);
          if (!strcmp (value, "heat_cool"))
             jo_string (s, "mode", "A");
          else if (*value != 'o')
@@ -1457,11 +1457,11 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       if (!strcmp (suffix, "demand"))
          jo_int (s, "demand", atoi (value));
       if (!strcmp (suffix, "streamer"))
-         jo_int (s, "streamer", atoi (value));
+         jo_int (s, "streamer", *value == 'f' || *value == '0' ? 0 : 1);
       if (!strcmp (suffix, "sensor"))
-         jo_int (s, "sensor", atoi (value));
+         jo_int (s, "sensor", *value == 'f' || *value == '0' ? 0 : 1);
       if (!strcmp (suffix, "power"))
-         jo_bool (s, "power", atoi (value));
+         jo_bool (s, "power", *value == 'f' || *value == '0' ? 0 : 1);
    }
    jo_close (s);
    jo_rewind (s);
@@ -2348,6 +2348,28 @@ send_ha_config (void)
          free (topic);
       }
    }
+   void addswitch (uint64_t ok, const char *tag)
+   {
+      if (asprintf (&topic, "homeassistant/switch/%s%s/config", revk_id, tag) >= 0)
+      {
+         if (!ok)
+            revk_mqtt_send_str (topic);
+         else
+         {
+            jo_t j = make (tag, NULL);
+            jo_string (j, "name", tag);
+            jo_string (j, "stat_t", hastatus);
+            jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
+            jo_bool (j, "payload_on", 1);
+            jo_bool (j, "payload_off", 0);
+            jo_bool (j, "state_on", 1);
+            jo_bool (j, "state_off", 0);
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
+         }
+         free (topic);
+      }
+   }
    if (asprintf (&topic, "homeassistant/climate/%s/config", revk_id) >= 0)
    {
       jo_t j = make ("", "mdi:thermostat");
@@ -2441,6 +2463,8 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
+   addswitch (daikin.status_known & CONTROL_power, "power");
+   addswitch (daikin.status_known & CONTROL_streamer, "streamer");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *icon)
    {
@@ -2482,7 +2506,6 @@ send_ha_config (void)
          free (topic);
       }
    }
-
    addtemp (ble && bletemp && bletemp->tempset, "bletemp", "mdi:thermometer");
    addhum (ble && bletemp && bletemp->humset, "blehum", "mdi:water-percent");
    addbat (ble && bletemp && bletemp->batset, "blebat", "mdi:battery-bluetooth-variant");
