@@ -2298,6 +2298,9 @@ send_ha_config (void)
       jo_close (j);
       if (icon)
          jo_string (j, "icon", icon);
+#ifdef	CONFIG_REVK_STATE_UP
+      jo_stringf(j,"availability_topic","%s/online",hastatus);
+#endif
       return j;
    }
    void addtemp (uint64_t ok, const char *tag, const char *icon)
