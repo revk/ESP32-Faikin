@@ -2283,9 +2283,9 @@ send_ha_config (void)
 {
    daikin.ha_send = 0;
    char *hastatus = revk_topic (topicstate, NULL, "ha");
-#ifdef  CONFIG_REVK_STATE_UP
-   char *lwt = revk_topic (topicstate, NULL, "up");
-#endif
+//#ifdef  CONFIG_REVK_STATE_UP
+   char *lwt = revk_topic (topicstate, NULL, NULL);
+//#endif
    char *cmd = revk_topic (topiccommand, NULL, NULL);
    char *topic;
    jo_t make (const char *tag, const char *icon)
@@ -2305,10 +2305,10 @@ send_ha_config (void)
       jo_close (j);
       if (icon)
          jo_string (j, "icon", icon);
-#ifdef	CONFIG_REVK_STATE_UP
-      jo_string (j, "avty_t", hastatus);
+//#ifdef	CONFIG_REVK_STATE_UP
+      jo_string (j, "avty_t", lwt);
       jo_string (j, "avty_tpl", "{{value_json.up}}");
-#endif
+//#endif
       return j;
    }
    void addtemp (uint64_t ok, const char *tag, const char *icon)
