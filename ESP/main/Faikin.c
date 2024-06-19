@@ -2589,13 +2589,8 @@ revk_state_extra (jo_t j)
       jo_int (j, "demand", daikin.demand);
    if ((daikin.status_known & CONTROL_Wh) && daikin.Wh)
       jo_int (j, "Wh", daikin.Wh);
-#if 0
-   if (daikin.status_known & CONTROL_fanrpm)
-      jo_int (j, "fanrpm", daikin.fanrpm);
-#else
    if (daikin.status_known & CONTROL_fanrpm)
       jo_litf (j, "fanfreq", "%.1f", daikin.fanrpm / 60.0);
-#endif
 #ifdef ELA
    if (ble && bletemp)
    {
