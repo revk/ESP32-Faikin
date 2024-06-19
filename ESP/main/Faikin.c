@@ -2282,8 +2282,7 @@ static void
 send_ha_config (void)
 {
    daikin.ha_send = 0;
-   char *hastatus = revk_topic (topicstate, NULL, "ha");
-   char *lwt = revk_topic (topicstate, NULL, NULL);
+   char *hastatus = revk_topic (topicstate, NULL, NULL);
    char *cmd = revk_topic (topiccommand, NULL, NULL);
    char *topic;
    jo_t make (const char *tag, const char *icon)
@@ -2303,7 +2302,7 @@ send_ha_config (void)
       jo_close (j);
       if (icon)
          jo_string (j, "icon", icon);
-      jo_string (j, "avty_t", lwt);
+      jo_string (j, "avty_t", hastatus);
       jo_string (j, "avty_tpl", "{{value_json.up}}");
       jo_bool (j, "pl_avail", 1);
       jo_bool (j, "pl_not_avail", 0);
@@ -2349,7 +2348,7 @@ send_ha_config (void)
          free (topic);
       }
    }
-   void addswitch (uint64_t ok, const char *tag)
+   void addswitch (uint64_t ok, const char *tag, const char *name)
    {
       if (asprintf (&topic, "homeassistant/switch/%s%s/config", revk_id, tag) >= 0)
       {
@@ -2358,7 +2357,7 @@ send_ha_config (void)
          else
          {
             jo_t j = make (tag, NULL);
-            jo_string (j, "name", tag);
+            jo_string (j, "name", name);
             jo_string (j, "stat_t", hastatus);
             jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
@@ -2462,11 +2461,8 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
-   if (haswitches)
-   {
-      addswitch (daikin.status_known & CONTROL_power, "power");
-      addswitch (daikin.status_known & CONTROL_streamer, "streamer");
-   }
+   addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power");
+   addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *icon)
    {
@@ -2551,7 +2547,6 @@ send_ha_config (void)
       free (topic);
    }
    free (cmd);
-   free (lwt);
    free (hastatus);
 }
 
@@ -2560,7 +2555,14 @@ ha_status (void)
 {                               // Home assistant message
    if (!haenable)
       return;
-   jo_t j = jo_object_alloc ();
+   revk_command ("status", NULL);
+}
+
+void
+revk_state_extra (jo_t j)
+{
+   if (!haenable)
+      return;
    if (b.loopback)
       jo_bool (j, "loopback", 1);
    else if (daikin.status_known & CONTROL_online)
@@ -2621,7 +2623,6 @@ ha_status (void)
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
-   revk_state ("ha", &j);
 }
 
 void
