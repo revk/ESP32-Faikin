@@ -2308,6 +2308,8 @@ send_ha_config (void)
 //#ifdef	CONFIG_REVK_STATE_UP
       jo_string (j, "avty_t", lwt);
       jo_string (j, "avty_tpl", "{{value_json.up}}");
+      jo_bool (j, "pl_avail", 1);
+      jo_bool (j, "pl_not_avail", 0);
 //#endif
       return j;
    }
