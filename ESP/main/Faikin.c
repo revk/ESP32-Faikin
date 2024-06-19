@@ -2280,7 +2280,7 @@ send_ha_config (void)
    daikin.ha_send = 0;
    char *hastatus = revk_topic (topicstate, NULL, "ha");
 #ifdef  CONFIG_REVK_STATE_UP
-   char *lwt = revk_topic (topicstate, NULL, "online");
+   char *lwt = revk_topic (topicstate, NULL, "status");
 #endif
    char *cmd = revk_topic (topiccommand, NULL, NULL);
    char *topic;
@@ -2303,11 +2303,7 @@ send_ha_config (void)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
       if (haonline)
-      {
          jo_string (j, "availability_topic", lwt);
-         jo_bool (j, "payload_available", 1);
-         jo_bool (j, "payload_not_available", 0);
-      }
 #endif
       return j;
    }
