@@ -2280,7 +2280,7 @@ send_ha_config (void)
    daikin.ha_send = 0;
    char *hastatus = revk_topic (topicstate, NULL, "ha");
 #ifdef  CONFIG_REVK_STATE_UP
-   char *lwt = revk_topic (topicstate, NULL, "status");
+   char *lwt = revk_topic (topicstate, NULL, "up");
 #endif
    char *cmd = revk_topic (topiccommand, NULL, NULL);
    char *topic;
