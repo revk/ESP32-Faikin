@@ -2306,7 +2306,8 @@ send_ha_config (void)
       if (icon)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
-      jo_string (j, "availability_topic", lwt);
+      jo_string (j, "avty_t", hastatus);
+      jo_string (j, "avty_tpl", "{{value_json.up}}");
 #endif
       return j;
    }
@@ -2363,8 +2364,8 @@ send_ha_config (void)
             jo_string (j, "stat_t", hastatus);
             jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
             jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-            jo_bool (j, "payload_on", 1);
-            jo_bool (j, "payload_off", 0);
+            jo_bool (j, "pl_on", 1);
+            jo_bool (j, "pl_off", 0);
             revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
