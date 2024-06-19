@@ -2348,7 +2348,7 @@ send_ha_config (void)
          free (topic);
       }
    }
-   void addswitch (uint64_t ok, const char *tag, const char *name)
+   void addswitch (uint64_t ok, const char *tag, const char *name, const char *icon)
    {
       if (asprintf (&topic, "homeassistant/switch/%s%s/config", revk_id, tag) >= 0)
       {
@@ -2356,7 +2356,7 @@ send_ha_config (void)
             revk_mqtt_send_str (topic);
          else
          {
-            jo_t j = make (tag, NULL);
+            jo_t j = make (tag, icon);
             jo_string (j, "name", name);
             jo_string (j, "stat_t", hastatus);
             jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
@@ -2461,8 +2461,8 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
-   addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power");
-   addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer");
+   addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power", "mdi:power");
+   addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer", "mdi:air-filter");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *icon)
    {
