@@ -1421,10 +1421,14 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          } else
             jo_lit (s, "temp", value);  // Direct controls
       }
+      int checkbool (void)
+      {
+         return !strcasecmp (value, "ON") || !strcmp (value, "1") || !strcasecmp (value, "true") ? 1 : 0;
+      }
       // HA stuff
       if (!strcmp (suffix, "mode"))
       {
-         jo_bool (s, "power", *value == 'o' || *value == 'f' || *value == '0' ? 0 : 1);
+         jo_bool (s, "power", strcmp (value, "off") ? 1 : 0);
          if (!strcmp (value, "heat_cool"))
             jo_string (s, "mode", "A");
          else if (*value != 'o')
@@ -1456,12 +1460,12 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       if (!strcmp (suffix, "demand"))
          jo_int (s, "demand", atoi (value));
-      if (!strcmp (suffix, "streamer"))
-         jo_int (s, "streamer", *value == 'f' || *value == '0' ? 0 : 1);
       if (!strcmp (suffix, "sensor"))
-         jo_int (s, "sensor", *value == 'f' || *value == '0' ? 0 : 1);
+         jo_bool (s, "sensor", checkbool ());
       if (!strcmp (suffix, "power"))
-         jo_bool (s, "power", *value == 'f' || *value == '0' ? 0 : 1);
+         jo_bool (s, "power", checkbool ());
+      if (!strcmp (suffix, "streamer"))
+         jo_bool (s, "streamer", checkbool ());
    }
    jo_close (s);
    jo_rewind (s);
@@ -2358,11 +2362,9 @@ send_ha_config (void)
             jo_string (j, "name", tag);
             jo_string (j, "stat_t", hastatus);
             jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             jo_bool (j, "payload_on", 1);
             jo_bool (j, "payload_off", 0);
-            jo_bool (j, "state_on", 1);
-            jo_bool (j, "state_off", 0);
-            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
             revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
@@ -2566,6 +2568,8 @@ ha_status (void)
       jo_bool (j, "loopback", 1);
    else if (daikin.status_known & CONTROL_online)
       jo_bool (j, "online", daikin.online);
+   if (daikin.status_known & CONTROL_power)
+      jo_bool (j, "power", daikin.power);
    if (daikin.status_known & CONTROL_temp)
       jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp); // Target - either internal or what we are using as reference
    if (daikin.status_known & CONTROL_env)
@@ -2613,6 +2617,8 @@ ha_status (void)
       jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
       jo_string (j, "fan", fans[daikin.fan]);
+   if (daikin.status_known & CONTROL_streamer)
+      jo_bool (j, "streamer", daikin.streamer);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
