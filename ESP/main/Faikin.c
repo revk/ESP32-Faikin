@@ -2302,8 +2302,7 @@ send_ha_config (void)
       if (icon)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
-      if (haonline)
-         jo_string (j, "availability_topic", lwt);
+      jo_string (j, "availability_topic", lwt);
 #endif
       return j;
    }

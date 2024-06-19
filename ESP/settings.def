@@ -42,7 +42,6 @@ bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 
 bit	dark									// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
-bit	ha.online								// Set HA availability (experimental)
 bit	ha.switches								// Set additional HA switches (experimental)
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
