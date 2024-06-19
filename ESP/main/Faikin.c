@@ -1309,7 +1309,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
    if (!strcmp (suffix, "connect") || !strcmp (suffix, "status"))
    {
       daikin.status_report = 1; // Report status on connect
-      if (ha)
+      if (haenable)
          daikin.ha_send = 1;
    }
    if (!strcmp (suffix, "send") && jo_here (j) == JO_STRING)
@@ -2302,9 +2302,12 @@ send_ha_config (void)
       if (icon)
          jo_string (j, "icon", icon);
 #ifdef	CONFIG_REVK_STATE_UP
-      jo_string (j, "availability_topic", lwt);
-      jo_bool (j, "payload_available", 1);
-      jo_bool (j, "payload_not_available", 0);
+      if (haonline)
+      {
+         jo_string (j, "availability_topic", lwt);
+         jo_bool (j, "payload_available", 1);
+         jo_bool (j, "payload_not_available", 0);
+      }
 #endif
       return j;
    }
@@ -2463,8 +2466,11 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Hz", "mdi:fan");
-   addswitch (daikin.status_known & CONTROL_power, "power");
-   addswitch (daikin.status_known & CONTROL_streamer, "streamer");
+   if (haswitches)
+   {
+      addswitch (daikin.status_known & CONTROL_power, "power");
+      addswitch (daikin.status_known & CONTROL_streamer, "streamer");
+   }
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *icon)
    {
@@ -2558,7 +2564,7 @@ send_ha_config (void)
 static void
 ha_status (void)
 {                               // Home assistant message
-   if (!ha)
+   if (!haenable)
       return;
    jo_t j = jo_object_alloc ();
    if (b.loopback)
@@ -2774,7 +2780,7 @@ revk_web_extra (httpd_req_t * req, int page)
 {
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
    revk_web_setting (req, "Text rather than icons", "noicons");
-   revk_web_setting (req, "Home Assistant", "ha");
+   revk_web_setting (req, "Home Assistant", "haenable");
    revk_web_setting (req, "Dark mode LED", "dark");
    if (!daikin.remote)
    {
@@ -2908,7 +2914,7 @@ app_main ()
          daikin.control_changed = 0;
          daikin.online = 1;
       }
-      if (ha)
+      if (haenable)
          daikin.ha_send = 1;
       do
       {
@@ -2932,7 +2938,7 @@ app_main ()
                   if (!strcmp (e->name, autob))
                   {
                      bletemp = e;
-                     if (ha)
+                     if (haenable)
                         daikin.ha_send = 1;
                      break;
                   }
