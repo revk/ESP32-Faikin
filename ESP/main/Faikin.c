@@ -2260,6 +2260,14 @@ legacy_web_set_special_mode (httpd_req_t * req)
             mode = atoi (v);
          free (v);
       }
+      if (jo_find (j, "en_streamer"))
+      {
+         char *v = jo_strdup (j);
+         if (v)
+            mode = atoi (v);
+         free (v);
+         kind = 3;
+      }
       switch (kind)
       {
       case 1:                  // powerful
@@ -2272,7 +2280,7 @@ legacy_web_set_special_mode (httpd_req_t * req)
          err = daikin_set_v (streamer, mode);
          break;
       default:
-         err = "Unknown mode";
+         err = "Unknown kind";
       }
    }
    return legacy_simple_response (req, err);
