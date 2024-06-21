@@ -44,6 +44,7 @@ bit	dark									// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
 bit	ha.switches								// Set additional HA switches
 bit	ha.fanrpm								// Use RPM not Hz for fan speed
+bit	ha.comprpm								// Use RPM not Hz for comp speed
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble									// Enable BLE

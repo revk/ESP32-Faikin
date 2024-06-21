@@ -2467,7 +2467,7 @@ send_ha_config (void)
    addtemp ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet), "inlet", "Inlet", "mdi:thermometer");        // Both defined so we used home as temp, so lets add inlet here
    addtemp (daikin.status_known & CONTROL_outside, "outside", "Outside", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "Liquid", "mdi:coolant-temperature");
-   addfreq (daikin.status_known & CONTROL_comp, "comp", "Compressor", "Hz", "mdi:sine-wave");
+   addfreq (daikin.status_known & CONTROL_comp, "comp", "Compressor", hacomprpm ? "rpm" : "Hz", "mdi:sine-wave");
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Fan", hafanrpm ? "rpm" : "Hz", "mdi:fan");
    addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power", "mdi:power");
    addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer", "mdi:air-filter");
@@ -2591,8 +2591,6 @@ revk_state_extra (jo_t j)
       jo_litf (j, "outside", "%.2f", daikin.outside);
    if (daikin.status_known & CONTROL_liquid)
       jo_litf (j, "liquid", "%.2f", daikin.liquid);
-   if (daikin.status_known & CONTROL_comp)
-      jo_int (j, "comp", daikin.comp);
    if (daikin.status_known & CONTROL_demand)
       jo_int (j, "demand", daikin.demand);
    if ((daikin.status_known & CONTROL_Wh) && daikin.Wh)
@@ -2604,6 +2602,8 @@ revk_state_extra (jo_t j)
       else
          jo_litf (j, "fanfreq", "%.1f", daikin.fanrpm / 60.0);
    }
+   if (daikin.status_known & CONTROL_comp)
+      jo_int (j, "comp", (hacomprpm ? 60 : 1) * daikin.comp);
 #ifdef ELA
    if (ble && bletemp)
    {
