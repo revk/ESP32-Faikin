@@ -43,6 +43,7 @@ bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 bit	dark									// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
 bit	ha.switches								// Set additional HA switches
+bit	ha.fanrpm								// Use RPM not Hz for fan speed
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble									// Enable BLE
