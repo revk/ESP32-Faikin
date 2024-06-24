@@ -3000,7 +3000,7 @@
 				)
 			)
 		)
-		(symbol "RevK:TC2030-USB-NL-DS"
+		(symbol "RevK:TC2030-USB-NL"
 			(pin_names
 				(offset 1.016)
 			)
@@ -3015,7 +3015,7 @@
 					)
 				)
 			)
-			(property "Value" "TC2030-USB-NL-DS"
+			(property "Value" "TC2030-USB-NL"
 				(at 0 8.89 0)
 				(effects
 					(font
@@ -3023,7 +3023,7 @@
 					)
 				)
 			)
-			(property "Footprint" "RevK:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical_DoubleSided"
+			(property "Footprint" "RevK:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical"
 				(at -0.254 -9.144 0)
 				(effects
 					(font
@@ -3041,7 +3041,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" "TC2030-USB-NL-DS"
+			(property "Description" "TC2030-USB-NL"
 				(at 0 12.7 0)
 				(effects
 					(font
@@ -3068,7 +3068,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "TC2030-USB-NL-DS_0_1"
+			(symbol "TC2030-USB-NL_0_1"
 				(rectangle
 					(start -5.08 7.62)
 					(end 5.08 -7.62)
@@ -3216,7 +3216,7 @@
 					)
 				)
 			)
-			(symbol "TC2030-USB-NL-DS_1_1"
+			(symbol "TC2030-USB-NL_1_1"
 				(circle
 					(center -3.81 0.635)
 					(radius 0.381)
@@ -3272,7 +3272,7 @@
 							)
 						)
 					)
-					(number "1A"
+					(number "1"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3290,43 +3290,7 @@
 							)
 						)
 					)
-					(number "1B"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 5.08 180)
-					(length 2.54) hide
-					(name "VBUS"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 5.08 180)
-					(length 2.54) hide
-					(name "VBUS"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "2B"
+					(number "2"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3344,25 +3308,7 @@
 							)
 						)
 					)
-					(number "3A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin bidirectional line
-					(at 7.62 1.27 180)
-					(length 2.54) hide
-					(name "D-"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "3B"
+					(number "3"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3380,25 +3326,7 @@
 							)
 						)
 					)
-					(number "4A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin bidirectional line
-					(at 7.62 -1.27 180)
-					(length 2.54) hide
-					(name "D+"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "4B"
+					(number "4"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3416,7 +3344,7 @@
 							)
 						)
 					)
-					(number "5A"
+					(number "5"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -3434,43 +3362,7 @@
 							)
 						)
 					)
-					(number "5B"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 -5.08 180)
-					(length 2.54) hide
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "6A"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-				)
-				(pin passive line
-					(at 7.62 -5.08 180)
-					(length 2.54) hide
-					(name "GND"
-						(effects
-							(font
-								(size 1.27 1.27)
-							)
-						)
-					)
-					(number "6B"
+					(number "6"
 						(effects
 							(font
 								(size 1.27 1.27)
@@ -5718,7 +5610,7 @@
 		)
 	)
 	(symbol
-		(lib_id "RevK:TC2030-USB-NL-DS")
+		(lib_id "RevK:TC2030-USB-NL")
 		(at 187.325 49.53 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -5743,7 +5635,7 @@
 				)
 			)
 		)
-		(property "Footprint" "RevK:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical_DoubleSided"
+		(property "Footprint" "RevK:Tag-Connect_TC2030-IDC-NL_2x03_P1.27mm_Vertical"
 			(at 187.071 58.674 0)
 			(effects
 				(font
@@ -5761,7 +5653,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "TC2030-USB-NL-DS"
+		(property "Description" "TC2030-USB-NL"
 			(at 187.325 36.83 0)
 			(effects
 				(font
@@ -5770,41 +5662,23 @@
 				(hide yes)
 			)
 		)
-		(pin "1A"
+		(pin "5"
 			(uuid "4eb35731-c8a0-443f-bbf0-46c057e7da43")
 		)
-		(pin "1B"
+		(pin "6"
 			(uuid "92f3abf9-c91c-477a-a113-90105c4d39a1")
 		)
-		(pin "2A"
+		(pin "1"
 			(uuid "77e726f8-fe9e-49f3-9056-46faf96091ed")
 		)
-		(pin "2B"
+		(pin "4"
 			(uuid "ccbc5d8d-a134-4356-b7dd-388137e330e4")
 		)
-		(pin "3A"
+		(pin "3"
 			(uuid "d2bdf675-40c0-4c6e-9a6e-6b5cb972f53a")
 		)
-		(pin "3B"
+		(pin "2"
 			(uuid "2424f369-6bc5-4c17-84e6-b350d2890ca1")
-		)
-		(pin "4A"
-			(uuid "81b610bb-7a58-4b75-b67e-9d418f60e6b5")
-		)
-		(pin "4B"
-			(uuid "0da35bb2-35d9-4978-a30b-f6e4d3dc0d25")
-		)
-		(pin "5A"
-			(uuid "78d04f6a-5d02-4587-a768-ee34627af865")
-		)
-		(pin "5B"
-			(uuid "86c0fa92-626a-4e09-b72d-ba86614f4b25")
-		)
-		(pin "6A"
-			(uuid "6387aae1-8b7d-4410-89cb-24ecff5445dc")
-		)
-		(pin "6B"
-			(uuid "e1829ce2-3fd2-4c45-8ed3-9d4c47d4471b")
 		)
 		(instances
 			(project "Faikin"
@@ -6774,79 +6648,6 @@
 			(project "Generic"
 				(path "/babeabf2-f3b0-4ed5-8d9e-0215947e6cf3"
 					(reference "R12")
-					(unit 1)
-				)
-			)
-		)
-	)
-	(symbol
-		(lib_id "power:GND")
-		(at 48.895 83.185 270)
-		(unit 1)
-		(exclude_from_sim no)
-		(in_bom yes)
-		(on_board yes)
-		(dnp no)
-		(fields_autoplaced yes)
-		(uuid "807b9f3e-90de-4fc3-8936-4238b82e7480")
-		(property "Reference" "#PWR01"
-			(at 42.545 83.185 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Value" "GND"
-			(at 45.7201 83.185 90)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(justify right)
-			)
-		)
-		(property "Footprint" ""
-			(at 48.895 83.185 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Datasheet" ""
-			(at 48.895 83.185 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 48.895 83.185 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(pin "1"
-			(uuid "05a581b9-c2f8-43ee-9c46-f350389b76f6")
-		)
-		(instances
-			(project "USBA"
-				(path "/2d210a96-f81f-42a9-8bf4-1b43c11086f3"
-					(reference "#PWR01")
-					(unit 1)
-				)
-			)
-			(project "Faikin"
-				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
-					(reference "#PWR020")
 					(unit 1)
 				)
 			)
@@ -8071,6 +7872,73 @@
 			(project "Generic"
 				(path "/babeabf2-f3b0-4ed5-8d9e-0215947e6cf3"
 					(reference "C5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:+3.3V")
+		(at 48.895 83.185 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "be8fe389-b18c-49fb-8936-29295d99ba44")
+		(property "Reference" "#PWR020"
+			(at 52.705 83.185 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "+3.3V"
+			(at 45.72 83.185 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 48.895 83.185 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 48.895 83.185 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"+3.3V\""
+			(at 48.895 83.185 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "e872ef62-a5c2-4cfb-877a-591be10ce601")
+		)
+		(instances
+			(project "Faikin"
+				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+					(reference "#PWR020")
 					(unit 1)
 				)
 			)
