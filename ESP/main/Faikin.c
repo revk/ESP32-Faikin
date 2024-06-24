@@ -2577,7 +2577,7 @@ revk_state_extra (jo_t j)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_power)
       jo_bool (j, "power", daikin.power);
-   //if (daikin.status_known & CONTROL_temp)
+   //if (daikin.status_known & CONTROL_temp) // HA always expects this
    jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp);    // Target - either internal or what we are using as reference
    if (daikin.status_known & CONTROL_env)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
