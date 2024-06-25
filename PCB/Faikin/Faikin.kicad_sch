@@ -11,6 +11,108 @@
 		(comment 2 "www.me.uk")
 	)
 	(lib_symbols
+		(symbol "Connector:TestPoint"
+			(pin_numbers hide)
+			(pin_names
+				(offset 0.762) hide)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "TP"
+				(at 0 6.858 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "TestPoint"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 5.08 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "test point"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "test point tp"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "Pin* Test*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "TestPoint_0_1"
+				(circle
+					(center 0 3.302)
+					(radius 0.762)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "TestPoint_1_1"
+				(pin passive line
+					(at 0 0 90)
+					(length 2.54)
+					(name "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+		)
 		(symbol "Connector_Generic:Conn_01x05"
 			(pin_names
 				(offset 1.016) hide)
@@ -4210,6 +4312,16 @@
 	)
 	(wire
 		(pts
+			(xy 29.845 98.425) (xy 48.895 98.425)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d104458d-b124-444b-a2c9-a7c7e732d087")
+	)
+	(wire
+		(pts
 			(xy 124.46 74.93) (xy 132.08 74.93)
 		)
 		(stroke
@@ -5547,6 +5659,72 @@
 		)
 	)
 	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 26.67 98.425 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "5ba933e3-f32e-41c8-8143-cf939f310186")
+		(property "Reference" "TP2"
+			(at 21.463 93.472 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 16.383 96.266 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_2.0x2.0mm"
+			(at 31.75 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 31.75 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 26.67 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "f08d8841-02f2-4dee-a845-f928fa507f0f")
+		)
+		(instances
+			(project "Faikin"
+				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+					(reference "TP2")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "RevK:VCUT")
 		(at 259.08 173.99 90)
 		(unit 1)
@@ -6178,7 +6356,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 48.895 98.425 270)
+		(at 48.895 90.805 270)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -6187,7 +6365,7 @@
 		(fields_autoplaced yes)
 		(uuid "76185512-a354-4459-aaa3-4fd796bd5987")
 		(property "Reference" "#PWR026"
-			(at 42.545 98.425 0)
+			(at 42.545 90.805 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6196,7 +6374,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 45.7201 98.425 90)
+			(at 45.7201 90.805 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6205,7 +6383,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 48.895 98.425 0)
+			(at 48.895 90.805 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6214,7 +6392,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 48.895 98.425 0)
+			(at 48.895 90.805 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6223,7 +6401,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 48.895 98.425 0)
+			(at 48.895 90.805 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8012,16 +8190,16 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 48.895 90.805 270)
+		(at 26.67 98.425 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
 		(fields_autoplaced yes)
-		(uuid "c91b9447-c233-4a7b-90e0-7210635e81ba")
-		(property "Reference" "#PWR01"
-			(at 42.545 90.805 0)
+		(uuid "c1ccb4d1-1385-41d8-abdb-592d3e1c725f")
+		(property "Reference" "#PWR017"
+			(at 26.67 104.775 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8030,16 +8208,15 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 45.7201 90.805 90)
+			(at 26.67 102.5581 0)
 			(effects
 				(font
 					(size 1.27 1.27)
 				)
-				(justify right)
 			)
 		)
 		(property "Footprint" ""
-			(at 48.895 90.805 0)
+			(at 26.67 98.425 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8048,7 +8225,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 48.895 90.805 0)
+			(at 26.67 98.425 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8057,7 +8234,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 48.895 90.805 0)
+			(at 26.67 98.425 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8066,15 +8243,9 @@
 			)
 		)
 		(pin "1"
-			(uuid "72f5b92d-481e-4ecc-96de-5fcf8d2c78ca")
+			(uuid "34fc3a6b-f2a4-47ab-b98b-86c0c83629e8")
 		)
 		(instances
-			(project "USBA"
-				(path "/2d210a96-f81f-42a9-8bf4-1b43c11086f3"
-					(reference "#PWR01")
-					(unit 1)
-				)
-			)
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
 					(reference "#PWR017")
@@ -8373,6 +8544,73 @@
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
 					(reference "C6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:TestPoint")
+		(at 29.845 98.425 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "d199131f-ff0a-420f-aa4c-ee28f81a44e4")
+		(property "Reference" "TP1"
+			(at 31.242 93.9108 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "TestPoint"
+			(at 31.242 96.3351 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "TestPoint:TestPoint_Pad_2.0x2.0mm"
+			(at 34.925 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 34.925 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "test point"
+			(at 29.845 98.425 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "bc6b817f-ee97-4953-b55b-d7fed60e4aa5")
+		)
+		(instances
+			(project ""
+				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
+					(reference "TP1")
 					(unit 1)
 				)
 			)
