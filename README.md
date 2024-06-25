@@ -92,3 +92,7 @@ The code is normally set up to automatically upgrade software, checking roughtly
 If you build yourself, you either need no code signing, or your own signing key. This will break auto-updates which try to load me code releases, so you need to adjuist settings `otahost` and `otaauto` accordingly. You can set these in the build config, along with WiFi settings, etc.
 
 If you want to purchase a pre-loaded assembled PCB, see [A&A circuit boards](https://www.aa.net.uk/etc/circuit-boards/) or [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+
+## Flashing code
+
+You will need to connect a suitable programming lead. Boards have a header for USB. The very latest design (expected on Amazon around Sep 2024) has a tag-connect compatible header for a [TC2030-USB-NL](https://www.tag-connect.com/product/tc2030-usb-nl) lead.
