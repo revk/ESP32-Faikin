@@ -355,10 +355,11 @@ set_float (const char *name, float *ptr, uint64_t flag, float val)
    xSemaphoreGive (daikin.mutex);
 }
 
-#define set_val(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
-#define set_int(name,val) set_int(#name,&daikin.name,CONTROL_##name,val)
-#define set_temp(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
-#define set_bool(name,val) set_val(name, (val ? 1 : 0))
+// These macros are used to report incoming status values from the AC
+#define report_uint8(name,val) set_uint8(#name,&daikin.name,CONTROL_##name,val)
+#define report_int(name,val) set_int(#name,&daikin.name,CONTROL_##name,val)
+#define report_float(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
+#define report_bool(name,val) report_uint8(name, (val ? 1 : 0))
 
 jo_t
 jo_comms_alloc (void)
@@ -424,71 +425,71 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '1':                // 'G1' - basic status
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
-            set_val (online, 1);
-            set_bool (power, payload[0] == '1');
-            set_val (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
-            set_val (heat, daikin.mode == FAIKIN_MODE_HEAT);    // Crude - TODO find if anything actually tells us this
+            report_uint8 (online, 1);
+            report_bool (power, payload[0] == '1');
+            report_uint8 (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
+            report_uint8 (heat, daikin.mode == FAIKIN_MODE_HEAT);    // Crude - TODO find if anything actually tells us this
             if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_AUTO)
-               set_temp (temp, s21_decode_target_temp (payload[2]));
+               report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
-               set_temp (temp, daikin.temp);    // Does not have temp in other modes
+               report_float (temp, daikin.temp);    // Does not have temp in other modes
             if (payload[3] != 'A')      // Set fan speed
-               set_val (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
+               report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
             else if (daikin.fan == 6 && (noguessnight || (daikin.power && daikin.fanrpm < 750)))
-               set_val (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
+               report_uint8 (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
             else
-               set_val (fan, alwaysnight ? 6 : 0);      // Auto as fan too fast to be quiet mode
+               report_uint8 (fan, alwaysnight ? 6 : 0);      // Auto as fan too fast to be quiet mode
          }
          break;
       case '3':                // Seems to be an alternative to G6
          if (check_length (cmd, cmd2, len, 1, payload))
          {
-            set_bool (powerful, payload[3] & 0x02);
+            report_bool (powerful, payload[3] & 0x02);
          }
          break;
       case '5':                // 'G5' - swing status
          if (check_length (cmd, cmd2, len, 1, payload))
          {
             if (!noswingw)
-               set_bool (swingv, payload[0] & 1);
+               report_bool (swingv, payload[0] & 1);
             if (!noswingh)
-               set_bool (swingh, payload[0] & 2);
+               report_bool (swingh, payload[0] & 2);
          }
          break;
       case '6':                // 'G6' - "powerful" mode and some others
          if (check_length (cmd, cmd2, len, S21_PAYLOAD_LEN, payload))
          {
             if (!nopowerful)
-               set_bool (powerful, payload[0] & 0x02);
+               report_bool (powerful, payload[0] & 0x02);
             if (!nocomfort)
-               set_bool (comfort, payload[0] & 0x40);
+               report_bool (comfort, payload[0] & 0x40);
             if (!noquiet)
-               set_bool (quiet, payload[0] & 0x80);
+               report_bool (quiet, payload[0] & 0x80);
             if (!nostreamer)
-               set_bool (streamer, payload[1] & 0x80);
+               report_bool (streamer, payload[1] & 0x80);
             if (!nosensor)
-               set_bool (sensor, payload[3] & 0x08);
+               report_bool (sensor, payload[3] & 0x08);
             if (!noled)
-               set_bool (led, (payload[3] & 0x0C) != 0x0C);
+               report_bool (led, (payload[3] & 0x0C) != 0x0C);
          }
          break;
       case '7':                // 'G7' - "demand" and "eco" mode
          if (check_length (cmd, cmd2, len, 2, payload))
          {
             if (!nodemand && payload[0] != '1')
-               set_int (demand, 100 - (payload[0] - '0'));
-            set_bool (econo, payload[1] & 0x02);
+               report_int (demand, 100 - (payload[0] - '0'));
+            report_bool (econo, payload[1] & 0x02);
          }
          break;
       case '9':
          if (check_length (cmd, cmd2, len, 2, payload))
          {
-            set_temp (home, (float) ((signed) payload[0] - 0x80) / 2);
-            set_temp (outside, (float) ((signed) payload[1] - 0x80) / 2);
+            report_float (home, (float) ((signed) payload[0] - 0x80) / 2);
+            report_float (outside, (float) ((signed) payload[1] - 0x80) / 2);
          }
          break;
       case 'M':                // Power meter
-         set_int (Wh, s21_decode_hex_sensor (payload) * 100);   // 100Wh units
+         report_int (Wh, s21_decode_hex_sensor (payload) * 100);   // 100Wh units
          break;
       }
    if (cmd == 'S')
@@ -501,13 +502,13 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             switch (cmd2)
             {
             case 'L':          // Fan
-               set_int (fanrpm, v * 10);
+               report_int (fanrpm, v * 10);
                break;
             case 'd':          // Compressor
-               set_int (comp, v);
+               report_int (comp, v);
                break;
             case 'N':          // Angle vertical swing
-               set_int (anglev, v);
+               report_int (anglev, v);
                break;
             }
          }
@@ -520,13 +521,13 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             switch (cmd2)
             {                   // Temperatures (guess)
             case 'H':          // 'SH' - home temp
-               set_temp (home, t);
+               report_float (home, t);
                break;
             case 'a':          // 'Sa' - outside temp
-               set_temp (outside, t);
+               report_float (outside, t);
                break;
             case 'I':          // 'SI' - liquid ???
-               set_temp (liquid, t);
+               report_float (liquid, t);
                break;
             case 'N':          // ?
                break;
@@ -580,28 +581,28 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       // The only way for us to learn actual values is to receive a CNW_MODE_CHANGED
       // packet, which only happens if a remote control is used. So let's default
       // to some sane values. This also sets up what UI controls we see
-      set_val (power, 0);
-      set_val (mode, FAIKIN_MODE_AUTO);
-      set_val (heat, 0);
-      set_temp (temp, 20);
-      set_val (fan, FAIKIN_FAN_AUTO);
-      set_val (econo, 0);
-      set_val (powerful, 0);
-      set_val (swingv, 0);
+      report_uint8 (power, 0);
+      report_uint8 (mode, FAIKIN_MODE_AUTO);
+      report_uint8 (heat, 0);
+      report_float (temp, 20);
+      report_uint8 (fan, FAIKIN_FAN_AUTO);
+      report_uint8 (econo, 0);
+      report_uint8 (powerful, 0);
+      report_uint8 (swingv, 0);
    }
    switch (payload[7] & 0xF)
    {                            // Mode change
    case 0:                     // temp
-      set_temp (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      report_float (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
       break;
    case 1:
-      set_temp (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
-      set_val (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
-      set_bool (power, !(payload[3] & 0x10));
-      set_val (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
-      set_bool (powerful, payload[4] == 3);
-      set_bool (swingv, payload[5] & 0x10);
-      set_bool (led, payload[5] & 0x80);
+      report_float (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+      report_uint8 (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
+      report_bool (power, !(payload[3] & 0x10));
+      report_uint8 (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
+      report_bool (powerful, payload[4] == 3);
+      report_bool (swingv, payload[5] & 0x10);
+      report_bool (led, payload[5] & 0x80);
       break;
    default:
       jo_t j = jo_comms_alloc ();
@@ -637,12 +638,12 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xCA && len >= 7)
    {                            // Main status settings
-      set_val (online, 1);
-      set_val (power, payload[0]);
-      set_val (mode, payload[1]);
-      set_val (heat, payload[2] == 1);
-      set_val (slave, payload[9]);
-      set_val (fan, (payload[6] >> 4) & 7);
+      report_uint8 (online, 1);
+      report_uint8 (power, payload[0]);
+      report_uint8 (mode, payload[1]);
+      report_uint8 (heat, payload[2] == 1);
+      report_uint8 (slave, payload[9]);
+      report_uint8 (fan, (payload[6] >> 4) & 7);
       return;
    }
    if (cmd == 0xCB && len >= 2)
@@ -653,13 +654,13 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
    {                            // Looks like temperatures - we assume 0000 is not set
       float t;
       if ((t = (int16_t) (payload[0] + (payload[1] << 8)) / 128.0) && t < 100)
-         set_temp (inlet, t);
+         report_float (inlet, t);
       if ((t = (int16_t) (payload[2] + (payload[3] << 8)) / 128.0) && t < 100)
-         set_temp (home, t);
+         report_float (home, t);
       if ((t = (int16_t) (payload[4] + (payload[5] << 8)) / 128.0) && t < 100)
-         set_temp (liquid, t);
+         report_float (liquid, t);
       if ((t = (int16_t) (payload[8] + (payload[9] << 8)) / 128.0) && t < 100)
-         set_temp (temp, t);
+         report_float (temp, t);
 #if 0
       if (debug)
       {
@@ -677,10 +678,10 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
    }
    if (cmd == 0xBE && len >= 9)
    {                            // Status/flags?
-      set_int (fanrpm, (payload[2] + (payload[3] << 8)));
+      report_int (fanrpm, (payload[2] + (payload[3] << 8)));
       // Flag4 ?
-      set_val (flap, payload[5]);
-      set_val (antifreeze, payload[6]);
+      report_uint8 (flap, payload[5]);
+      report_uint8 (antifreeze, payload[6]);
       // Flag7 ?
       // Flag8 ?
       // Flag9 ?
@@ -702,7 +703,7 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 void
 daikin_as_response (int len, uint8_t * res)
 {
-   set_val (online, 1);
+   report_uint8 (online, 1);
    switch (*res)
    {
    case 'U':
@@ -3279,7 +3280,7 @@ app_main ()
             if (daikin.control)
                return;
             daikin.hysteresis = 0;
-            set_val (control, 1);
+            report_uint8 (control, 1);
             samplestart ();
 
             // Switch modes (heating or cooling) depending on currently measured 
@@ -3315,7 +3316,7 @@ app_main ()
          {                      // Stop controlling
             if (!daikin.control)
                return;
-            set_val (control, 0);
+            report_uint8 (control, 0);
             if (daikin.fansaved)
             {                   // Restore saved fan setting (if was set, which nofanauto would not do)
                daikin_set_v (fan, daikin.fansaved);
