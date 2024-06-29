@@ -104,6 +104,21 @@ proto_name (void)
    return uart_enabled ()? prototype[proto_type ()] : "MOCK";
 }
 
+static const char *
+get_temp_step (void)
+{
+   switch (proto_type ())
+   {
+   case PROTO_TYPE_CN_WIRED:
+      return "1";
+   case PROTO_TYPE_S21:
+      return "0.5";
+   // TODO(RevK): PROTO_TYPE_ALTHERMA_S
+   default: // PROTO_TYPE_X50
+      return "0.1";
+   }
+}
+
 // 'fanstep' setting overrides number of available fan speeds
 // 1 = force 5 speeds; 2 = force 3 speeds; 0 = default
 // For experiments only !
@@ -1614,8 +1629,7 @@ web_root (httpd_req_t * req)
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
-   addslider ("Set", "temp", tmin, tmax,
-              proto_type () == PROTO_TYPE_CN_WIRED ? "1" : proto_type () == PROTO_TYPE_S21 ? "0.5" : "0.1");
+   addslider ("Set", "temp", tmin, tmax, get_temp_step ());
    void addt (const char *tag, const char *help)
    {
       revk_web_send (req, "<td title=\"%s\" align=right>%s<br><span id=\"%s\"></span></td>", help, tag, tag);
@@ -1699,8 +1713,7 @@ web_root (httpd_req_t * req)
                      "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
       add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
            fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
-      addslider ("Target", "autot", tmin, tmax,
-                 proto_type () == PROTO_TYPE_CN_WIRED ? "1" : proto_type () == PROTO_TYPE_S21 ? "0.5" : "0.1");
+      addslider ("Target", "autot", tmin, tmax, get_temp_step ());
       addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
       revk_web_send (req, "<tr>");
       addtime ("On", "auto1");
@@ -2385,7 +2398,7 @@ send_ha_config (void)
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
-      jo_lit (j, "temp_step", (proto_type () == PROTO_TYPE_S21) ? "0.5" : "0.1");
+      jo_lit (j, "temp_step", get_temp_step ());
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", hastatus);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
