@@ -10553,7 +10553,7 @@
 	)
 	(gr_line
 		(start 122.75 57)
-		(end 151.505 57)
+		(end 151.5 57)
 		(stroke
 			(width 0.05)
 			(type default)
