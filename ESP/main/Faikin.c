@@ -8,14 +8,14 @@ static const char TAG[] = "Faikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
-#include <driver/rmt_tx.h>
-#include <driver/rmt_rx.h>
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 #include "bleenv.h"
 #endif
+#include "cn_wired.h"
+#include "cn_wired_driver.h"
 #include "daikin_s21.h"
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
@@ -98,6 +98,18 @@ proto_type (void)
    return proto / PROTO_SCALE;
 }
 
+static int
+invert_tx_line (void)
+{
+   return tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0);
+}
+
+static int
+invert_rx_line (void)
+{
+   return rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0);
+}
+
 static const char *
 proto_name (void)
 {
@@ -127,29 +139,6 @@ have_5_fan_speeds (void)
 {
    return fanstep == 1 || (!fanstep && proto_type () == PROTO_TYPE_S21);
 }
-
-#define	CN_WIRED_LEN	8
-#define	CN_WIRED_SYNC	2600    // uS
-#define	CN_WIRED_START	(cnmark900?900:1000)    // uS
-#define	CN_WIRED_SPACE	300     // uS
-#define	CN_WIRED_0	400     // uS
-#define	CN_WIRED_1	1000    // uS
-#define	CN_WIRED_IDLE	16000   // uS
-#define	CN_WIRED_TERM	2000    // uS
-#define	CN_WIRED_MARGIN	200     // uS
-rmt_channel_handle_t rmt_tx = NULL,
-   rmt_rx = NULL;
-rmt_encoder_handle_t rmt_encoder = NULL;
-rmt_symbol_word_t rmt_rx_raw[70];       // Needs to allow for 66, extra is to spot longer messages
-volatile size_t rmt_rx_len = 0; // Rx is ready
-const rmt_receive_config_t rmt_rx_config = {
-   .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   .signal_range_max_ns = 10000000,     // longest - needs to be over the 2600uS sync pulse...
-};
-
-const rmt_transmit_config_t rmt_tx_config = {
-   .flags.eot_level = 1,
-};
 
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
@@ -424,6 +413,15 @@ comm_timeout (uint8_t * buf, int rxlen)
    revk_error ("comms", &j);
 }
 
+static void
+comm_badcrc (uint8_t c, const uint8_t *buf, int rxlen)
+{
+   jo_t j = jo_comms_alloc ();
+   jo_stringf (j, "badsum", "%02X", c);
+   jo_base16 (j, "data", buf, rxlen);
+   revk_error ("comms", &j);
+}
+
 // Decode S21 response payload
 int
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
@@ -553,21 +551,6 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       }
    }
    return RES_OK;
-}
-
-
-bool
-rmt_rx_callback (rmt_channel_handle_t channel, const rmt_rx_done_event_data_t * edata, void *user_data)
-{
-   if (edata->num_symbols < 64)
-   {                            // Silly... restart rx
-      rmt_rx_len = 0;
-      rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config);
-      return pdFALSE;
-   }
-   // Got something
-   rmt_rx_len = edata->num_symbols;
-   return pdFALSE;
 }
 
 void
@@ -965,129 +948,42 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
 void
 daikin_cn_wired_command (int len, uint8_t * buf)
 {                               // Waits rx and sends command/response to it
-   if (!rmt_tx || !rmt_encoder || !rmt_rx)
+   uint8_t rx[CN_WIRED_LEN];
+   esp_err_t e = cn_wired_read_bytes (rx, protofix ? 20000 : 5000);
+
+   if (e == ESP_ERR_INVALID_STATE)
    {
       daikin.talking = 0;       // Not ready?
       return;
    }
-
-   {                            // Wait rx
-      int wait = (protofix ? 20000 : 5000);
-      while (!rmt_rx_len && --wait)
-         usleep (1000);
-   }
-   if (!rmt_rx_len)
+   if (e == ESP_ERR_TIMEOUT)
    {
       comm_timeout (NULL, 0);
       return;
    }
-   {                            // Process receive
-      uint32_t sum0 = 0,
-         sum1 = 0,
-         sums = 0,
-         cnt0 = 0,
-         cnt1 = 0,
-         cnts = 0,
-         sync = 0,
-         start = 0;
-      uint8_t rx[CN_WIRED_LEN] = { 0 };
-      const char *e = NULL;
-      int p = 0,
-         dur = 0;
-      // Sanity checking
-      if (!e && rmt_rx_len != sizeof (rx) * 8 + 2)
-         e = "Wrong length";
-      if (!e && rmt_rx_raw[p].level0)
-         e = "Bad start polarity";
-      if (!e && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SYNC - CN_WIRED_MARGIN || dur > CN_WIRED_SYNC + CN_WIRED_MARGIN))
-         e = "Bad start duration";
-      sync = rmt_rx_raw[p].duration0;
-      if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_START - CN_WIRED_MARGIN || dur > CN_WIRED_START + CN_WIRED_MARGIN))
-         e = "Bad start bit";
-      start = rmt_rx_raw[p].duration1;
-      p++;
-      for (int i = 0; !e && i < sizeof (rx); i++)
-         for (uint8_t b = 0x01; !e && b; b <<= 1)
-         {
-            if (!e
-                && ((dur = rmt_rx_raw[p].duration0) < CN_WIRED_SPACE - CN_WIRED_MARGIN || dur > CN_WIRED_SPACE + CN_WIRED_MARGIN))
-               e = "Bad space duration";
-            sums += rmt_rx_raw[p].duration0;
-            cnts++;
-            if (!e && (dur = rmt_rx_raw[p].duration1) > CN_WIRED_1 - CN_WIRED_MARGIN && dur < CN_WIRED_1 + CN_WIRED_MARGIN)
-            {
-               rx[i] |= b;
-               sum1 += rmt_rx_raw[p].duration1;
-               cnt1++;
-            } else if (!e && ((dur = rmt_rx_raw[p].duration1) < CN_WIRED_0 - CN_WIRED_MARGIN || dur > CN_WIRED_1 + CN_WIRED_MARGIN))
-               e = "Bad bit duration";
-            else
-            {
-               sum0 += rmt_rx_raw[p].duration1;
-               cnt0++;
-            }
-            p++;
-         }
-      if (!e)
-      {
-         dur = 0;               // Not a duration error
-         uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
-         if (sum >= 2)
-         {                      // All nibbles must add to F
-            sum = 0;
-            for (int i = 0; i < sizeof (rx); i++)
-               sum += (rx[i] >> 4) + rx[i];
-            if ((sum & 0xF) != 0xF)
-               e = "Bad checksum";
-         } else
-         {                      // Checksum is sum of all nibbles
-            for (int i = 0; i < sizeof (rx) - 1; i++)
-               sum += (rx[i] >> 4) + rx[i];
-            if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
-               e = "Bad checksum";
-         }
-      }
-      if (e)
-      {
-         jo_t j = jo_comms_alloc ();
-         jo_string (j, "error", e);
-         //jo_int (j, "ts", esp_timer_get_time ());
-         if (dur)
-            jo_int (j, "duration", dur);
-         if (p > 1)
-            jo_base16 (j, "data", rx, (p - 1) / 8);
-         jo_int (j, "sync", sync);
-         jo_int (j, "start", start);
-         if (cnts)
-            jo_int (j, "space", sums / cnts);
-         if (cnt0)
-            jo_int (j, "0", sum0 / cnt0);
-         if (cnt1)
-            jo_int (j, "1", sum1 / cnt1);
-         revk_error ("comms", &j);
+   if (!e)
+   {
+      uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
+      if (sum >= 2)
+      {                      // All nibbles must add to F
+         sum = 0;
+         for (int i = 0; i < sizeof (rx); i++)
+            sum += (rx[i] >> 4) + rx[i];
+         if ((sum & 0xF) != 0xF)
+            e = ESP_ERR_INVALID_CRC;
       } else
-      {                         // Got a message, yay!
-         if (b.dumping)
-         {
-            jo_t j = jo_comms_alloc ();
-            //jo_int (j, "ts", esp_timer_get_time ());
-            jo_base16 (j, "dump", rx, sizeof (rx));
-            jo_int (j, "sync", sync);
-            jo_int (j, "start", start);
-            if (cnts)
-               jo_int (j, "space", sums / cnts);
-            if (cnt0)
-               jo_int (j, "0", sum0 / cnt0);
-            if (cnt1)
-               jo_int (j, "1", sum1 / cnt1);
-            revk_info ("rx", &j);
-         }
-         daikin_cn_wired_response (sizeof (rx), rx);
+      {                      // Checksum is sum of all nibbles
+         for (int i = 0; i < sizeof (rx) - 1; i++)
+            sum += (rx[i] >> 4) + rx[i];
+         if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
+            e = ESP_ERR_INVALID_CRC;
       }
+
+      if (!e) {
+         daikin_cn_wired_response (sizeof (rx), rx); // Got a message, yay!
+      } else
+         comm_badcrc (sum & 0xF, rx, sizeof(rx));
    }
-   // Next Rx
-   rmt_rx_len = 0;
-   REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
 
    if (daikin.control_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
    {                            // Send response
@@ -1111,31 +1007,7 @@ daikin_cn_wired_command (int len, uint8_t * buf)
          jo_base16 (j, "dump", buf, len);
          revk_info ("tx", &j);
       }
-      // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-      rmt_symbol_word_t seq[3 + len * 8 + 1];
-      int p = 0;
-      seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
-      seq[p].level0 = 0;
-      seq[p].duration1 = 1000;
-      seq[p++].level1 = 0;
-      void add (int d)
-      {
-         seq[p].duration0 = d;
-         seq[p].level0 = 1;
-         seq[p].duration1 = CN_WIRED_SPACE;
-         seq[p++].level1 = 0;
-      }
-      add (CN_WIRED_START);
-      for (int i = 0; i < len; i++)
-         for (uint8_t b = 0x01; b; b <<= 1)
-            add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
-      seq[p].duration0 = CN_WIRED_IDLE;
-      seq[p].level0 = 1;
-      seq[p].duration1 = CN_WIRED_TERM;
-      seq[p++].level1 = 0;
-
-      REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &rmt_tx_config));
-      REVK_ERR_CHECK (rmt_tx_wait_all_done (rmt_tx, 1000));
+      cn_wired_write_bytes (buf);
    }
 }
 
@@ -2659,67 +2531,10 @@ uart_setup (void)
       err = gpio_reset_pin (tx.num);
    if (proto_type () == PROTO_TYPE_CN_WIRED)
    {
-      if (!rmt_encoder)
-      {
-         rmt_copy_encoder_config_t encoder_config = {
-         };
-         REVK_ERR_CHECK (rmt_new_copy_encoder (&encoder_config, &rmt_encoder));
-      }
-      if (!rmt_tx)
-      {                         // Create rmt_tx
-         rmt_tx_channel_config_t tx_chan_config = {
-            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
-            .gpio_num = tx.num, // GPIO number
-            .mem_block_symbols = 72,    // symbols
-            .resolution_hz = 1 * 1000 * 1000,   // 1 MHz tick resolution, i.e., 1 tick = 1 µs
-            .trans_queue_depth = 1,     // set the number of transactions that can pend in the background
-            .flags.invert_out = (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0)),
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-            .flags.with_dma = true,
-#endif
-         };
-         REVK_ERR_CHECK (rmt_new_tx_channel (&tx_chan_config, &rmt_tx));
-         if (rmt_tx)
-            REVK_ERR_CHECK (rmt_enable (rmt_tx));
-      }
-      if (!rmt_rx)
-      {                         // Create rmt_rx
-         rmt_rx_channel_config_t rx_chan_config = {
-            .clk_src = RMT_CLK_SRC_DEFAULT,     // select source clock
-            .resolution_hz = 1 * 1000 * 1000,   // 1MHz tick resolution, i.e. 1 tick = 1us
-            .mem_block_symbols = 72,    // 
-            .gpio_num = rx.num, // GPIO number
-            .flags.invert_in = (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0)),
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
-            .flags.with_dma = true,
-#endif
-         };
-         REVK_ERR_CHECK (rmt_new_rx_channel (&rx_chan_config, &rmt_rx));
-         if (rmt_rx)
-         {
-            rmt_rx_event_callbacks_t cbs = {
-               .on_recv_done = rmt_rx_callback,
-            };
-            REVK_ERR_CHECK (rmt_rx_register_event_callbacks (rmt_rx, &cbs, NULL));
-            REVK_ERR_CHECK (rmt_enable (rmt_rx));
-         }
-      }
-      rmt_rx_len = 0;
-      REVK_ERR_CHECK (rmt_receive (rmt_rx, rmt_rx_raw, sizeof (rmt_rx_raw), &rmt_rx_config));
+      err = cn_wired_driver_install (rx.num, tx.num, invert_rx_line(), invert_tx_line());
    } else
    {
-      if (rmt_tx)
-      {
-         REVK_ERR_CHECK (rmt_disable (rmt_tx));
-         REVK_ERR_CHECK (rmt_del_channel (rmt_tx));
-         rmt_tx = NULL;
-      }
-      if (rmt_rx)
-      {
-         REVK_ERR_CHECK (rmt_disable (rmt_rx));
-         REVK_ERR_CHECK (rmt_del_channel (rmt_rx));
-         rmt_rx = NULL;
-      }
+      cn_wired_driver_delete ();
       uart_driver_delete (uart);
       uart_config_t uart_config = {
          .baud_rate = (proto_type () == PROTO_TYPE_S21) ? 2400 : 9600,
@@ -2738,9 +2553,9 @@ uart_setup (void)
       if (!err)
       {
          uint8_t i = 0;
-         if (rx.invert ^ ((proto & PROTO_RXINVERT) ? 1 : 0))
+         if (invert_rx_line ())
             i |= UART_SIGNAL_RXD_INV;
-         if (tx.invert ^ ((proto & PROTO_TXINVERT) ? 1 : 0))
+         if (invert_tx_line ())
             i |= UART_SIGNAL_TXD_INV;
          err = uart_set_line_inverse (uart, i);
       }
@@ -2748,18 +2563,19 @@ uart_setup (void)
          err = uart_driver_install (uart, 1024, 0, 0, NULL, 0);
       if (!err)
          err = uart_set_rx_full_threshold (uart, 1);
-      if (err)
+      if (!err)
       {
-         jo_t j = jo_object_alloc ();
-         jo_string (j, "error", "Failed to uart");
-         jo_int (j, "uart", uart);
-         jo_int (j, "gpio", rx.num);
-         jo_string (j, "description", esp_err_to_name (err));
-         revk_error ("uart", &j);
-         return;
+         sleep (1);
+         err = uart_flush (uart);
       }
-      sleep (1);
-      uart_flush (uart);
+   }
+   if (err)
+   {
+      jo_t j = jo_object_alloc ();
+      jo_string (j, "error", "Failed to set up commmunication port");
+      jo_int (j, "uart", uart);
+      jo_string (j, "description", esp_err_to_name (err));
+      revk_error ("uart", &j);
    }
 }
 
