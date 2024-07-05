@@ -567,10 +567,44 @@ protocol_found (void)
 }
 
 void
-daikin_cn_wired_response (int len, uint8_t * payload)
-{                               // Process response
-   if (len != CN_WIRED_LEN)
+cn_wired_report_fan_speed(const uint8_t* packet)
+{
+   int8_t new_fan = cnw_decode_fan(packet);
+
+   if (new_fan != FAIKIN_FAN_INVALID)
+      report_uint8 (fan, new_fan);
+   // Eco and Powerful are dedicated flags for us, because this is how
+   // other protocols handle it
+   report_bool (econo, packet[CNW_FAN_OFFSET] == CNW_FAN_ECO);
+   report_bool (powerful, packet[CNW_FAN_OFFSET] == CNW_FAN_POWERFUL);
+}
+
+// Parse an incoming CN_WIRED packet
+// These packets always have a fixed length of CNW_PKT_LEN
+void
+daikin_cn_wired_incoming_packet (const uint8_t * payload)
+{
+   static int cnw_retries = 0;
+   int8_t new_mode;
+   jo_t j;
+
+   uint8_t c = cnw_checksum (payload);
+
+   if (c != payload[CNW_CRC_TYPE_OFFSET]) {
+      // Bad checksum
+      comm_badcrc (c >> 4, payload, CNW_PKT_LEN);
+
+      daikin.online = false;
+
+      // When autodetecting a protocol, we only have 2 retries before deciding
+      // that it's not CN_WIRED
+      if (!protocol_set && ++cnw_retries == 2)
+      {
+         cnw_retries = 0;
+         daikin.talking = 0;
+      }
       return;
+   }
 
    // We're now online
    report_uint8 (online, 1);
@@ -592,26 +626,111 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       report_uint8 (powerful, 0);
       report_uint8 (swingv, 0);
    }
-   switch (payload[7] & 0xF)
-   {                            // Mode change
-   case 0:                     // temp
-      report_float (home, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
+   
+   if (b.dumping)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "data", payload, CNW_PKT_LEN);
+      cn_wired_stats (j);
+      revk_info ("rx", &j);
+   }
+
+   switch (payload[CNW_CRC_TYPE_OFFSET] & CNW_TYPE_MASK)
+   {
+   case CNW_SENSOR_REPORT:
+      report_float (home, decode_bcd (payload[CNW_TEMP_OFFSET]));
       break;
-   case 1:
-      report_float (temp, (payload[0] >> 4) * 10 + (payload[0] & 0xF));
-      report_uint8 (mode, "7020100030000000"[payload[3] & 15] - '0');        // Map DFCXHXXXAXXXXXXX to FHCA456D
-      report_bool (power, !(payload[3] & 0x10));
-      report_uint8 (fan, "0040200016000000"[payload[4] & 15] - '0'); // Map XA4P2XXX1QXXXXXX to A12345Q
-      report_bool (powerful, payload[4] == 3);
-      report_bool (swingv, payload[5] & 0x10);
-      report_bool (led, payload[5] & 0x80);
+   case CNW_MODE_CHANGED:
+      new_mode = cnw_decode_mode(payload);
+      report_uint8 (power, !(payload[CNW_MODE_OFFSET] & CNW_MODE_POWEROFF));
+      if (new_mode != FAIKIN_MODE_INVALID)
+         report_uint8 (mode, new_mode);
+      report_uint8 (heat, daikin.mode == FAIKIN_MODE_HEAT);
+      report_float (temp, decode_bcd (payload[CNW_TEMP_OFFSET]));
+      cn_wired_report_fan_speed(payload);
+      report_bool (swingv, payload[CNW_SPECIALS_OFFSET] & CNW_V_SWING);
       break;
    default:
-      jo_t j = jo_comms_alloc ();
+      // From testing with people we know there are also packets of other types.
+      // Example of a type 2 packet: 0038000000000022
+      // We currently don't know what they mean.
+      j = jo_comms_alloc ();
       jo_string (j, "error", "Unknown message type");
-      //jo_int (j, "ts", esp_timer_get_time ());
-      jo_base16 (j, "dump", payload, len);
+      jo_base16 (j, "dump", payload, CNW_PKT_LEN);
       revk_error ("rx", &j);
+      break;
+   }
+}
+
+void
+daikin_cn_wired_send_modes (void)
+{
+   int new_fan;
+   uint8_t buf[CNW_PKT_LEN];
+
+   // These A/Cs from internal perspective have 6 fan speeds: Eco, Auto, 1, 2, 3, Powerful
+   // For more advanced A/Cs Eco and Powerful are special modes, they can be combined with fan speed settings,
+   // so for us these two settings are separate on/off controls. And here are emulating this behavior
+   // with the following algorithm:
+   // - If the user enables Powerful, Eco is turned off, fan speed is remembered
+   // - If the user enables Eco, Powerful is turned off, fan speed is remembered
+   // - If the user disables Eco or Powerful (only one can be enabled!), fan speed is reset to remembered value
+   // - If the user selects fan speed, both Powerful and Eco are turned off.
+   // The first line implement this exact logic. We check which control of the three
+   // the user has frobbed, and act accordingly
+   if (daikin.control_changed & CONTROL_fan) {
+      // The user has touched fan speed control, set the speed
+      new_fan = cnw_encode_fan(daikin.fan);
+   } else if (daikin.control_changed & CONTROL_econo) {
+      // The user has touched Econo switch, act according to new state
+      new_fan = daikin.econo ? CNW_FAN_ECO : cnw_encode_fan(daikin.fan);
+   } else if (daikin.control_changed & CONTROL_powerful) {
+      // The user has touched Powerful switch, act according to new state
+      new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan(daikin.fan);
+      // If the user hasn't changed anything, we still have to fill in current fan speed.
+      // This relies on the fact that controls are always in valid state, and only
+      // one of Powerful or Econo can be active. Even if somehow not true, the order
+      // of precedence is as coded here. We'll force our controls to a valid state
+      // by calling cn_wired_report_fan_speed()
+   } else if (daikin.powerful) {
+      new_fan = CNW_FAN_POWERFUL;
+   } else if (daikin.econo) {
+      new_fan = CNW_FAN_ECO;
+   } else {
+      new_fan = cnw_encode_fan(daikin.fan);
+   }
+
+   buf[CNW_TEMP_OFFSET]     = encode_bcd(daikin.temp);
+   buf[1]                   = 0x04; // These two bytes are perhaps not even used, but from experiments
+   buf[2]                   = 0x50; // we know these packets work. So let's stick to known working values.
+   buf[CNW_MODE_OFFSET]     = cnw_encode_mode(daikin.mode, daikin.power);
+   buf[CNW_FAN_OFFSET]      = new_fan;
+   // Experimental. Setting CNW_V_SWING bit in CNW_SPECIALS_OFFSET does not work;
+   // the conditioner doesn't understand it.
+   // Here we're replicating what Daichi controller does, with one little exception.
+   // Daichi uses value of 0xF0 for CNW_SPECIALS_OFFSET, but from other users we know
+   // that bit 7 stands for LED, so we change it to 0x70.
+   // Could be that vertical swing flag actually sits in bit 0 of 6th byte; and Daichi got it wrong.
+   buf[CNW_SPECIALS_OFFSET] = daikin.swingv ? 0x70 : 0;
+   buf[6]                   = daikin.swingv ? 0x11 : 0x10;
+   buf[CNW_CRC_TYPE_OFFSET] = CNW_COMMAND;
+   buf[CNW_CRC_TYPE_OFFSET] = cnw_checksum(buf);
+
+   if (b.dumping)
+   {
+      jo_t j = jo_comms_alloc ();
+      jo_base16 (j, "data", buf, CNW_PKT_LEN);
+      revk_info (daikin.talking ? "tx" : "cannot-tx", &j);
+   }
+
+   if (cn_wired_write_bytes (buf) == ESP_OK) {
+      // Modes sent
+      daikin.control_changed = 0;
+      // This validates fan speed controls by parsing back value
+      // from the packet we've just composed and sent. We're reusing
+      // receiving code for simplicity. This implements the second part
+      // of mutual exclusion logic, described above.
+      cn_wired_report_fan_speed (buf);
    }
 }
 
@@ -946,72 +1065,6 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       return s21_bad (j);
    }
    return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
-}
-
-void
-daikin_cn_wired_command (int len, uint8_t * buf)
-{                               // Waits rx and sends command/response to it
-   uint8_t rx[CN_WIRED_LEN];
-   esp_err_t e = cn_wired_read_bytes (rx, protofix ? 20000 : 5000);
-
-   if (e == ESP_ERR_INVALID_STATE)
-   {
-      daikin.talking = 0;       // Not ready?
-      return;
-   }
-   if (e == ESP_ERR_TIMEOUT)
-   {
-      comm_timeout (NULL, 0);
-      return;
-   }
-   if (!e)
-   {
-      uint8_t sum = (rx[sizeof (rx) - 1] & 0x0F);
-      if (sum >= 2)
-      {                      // All nibbles must add to F
-         sum = 0;
-         for (int i = 0; i < sizeof (rx); i++)
-            sum += (rx[i] >> 4) + rx[i];
-         if ((sum & 0xF) != 0xF)
-            e = ESP_ERR_INVALID_CRC;
-      } else
-      {                      // Checksum is sum of all nibbles
-         for (int i = 0; i < sizeof (rx) - 1; i++)
-            sum += (rx[i] >> 4) + rx[i];
-         if ((rx[sizeof (rx) - 1] >> 4) != (sum & 0xF))
-            e = ESP_ERR_INVALID_CRC;
-      }
-
-      if (!e) {
-         daikin_cn_wired_response (sizeof (rx), rx); // Got a message, yay!
-      } else
-         comm_badcrc (sum & 0xF, rx, sizeof(rx));
-   }
-
-   if (daikin.control_changed || !(daikin.status_known & CONTROL_power) || daikin.cnresend)
-   {                            // Send response
-      if (daikin.control_changed && cnsend4)
-         daikin.cnresend = 3;   // Send 3 more times
-      else if (daikin.cnresend)
-         daikin.cnresend--;
-      daikin.control_changed = 0;       // Assume all handled
-      // Checksum (LOL)
-      uint8_t sum = (buf[len - 1] & 0x0F);
-      buf[len - 1] &= 0xF0;
-      for (int i = 0; i < len - 1; i++)
-         sum += (buf[i] >> 4) + buf[i];
-      if ((buf[len - 1] & 0x0F) >= 2)
-         sum = 0xF - sum;       // All add to F
-      buf[len - 1] = (sum << 4) + (buf[len - 1] & 0x0F);
-      if (b.dumping)
-      {
-         jo_t j = jo_comms_alloc ();
-         jo_int (j, "ts", esp_timer_get_time ());
-         jo_base16 (j, "dump", buf, len);
-         revk_info ("tx", &j);
-      }
-      cn_wired_write_bytes (buf);
-   }
 }
 
 void
@@ -2818,19 +2871,27 @@ app_main ()
 #undef poll
             } else if (proto_type () == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
-               uint8_t cmd[CN_WIRED_LEN] = { 0 };
-               cmd[0] = ((int) (daikin.temp) / 10) * 0x10 + ((int) (daikin.temp) % 10);
-               if (cmd[0] == 0xC7)
-                  cmd[0] = 0x20;        // temp was not set
-               cmd[1] = cnbyte1;        // ?
-               cmd[2] = cnbyte2;        // ?
-               cmd[3] = ((const uint8_t[])
-                         { 0x01, 0x04, 0x02, 0x08, 0x00, 0x00, 0x00, 0x00 }[daikin.mode]) + (daikin.power ? 0 : 0x10);  // FHCA456D mapped
-               cmd[4] = daikin.powerful ? 0x03 : ((const uint8_t[])
-                                                  { 0x01, 0x08, 0x04, 0x04, 0x02, 0x02, 0x09 }[daikin.fan]);    // A12345Q mapped
-               cmd[5] = (daikin.led ? 0x80 : 0) | (daikin.swingv ? 0x1F : 0x0A);
-               cmd[6] = 0x10;   // ?
-               daikin_cn_wired_command (sizeof (cmd), cmd);
+               uint8_t buf[CNW_PKT_LEN];
+               esp_err_t e = cn_wired_read_bytes (buf,  protofix ? 20000 : 5000);
+
+               if (e == ESP_ERR_TIMEOUT)
+               {
+                  daikin.online = false;
+                  comm_timeout (NULL, 0);
+               }
+               else if (e == ESP_OK)
+               {
+                  daikin_cn_wired_incoming_packet (buf);
+                  // We send modes as a "response" to every packet from the AC. We know that original
+                  // equipment (wall panel, as well as Daichi 3rd party controller) does that too; and
+                  // we also know that some ACs (FTN15PV1L) don't take commands on 1st try if we don't
+                  // do so. Perhaps they think we are offline.
+                  daikin_cn_wired_send_modes ();
+               }
+               else
+               {
+                  daikin.talking = 0;       // Not ready?
+               }
             } else if (proto_type () == PROTO_TYPE_S21)
             {                   // Older S21
                char temp[5];
