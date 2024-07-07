@@ -2534,8 +2534,6 @@ uart_setup (void)
       err = cn_wired_driver_install (rx.num, tx.num, invert_rx_line(), invert_tx_line());
    } else
    {
-      cn_wired_driver_delete ();
-      uart_driver_delete (uart);
       uart_config_t uart_config = {
          .baud_rate = (proto_type () == PROTO_TYPE_S21) ? 2400 : 9600,
          .data_bits = UART_DATA_8_BITS,
@@ -3446,5 +3444,9 @@ app_main ()
       // We're here if protocol has been broken. We'll reconfigure the UART
       // and restart from scratch, possibly changing the protocol, if we're
       // in detection phase.
+      if (proto_type () == PROTO_TYPE_CN_WIRED)
+         cn_wired_driver_delete ();
+      else
+         uart_driver_delete (uart);
    }
 }
