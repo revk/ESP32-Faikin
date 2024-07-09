@@ -24,8 +24,19 @@ const rmt_receive_config_t rmt_rx_config = {
    .signal_range_max_ns = 10000000,     // longest - needs to be over the 2600uS sync pulse...
 };
 
+// We want our TX line to sit high when idle. Unfortunately the new RMT driver
+// doesn't really allow us to do that. Inside rmt_tx.c rmt_new_tx_channel() function
+// does this (as of v5.2.2 release):
+//    // idle level is determined by register value
+//    rmt_ll_tx_fix_idle_level(hal->regs, channel_id, 0, true);
+// So, it simply forces idle level to 0, and it stays so until the first tx happens.
+// In order to circumvent the issue we invert the whole thing and apply GPIO inversion,
+// so that hardcoded 0 becomes HIGH. Hence values here are swapped, not a bug!
+static const uint16_t TX_HIGH = 0;
+static const uint16_t TX_LOW  = 1;
+
 const rmt_transmit_config_t rmt_tx_config = {
-   .flags.eot_level = 1,
+   .flags.eot_level = TX_HIGH,
 };
 
 bool
@@ -67,7 +78,7 @@ cn_wired_driver_install (gpio_num_t rx_num, gpio_num_t tx_num, int rx_invert, in
          .mem_block_symbols = 72,    // symbols
          .resolution_hz = 1 * 1000 * 1000,   // 1 MHz tick resolution, i.e., 1 tick = 1 µs
          .trans_queue_depth = 1,     // set the number of transactions that can pend in the background
-         .flags.invert_out = tx_invert,
+         .flags.invert_out = tx_invert ^ TX_LOW,    // See comments at TX_LOW/TX_HIGH definitions
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
          .flags.with_dma = true,
 #endif
@@ -241,24 +252,24 @@ cn_wired_write_bytes (const uint8_t *buf)
    rmt_symbol_word_t seq[3 + CN_WIRED_LEN * 8 + 1];
    int p = 0;
    seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
-   seq[p].level0 = 0;
+   seq[p].level0 = TX_LOW;
    seq[p].duration1 = 1000;
-   seq[p++].level1 = 0;
+   seq[p++].level1 = TX_LOW;
    void add (int d)
    {
       seq[p].duration0 = d;
-      seq[p].level0 = 1;
+      seq[p].level0 = TX_HIGH;
       seq[p].duration1 = CN_WIRED_SPACE;
-      seq[p++].level1 = 0;
+      seq[p++].level1 = TX_LOW;
    }
    add (CN_WIRED_START);
    for (int i = 0; i < CN_WIRED_LEN; i++)
       for (uint8_t b = 0x01; b; b <<= 1)
          add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
    seq[p].duration0 = CN_WIRED_IDLE;
-   seq[p].level0 = 1;
+   seq[p].level0 = TX_HIGH;
    seq[p].duration1 = CN_WIRED_TERM;
-   seq[p++].level1 = 0;
+   seq[p++].level1 = TX_LOW;
 
    err = REVK_ERR_CHECK (rmt_transmit (rmt_tx, rmt_encoder, seq, p * sizeof (rmt_symbol_word_t), &rmt_tx_config));
    if (!err)
