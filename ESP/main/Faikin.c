@@ -571,6 +571,10 @@ daikin_cn_wired_response (int len, uint8_t * payload)
 {                               // Process response
    if (len != CN_WIRED_LEN)
       return;
+
+   // We're now online
+   report_uint8 (online, 1);
+
    if (!protocol_set)
    {
       // Protocol autodetection complete
@@ -609,7 +613,6 @@ daikin_cn_wired_response (int len, uint8_t * payload)
       jo_base16 (j, "dump", payload, len);
       revk_error ("rx", &j);
    }
-   daikin.control_changed = 0;  // Assume all updated
 }
 
 void
