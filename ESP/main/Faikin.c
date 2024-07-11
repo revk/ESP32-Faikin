@@ -573,9 +573,8 @@ cn_wired_report_fan_speed(const uint8_t* packet)
 
    if (new_fan != FAIKIN_FAN_INVALID)
       report_uint8 (fan, new_fan);
-   // Eco and Powerful are dedicated flags for us, because this is how
+   // Powerful is a dedicated flag\ for us, because this is how
    // other protocols handle it
-   report_bool (econo, packet[CNW_FAN_OFFSET] == CNW_FAN_ECO);
    report_bool (powerful, packet[CNW_FAN_OFFSET] == CNW_FAN_POWERFUL);
 }
 
@@ -622,7 +621,6 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       report_uint8 (heat, 0);
       report_float (temp, 20);
       report_uint8 (fan, FAIKIN_FAN_AUTO);
-      report_uint8 (econo, 0);
       report_uint8 (powerful, 0);
       report_uint8 (swingv, 0);
    }
@@ -669,35 +667,21 @@ daikin_cn_wired_send_modes (void)
    uint8_t buf[CNW_PKT_LEN];
 
    // These A/Cs from internal perspective have 6 fan speeds: Eco, Auto, 1, 2, 3, Powerful
-   // For more advanced A/Cs Eco and Powerful are special modes, they can be combined with fan speed settings,
-   // so for us these two settings are separate on/off controls. And here are emulating this behavior
+   // For more advanced A/Cs Powerful is a special mode, which can be combined with fan speed settings,
+   // so for us this setting is a separate on/off controls. And here are emulating this behavior
    // with the following algorithm:
-   // - If the user enables Powerful, Eco is turned off, fan speed is remembered
-   // - If the user enables Eco, Powerful is turned off, fan speed is remembered
-   // - If the user disables Eco or Powerful (only one can be enabled!), fan speed is reset to remembered value
-   // - If the user selects fan speed, both Powerful and Eco are turned off.
-   // The first line implement this exact logic. We check which control of the three
+   // - If the user enables Powerful, fan speed is remembered
+   // - If the user disables Powerful, fan speed is reset to remembered value
+   // - If the user selects fan speed, Powerful is turned off.
+   // This conditional implements this exact logic. We check which control of the two
    // the user has frobbed, and act accordingly
    if (daikin.control_changed & CONTROL_fan) {
-      // The user has touched fan speed control, set the speed
+      // The user has touched fan speed control, set the speed and cancel Powerful
       new_fan = cnw_encode_fan(daikin.fan);
-   } else if (daikin.control_changed & CONTROL_econo) {
-      // The user has touched Econo switch, act according to new state
-      new_fan = daikin.econo ? CNW_FAN_ECO : cnw_encode_fan(daikin.fan);
-   } else if (daikin.control_changed & CONTROL_powerful) {
-      // The user has touched Powerful switch, act according to new state
-      new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan(daikin.fan);
-      // If the user hasn't changed anything, we still have to fill in current fan speed.
-      // This relies on the fact that controls are always in valid state, and only
-      // one of Powerful or Econo can be active. Even if somehow not true, the order
-      // of precedence is as coded here. We'll force our controls to a valid state
-      // by calling cn_wired_report_fan_speed()
-   } else if (daikin.powerful) {
-      new_fan = CNW_FAN_POWERFUL;
-   } else if (daikin.econo) {
-      new_fan = CNW_FAN_ECO;
    } else {
-      new_fan = cnw_encode_fan(daikin.fan);
+      // The user has either touched Powerful control, or none of the two. Powerful
+      // takes over.
+      new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan(daikin.fan);
    }
 
    buf[CNW_TEMP_OFFSET]     = encode_bcd(daikin.temp);
@@ -729,7 +713,7 @@ daikin_cn_wired_send_modes (void)
       // This validates fan speed controls by parsing back value
       // from the packet we've just composed and sent. We're reusing
       // receiving code for simplicity. This implements the second part
-      // of mutual exclusion logic, described above.
+      // of Powerful vs Fan speed mutual exclusion logic, described above.
       cn_wired_report_fan_speed (buf);
    }
 }
@@ -1555,7 +1539,7 @@ web_root (httpd_req_t * req)
    if (have_5_fan_speeds ())
       add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", alwaysnight ? NULL : "Auto", "A", NULL);
    else if (proto_type () == PROTO_TYPE_CN_WIRED)
-      add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", NULL);
+      add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", "Quiet", "Q", NULL);
    else
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", NULL);
    addslider ("Set", "temp", tmin, tmax, get_temp_step ());

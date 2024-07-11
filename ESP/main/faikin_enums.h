@@ -56,8 +56,9 @@ cnw_decode_fan(const uint8_t *data)
         return FAIKIN_FAN_5;
     case CNW_FAN_AUTO:
         return FAIKIN_FAN_AUTO;
-    // QUIET and POWERFUL are handled separately; they are not
-    // fan speeds for us
+    case CNW_FAN_QUIET:
+        return FAIKIN_FAN_QUIET;
+    // POWERFUL is handled separately; it's not a fan speed for us
     default:
         return FAIKIN_FAN_INVALID;
     }
@@ -79,6 +80,8 @@ cnw_encode_fan(uint8_t fan)
 {
     if (fan == FAIKIN_FAN_AUTO)
         return CNW_FAN_AUTO;
+    else if (fan == FAIKIN_FAN_QUIET)
+        return CNW_FAN_QUIET;
     else if (fan > FAIKIN_FAN_3)
         return CNW_FAN_3;
     else if (fan > FAIKIN_FAN_1)

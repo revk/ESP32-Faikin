@@ -20,14 +20,14 @@
 #define CNW_HEAT 4
 #define CNW_AUTO 8
 
-// Known fan speed settings. Note that POWERFUL and ECO are not modifiers
-// but unique values, mutually exclusive with everything else.
+// Known fan speed settings. Note that POWERFUL is not a modifier
+// but unique value, mutually exclusive with everything else.
 #define CNW_FAN_1        8
 #define CNW_FAN_2        4
 #define CNW_FAN_3        2
 #define CNW_FAN_AUTO     1
 #define CNW_FAN_POWERFUL 3
-#define CNW_FAN_ECO      9
+#define CNW_FAN_QUIET    9
 
 // Special mode flags
 #define CNW_LED_ON  0x80
