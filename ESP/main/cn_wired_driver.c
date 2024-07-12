@@ -133,6 +133,23 @@ cn_wired_driver_delete (void)
    }
 }
 
+// Raw signal lengths for debugging stats
+static uint32_t rx_sync;
+static uint32_t rx_start;
+static uint32_t rx_space;
+static uint32_t rx_0;
+static uint32_t rx_1;
+
+void
+cn_wired_stats (jo_t j)
+{
+   jo_int (j, "sync", rx_sync);
+   jo_int (j, "start", rx_start);
+   jo_int (j, "space", rx_space);
+   jo_int (j, "0", rx_0);
+   jo_int (j, "1", rx_1);
+}
+
 esp_err_t
 cn_wired_read_bytes (uint8_t *rx, int wait)
 {
@@ -165,7 +182,7 @@ cn_wired_read_bytes (uint8_t *rx, int wait)
 
    // Process receive
    // Sanity checking
-   if (!e && rmt_rx_len != CN_WIRED_LEN * 8 + 2)
+   if (!e && rmt_rx_len != CNW_PKT_LEN * 8 + 2)
       e = "Wrong length";
    if (!e && rmt_rx_raw[p].level0)
       e = "Bad start polarity";
@@ -176,7 +193,7 @@ cn_wired_read_bytes (uint8_t *rx, int wait)
       e = "Bad start bit";
    start = rmt_rx_raw[p].duration1;
    p++;
-   for (int i = 0; !e && i < CN_WIRED_LEN; i++)
+   for (int i = 0; !e && i < CNW_PKT_LEN; i++)
    {
       rx[i] = 0;
       for (uint8_t b = 0x01; !e && b; b <<= 1)
@@ -201,40 +218,26 @@ cn_wired_read_bytes (uint8_t *rx, int wait)
          p++;
       }
    }
+
+   // Save statistics for possible dumping
+   rx_sync = sync;
+   rx_start = start;
+   rx_space = cnts ? sums / cnts : 0;
+   rx_0 = cnt0 ? sum0 / cnt0 : 0;
+   rx_1 = cnt1 ? sum1 / cnt1 : 0;
+
    if (e)
    {
       jo_t j = jo_comms_alloc ();
       jo_string (j, "error", e);
-      //jo_int (j, "ts", esp_timer_get_time ());
       if (dur)
          jo_int (j, "duration", dur);
       if (p > 1)
          jo_base16 (j, "data", rx, (p - 1) / 8);
-      jo_int (j, "sync", sync);
-      jo_int (j, "start", start);
       jo_int (j, "rmt_rx_len", rmt_rx_len);
-      if (cnts)
-         jo_int (j, "space", sums / cnts);
-      if (cnt0)
-         jo_int (j, "0", sum0 / cnt0);
-      if (cnt1)
-         jo_int (j, "1", sum1 / cnt1);
+      cn_wired_stats (j);
       revk_error ("comms", &j);
       err = ESP_ERR_INVALID_RESPONSE;
-   } else if (dump)
-   {
-      jo_t j = jo_comms_alloc ();
-      //jo_int (j, "ts", esp_timer_get_time ());
-      jo_base16 (j, "dump", rx, CN_WIRED_LEN);
-      jo_int (j, "sync", sync);
-      jo_int (j, "start", start);
-      if (cnts)
-         jo_int (j, "space", sums / cnts);
-      if (cnt0)
-         jo_int (j, "0", sum0 / cnt0);
-      if (cnt1)
-         jo_int (j, "1", sum1 / cnt1);
-      revk_info ("rx", &j);
    }
 
    // Next Rx
@@ -249,7 +252,7 @@ cn_wired_write_bytes (const uint8_t *buf)
 {
    esp_err_t err;
    // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
-   rmt_symbol_word_t seq[3 + CN_WIRED_LEN * 8 + 1];
+   rmt_symbol_word_t seq[3 + CNW_PKT_LEN * 8 + 1];
    int p = 0;
    seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
    seq[p].level0 = TX_LOW;
@@ -263,7 +266,7 @@ cn_wired_write_bytes (const uint8_t *buf)
       seq[p++].level1 = TX_LOW;
    }
    add (CN_WIRED_START);
-   for (int i = 0; i < CN_WIRED_LEN; i++)
+   for (int i = 0; i < CNW_PKT_LEN; i++)
       for (uint8_t b = 0x01; b; b <<= 1)
          add ((buf[i] & b) ? CN_WIRED_1 : CN_WIRED_0);
    seq[p].duration0 = CN_WIRED_IDLE;
