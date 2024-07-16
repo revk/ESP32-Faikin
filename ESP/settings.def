@@ -34,8 +34,8 @@ bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mod
 bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
 bit	no.guessnight								// Do not assume someone else can set auto after we set night
-bit	no.icons			.live=1					// Don't show icons on web UI
-nit	no.1c									// Force 1C steps in temp setting
+bit	no.icons			.live=1					// Do not show icons on web UI
+bit	no.1c									// Force 1C steps in temp setting
 
 bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 
