@@ -2756,8 +2756,21 @@ app_main ()
          proto++;
          if (proto >= PROTO_TYPE_MAX * PROTO_SCALE)
             proto = 0;
-         if ((proto_type () == PROTO_TYPE_CN_WIRED && nocnwired) ||     //
-             (proto_type () == PROTO_TYPE_S21 && nos21) ||      //
+         if (proto_type () == PROTO_TYPE_CN_WIRED)
+         {
+            uint8_t invert_mask;
+
+            if (nocnwired)
+               continue;
+            // Since CN_WIRED is a passive protocol (receive only, no actual responses),
+            // we cannot have idea whether our tx polarity is correct. If we choose a wrong one,
+            // the AC won't receive anything, but we'd have no way to detect that.
+            // So, here we explicitly ban having different polarities. Invert either all or nothing.
+            invert_mask = proto & (PROTO_TXINVERT | PROTO_RXINVERT);
+            if (invert_mask == PROTO_TXINVERT || invert_mask == PROTO_RXINVERT)
+               continue;
+         }
+         if ((proto_type () == PROTO_TYPE_S21 && nos21) ||      //
              (proto_type () == PROTO_TYPE_X50A && nox50a) ||    //
              (proto_type () == PROTO_TYPE_ALTHERMA_S && noas) ||        //
              ((proto & PROTO_TXINVERT) && noswaptx) ||  //
