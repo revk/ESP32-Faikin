@@ -125,8 +125,8 @@ get_temp_step (void)
       return "1";
    case PROTO_TYPE_S21:
       return "0.5";
-   // TODO(RevK): PROTO_TYPE_ALTHERMA_S
-   default: // PROTO_TYPE_X50
+      // TODO(RevK): PROTO_TYPE_ALTHERMA_S
+   default:                    // PROTO_TYPE_X50
       return "0.1";
    }
 }
@@ -414,7 +414,7 @@ comm_timeout (uint8_t * buf, int rxlen)
 }
 
 static void
-comm_badcrc (uint8_t c, const uint8_t *buf, int rxlen)
+comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
 {
    jo_t j = jo_comms_alloc ();
    jo_stringf (j, "badsum", "%02X", c);
@@ -440,18 +440,18 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          {
             report_uint8 (online, 1);
             report_bool (power, payload[0] == '1');
-            report_uint8 (mode, "30721003"[payload[1] & 0x7] - '0'); // FHCA456D mapped from AXDCHXF
-            report_uint8 (heat, daikin.mode == FAIKIN_MODE_HEAT);    // Crude - TODO find if anything actually tells us this
+            report_uint8 (mode, "30721003"[payload[1] & 0x7] - '0');    // FHCA456D mapped from AXDCHXF
+            report_uint8 (heat, daikin.mode == FAIKIN_MODE_HEAT);       // Crude - TODO find if anything actually tells us this
             if (daikin.mode == FAIKIN_MODE_HEAT || daikin.mode == FAIKIN_MODE_COOL || daikin.mode == FAIKIN_MODE_AUTO)
                report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
-               report_float (temp, daikin.temp);    // Does not have temp in other modes
+               report_float (temp, daikin.temp);        // Does not have temp in other modes
             if (payload[3] != 'A')      // Set fan speed
-               report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
+               report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
             else if (daikin.fan == 6 && (noguessnight || (daikin.power && daikin.fanrpm < 750)))
-               report_uint8 (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
+               report_uint8 (fan, 6);   // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
             else
-               report_uint8 (fan, alwaysnight ? 6 : 0);      // Auto as fan too fast to be quiet mode
+               report_uint8 (fan, alwaysnight ? 6 : 0); // Auto as fan too fast to be quiet mode
          }
          break;
       case '3':                // Seems to be an alternative to G6
@@ -502,7 +502,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
          break;
       case 'M':                // Power meter
-         report_int (Wh, s21_decode_hex_sensor (payload) * 100);   // 100Wh units
+         report_int (Wh, s21_decode_hex_sensor (payload) * 100);        // 100Wh units
          break;
       }
    if (cmd == 'S')
@@ -567,9 +567,9 @@ protocol_found (void)
 }
 
 void
-cn_wired_report_fan_speed(const uint8_t* packet)
+cn_wired_report_fan_speed (const uint8_t * packet)
 {
-   int8_t new_fan = cnw_decode_fan(packet);
+   int8_t new_fan = cnw_decode_fan (packet);
 
    if (new_fan != FAIKIN_FAN_INVALID)
       report_uint8 (fan, new_fan);
@@ -589,7 +589,8 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
 
    uint8_t c = cnw_checksum (payload);
 
-   if (c != payload[CNW_CRC_TYPE_OFFSET]) {
+   if (c != payload[CNW_CRC_TYPE_OFFSET])
+   {
       // Bad checksum
       comm_badcrc (c >> 4, payload, CNW_PKT_LEN);
 
@@ -604,7 +605,6 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       }
       return;
    }
-
    // We're now online
    report_uint8 (online, 1);
 
@@ -624,7 +624,7 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       report_uint8 (powerful, 0);
       report_uint8 (swingv, 0);
    }
-   
+
    if (b.dumping)
    {
       jo_t j = jo_comms_alloc ();
@@ -639,13 +639,13 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       report_float (home, decode_bcd (payload[CNW_TEMP_OFFSET]));
       break;
    case CNW_MODE_CHANGED:
-      new_mode = cnw_decode_mode(payload);
+      new_mode = cnw_decode_mode (payload);
       report_uint8 (power, !(payload[CNW_MODE_OFFSET] & CNW_MODE_POWEROFF));
       if (new_mode != FAIKIN_MODE_INVALID)
          report_uint8 (mode, new_mode);
       report_uint8 (heat, daikin.mode == FAIKIN_MODE_HEAT);
       report_float (temp, decode_bcd (payload[CNW_TEMP_OFFSET]));
-      cn_wired_report_fan_speed(payload);
+      cn_wired_report_fan_speed (payload);
       report_bool (swingv, payload[CNW_SPECIALS_OFFSET] & CNW_V_SWING);
       break;
    default:
@@ -675,20 +675,22 @@ daikin_cn_wired_send_modes (void)
    // - If the user selects fan speed, Powerful is turned off.
    // This conditional implements this exact logic. We check which control of the two
    // the user has frobbed, and act accordingly
-   if (daikin.control_changed & CONTROL_fan) {
+   if (daikin.control_changed & CONTROL_fan)
+   {
       // The user has touched fan speed control, set the speed and cancel Powerful
-      new_fan = cnw_encode_fan(daikin.fan);
-   } else {
+      new_fan = cnw_encode_fan (daikin.fan);
+   } else
+   {
       // The user has either touched Powerful control, or none of the two. Powerful
       // takes over.
-      new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan(daikin.fan);
+      new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan (daikin.fan);
    }
 
-   buf[CNW_TEMP_OFFSET]     = encode_bcd(daikin.temp);
-   buf[1]                   = 0x04; // These two bytes are perhaps not even used, but from experiments
-   buf[2]                   = 0x50; // we know these packets work. So let's stick to known working values.
-   buf[CNW_MODE_OFFSET]     = cnw_encode_mode(daikin.mode, daikin.power);
-   buf[CNW_FAN_OFFSET]      = new_fan;
+   buf[CNW_TEMP_OFFSET] = encode_bcd (daikin.temp);
+   buf[1] = 0x04;               // These two bytes are perhaps not even used, but from experiments
+   buf[2] = 0x50;               // we know these packets work. So let's stick to known working values.
+   buf[CNW_MODE_OFFSET] = cnw_encode_mode (daikin.mode, daikin.power);
+   buf[CNW_FAN_OFFSET] = new_fan;
    // Experimental. Setting CNW_V_SWING bit in CNW_SPECIALS_OFFSET does not work;
    // the conditioner doesn't understand it.
    // Here we're replicating what Daichi controller does, with one little exception.
@@ -696,9 +698,9 @@ daikin_cn_wired_send_modes (void)
    // that bit 7 stands for LED, so we change it to 0x70.
    // Could be that vertical swing flag actually sits in bit 0 of 6th byte; and Daichi got it wrong.
    buf[CNW_SPECIALS_OFFSET] = daikin.swingv ? 0x70 : 0;
-   buf[6]                   = daikin.swingv ? 0x11 : 0x10;
+   buf[6] = daikin.swingv ? 0x11 : 0x10;
    buf[CNW_CRC_TYPE_OFFSET] = CNW_COMMAND;
-   buf[CNW_CRC_TYPE_OFFSET] = cnw_checksum(buf);
+   buf[CNW_CRC_TYPE_OFFSET] = cnw_checksum (buf);
 
    if (b.dumping)
    {
@@ -707,7 +709,8 @@ daikin_cn_wired_send_modes (void)
       revk_info (daikin.talking ? "tx" : "cannot-tx", &j);
    }
 
-   if (cn_wired_write_bytes (buf) == ESP_OK) {
+   if (cn_wired_write_bytes (buf) == ESP_OK)
+   {
       // Modes sent
       daikin.control_changed = 0;
       // This validates fan speed controls by parsing back value
@@ -2311,7 +2314,7 @@ send_ha_config (void)
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
-      jo_lit (j, "temp_step", get_temp_step ());
+      jo_lit (j, "temp_step", no1c ? "1" : get_temp_step ());
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", hastatus);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
@@ -2571,7 +2574,7 @@ uart_setup (void)
       err = gpio_reset_pin (tx.num);
    if (proto_type () == PROTO_TYPE_CN_WIRED)
    {
-      err = cn_wired_driver_install (rx.num, tx.num, invert_rx_line(), invert_tx_line());
+      err = cn_wired_driver_install (rx.num, tx.num, invert_rx_line (), invert_tx_line ());
    } else
    {
       uart_config_t uart_config = {
@@ -2856,14 +2859,13 @@ app_main ()
             } else if (proto_type () == PROTO_TYPE_CN_WIRED)
             {                   // CN WIRED
                uint8_t buf[CNW_PKT_LEN];
-               esp_err_t e = cn_wired_read_bytes (buf,  protofix ? 20000 : 5000);
+               esp_err_t e = cn_wired_read_bytes (buf, protofix ? 20000 : 5000);
 
                if (e == ESP_ERR_TIMEOUT)
                {
                   daikin.online = false;
                   comm_timeout (NULL, 0);
-               }
-               else if (e == ESP_OK)
+               } else if (e == ESP_OK)
                {
                   daikin_cn_wired_incoming_packet (buf);
                   // We send modes as a "response" to every packet from the AC. We know that original
@@ -2871,10 +2873,9 @@ app_main ()
                   // we also know that some ACs (FTN15PV1L) don't take commands on 1st try if we don't
                   // do so. Perhaps they think we are offline.
                   daikin_cn_wired_send_modes ();
-               }
-               else
+               } else
                {
-                  daikin.talking = 0;       // Not ready?
+                  daikin.talking = 0;   // Not ready?
                }
             } else if (proto_type () == PROTO_TYPE_S21)
             {                   // Older S21
@@ -3129,7 +3130,6 @@ app_main ()
             if ((daikin.env_delta <= 0 && daikin.env_delta_prev <= 0) || (daikin.env_delta >= 0 && daikin.env_delta_prev >= 0))
                measured_temp += (daikin.env_delta + daikin.env_delta_prev) * tpredictt / (tpredicts * 2);       // Predict
          }
-
          // Apply adjustment
          if (!thermostat && daikin.control && daikin.power && !isnan (min) && !isnan (max))
          {
@@ -3172,7 +3172,6 @@ app_main ()
                   daikin_set_e (mode, "H");     // Set heating as under temp
                }
             }
-
             // Force high fan at the beginning if not fan in AUTO 
             //  and temperature not close to target temp
             // TODO: Use of switchtemp for different purposes is confusing (ref. min/max a couple of lines above)
@@ -3224,7 +3223,6 @@ app_main ()
             }
             last = hhmm;
          }
-
          // Monitoring and automation
          if (!isnan (measured_temp) && !isnan (min) && !isnan (max) && tsample)
          {                      // Monitoring and automation
@@ -3345,7 +3343,6 @@ app_main ()
                daikin.sample = now + tsample;   // Set time for next sample cycle
             }
          }
-
          // End Control due to timeout
          if (daikin.controlvalid && now > daikin.controlvalid)
          {                      // End of auto mode and no env data either
@@ -3355,7 +3352,6 @@ app_main ()
             daikin.remote = 0;
             controlstop ();
          }
-
          // Local auto controls
          if (daikin.power && daikin.controlvalid && !revk_shutting_down (NULL))
          {                      // Local auto controls
