@@ -254,7 +254,12 @@ cn_wired_write_bytes (const uint8_t *buf)
    // Encode manually, yes, silly, but bytes encoder has no easy way to add the start bits.
    rmt_symbol_word_t seq[3 + CNW_PKT_LEN * 8 + 1];
    int p = 0;
-   seq[p].duration0 = CN_WIRED_SYNC - 1000;  // 2500us low - do in two parts? so we start with high for data
+
+   // One RMT symbol consists of both level0 and level1, thus any RMT sequence consists of
+   // even number of states. The whole CN_WIRED SYNC has to be LOW, and following symbols
+   // consist of HIGH-LOW pairs. Therefore total number of our states is odd, so we break
+   // our SYNC down into two parts of the same LOW level to make a valid RMT sequence.
+   seq[p].duration0 = CN_WIRED_SYNC - 1000;
    seq[p].level0 = TX_LOW;
    seq[p].duration1 = 1000;
    seq[p++].level1 = TX_LOW;
