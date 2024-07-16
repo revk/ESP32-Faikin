@@ -35,7 +35,6 @@ bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
 bit	no.guessnight								// Do not assume someone else can set auto after we set night
 bit	no.icons			.live=1					// Do not show icons on web UI
-bit	no.1c									// Force 1C steps in temp setting
 
 bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 
@@ -44,6 +43,7 @@ bit	ha.enable	1		.old="ha"				// Home Assistance
 bit	ha.switches								// Set additional HA switches
 bit	ha.fanrpm								// Use RPM not Hz for fan speed
 bit	ha.comprpm								// Use RPM not Hz for comp speed
+bit	ha.1c									// Force 1C steps in temp setting
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble									// Enable BLE

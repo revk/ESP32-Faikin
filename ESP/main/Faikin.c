@@ -2314,7 +2314,7 @@ send_ha_config (void)
       jo_int (j, "min_temp", tmin);
       jo_int (j, "max_temp", tmax);
       jo_string (j, "temp_unit", "C");
-      jo_lit (j, "temp_step", no1c ? "1" : get_temp_step ());
+      jo_lit (j, "temp_step", ha1c ? "1" : get_temp_step ());
       jo_string (j, "temp_cmd_t", "~/temp");
       jo_string (j, "temp_stat_t", hastatus);
       jo_string (j, "temp_stat_tpl", "{{value_json.target}}");
