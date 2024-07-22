@@ -2881,6 +2881,11 @@ app_main ()
                } else if (e == ESP_OK)
                {
                   daikin_cn_wired_incoming_packet (buf);
+
+                  // Send new modes to the AC. We have just received a data packet; CN_WIRED devices
+                  // may dislike being interrupted, so we delay for 20 ms in order for the packet
+                  // trailer pulse (which we ignore) passes
+                  sys_msleep(20);
                   // We send modes as a "response" to every packet from the AC. We know that original
                   // equipment (wall panel, as well as Daichi 3rd party controller) does that too; and
                   // we also know that some ACs (FTN15PV1L) don't take commands on 1st try if we don't
