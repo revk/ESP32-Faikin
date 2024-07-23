@@ -21,7 +21,8 @@ rmt_symbol_word_t rmt_rx_raw[70];       // Needs to allow for 66, extra is to sp
 volatile size_t rmt_rx_len = 0; // Rx is ready
 const rmt_receive_config_t rmt_rx_config = {
    .signal_range_min_ns = 1000, // shortest - to eliminate glitches
-   .signal_range_max_ns = 10000000,     // longest - needs to be over the 2600uS sync pulse...
+    // longest - needs to be over the 2600uS sync pulse...
+   .signal_range_max_ns = (CN_WIRED_SYNC + CN_WIRED_MARGIN) * 1000,
 };
 
 // We want our TX line to sit high when idle. Unfortunately the new RMT driver
@@ -134,6 +135,7 @@ cn_wired_driver_delete (void)
 }
 
 // Raw signal lengths for debugging stats
+static uint32_t rx_len;
 static uint32_t rx_sync;
 static uint32_t rx_start;
 static uint32_t rx_space;
@@ -143,6 +145,7 @@ static uint32_t rx_1;
 void
 cn_wired_stats (jo_t j)
 {
+   jo_int (j, "rmt_rx_len", rx_len);
    jo_int (j, "sync", rx_sync);
    jo_int (j, "start", rx_start);
    jo_int (j, "space", rx_space);
@@ -220,6 +223,7 @@ cn_wired_read_bytes (uint8_t *rx, int wait)
    }
 
    // Save statistics for possible dumping
+   rx_len = rmt_rx_len;
    rx_sync = sync;
    rx_start = start;
    rx_space = cnts ? sums / cnts : 0;
@@ -234,7 +238,6 @@ cn_wired_read_bytes (uint8_t *rx, int wait)
          jo_int (j, "duration", dur);
       if (p > 1)
          jo_base16 (j, "data", rx, (p - 1) / 8);
-      jo_int (j, "rmt_rx_len", rmt_rx_len);
       cn_wired_stats (j);
       revk_error ("comms", &j);
       err = ESP_ERR_INVALID_RESPONSE;
