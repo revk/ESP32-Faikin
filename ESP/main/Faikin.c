@@ -623,6 +623,8 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       report_uint8 (fan, FAIKIN_FAN_AUTO);
       report_uint8 (powerful, 0);
       report_uint8 (swingv, 0);
+      if (!noled)
+         report_uint8 (led, 0);
    }
 
    if (b.dumping)
@@ -647,6 +649,8 @@ daikin_cn_wired_incoming_packet (const uint8_t * payload)
       report_float (temp, decode_bcd (payload[CNW_TEMP_OFFSET]));
       cn_wired_report_fan_speed (payload);
       report_bool (swingv, payload[CNW_SPECIALS_OFFSET] & CNW_V_SWING);
+      if (!noled)
+         report_bool (led, payload[CNW_SPECIALS_OFFSET] & CNW_LED_ON);
       break;
    default:
       // From testing with people we know there are also packets of other types.
@@ -664,6 +668,7 @@ void
 daikin_cn_wired_send_modes (void)
 {
    int new_fan;
+   uint8_t specials = 0;
    uint8_t buf[CNW_PKT_LEN];
 
    // These A/Cs from internal perspective have 6 fan speeds: Eco, Auto, 1, 2, 3, Powerful
@@ -686,18 +691,23 @@ daikin_cn_wired_send_modes (void)
       new_fan = daikin.powerful ? CNW_FAN_POWERFUL : cnw_encode_fan (daikin.fan);
    }
 
-   buf[CNW_TEMP_OFFSET] = encode_bcd (daikin.temp);
-   buf[1] = 0x04;               // These two bytes are perhaps not even used, but from experiments
-   buf[2] = 0x50;               // we know these packets work. So let's stick to known working values.
-   buf[CNW_MODE_OFFSET] = cnw_encode_mode (daikin.mode, daikin.power);
-   buf[CNW_FAN_OFFSET] = new_fan;
    // Experimental. Setting CNW_V_SWING bit in CNW_SPECIALS_OFFSET does not work;
    // the conditioner doesn't understand it.
    // Here we're replicating what Daichi controller does, with one little exception.
    // Daichi uses value of 0xF0 for CNW_SPECIALS_OFFSET, but from other users we know
    // that bit 7 stands for LED, so we change it to 0x70.
    // Could be that vertical swing flag actually sits in bit 0 of 6th byte; and Daichi got it wrong.
-   buf[CNW_SPECIALS_OFFSET] = daikin.swingv ? 0x70 : 0;
+   if (daikin.swingv)
+      specials |= 0x70;
+   if (daikin.led)
+      specials |= CNW_LED_ON;
+
+   buf[CNW_TEMP_OFFSET] = encode_bcd (daikin.temp);
+   buf[1] = 0x04;               // These two bytes are perhaps not even used, but from experiments
+   buf[2] = 0x50;               // we know these packets work. So let's stick to known working values.
+   buf[CNW_MODE_OFFSET] = cnw_encode_mode (daikin.mode, daikin.power);
+   buf[CNW_FAN_OFFSET] = new_fan;
+   buf[CNW_SPECIALS_OFFSET] = specials;
    buf[6] = daikin.swingv ? 0x11 : 0x10;
    buf[CNW_CRC_TYPE_OFFSET] = CNW_COMMAND;
    buf[CNW_CRC_TYPE_OFFSET] = cnw_checksum (buf);
