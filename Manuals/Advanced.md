@@ -140,6 +140,7 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
 |`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikin auto mode|
 |`env`|This is the temperature reference used for the Faikin auto mode|
+|`streamer`| Boolean|
 
 For remote controlled Faikin auto mode, you typically send a `control` message with `target` and `env` in the JSON payload. This needs to be sent regularly to avoid it revertign to normal (not Faikin auto mode).
 
