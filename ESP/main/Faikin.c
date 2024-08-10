@@ -426,6 +426,7 @@ enum
    RES_NOACK,
    RES_BAD,
    RES_WAIT,
+   RES_TIMEOUT
 };
 
 static int
@@ -942,55 +943,70 @@ daikin_as_poll (char reg)
    return daikin_as_command (2, temp);
 }
 
-int
-daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
+static int
+is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2)
 {
-   if (debug && txlen > 2 && !b.dumping)
+   return rxlen >= S21_MIN_PKT_LEN && buf[S21_STX_OFFSET] == STX && buf[rxlen - 1] == ETX &&
+          buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
+}
+
+static void
+jo_s21_payload (jo_t j, char *payload, int payload_len)
+{
+   if (payload_len)
+   {
+      jo_base16 (j, "payload", payload, payload_len);
+      jo_stringn (j, "text", (char *) payload, payload_len);
+   }
+}
+
+int
+daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
+{
+   if (debug && payload_len > 2 && !b.dumping)
    {
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      if (txlen)
-      {
-         jo_base16 (j, "payload", payload, txlen);
-         jo_stringn (j, "text", (char *) payload, txlen);
-      }
+      jo_s21_payload (j, payload, payload_len);
       revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking && !protofix)
       return RES_WAIT;          // Failed
    uint8_t buf[256],
      temp;
+   int txlen = S21_MIN_PKT_LEN + payload_len;
    if (!snoop)
    {                            // Send
-      buf[0] = STX;
-      buf[1] = cmd;
-      buf[2] = cmd2;
-      if (txlen)
-         memcpy (buf + 3, payload, txlen);
-      buf[3 + txlen] = s21_checksum (buf, S21_MIN_PKT_LEN + txlen);
-      buf[4 + txlen] = ETX;
+      buf[S21_STX_OFFSET] = STX;
+      buf[S21_CMD0_OFFSET] = cmd;
+      buf[S21_CMD1_OFFSET] = cmd2;
+      if (payload_len)
+         memcpy (buf + S21_PAYLOAD_OFFSET, payload, payload_len);
+      buf[S21_PAYLOAD_OFFSET + payload_len] = s21_checksum (buf, txlen);
+      buf[S21_PAYLOAD_OFFSET + payload_len + 1] = ETX;
       if (b.dumping)
       {
          jo_t j = jo_comms_alloc ();
-         jo_base16 (j, "dump", buf, txlen + S21_MIN_PKT_LEN);
+         jo_base16 (j, "dump", buf, txlen);
          char c[3] = { cmd, cmd2 };
-         jo_stringn (j, c, payload, txlen);
+         jo_stringn (j, c, payload, payload_len);
          revk_info ("tx", &j);
       }
-      uart_write_bytes (uart, buf, S21_MIN_PKT_LEN + txlen);
+      uart_write_bytes (uart, buf, txlen);
    }
    // Wait ACK. Apparently some models omit it.
    int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
+   if (rxlen == 0)
+   {
+      comm_timeout (NULL, 0);
+      return RES_TIMEOUT;
+   }
    if (rxlen != 1 || (temp != ACK && temp != STX))
    {
       // Got something else
       jo_t j = jo_comms_alloc ();
       jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      if (txlen)
-      {
-         jo_base16 (j, "payload", payload, txlen);
-         jo_stringn (j, "text", (char *) payload, txlen);
-      }
+      jo_s21_payload (j, payload, payload_len);
       if (rxlen == 1 && temp == NAK)
       {
          // Got an explicit NAK
@@ -1005,8 +1021,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       // Unexpected reply, protocol broken
       daikin.talking = 0;
       jo_bool (j, "noack", 1);
-      if (rxlen)
-         jo_stringf (j, "value", "%02X", temp);
+      jo_stringf (j, "value", "%02X", temp);
       revk_error ("comms", &j);
       return RES_NOACK;
    }
@@ -1073,7 +1088,11 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       jo_stringf (j, "badsum", "%02X", c);
       return s21_bad (j);
    }
-   if (!snoop && rxlen >= 5 && buf[0] == STX && buf[rxlen - 1] == ETX && buf[1] == cmd)
+   // For reliability, verify that we've got back the exact transmitted data
+   // We're using the same buf for both tx and rx, so our sent packet is gone
+   // at this point, so we're verifying piece by piece
+   if (!snoop && rxlen == txlen && is_valid_s21_response (buf, rxlen, cmd, cmd2) &&
+       (payload_len == 0 || !memcmp (payload, buf + S21_PAYLOAD_OFFSET, payload_len)))
    {                            // Loop back
       daikin.talking = 0;
       if (!b.loopback)
@@ -1093,8 +1112,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int txlen, char *payload)
       protocol_found ();
    // An expected S21 reply contains the first character of the command
    // incremented by 1, the second character is left intact
-   if (!snoop && (rxlen < S21_MIN_PKT_LEN || buf[S21_STX_OFFSET] != STX || buf[rxlen - 1] != ETX || buf[S21_CMD0_OFFSET] != cmd + 1
-                  || buf[S21_CMD1_OFFSET] != cmd2))
+   if (!snoop && !is_valid_s21_response (buf, rxlen, cmd + 1, cmd2))
    {                            // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
       jo_t j = jo_comms_alloc ();
