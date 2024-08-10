@@ -20,20 +20,25 @@
 #include <termios.h>
 #endif
 
-int   debug = 0,
-	  ump = 0;
-int   dump = 0;
-int   power = 0;
-int   mode = 3;
-int   comp = 1;
-float temp = 22.5;
-int   fan = 3;
-int   swing = 0;
-int   powerful = 0;
-int   eco = 0;
-int   home = 245; // Multiplied by 10
-int   outside = 205;
-int   inlet = 185;
+int debug = 0; // Dump commands and responses (short form)
+int dump  = 0; // Raw dump
+
+// Simulated A/C state. Defaults are chosen to be distinct; can be changed via
+// command line.
+int   power       = 0;    // Power on
+int   mode        = 3;    // Mode
+float temp        = 22.5; // Set point
+int   fan         = 3;    // Fan speed
+int   swing       = 0;    // Swing direction
+int   powerful    = 0;    // Powerful mode
+int   eco         = 0;    // Eco mode
+int   home        = 245;  // Reported temparatures (multiplied by 10 here)
+int   outside     = 205;
+int   inlet       = 185;
+int   fanrpm      = 52;   // Fan RPM (divided by 10 here)
+int   comprpm     = 42;   // Compressor RPM
+int   protocol    = 2; // Protocol version
+const char *model = "135D"; // Reported A/C model code. Default taken from FTXF20D5V1B
 
 static void hexdump_raw(const unsigned char *buf, unsigned int len)
 {
@@ -72,7 +77,7 @@ static void s21_nak(int p, unsigned char *buf)
 {
    static unsigned char response = NAK;
 
-   printf(" -> Unknown command, sending NAK\n");
+   printf(" -> Unknown command %c%c, sending NAK\n", buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET]);
    serial_write(p, &response, 1);
    
    buf[0] = 0; // Clear read buffer
@@ -87,12 +92,13 @@ static void s21_ack(int p)
 
 static void s21_nonstd_reply(int p, unsigned char *response, int body_len)
 {
-   int pkt_len = 3 + body_len; // 3 bytes for STX, checksum, ETX
+   int pkt_len = S21_FRAMING_LEN + body_len;
    int l;
 
    s21_ack(p); // Send ACK before the reply
 
-   response[S21_STX_OFFSET] = STX; // +2 below accounts for this
+   // Make a proper framing
+   response[S21_STX_OFFSET] = STX;
    response[S21_CMD0_OFFSET + body_len] = s21_checksum(response, pkt_len);
    response[S21_CMD0_OFFSET + body_len + 1] = ETX;
 
@@ -107,22 +113,53 @@ static void s21_reply(int p, unsigned char *response, const unsigned char *cmd, 
 	s21_nonstd_reply(p, response, 2 + payload_len); // Body is two cmd bytes plus payload
 }
 
-static void send_temp(int p, unsigned char *response, const unsigned char *cmd, int value)
+// A wrapper for unknown command. Useful because we're adding them in bulk
+static void unknown_cmd(int p, unsigned char *response, const unsigned char *cmd,
+                        unsigned char r0, unsigned char r1, unsigned char r2, unsigned char r3)
+{
+   if (debug)
+      printf(" -> unknown ('%c%c') = 0x%02X 0x%02X 0x%02X 0x%02X\n",
+	         cmd[S21_CMD0_OFFSET], cmd[S21_CMD1_OFFSET], r0, r1, r2, r3);
+   response[3] = r0;
+   response[4] = r1;
+   response[5] = r2;
+   response[6] = r3;
+
+   s21_reply(p, response, cmd, S21_PAYLOAD_LEN);
+}
+
+static void send_temp(int p, unsigned char *response, const unsigned char *cmd, int value, const char *name)
 {
 	char buf[5];
 	
 	snprintf(buf, sizeof(buf), "%+d", value);
 	if (debug)
-	   printf(" -> '%c' sensor = %s\n", cmd[2], buf);
+	   printf(" -> %s = %s\n", name, buf);
 
     // A decimal value from sensor is sent as ASCII value with sign,
 	// spelled backwards for some reason. One decimal place is assumed.
-	response[3] = buf[3];
-	response[4] = buf[2];
-	response[5] = buf[1];
-	response[6] = buf[0];
+	response[S21_PAYLOAD_OFFSET + 0] = buf[3];
+	response[S21_PAYLOAD_OFFSET + 1] = buf[2];
+	response[S21_PAYLOAD_OFFSET + 2] = buf[1];
+	response[S21_PAYLOAD_OFFSET + 3] = buf[0];
 	
 	s21_reply(p, response, cmd, S21_PAYLOAD_LEN);
+}
+
+static void send_int(int p, unsigned char *response, const unsigned char *cmd, int value, const char *name)
+{
+	char buf[4];
+
+	snprintf(buf, sizeof(buf), "%03d", value);
+	if (debug)
+	   	printf(" -> %s = %s\n", name, buf);
+
+	// Order inverted, the same as in send_temp()
+    response[S21_PAYLOAD_OFFSET + 0] = buf[2];
+	response[S21_PAYLOAD_OFFSET + 1] = buf[1];
+	response[S21_PAYLOAD_OFFSET + 2] = buf[0];
+			
+	s21_reply(p, response, buf, 3); // Nontypical response, 3 bytes, not 4!
 }
 
 int
@@ -137,9 +174,12 @@ main(int argc, const char *argv[])
 	  {"mode", 0, POPT_ARG_INT, &mode, 0, "Mode", "0=F,1=H,2=C,3=A,7=D"},
 	  {"fan", 0, POPT_ARG_INT, &fan, 0, "Fan", "0 = auto, 1-5 = set speed, 6 = quiet"},
 	  {"temp", 0, POPT_ARG_FLOAT, &temp, 0, "Temp", "C"},
-	  {"comp", 0, POPT_ARG_INT, &comp, 0, "Comp", "1=H,2=C"},
+	  {"comprpm", 0, POPT_ARG_INT, &fanrpm, 0, "Fan rpm (divided by 10)"},
+	  {"comprpm", 0, POPT_ARG_INT, &comprpm, 0, "Compressor rpm"},
 	  {"powerful", 0, POPT_ARG_NONE, &powerful, 0, "Debug"},
 	  {"dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump"},
+	  {"protocol", 0, POPT_ARG_INT, &protocol, 0, "Reported protocol version"},
+	  {"model", 0, POPT_ARG_STRING, &model, 0, "Reported model code"},
 	  POPT_AUTOHELP {}
    };
 
@@ -158,6 +198,11 @@ main(int argc, const char *argv[])
       return -1;
    }
    poptFreeContext(optCon);
+
+   if (!model || strlen(model) < 4) {
+	  fprintf(stderr, "Invalid --model code given, 4 characters required");
+	  return -1;
+   }
 
    int p = open(port, O_RDWR);
 
@@ -297,14 +342,8 @@ main(int argc, const char *argv[])
 			// Correspond to A/C models CTXM60RVMA, CTXM35RVMA
 			// It was experimentally found that with different values, given by FTXF20D, the
 			// controller falls into error 252 and refuses to accept A/C commands over HTTP.
-		    if (debug)
-		       printf(" -> unknown ('F2')\n");
-			response[3] = 0x3D; // FTXF20D: 0x34;
-			response[4] = 0x3B; // FTXF20D: 0x3A;
-			response[5] = 0x00;
-			response[6] = 0x80;
-
-		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			// FTXF20D: 34 3A 00 80
+			unknown_cmd(p, response, buf, 0x3D, 0x3B, 0x00, 0x80);
 			break;
 		 case '3':
 		    if (debug)
@@ -317,15 +356,9 @@ main(int argc, const char *argv[])
 		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '4':
-		    // Also taken from CTXM60RVMA, CTXM35RVMA. Not researched yet.
-		    if (debug)
-		       printf(" -> unknown ('F4')\n");
-		    response[3] = 0x30;
-			response[4] = 0x00;
-			response[5] = 0x80; // FTXF20D: 0xA0;
-			response[6] = 0x30;
-
-			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+		    // Also taken from CTXM60RVMA, CTXM35RVMA, and also error 252 if wrong
+			// FTXF20D: 30 00 A0 30
+			unknown_cmd(p, response, buf, 0x30, 0x00, 0x80, 0x30);
 			break;
 		 case '5':
 		    if (debug)
@@ -359,7 +392,7 @@ main(int argc, const char *argv[])
 			break;
 		case '8':
 		    if (debug)
-		       printf(" -> Protocol version = 1.0\n");
+		       printf(" -> Protocol version = %d\n", protocol);
 			// 'F8' - this is found out to be protocol version.
 			// My FTXF20D replies with '0020' (assuming reading in reverse like everything else).
 			// If we say that, BRP069B41 then asks for F9 (we know it's different form of home/outside sensor)
@@ -367,19 +400,81 @@ main(int argc, const char *argv[])
 			// all of them and tried to downgrade the response to '0000'. This caused the controller sending
 			// 'MM' command (see below), and then it goes online with our emulated A/C.
 			// '0010' gives the same results
-		    response[3] = 0x30;
-			response[4] = 0x31; // FTXF20D: 0x32;
-			response[5] = 0x30;
-			response[6] = 0x30;
+		    response[3] = '0';
+			response[4] = '0' + protocol;
+			response[5] = '0';
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
- /*
-  * I also tried the following commands on my FTXF20D and got
-  * responses as listed. It is currently unknown what they report.
-  * 'F9' 06 02 47 39 B4 FF FF 30 62 03
-  * 'RI' 06 02 53 49 35 36 32 2B 64 03 - the same data as for 'RH', probably firmware bug
-  */
+		 case '9':
+			// In debug log temperature values will appear multiplied by 2
+		    response[3] = home / 5 + 0x80;
+			response[4] = outside / 5 + 0x80; // This is from Faikin sources, but FTXF20D returnx 0xFF here
+			response[5] = 0xFF; // Copied from FTFX20D
+			response[6] = 0x30; // Copied from FTFX20D
+
+		    if (debug)
+		       printf(" -> home = 0x%02X (%.1f) outside = 0x%02X (%.1f)\n",
+			          response[3], home / 10.0, response[4], outside / 10.0);
+
+			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
+		 case 'C':
+		    // Protocol v2 - model code. Reported as "model=" in aircon/get_model_info.
+			// One of few commands, which is only sent by controller once after bootup.
+			// Even if communication is broken, then recovered (sim restarted), it won't
+			// be sent again. Controller reboot would be required to accept the new value.
+		 	if (debug)
+		       printf(" -> model = %s\n", model);
+
+		    response[3] = model[3];
+			response[4] = model[2];
+			response[5] = model[1];
+			response[6] = model[0];
+
+			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
+		 // All unknown_cmd's below are queried by BRP069B41 for protocol version 2.
+		 // They are all mandatory; if we respond NAK, the controller keeps retrying
+		 // this command and doesn't proceed.
+		 // All response values are taken from FTXF20D
+		 case 'B':
+			unknown_cmd(p, response, buf, 0x30, 0x33, 0x36, 0x30); // 0630
+			break;
+		 case 'G':
+			unknown_cmd(p, response, buf, 0x30, 0x34, 0x30, 0x30); // 0040
+			break;
+		 case 'K':
+			unknown_cmd(p, response, buf, 0x71, 0x73, 0x35, 0x31); //15sq
+			break;
+		 case 'M':
+			unknown_cmd(p, response, buf, 0x33, 0x42, 0x30, 0x30); //00B3
+			break;
+		 case 'N':
+			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); //0000
+			break;
+		 case 'P':
+			unknown_cmd(p, response, buf, 0x37, 0x33, 0x30, 0x30); // 0037
+			break;
+		 case 'Q':
+			unknown_cmd(p, response, buf, 0x45, 0x33, 0x30, 0x30); //003E
+			break;
+		 case 'R':
+			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); // 0000
+			break;
+		 case 'S':
+			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); // 0000
+			break;
+		 case 'T':
+			unknown_cmd(p, response, buf, 0x31, 0x30, 0x30, 0x30); // 0001
+			break;
+		 case 'V':
+		 	// This one is not sent by BRP069B41, but i quickly got tired of adding these
+			// one by one and simply ran all the alphabet up to FZZ on my FTXF20D, so here it is.
+			unknown_cmd(p, response, buf, 0x33, 0x37, 0x83, 0x30);
+			break;
+		 // BRP069B41 also sends 'FY' command, but accepts NAK and stops doing so.
+		 // Therefore the command is optional. My FTXF20D also doesn't recognize it.
 		 default:
 		    // Respond NAK to an unknown command. My FTXF20D does the same.
 		    s21_nak(p, buf);
@@ -387,8 +482,9 @@ main(int argc, const char *argv[])
 		 }
 	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
 		if (debug)
-		    printf(" -> unknown ('F4')\n");
-		// This is sent by BRP069B41 for protocol version 1 (see F8 description above)
+		    printf(" -> unknown ('MM')\n");
+		// This is sent by BRP069B41 and response is mandatory. The controller
+		// loops forever if NAK is received.
 		// I experimentally found out that this command doesn't have a second
 		// byte, and the A/C always responds with this. Note non-standard
 		// response form.
@@ -400,29 +496,37 @@ main(int argc, const char *argv[])
 
 		s21_nonstd_reply(p, response, 5);
 	  } else if (buf[S21_CMD0_OFFSET] == 'R') {
-		 // Query temperature sensors
+		 // Query sensors
 		 switch (buf[S21_CMD1_OFFSET]) {
 	     case 'H':
-		    send_temp(p, response, buf, home);
+		    send_temp(p, response, buf, home, "home");
 		    break;
 	     case 'I':
-		    send_temp(p, response, buf, inlet);
+		    send_temp(p, response, buf, inlet, "inlet");
 		    break;
 	     case 'a':
-		    send_temp(p, response, buf, outside);
+		    send_temp(p, response, buf, outside, "outside");
 		    break;
 	     case 'L':
-		    // No idea what this is, comments in Faikin code say it's fan speed
-			// This sample value was grabbed from my FTXF20D; when turned off,
-			// it reports '000'. Let's try. It should most likely read 052, because
-			// after some time it reported '350', should have been 053. This also
-			// follows logic of reporting sensor temperatures in inverse order
-			// (see send_temp())
-		    response[S21_PAYLOAD_OFFSET + 0] = '2';
-			response[S21_PAYLOAD_OFFSET + 1] = '5';
-			response[S21_PAYLOAD_OFFSET + 2] = '0';
-			
-			s21_reply(p, response, buf, 3); // Nontypical response, 3 bytes, not 4!
+		 	send_int(p, response, buf, fanrpm, "fanrpm");
+		    break;
+		 case 'd':
+		 	send_int(p, response, buf, comprpm, "compressor rpm");
+			break;
+	     case 'N':
+		 	// These two are queried by BRP069B41, at least for protocol version 1, but we have no idea
+			// what they mean. Not found anywhere in controller's http responses. We're replying with
+			// some distinct values for possible identification in case if they pop up somewhere.
+			// The following is what my FTX20D returns, also with known commands from above, for comparison:
+			// {"protocol":"S21","dump":"0253483035322B5D03","SH":"052+"} - home
+			// {"protocol":"S21","dump":"0253493535322B6303","SI":"552+"} - inlet
+			// {"protocol":"S21","dump":"0253613035312B7503","Sa":"051+"} - outside
+			// {"protocol":"S21","dump":"02534E3532312B6403","SN":"521+"} - ???
+			// {"protocol":"S21","dump":"0253583033322B6B03","SX":"032+"} - ???
+		    send_temp(p, response, buf, 235, "unknown ('RN')");
+		    break;
+	     case 'X':
+		    send_temp(p, response, buf, 215, "unknown ('RX')");
 		    break;
 		 default:
 		    s21_nak(p, buf);
