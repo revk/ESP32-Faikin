@@ -61,14 +61,32 @@ enum
 };
 const char *const prototype[] = { "S21", "X50A", "CN_WIRED", "Altherma_S" };
 
-const char *const fans[] = {    // mapping A12345Q
-   "auto",
-   "low",
-   "lowMedium",
-   "medium",
-   "mediumHigh",
-   "high",
-   "night",
+struct FanMode
+{
+   char mode;
+   const char *name;
+};
+
+const struct FanMode fans[] = {
+   {'A', "auto"},
+   {'1', "low"},
+   {'2', "lowMedium"},
+   {'3', "medium"},
+   {'4', "mediumHigh"},
+   {'5', "high"},
+   {'Q', "night"},
+   {0, NULL}
+};
+
+const struct FanMode cn_wired_fans[] = {
+   {'A', "auto"},
+   {'1', "low"},
+   {0, "lowMedium"}, // Not used
+   {'3', "medium"},
+   {0, "mediumHigh"}, // Not used
+   {'5', "high"},
+   {'Q', "quiet"},
+   {0, NULL}
 };
 
 #define	PROTO_TXINVERT	1
@@ -114,6 +132,31 @@ static const char *
 proto_name (void)
 {
    return uart_enabled ()? prototype[proto_type ()] : "MOCK";
+}
+
+static const struct FanMode *
+get_fan_modes (void)
+{
+   return proto_type () == PROTO_TYPE_CN_WIRED ? cn_wired_fans : fans;
+}
+
+// Decode fan mode by name into a character (A12345Q)
+static char
+lookup_fan_mode (const char *name)
+{
+   const struct FanMode *f;
+
+   for (f = get_fan_modes (); f->name; f++)
+   {
+      if (!strcmp(name, f->name))
+      {
+         if (f->mode)
+            return f->mode;
+         break; // The value isn't valid for this protocol
+      }
+   }
+
+   return *name; // Fallback
 }
 
 static const char *
@@ -1323,6 +1366,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       return ret ? : "";
    }
 
+   // The following code converts the received MQTT message to our generic format,
+   // then passes it to daikin_control()
    jo_t s = jo_object_alloc ();
    // Crude commands - setting one thing
    if (!j)
@@ -1366,7 +1411,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       {
          return !strcasecmp (value, "ON") || !strcmp (value, "1") || !strcasecmp (value, "true") ? 1 : 0;
       }
-      // HA stuff
+      // The following processes commands from HA.
+      // Topic suffixes according to auto-discovery we sent in send_ha_config()
       if (!strcmp (suffix, "mode"))
       {
          jo_bool (s, "power", strcmp (value, "off") ? 1 : 0);
@@ -1377,12 +1423,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       if (!strcmp (suffix, "fan"))
       {
-         int f;
-         for (f = 0; f < sizeof (fans) / sizeof (*fans) && strcmp (fans[f], value); f++);
-         if (f < sizeof (fans) / sizeof (*fans))
-            jo_stringf (s, "fan", "%c", CONTROL_fan_VALUES[f]);
-         else
-            jo_stringf (s, "fan", "%c", *value);
+         char f = lookup_fan_mode (value);
+         jo_stringf (s, "fan", "%c", f);
       }
       if (!strcmp (suffix, "swing"))
       {
@@ -2226,6 +2268,22 @@ legacy_web_set_special_mode (httpd_req_t * req)
 }
 
 static void
+addmodes (jo_t j, const struct FanMode * modes)
+{
+   const struct FanMode *f;
+
+   jo_array (j, "fan_modes");\
+   for (f = modes; f->name; f++) {
+      // Only list modes, which are valid for current protocol
+      if (f->mode)
+         jo_string (j, NULL, f->name);
+   }
+   jo_close (j);
+}
+
+// Compose and send HomeAssistant MQTT auto-discovery message
+// According to https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery
+static void
 send_ha_config (void)
 {
    daikin.ha_send = 0;
@@ -2362,12 +2420,14 @@ send_ha_config (void)
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
          if (have_5_fan_speeds ())
          {
-            jo_array (j, "fan_modes");
-            for (int f = 0; f < sizeof (fans) / sizeof (*fans); f++)
-               if (f || !alwaysnight)
-                  jo_string (j, NULL, fans[f]);
-            jo_close (j);
+            // alwaysnight setting skips "auto"
+            addmodes (j, alwaysnight ? &fans[1] : fans);
          }
+         else if (proto_type () == PROTO_TYPE_CN_WIRED)
+         {
+            addmodes (j, cn_wired_fans);
+         }
+         // [“auto”, “low”, “medium”, “high”] is the default, no need to report
       }
       if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       {
@@ -2562,7 +2622,10 @@ revk_state_extra (jo_t j)
    if (!nohvacaction && daikin.action != HVAC_IDLE)
       jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
-      jo_string (j, "fan", fans[daikin.fan]);
+   {
+      const struct FanMode * f = get_fan_modes ();
+      jo_string (j, "fan", f[daikin.fan].name);
+   }
    if (daikin.status_known & CONTROL_streamer)
       jo_bool (j, "streamer", daikin.streamer);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
