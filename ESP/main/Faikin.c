@@ -426,6 +426,7 @@ enum
    RES_NOACK,
    RES_BAD,
    RES_WAIT,
+   RES_TIMEOUT
 };
 
 static int
@@ -995,6 +996,11 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
    }
    // Wait ACK. Apparently some models omit it.
    int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
+   if (rxlen == 0)
+   {
+      comm_timeout (NULL, 0);
+      return RES_TIMEOUT;
+   }
    if (rxlen != 1 || (temp != ACK && temp != STX))
    {
       // Got something else
@@ -1015,8 +1021,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
       // Unexpected reply, protocol broken
       daikin.talking = 0;
       jo_bool (j, "noack", 1);
-      if (rxlen)
-         jo_stringf (j, "value", "%02X", temp);
+      jo_stringf (j, "value", "%02X", temp);
       revk_error ("comms", &j);
       return RES_NOACK;
    }
