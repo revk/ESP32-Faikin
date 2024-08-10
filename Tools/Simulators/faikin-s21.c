@@ -11,8 +11,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <errno.h>
-#include <err.h>
 
 #include "main/daikin_s21.h"
 
