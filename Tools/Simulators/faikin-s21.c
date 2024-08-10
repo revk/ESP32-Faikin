@@ -11,8 +11,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
-#include <errno.h>
-#include <err.h>
 
 #include "main/daikin_s21.h"
 
@@ -87,20 +85,26 @@ static void s21_ack(int p)
    serial_write(p, &response, 1);
 }
 
-static void s21_reply(int p, unsigned char *response, const unsigned char *cmd, int payload_len)
+static void s21_nonstd_reply(int p, unsigned char *response, int body_len)
 {
-   int pkt_len = S21_MIN_PKT_LEN + payload_len;
+   int pkt_len = 3 + body_len; // 3 bytes for STX, checksum, ETX
    int l;
 
    s21_ack(p); // Send ACK before the reply
 
-   response[S21_STX_OFFSET]  = STX;
-   response[S21_CMD0_OFFSET] = cmd[S21_CMD0_OFFSET] + 1;
-   response[S21_CMD1_OFFSET] = cmd[S21_CMD1_OFFSET];
-   response[S21_PAYLOAD_OFFSET + payload_len] = s21_checksum(response, pkt_len);
-   response[S21_PAYLOAD_OFFSET + payload_len + 1] = ETX;
+   response[S21_STX_OFFSET] = STX; // +2 below accounts for this
+   response[S21_CMD0_OFFSET + body_len] = s21_checksum(response, pkt_len);
+   response[S21_CMD0_OFFSET + body_len + 1] = ETX;
 
    serial_write(p, response, pkt_len);
+}
+
+static void s21_reply(int p, unsigned char *response, const unsigned char *cmd, int payload_len)
+{
+	response[S21_CMD0_OFFSET] = cmd[S21_CMD0_OFFSET] + 1;
+    response[S21_CMD1_OFFSET] = cmd[S21_CMD1_OFFSET];
+
+	s21_nonstd_reply(p, response, 2 + payload_len); // Body is two cmd bytes plus payload
 }
 
 static void send_temp(int p, unsigned char *response, const unsigned char *cmd, int value)
@@ -285,12 +289,40 @@ main(int argc, const char *argv[])
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
+		 case '2':
+		    // BRP069B41 sends this as first command. If NAK is received, it keeps retrying
+			// and doesn't send anything else. Suggestion - query AC features
+			// The response values here are kindly provided by a user in reverse engineering
+			// thread: https://github.com/revk/ESP32-Faikin/issues/408#issuecomment-2278296452
+			// Correspond to A/C models CTXM60RVMA, CTXM35RVMA
+			// It was experimentally found that with different values, given by FTXF20D, the
+			// controller falls into error 252 and refuses to accept A/C commands over HTTP.
+		    if (debug)
+		       printf(" -> unknown ('F2')\n");
+			response[3] = 0x3D; // FTXF20D: 0x34;
+			response[4] = 0x3B; // FTXF20D: 0x3A;
+			response[5] = 0x00;
+			response[6] = 0x80;
+
+		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
+		 case '3':
+		    if (debug)
+		       printf(" -> powerful ('F3') %d\n", powerful);
+			response[3] = 0x30; // No idea what this is, taken from my FTXF20D
+			response[4] = 0xFE;
+			response[5] = 0xFE;
+			response[6] = powerful ? 2 : 0;
+
+		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
 		 case '4':
+		    // Also taken from CTXM60RVMA, CTXM35RVMA. Not researched yet.
 		    if (debug)
 		       printf(" -> unknown ('F4')\n");
-		    response[3] = 0x30; // No idea what this is, taken from my FTXF20D
+		    response[3] = 0x30;
 			response[4] = 0x00;
-			response[5] = 0xA0;
+			response[5] = 0x80; // FTXF20D: 0xA0;
 			response[6] = 0x30;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
@@ -307,8 +339,8 @@ main(int argc, const char *argv[])
 			break;
 		 case '6':
 		    if (debug)
-		       printf(" -> powerful %d\n", powerful);
-		    response[3] = powerful ? '2' : '0';
+		       printf(" -> powerful ('F6') %d\n", powerful);
+		    response[3] = powerful ? 2 : 0;
 			response[4] = 0;
 			response[5] = 0;
 			response[6] = 0;
@@ -325,12 +357,26 @@ main(int argc, const char *argv[])
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
+		case '8':
+		    if (debug)
+		       printf(" -> Protocol version = 1.0\n");
+			// 'F8' - this is found out to be protocol version.
+			// My FTXF20D replies with '0020' (assuming reading in reverse like everything else).
+			// If we say that, BRP069B41 then asks for F9 (we know it's different form of home/outside sensor)
+			// then proceeds requiring more commands, majority of english alphabet. I got tired implementing
+			// all of them and tried to downgrade the response to '0000'. This caused the controller sending
+			// 'MM' command (see below), and then it goes online with our emulated A/C.
+			// '0010' gives the same results
+		    response[3] = 0x30;
+			response[4] = 0x31; // FTXF20D: 0x32;
+			response[5] = 0x30;
+			response[6] = 0x30;
+
+			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
  /*
   * I also tried the following commands on my FTXF20D and got
   * responses as listed. It is currently unknown what they report.
-  * 'F2' 06 02 47 32 34 3A 00 80 67 03
-  * 'F3' 06 02 47 33 30 30 30 00 0A 03
-  * 'F8' 06 02 47 38 30 32 30 30 41 03
   * 'F9' 06 02 47 39 B4 FF FF 30 62 03
   * 'RI' 06 02 53 49 35 36 32 2B 64 03 - the same data as for 'RH', probably firmware bug
   */
@@ -339,9 +385,23 @@ main(int argc, const char *argv[])
 		    s21_nak(p, buf);
 		    continue;
 		 }
-	  } else if (buf[1] == 'R') {
+	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
+		if (debug)
+		    printf(" -> unknown ('F4')\n");
+		// This is sent by BRP069B41 for protocol version 1 (see F8 description above)
+		// I experimentally found out that this command doesn't have a second
+		// byte, and the A/C always responds with this. Note non-standard
+		// response form.
+		response[S21_CMD0_OFFSET] = 'M';
+		response[2] = 'F';
+		response[3] = 'F';
+		response[4] = 'F';
+		response[5] = 'F';
+
+		s21_nonstd_reply(p, response, 5);
+	  } else if (buf[S21_CMD0_OFFSET] == 'R') {
 		 // Query temperature sensors
-		 switch (buf[2]) {
+		 switch (buf[S21_CMD1_OFFSET]) {
 	     case 'H':
 		    send_temp(p, response, buf, home);
 		    break;
