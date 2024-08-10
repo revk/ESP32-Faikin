@@ -15,12 +15,14 @@ SQLLIB=$(shell mariadb_config --libs)
 SQLVER=$(shell mariadb_config --version | sed 'sx\..*xx')
 endif
 
-TOOLS := faikin faikin-s21
 ifdef	SQLINC
-TOOLS += faikinlog faikingraph
+TOOLS := faikinlog faikingraph
 else
+TOOLS :=
 $(warning Warning - mariadb/mysql not installed, needed if you want to build tools)
 endif
+
+all: tools
 
 tools:	$(TOOLS)
 
@@ -41,12 +43,6 @@ AJL/ajl.o: AJL/ajl.c
 
 CCOPTS=${SQLINC} -I. -I/usr/local/ssl/include -D_GNU_SOURCE -g -Wall -funsigned-char -lm
 OPTS=-L/usr/local/ssl/lib ${SQLLIB} ${CCOPTS}
-
-faikin: faikin.c
-	gcc -O -o $@ $< -lpopt ${INCLUDES} ${LIBS}
-
-faikin-s21: faikin-s21.c ../ESP32/main/daikin_s21.h ../ESP32/main/faikin_enums.h
-	gcc -O0 -g -o $@ $< -lpopt -lm ${INCLUDES} ${LIBS}
 
 faikinlog: faikinlog.c SQLlib/sqllib.o AJL/ajl.o ../ESP32/main/acextras.m ../ESP32/main/acfields.m ../ESP32/main/accontrols.m
 	cc -O -o $@ $< -lpopt -lmosquitto -ISQLlib SQLlib/sqllib.o -IAJL AJL/ajl.o ${INCLUDES} ${OPTS}
