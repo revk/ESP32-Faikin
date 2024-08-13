@@ -81,9 +81,9 @@ const struct FanMode fans[] = {
 const struct FanMode cn_wired_fans[] = {
    {'A', "auto"},
    {'1', "low"},
-   {0, "lowMedium"}, // Not used
+   {0, "lowMedium"},            // Not used
    {'3', "medium"},
-   {0, "mediumHigh"}, // Not used
+   {0, "mediumHigh"},           // Not used
    {'5', "high"},
    {'Q', "quiet"},
    {0, NULL}
@@ -148,15 +148,15 @@ lookup_fan_mode (const char *name)
 
    for (f = get_fan_modes (); f->name; f++)
    {
-      if (!strcmp(name, f->name))
+      if (!strcmp (name, f->name))
       {
          if (f->mode)
             return f->mode;
-         break; // The value isn't valid for this protocol
+         break;                 // The value isn't valid for this protocol
       }
    }
 
-   return *name; // Fallback
+   return *name;                // Fallback
 }
 
 static const char *
@@ -947,7 +947,7 @@ static int
 is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2)
 {
    return rxlen >= S21_MIN_PKT_LEN && buf[S21_STX_OFFSET] == STX && buf[rxlen - 1] == ETX &&
-          buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
+      buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
 }
 
 static void
@@ -1383,7 +1383,6 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
    }
-
    // The following code converts the received MQTT message to our generic format,
    // then passes it to daikin_control()
    jo_t s = jo_object_alloc ();
@@ -1463,6 +1462,14 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          jo_int (s, "demand", atoi (value));
       if (!strcmp (suffix, "sensor"))
          jo_bool (s, "sensor", checkbool ());
+      if (!strcmp (suffix, "econo"))
+         jo_bool (s, "econo", checkbool ());
+      if (!strcmp (suffix, "powerful"))
+         jo_bool (s, "powerful", checkbool ());
+      if (!strcmp (suffix, "quiet"))
+         jo_bool (s, "quiet", checkbool ());
+      if (!strcmp (suffix, "comfort"))
+         jo_bool (s, "comfort", checkbool ());
       if (!strcmp (suffix, "power"))
          jo_bool (s, "power", checkbool ());
       if (!strcmp (suffix, "streamer"))
@@ -2286,12 +2293,13 @@ legacy_web_set_special_mode (httpd_req_t * req)
 }
 
 static void
-addmodes (jo_t j, const struct FanMode * modes)
+addmodes (jo_t j, const struct FanMode *modes)
 {
    const struct FanMode *f;
 
-   jo_array (j, "fan_modes");\
-   for (f = modes; f->name; f++) {
+   jo_array (j, "fan_modes");
+   for (f = modes; f->name; f++)
+   {
       // Only list modes, which are valid for current protocol
       if (f->mode)
          jo_string (j, NULL, f->name);
@@ -2440,8 +2448,7 @@ send_ha_config (void)
          {
             // alwaysnight setting skips "auto"
             addmodes (j, alwaysnight ? &fans[1] : fans);
-         }
-         else if (proto_type () == PROTO_TYPE_CN_WIRED)
+         } else if (proto_type () == PROTO_TYPE_CN_WIRED)
          {
             addmodes (j, cn_wired_fans);
          }
@@ -2488,6 +2495,11 @@ send_ha_config (void)
    addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Fan", hafanrpm ? "rpm" : "Hz", "mdi:fan");
    addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power", "mdi:power");
    addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer", "mdi:air-filter");
+   addswitch (haswitches && (daikin.status_known & CONTROL_sensor), "sensor", "Sensor mode", "mdi:motion-sensor");
+   addswitch (haswitches && (daikin.status_known & CONTROL_powerful), "powerful", "Powerful", "mdi:arm-flex");
+   addswitch (haswitches && (daikin.status_known & CONTROL_comfort), "comfort", "Comfort mode", "mdi:teddy-bear");
+   addswitch (haswitches && (daikin.status_known & CONTROL_quiet), "quiet", "Quiet outdoor", "mdi:volume-minus");
+   addswitch (haswitches && (daikin.status_known & CONTROL_econo), "econo", "Econo mode", "mdi:trending-down");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *name, const char *icon)
    {
@@ -2641,11 +2653,21 @@ revk_state_extra (jo_t j)
       jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
    {
-      const struct FanMode * f = get_fan_modes ();
+      const struct FanMode *f = get_fan_modes ();
       jo_string (j, "fan", f[daikin.fan].name);
    }
    if (daikin.status_known & CONTROL_streamer)
       jo_bool (j, "streamer", daikin.streamer);
+   if (daikin.status_known & CONTROL_quiet)
+      jo_bool (j, "quiet", daikin.quiet);
+   if (daikin.status_known & CONTROL_econo)
+      jo_bool (j, "econo", daikin.econo);
+   if (daikin.status_known & CONTROL_comfort)
+      jo_bool (j, "comfort", daikin.comfort);
+   if (daikin.status_known & CONTROL_powerful)
+      jo_bool (j, "powerful", daikin.powerful);
+   if (daikin.status_known & CONTROL_sensor)
+      jo_bool (j, "sensor", daikin.sensor);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
@@ -2976,7 +2998,7 @@ app_main ()
                   // Send new modes to the AC. We have just received a data packet; CN_WIRED devices
                   // may dislike being interrupted, so we delay for 20 ms in order for the packet
                   // trailer pulse (which we ignore) passes
-                  sys_msleep(20);
+                  sys_msleep (20);
                   // We send modes as a "response" to every packet from the AC. We know that original
                   // equipment (wall panel, as well as Daichi 3rd party controller) does that too; and
                   // we also know that some ACs (FTN15PV1L) don't take commands on 1st try if we don't
