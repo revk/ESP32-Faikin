@@ -12,8 +12,6 @@ The first section coverrs teh direct controls and status for the air-con unit. t
 
 Making changes has immediate effect, and changes by other means, such as IR remote, show immediately (within seconds).
 
-The one exception is the fan "Night" mode, where available. This can be set but it seems there is no way to tell it has been set, so this only shows if set from this interface.
-
 ## Automated controls
 
 The automated controls allow a separate layer of controls to be applied. These work by setting "Cool" and "Heat" as needed to achieve a desired temperature, much like the air-con's own "Auto" mode. But with more options.
