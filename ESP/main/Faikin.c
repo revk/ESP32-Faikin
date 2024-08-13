@@ -528,8 +528,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                report_float (temp, daikin.temp);        // Does not have temp in other modes
-            if (s21.RG >= S21MAXTRY)
-            { // RG is better, so used if working
+            if (s21.RG)
+            { // RG is better, so we only look at G1 if RG does not work
                if (payload[3] != 'A')   // Set fan speed
                   report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
                else if (daikin.fan == 6)
@@ -3176,7 +3176,7 @@ app_main ()
                                              CONTROL_sensor | CONTROL_quiet | CONTROL_led))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  if (s21.F3)
+                  if (!s21.F3)
                   {             // F3 or F6 depends on model
                      temp[0] = '0';
                      temp[1] = '0';
@@ -3184,7 +3184,7 @@ app_main ()
                      temp[3] = '0' + (daikin.powerful ? 2 : 0);
                      daikin_s21_command ('D', '3', S21_PAYLOAD_LEN, temp);
                   }
-                  if (s21.F6)
+                  if (!s21.F6)
                   {
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
