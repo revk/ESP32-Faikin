@@ -24,7 +24,7 @@
 // A typical payload length, but there are deviations
 #define S21_PAYLOAD_LEN 4
 // A minimum length of a packet (with no payload): framing + CMD0 + CMD1
-#define S21_MIN_PKT_LEN S21_FRAMING_LEN + 2
+#define S21_MIN_PKT_LEN (S21_FRAMING_LEN + 2)
 
 // Encoding for minimum target temperature value, correspond to 18 deg.C.
 #define AC_MIN_TEMP_VALUE '@'

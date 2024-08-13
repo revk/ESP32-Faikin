@@ -31,6 +31,41 @@ static const char TAG[] = "Faikin";
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
+#define	S21MAXTRY	20
+struct
+{                               // Status of S21 messages that get a valid response
+   uint8_t F1;
+   uint8_t F2;
+   uint8_t F3;
+   uint8_t F4;
+   uint8_t F5;
+   uint8_t F6;
+   uint8_t F7;
+   uint8_t F8;
+   uint8_t F9;
+   uint8_t FA;
+   uint8_t FB;
+   uint8_t FC;
+   uint8_t FG;
+   uint8_t FK;
+   uint8_t FN;
+   uint8_t FM;
+   uint8_t FP;
+   uint8_t FQ;
+   uint8_t FS;
+   uint8_t FT;
+   uint8_t RD;
+   uint8_t RG;
+   uint8_t RI;
+   uint8_t RM;
+   uint8_t RL;
+   uint8_t RN;
+   uint8_t RH;
+   uint8_t RX;
+   uint8_t Ra;
+   uint8_t Rd;
+} s21 = { 0 };
+
 // Settings (RevK library used by MQTT setting command)
 
 enum
@@ -470,10 +505,13 @@ comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
 int
 daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
-   if (len > 1 && s21debug)
+   if (len >= 1 && s21debug)
    {
       char tag[3] = { cmd, cmd2 };
-      jo_stringn (s21debug, tag, (char *) payload, len);
+      if (debughex)
+         jo_base16 (s21debug, tag, payload, len);
+      else
+         jo_stringn (s21debug, tag, (char *) payload, len);
    }
    // Remember to add to polling if we add more handlers
    if (cmd == 'G')
@@ -490,12 +528,15 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                report_float (temp, daikin.temp);        // Does not have temp in other modes
-            if (payload[3] != 'A')      // Set fan speed
-               report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');  // XXX12345 mapped to A12345Q
-            else if (daikin.fan == 6 && (noguessnight || (daikin.power && daikin.fanrpm < 750)))
-               report_uint8 (fan, 6);   // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
-            else
-               report_uint8 (fan, alwaysnight ? 6 : 0); // Auto as fan too fast to be quiet mode
+            if (s21.RG >= S21MAXTRY)
+            { // RG is better, so used if working
+               if (payload[3] != 'A')   // Set fan speed
+                  report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
+               else if (daikin.fan == 6)
+                  report_uint8 (fan, 6);        // Quiet mode set (it returns as auto, so we assume it should be quiet if fan speed is low)
+               else
+                  report_uint8 (fan, 0);        // Auto as fan too fast to be quiet mode
+            }
          }
          break;
       case '3':                // Seems to be an alternative to G6
@@ -551,7 +592,23 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       }
    if (cmd == 'S')
    {
-      if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D' || cmd2 == 'N' || cmd2 == 'M')
+      if (cmd2 == 'G')
+      {
+         if (check_length (cmd, cmd2, len, 1, payload))
+         {                      // One byte response!
+            switch (cmd2)
+            {
+            case 'G':
+               if (payload[0] >= '3' && payload[0] <= '7')
+                  report_uint8 (fan, payload[0] - '3' + 1);     // 1-5
+               else if (payload[0] == 'A')
+                  report_uint8 (fan, 0);        // Auto
+               else if (payload[0] == 'B')
+                  report_uint8 (fan, 6);        // Quiet
+               break;
+            }
+         }
+      } else if (cmd2 == 'L' || cmd2 == 'd' || cmd2 == 'D' || cmd2 == 'N' || cmd2 == 'M')
       {                         // These responses are always only 3 bytes long
          if (check_length (cmd, cmd2, len, 3, payload))
          {
@@ -1617,7 +1674,7 @@ web_root (httpd_req_t * req)
    revk_web_send (req, "</tr>");
    add ("Mode", "mode", "Auto", "A", "Heat", "H", "Cool", "C", "Dry", "D", "Fan", "F", NULL);
    if (have_5_fan_speeds ())
-      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", alwaysnight ? NULL : "Auto", "A", NULL);
+      add ("Fan", "fan", "1", "1", "2", "2", "3", "3", "4", "4", "5", "5", "Night", "Q", "Auto", "A", NULL);
    else if (proto_type () == PROTO_TYPE_CN_WIRED)
       add ("Fan", "fan", "Low", "1", "Mid", "3", "High", "5", "Auto", "A", "Quiet", "Q", NULL);
    else
@@ -2158,7 +2215,7 @@ legacy_web_set_control_info (httpd_req_t * req)
          {
             int8_t setval;
             if (*v == 'A')
-               setval = (alwaysnight ? 6 : 0);
+               setval = 0;
             else if (*v == 'B')
                setval = 6;
             else if (*v >= '3' && *v <= '7')
@@ -2446,8 +2503,7 @@ send_ha_config (void)
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
          if (have_5_fan_speeds ())
          {
-            // alwaysnight setting skips "auto"
-            addmodes (j, alwaysnight ? &fans[1] : fans);
+            addmodes (j, fans);
          } else if (proto_type () == PROTO_TYPE_CN_WIRED)
          {
             addmodes (j, cn_wired_fans);
@@ -3017,16 +3073,15 @@ app_main ()
                // Each value has a smart NAK counter (see macro below), which allows
                // for autodetecting unsupported commands
 #define poll(a,b,c,d)                         \
-   static uint8_t a##b##d=2;                  \
-   if(a##b##d){                               \
+   if(s21.a##b##d<S21MAXTRY){                               \
       int r=daikin_s21_command(*#a,*#b,c,#d); \
       if (r==RES_OK)                          \
-         a##b##d=100;                         \
+         s21.a##b##d=0;                         \
       else if(r==RES_NAK)                     \
-         a##b##d--;                           \
+         s21.a##b##d++;                           \
    }                                          \
    if(!daikin.talking)                        \
-      a##b##d=2;
+      s21.a##b##d=0;
                poll (F, 1, 0,);
                if (debug)
                {
@@ -3073,14 +3128,15 @@ app_main ()
                poll (R, L, 0,); // Fan speed
                poll (R, d, 0,); // Compressor
                poll (R, N, 0,); // Angle
+               poll (R, G, 0,); // Fan
                if (debug)
                {
                   poll (R, M, 0,);
                   poll (R, X, 0,);
                   poll (R, D, 0,);
                }
-               if (RH == 100 && Ra == 100)
-                  F9 = 0;       // Don't use F9
+               if (!s21.RH && !s21.Ra)
+                  s21.F9 = 255; // Don't use F9
                if (*debugsend)
                {
                   b.dumping = 1;        // Force dumping
@@ -3120,7 +3176,7 @@ app_main ()
                                              CONTROL_sensor | CONTROL_quiet | CONTROL_led))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  if (F3)
+                  if (s21.F3)
                   {             // F3 or F6 depends on model
                      temp[0] = '0';
                      temp[1] = '0';
@@ -3128,7 +3184,7 @@ app_main ()
                      temp[3] = '0' + (daikin.powerful ? 2 : 0);
                      daikin_s21_command ('D', '3', S21_PAYLOAD_LEN, temp);
                   }
-                  if (F6)
+                  if (s21.F6)
                   {
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);

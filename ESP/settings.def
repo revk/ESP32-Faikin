@@ -1,5 +1,6 @@
 bit	dump									// Dump protocol on MQTT for each message
 bit	debug				.live=1					// Debug (extra messages and list replies in one long message on MQTT)
+bit	debughex			.live=1					// Debug in hex
 bit	snoop									// Listen only (for debugging)
 bit	livestatus			.live=1					// Send status messages in real time
 bit	fixstatus								// Send status as fixed values not array
@@ -33,10 +34,7 @@ bit	no.faikinauto								// Do not show faikin auto controls
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
-bit	no.guessnight								// Do not assume someone else can set auto after we set night
 bit	no.icons			.live=1					// Do not show icons on web UI
-
-bit	alwaysnight			.old="alwaysquiet"			// Always set Night mode not Auto
 
 bit	dark									// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
