@@ -586,6 +586,17 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             report_float (outside, (float) ((signed) payload[1] - 0x80) / 2);
          }
          break;
+      case 'C':
+         if (len > 0)
+         {
+            // Normally response length would be 4, but let's try being more creative
+            // and future-proof. Accept the whole payload whatever it is.
+            int limit = len >= sizeof (daikin.model) ? sizeof (daikin.model) - 1 : len;
+            for (int i = 0; i < limit; i++) // The string is provided in reverse
+               daikin.model[i] = payload[len - i - 1];
+            daikin.model[limit] = 0;
+         }
+         break;
       case 'M':                // Power meter
          report_int (Wh, s21_decode_hex_sensor (payload) * 100);        // 100Wh units
          break;
@@ -3104,7 +3115,10 @@ app_main ()
                {
                   poll (F, A, 0,);
                   poll (F, B, 0,);
-                  poll (F, C, 0,);
+               }
+               poll (F, C, 0,);
+               if (debug)
+               {
                   poll (F, G, 0,);
                   poll (F, K, 0,);
                }
