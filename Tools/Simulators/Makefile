@@ -6,12 +6,26 @@ LIBS :=
 INCLUDES :=
 endif
 
+CFLAGS := -g -O
+
 ESP_DIR := ../../ESP
 
-faikin-x50: faikin-x50.c
-	gcc -O -o $@ $< -lpopt -I${ESP_DIR} ${INCLUDES} ${LIBS}
-
-faikin-s21: faikin-s21.c ${ESP_DIR}/main/daikin_s21.h ${ESP_DIR}/main/faikin_enums.h
-	gcc -O -g -o $@ $< -lpopt -I${ESP_DIR} ${INCLUDES} ${LIBS}
-
 all: faikin-x50 faikin-s21
+
+osal.o : osal.c osal.h
+	gcc $(CFLAGS) -c -o $@ $<
+
+faikin-s21.o : faikin-s21.c osal.h ${ESP_DIR}/main/daikin_s21.h ${ESP_DIR}/main/faikin_enums.h
+	gcc $(CFLAGS) -c -o $@ $< -I${ESP_DIR} ${INCLUDES}
+
+faikin-x50.o : faikin-x50.c osal.h
+	gcc $(CFLAGS) -c -o $@ $< -I${ESP_DIR} ${INCLUDES}
+
+faikin-x50: faikin-x50.o osal.o
+	gcc -o $@ $^ -lpopt ${LIBS}
+
+faikin-s21: faikin-s21.o osal.o
+	gcc -o $@ $^ -lpopt ${LIBS}
+
+clean:
+	rm -f faikin-x50 faikin-s21 faikin-x50.exe faikin-s21.exe *.o

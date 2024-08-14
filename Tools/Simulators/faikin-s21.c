@@ -13,12 +13,7 @@
 #include <stdint.h>
 
 #include "main/daikin_s21.h"
-
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <termios.h>
-#endif
+#include "osal.h"
 
 int debug = 0; // Dump commands and responses (short form)
 int dump  = 0; // Raw dump
@@ -210,32 +205,8 @@ main(int argc, const char *argv[])
       fprintf(stderr, "Cannot open %s: %s", port, strerror(errno));
 	  exit(255);
    }
-#ifdef WIN32
-   DCB dcb = {0};
-   
-   dcb.DCBlength = sizeof(dcb);
-   dcb.BaudRate  = CBR_2400;
-   dcb.fBinary   = TRUE;
-   dcb.fParity   = TRUE;
-   dcb.ByteSize  = 8;
-   dcb.Parity    = EVENPARITY;
-   dcb.StopBits  = TWOSTOPBITS;
-   
-   if (!SetCommState((HANDLE)_get_osfhandle(p), &dcb)) {
-      fprintf(stderr, "Failed to set port parameters\n");
-	  exit(255);
-   }
-#else
-   struct termios  t;
-   if (tcgetattr(p, &t) < 0)
-      err(1, "Cannot get termios");
-   cfsetspeed(&t, 2400);
-   t.c_cflag = CREAD | CS8 | PARENB | CSTOPB;
-   if (tcsetattr(p, TCSANOW, &t) < 0)
-      err(1, "Cannot set termios");
-   usleep(100000);
-   tcflush(p, TCIOFLUSH);
-#endif
+
+   set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS);
 
    unsigned char buf[256];
    unsigned char response[256];
