@@ -36,6 +36,63 @@ int wait_read(int p, unsigned int timeout)
         return -1;
 }
 
+static HANDLE hMapFile;
+
+void *create_shmem(const char *name, void *data, unsigned int len)
+{
+   void *pBuf;
+
+   hMapFile = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, len, name);
+   if (hMapFile == NULL)
+   {
+        fprintf(stderr, "Could not create file mapping object (0x%08X)\n", GetLastError());
+        return NULL;
+   }
+
+   pBuf = MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0,len);
+
+   if (pBuf == NULL)
+   {
+       fprintf(stderr, "Could not map view of file (0x%08X)\n", GetLastError());
+       CloseHandle(hMapFile);
+       return NULL;
+   }
+
+   CopyMemory(pBuf, data, len);
+
+   return pBuf;
+}
+
+void *open_shmem(const char *name, unsigned int len)
+{
+   void *pBuf;
+
+   hMapFile = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, name);
+
+   if (hMapFile == NULL)
+   {
+      fprintf(stderr, "Could not open file mapping object (0x%08X)\n", GetLastError());
+      return NULL;
+   }
+
+   pBuf = MapViewOfFile(hMapFile, FILE_MAP_ALL_ACCESS, 0, 0, len);
+
+   if (pBuf == NULL)
+   {
+      fprintf(stderr, "Could not map view of file (0x%08X)\n", GetLastError());
+      CloseHandle(hMapFile);
+      return NULL;
+   }
+
+   return pBuf;
+}
+
+void close_shmem(void *mem)
+{
+   UnmapViewOfFile(mem);
+   CloseHandle(hMapFile);
+}
+
 #else
 
 void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
@@ -60,6 +117,23 @@ int wait_read(int p, unsigned int timeout)
     struct timeval  tv = {0, timeout * 1000};
     
     return select(p + 1, &r, NULL, NULL, &tv);
+}
+
+void *create_shmem(const char *name, void* data, unsigned int len)
+{
+    return data;
+}
+
+void *open_shmem(const char *name, unsigned int len)
+{
+    fprintf(stderr, "Sorry, shared memory is not implemented for UNIX targets\n");
+    exit(255);
+    return NULL;
+}
+
+void close_shmem(void *mem)
+{
+    // Not implemented
 }
 
 #endif

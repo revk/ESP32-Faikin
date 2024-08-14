@@ -21,3 +21,6 @@
 
 void set_serial(int pm, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop);
 int wait_read(int p, unsigned int timeout);
+void *create_shmem(const char *name, void* data, unsigned int len);
+void *open_shmem(const char *name, unsigned int len);
+void close_shmem(void *mem);
