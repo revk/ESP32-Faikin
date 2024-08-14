@@ -529,7 +529,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             else if (!isnan (daikin.temp))
                report_float (temp, daikin.temp);        // Does not have temp in other modes
             if (s21.RG)
-            { // RG is better, so we only look at G1 if RG does not work
+            {                   // RG is better, so we only look at G1 if RG does not work
                if (payload[3] != 'A')   // Set fan speed
                   report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
                else if (daikin.fan == 6)
@@ -592,7 +592,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             // Normally response length would be 4, but let's try being more creative
             // and future-proof. Accept the whole payload whatever it is.
             int limit = len >= sizeof (daikin.model) ? sizeof (daikin.model) - 1 : len;
-            for (int i = 0; i < limit; i++) // The string is provided in reverse
+            for (int i = 0; i < limit; i++)     // The string is provided in reverse
                daikin.model[i] = payload[len - i - 1];
             daikin.model[limit] = 0;
          }
@@ -2839,6 +2839,8 @@ revk_web_extra (httpd_req_t * req, int page)
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
    revk_web_setting (req, "Text rather than icons", "noicons");
    revk_web_setting (req, "Home Assistant", "haenable");
+   if (haenable)
+      revk_web_setting (req, "HA Extra switches", "haswitches");
    revk_web_setting (req, "Dark mode LED", "dark");
    if (!daikin.remote)
    {
