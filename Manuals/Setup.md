@@ -82,3 +82,38 @@ The controls page shows teh controls for your air-con, and also has a link for *
 We recommend you upgrade the software when you receive the device, as new features are often added.
 
 Go to the web page, and select *WiFi settings*. You can click on *Upgrade*. This does need internet access.
+
+## Re-flash Firmware
+
+If you've forgotten your login credentials or, for some reason, you are denied access to the settings page, you will need to reflash your device.
+
+### Prerequisites:
+
+- A USB to serial converter (such as this one: ![Amazon Link](https://amzn.eu/d/5VDxz50) or ![Tasmotizer-PCB](https://github.com/revk/Tasmotizer-PCB)).
+- Some Dupont wires.
+- Download the correct firmware binaries for your device (PICO, S1, or S3) from this ![link](https://github.com/revk/ESP32-Faikin/tree/main/ESP/release).
+
+### Connection
+Connect the USB to serial converter according to this pinout diagram::
+![357787461-10591127-4cfe-4293-a29b-56408e83f4b8](https://github.com/user-attachments/assets/2d2a5358-981a-45ef-9e31-a6a61b251568)
+
+### Erase Flash
+Run the following command in the shell::
+
+``` 
+esptool.py --chip esp32s3 erase_flash
+```
+
+### Flash the New Firmware
+Run the following command in the shell (for S3 chip):
+
+```
+esptool.py -p /dev/cu.usbserial-A50285BI write_flash 0x0 Faikin-S3-MINI-N4-R2-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S3-MINI-N4-R2.bin
+```
+
+or (for S1 chip)
+
+```
+esptool.py -p /dev/ttyUSB0 write_flash 0x1000 Faikin-S1-PICO-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S1-PICO.bin
+```
+
