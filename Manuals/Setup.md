@@ -92,6 +92,7 @@ If you've forgotten your login credentials or, for some reason, you are denied a
 - A USB to serial converter (such as this one: ![Amazon Link](https://amzn.eu/d/5VDxz50) or ![Tasmotizer-PCB](https://github.com/revk/Tasmotizer-PCB)).
 - Some Dupont wires.
 - Download the correct firmware binaries for your device (PICO, S1, or S3) from this ![link](https://github.com/revk/ESP32-Faikin/tree/main/ESP/release).
+- Note that newer boards may need a TC2030 lead for USB instead
 
 ### Connection
 Connect the USB to serial converter according to this pinout diagram::
