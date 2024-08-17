@@ -16,6 +16,9 @@ struct S21State
     unsigned int protocol;    // Protocol version
     char         model[4];    // Reported A/C model code
     // The following aren't understood yet
+    unsigned char F2[4];
+    unsigned char F3[4];
+    unsigned char F4[4];
     unsigned char FB[4];
     unsigned char FG[4];
     unsigned char FK[4];

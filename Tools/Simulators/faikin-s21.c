@@ -37,7 +37,13 @@ static struct S21State init_state = {
    .power    = 2,	 // Power consumption in 100 Wh units
    .protocol = 2,    // Protocol version
    .model    = {'1', '3', '5', 'D'},     // Reported A/C model code. Default taken from FTXF20D5V1B
-   // Taken from FTXF20D
+   // Values are taken from FTXF20D5V1B, except F4.
+   // F4 corresponds to A/C models CTXM60RVMA, CTXM35RVMA. Kindly provided by
+   // a user in reverse engineering thread:
+   // https://github.com/revk/ESP32-Faikin/issues/408#issuecomment-2278296452
+   .F2       = {0x34, 0x3A, 0x00, 0x80},
+   .F3       = {0x30, 0xFE, 0xFE, 0x00},
+   .F4       = {0x30, 0x00, 0x80, 0x30},
    .FB       = {0x30, 0x33, 0x36, 0x30}, // 0630
    .FG       = {0x30, 0x34, 0x30, 0x30}, // 0040
    .FK       = {0x71, 0x73, 0x35, 0x31}, // 15sq
@@ -356,30 +362,37 @@ main(int argc, const char *argv[])
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '2':
-		    // BRP069B41 sends this as first command. If NAK is received, it keeps retrying
-			// and doesn't send anything else. Suggestion - query AC features
-			// The response values here are kindly provided by a user in reverse engineering
-			// thread: https://github.com/revk/ESP32-Faikin/issues/408#issuecomment-2278296452
-			// Correspond to A/C models CTXM60RVMA, CTXM35RVMA
-			// It was experimentally found that with different values, given by FTXF20D, the
-			// controller falls into error 252 and refuses to accept A/C commands over HTTP.
-			// FTXF20D: 34 3A 00 80
-			unknown_cmd(p, response, buf, 0x3D, 0x3B, 0x00, 0x80);
+		    // Optional features. Displayed in /aircon/get_model_info:
+			// byte 0:
+			// - bit 0 - set to 1 on CTXM60RVMA, CTXM35RVMA. BRP069B41 apparently ignores it.
+			// - bit 2 - Swing (any kind) is avaiiable
+			// - bit 3 - Horizontal swing is available. 0 = vertical only
+			//   Swing options are only effective when "enable fan controls" bit in FK command
+			//   is reported as 1.
+			// byte 1:
+			// - bit 3: 0 => type=C, 1 => type=N - unknown
+			// byte 2: Zero value, perhaps not used
+			// byte 3: Something about humidity sensor, complicated:
+			// - bit 1: humd=<bool> - Humidity sensor available ???
+			// - bit 4:
+			//   0 => s_humd=165 when bit 1 == 1, or s_humd=0 when bit 1 == 0
+			//   1 => s_humd=183 when bit 1 == 1, or s_humd=146 when bit 1 == 0
+            //   s_humd is forced to 16 regardless of bits 1 and 4 when byte 2 bit 1
+			//   in FK command (see below) is set to 1
+			// Some known responses:
+			// CTXM60RVMA, CTXM35RVMA : 3D 3B 00 80
+			// FTXF20D5V1B, ATX20K2V1B: 34 3A 00 80
+			unknown_cmd_a(p, response, buf, state->F2);
 			break;
 		 case '3':
-		    if (debug)
-		       printf(" -> powerful ('F3') %d\n", state->powerful);
-			response[3] = 0x30; // No idea what this is, taken from my FTXF20D
-			response[4] = 0xFE;
-			response[5] = 0xFE;
-			response[6] = state->powerful ? 2 : 0;
-
-		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+		 	// Faikin treats byte[3] of payload as "powerful" flag, alternative to F6,
+			// but that's not true, at least on ATX20K2V1B and FTXF20D5.
+		 	unknown_cmd_a(p, response, buf, state->F3);
 			break;
 		 case '4':
 		    // Also taken from CTXM60RVMA, CTXM35RVMA, and also error 252 if wrong
 			// FTXF20D: 30 00 A0 30
-			unknown_cmd(p, response, buf, 0x30, 0x00, 0x80, 0x30);
+			unknown_cmd_a(p, response, buf, state->F4);
 			break;
 		 case '5':
 		    if (debug)
@@ -468,29 +481,34 @@ main(int argc, const char *argv[])
 			unknown_cmd_a(p, response, buf, state->FB);
 			break;
 		 case 'G':
+		 	// byte[1] of the payload is a hexadecimal character from '0' to 'F'.
+			// Found to increment every time any key is pushed on RC. After 'F' rolls
+			// over to '1'
+			// Other bytes are always 30 xx 30 30
 			unknown_cmd_a(p, response, buf, state->FG);
 			break;
 		 case 'K':
 		    // Optional features. Displayed in /aircon/get_model_info:
 			// byte 0:
-			// - bit 2: acled=<bool>. LED control presence ?
+			// - bit 2: acled=<bool>. LED control available ?
 			// - bit 3: land=<bool>
 			// byte 1:
 			// - bit 0: elec=<bool>
 			// - bit 2: temp_rng=<bool>
-			// - bit 3: m_dtct 0=<bool>
+			// - bit 3: m_dtct 0=<bool>. Supposedly "human presence detector AKA "intelligent eye(tm) is available"
 			// byte 2:
-			// - bit 0: Not understood
+			// - bit 0: Japanese market ?? But we don't know a real difference
 			//   0 -> ac_dst=jp
 			//   1 -> ac_dst=--
-			// - bit 1: Not understood. Something with humidity ?
-			//   0 -> s_humd=0
-			//   1 -> s_humd=16
-			// - bit 2: Enable fan controls ???
+			// - bit 1: When set to 1, forces s_humd=16 regardless of F2 command bits
+			// - bit 2: Fan controls available
 			//    0 -> en_frate=0 en_fdir=0 s_fdir=0
 			//    1 -> en_frate=1 en_fdir=1 s_fdir=3
-			//    When set to 0, the "Online controller" app always shows "fan off",
-			//    and attempts to control it do nothing.
+			//    When set to 1, actual values of en_fdir and s_fdir are encoded in F2 command byte 0
+			//    (see above).
+			//    When this bit is changed to 0 on the fly using s21-control, the "Online controller"
+			//    app always shows "fan off", and attempts to control it do nothing. If the app is restarted,
+			//    it doesn't show fan controls (neither speed nor swing) at all for this unit.
 			// - bit 3: disp_dry=<bool>
 			// byte 3 - doesn't change anything
 			// FTXF20D values: 0x71, 0x73, 0x35, 0x31
@@ -519,8 +537,9 @@ main(int argc, const char *argv[])
 			// one by one and simply ran all the alphabet up to FZZ on my FTXF20D, so here it is.
 			unknown_cmd(p, response, buf, 0x33, 0x37, 0x83, 0x30);
 			break;
-		 // BRP069B41 also sends 'FY' command, but accepts NAK and stops doing so.
-		 // Therefore the command is optional. My FTXF20D also doesn't recognize it.
+		 // BRP069B41 also sends 'FY' command, but accepts NAK and stops probing it.
+		 // Therefore the command is optional. Both of my units (FTXF20D, ATX20K2V1B)
+		 // also don't recognize it.
 		 default:
 		    // Respond NAK to an unknown command. My FTXF20D does the same.
 		    s21_nak(p, buf);
