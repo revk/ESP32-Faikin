@@ -223,31 +223,31 @@ static bleenv_t *bletemp = NULL;
 
 static int
 ble_sensor_connected (void)
-{
-   return ble && *autob;
+{                               // We actually have BLE configured and connected and not missing
+   return (ble && bletemp && !bletemp->missing) ? 1 : 0;
 }
 
 static int
 ble_sensor_enabled (void)
-{
-   return !!*autob;
+{                               // We have BLE enabled and a BLE sensor defeined
+   return (ble && *autob) ? 1 : 0;
 }
 
-#else
+#else // ELA
 
 static int
 ble_sensor_connected (void)
-{
+{                               // No BLE
    return 0;
 }
 
 static int
 ble_sensor_enabled (void)
-{
+{                               // No BLE
    return 0;
 }
 
-#endif
+#endif // ELA
 
 // The current aircon state and stats
 struct
@@ -1566,7 +1566,7 @@ daikin_status (void)
 #define s(name,len)     if((daikin.status_known&CONTROL_##name)&&*daikin.name)jo_string(j,#name,daikin.name);
 #include "acextras.m"
 #ifdef	ELA
-   if (bletemp && !bletemp->missing)
+   if (ble_sensor_connected ())
    {
       jo_object (j, "ble");
       if (bletemp->tempset)
@@ -1579,7 +1579,7 @@ daikin_status (void)
          jo_litf (j, "volt", "%.2f", bletemp->volt / 100.0);
       jo_close (j);
    }
-   if (ble && *autob)
+   if (ble_sensor_enabled ())
       jo_string (j, "autob", autob);
 #endif
    if (daikin.remote)
@@ -1757,7 +1757,7 @@ web_root (httpd_req_t * req)
                   "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
                   "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 
-   if (autor || ble_sensor_connected () || (!nofaikinauto && !daikin.remote))
+   if (autor || ble_sensor_enabled () || (!nofaikinauto && !daikin.remote))
    {
       void addnote (const char *note)
       {
@@ -3000,7 +3000,7 @@ app_main ()
             usleep (1000000LL - (esp_timer_get_time () % 1000000LL));
          }
 #ifdef ELA
-         if (ble_sensor_connected ())
+         if (ble_sensor_enabled ())
          {                      // Automatic external temperature logic - only really useful if autor/autot set
             bleenv_expire (120);
             if (!bletemp || strcmp (bletemp->name, autob))
