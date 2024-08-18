@@ -1422,6 +1422,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
                while (jo_here (j) > JO_CLOSE)
                   jo_next (j);  // Should not be more
                t = jo_next (j); // Pass the close
+               if (!autor && !ble_sensor_enabled ())
+                  daikin.remote = 1;    // Hides local automation settings
                continue;        // As we passed the close, don't skip}
             } else
                min = max = strtof (val, NULL);
@@ -1446,8 +1448,6 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          daikin.env = env;
          daikin.status_known |= CONTROL_env;    // So we report it
       }
-      if (!autor && !ble_sensor_enabled ())
-         daikin.remote = 1;     // Hides local automation settings
       xSemaphoreGive (daikin.mutex);
       return ret ? : "";
    }
