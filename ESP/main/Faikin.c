@@ -33,7 +33,7 @@ static const char TAG[] = "Faikin";
 
 #define	S21MAXTRY	20
 struct
-{                               // Status of S21 messages that get a valid response
+{                               // Status of S21 messages that get a valid response - this is a count of NAKs, so 0 means working...
    uint8_t F1;
    uint8_t F2;
    uint8_t F3;
