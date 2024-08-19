@@ -7,14 +7,12 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <err.h>
 #include <popt.h>
-#include <err.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include <termios.h>
 #include <stdint.h>
 
+#include "osal.h"
 
 int
 main (int argc, const char *argv[])
@@ -71,8 +69,10 @@ main (int argc, const char *argv[])
       //poptSetOtherOptionHelp(optCon, "");
 
       int c;
-      if ((c = poptGetNextOpt (optCon)) < -1)
-         errx (1, "%s: %s\n", poptBadOption (optCon, POPT_BADOPTION_NOALIAS), poptStrerror (c));
+      if ((c = poptGetNextOpt(optCon)) < -1) {
+         fprintf(stderr, "%s: %s\n", poptBadOption(optCon, POPT_BADOPTION_NOALIAS), poptStrerror(c));
+         exit(255);
+      }
 
       if (poptPeekArg (optCon) || !port)
       {
@@ -82,17 +82,12 @@ main (int argc, const char *argv[])
    }
 
    int p = open (port, O_RDWR);
-   if (p < 0)
-      err (1, "Cannot open %s", port);
-   struct termios t;
-   if (tcgetattr (p, &t) < 0)
-      err (1, "Cannot get termios");
-   cfsetspeed (&t, 9600);
-   t.c_cflag = CREAD | CS8 | PARENB;
-   if (tcsetattr (p, TCSANOW, &t) < 0)
-      err (1, "Cannot set termios");
-   usleep (100000);
-   tcflush (p, TCIOFLUSH);
+   if (p < 0) {
+      fprintf(stderr, "Cannot open %s: %s", port, strerror(errno));
+	  exit(255);
+   }
+
+   set_serial(p, 9600, CS8, EVENPARITY, TWOSTOPBITS);
 
    void acsend (unsigned char cmd, const unsigned char *payload, int len)
    {
@@ -134,11 +129,7 @@ main (int argc, const char *argv[])
          unsigned char buf[256];
          while (len < sizeof (buf))
          {
-            fd_set r;
-            FD_ZERO (&r);
-            FD_SET (p, &r);
-            struct timeval tv = { 0, len ? 100000 : 10000 };
-            int l = select (p + 1, &r, NULL, NULL, &tv);
+            int l = wait_read(p, len  ? 100 : 10);
             if (l <= 0)
                break;
             l = read (p, buf + len, sizeof (buf) - len);
@@ -269,7 +260,7 @@ main (int argc, const char *argv[])
          break;
       default:
          acsend (cmd, NULL, 0);
-         warnx ("Unknown %02X", cmd);
+         printf ("Unknown %02X\n", cmd);
       }
    }
    poptFreeContext (optCon);

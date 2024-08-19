@@ -13,32 +13,41 @@
 #include <stdint.h>
 
 #include "main/daikin_s21.h"
+#include "faikin-s21.h"
+#include "osal.h"
 
-#ifdef WIN32
-#include <windows.h>
-#else
-#include <termios.h>
-#endif
+static int debug = 0; // Dump commands and responses (short form)
+static int dump  = 0; // Raw dump
 
-int debug = 0; // Dump commands and responses (short form)
-int dump  = 0; // Raw dump
-
-// Simulated A/C state. Defaults are chosen to be distinct; can be changed via
-// command line.
-int   power       = 0;    // Power on
-int   mode        = 3;    // Mode
-float temp        = 22.5; // Set point
-int   fan         = 3;    // Fan speed
-int   swing       = 0;    // Swing direction
-int   powerful    = 0;    // Powerful mode
-int   eco         = 0;    // Eco mode
-int   home        = 245;  // Reported temparatures (multiplied by 10 here)
-int   outside     = 205;
-int   inlet       = 185;
-int   fanrpm      = 52;   // Fan RPM (divided by 10 here)
-int   comprpm     = 42;   // Compressor RPM
-int   protocol    = 2; // Protocol version
-const char *model = "135D"; // Reported A/C model code. Default taken from FTXF20D5V1B
+// Initial state of a simulated A/C. Defaults are chosen to be distinct;
+// can be changed via command line.
+static struct S21State init_state = {
+   .power    = 0,    // Power on
+   .mode     = 3,    // Mode
+   .temp     = 22.5, // Set point
+   .fan      = 3,    // Fan speed
+   .swing    = 0,    // Swing direction
+   .powerful = 0,    // Powerful mode
+   .eco      = 0,    // Eco mode
+   .home     = 245,  // Reported temparatures (multiplied by 10 here)
+   .outside  = 205,
+   .inlet    = 185,
+   .fanrpm   = 52,   // Fan RPM (divided by 10 here)
+   .comprpm  = 42,   // Compressor RPM
+   .power    = 2,	 // Power consumption in 100 Wh units
+   .protocol = 2,    // Protocol version
+   .model    = {'1', '3', '5', 'D'},     // Reported A/C model code. Default taken from FTXF20D5V1B
+   // Taken from FTXF20D
+   .FB       = {0x30, 0x33, 0x36, 0x30}, // 0630
+   .FG       = {0x30, 0x34, 0x30, 0x30}, // 0040
+   .FK       = {0x71, 0x73, 0x35, 0x31}, // 15sq
+   .FN       = {0x30, 0x30, 0x30, 0x30}, // 0000
+   .FP       = {0x37, 0x33, 0x30, 0x30}, // 0037
+   .FQ       = {0x45, 0x33, 0x30, 0x30}, // 003E
+   .FR       = {0x30, 0x30, 0x30, 0x30}, // 0000
+   .FS       = {0x30, 0x30, 0x30, 0x30}, // 0000
+   .FT       = {0x31, 0x30, 0x30, 0x30}  // 0001
+};
 
 static void hexdump_raw(const unsigned char *buf, unsigned int len)
 {
@@ -128,6 +137,11 @@ static void unknown_cmd(int p, unsigned char *response, const unsigned char *cmd
    s21_reply(p, response, cmd, S21_PAYLOAD_LEN);
 }
 
+static void unknown_cmd_a(int p, unsigned char *response, const unsigned char *cmd, const unsigned char *r)
+{
+   unknown_cmd(p, response, cmd, r[0], r[1], r[2], r[3]);
+}
+
 static void send_temp(int p, unsigned char *response, const unsigned char *cmd, int value, const char *name)
 {
 	char buf[5];
@@ -146,11 +160,11 @@ static void send_temp(int p, unsigned char *response, const unsigned char *cmd, 
 	s21_reply(p, response, cmd, S21_PAYLOAD_LEN);
 }
 
-static void send_int(int p, unsigned char *response, const unsigned char *cmd, int value, const char *name)
+static void send_int(int p, unsigned char *response, const unsigned char *cmd, unsigned int value, const char *name)
 {
 	char buf[4];
 
-	snprintf(buf, sizeof(buf), "%03d", value);
+	snprintf(buf, sizeof(buf), "%03u", value);
 	if (debug)
 	   	printf(" -> %s = %s\n", name, buf);
 
@@ -159,26 +173,45 @@ static void send_int(int p, unsigned char *response, const unsigned char *cmd, i
 	response[S21_PAYLOAD_OFFSET + 1] = buf[1];
 	response[S21_PAYLOAD_OFFSET + 2] = buf[0];
 			
-	s21_reply(p, response, buf, 3); // Nontypical response, 3 bytes, not 4!
+	s21_reply(p, response, cmd, 3); // Nontypical response, 3 bytes, not 4!
+}
+
+static void send_hex(int p, unsigned char *response, const unsigned char *cmd, unsigned int value, const char *name)
+{
+	char buf[5];
+
+	snprintf(buf, sizeof(buf), "%04X", value);
+	if (debug)
+	   	printf(" -> %s = %s\n", name, buf);
+
+	// Order inverted, the same as in send_temp()
+    response[S21_PAYLOAD_OFFSET + 0] = buf[3];
+	response[S21_PAYLOAD_OFFSET + 1] = buf[2];
+	response[S21_PAYLOAD_OFFSET + 2] = buf[1];
+	response[S21_PAYLOAD_OFFSET + 2] = buf[0];
+			
+	s21_reply(p, response, cmd, S21_PAYLOAD_LEN);
 }
 
 int
 main(int argc, const char *argv[])
 {
-   const char     *port = NULL;
-   poptContext     optCon;
+   const char  *port = NULL;
+   char        *model = NULL;
+   poptContext optCon;
    const struct poptOption optionsTable[] = {
 	  {"port", 'p', POPT_ARG_STRING, &port, 0, "Port", "/dev/cu.usbserial..."},
 	  {"debug", 'v', POPT_ARG_NONE, &debug, 0, "Debug"},
-	  {"on", 0, POPT_ARG_NONE, &power, 0, "Power on"},
-	  {"mode", 0, POPT_ARG_INT, &mode, 0, "Mode", "0=F,1=H,2=C,3=A,7=D"},
-	  {"fan", 0, POPT_ARG_INT, &fan, 0, "Fan", "0 = auto, 1-5 = set speed, 6 = quiet"},
-	  {"temp", 0, POPT_ARG_FLOAT, &temp, 0, "Temp", "C"},
-	  {"comprpm", 0, POPT_ARG_INT, &fanrpm, 0, "Fan rpm (divided by 10)"},
-	  {"comprpm", 0, POPT_ARG_INT, &comprpm, 0, "Compressor rpm"},
-	  {"powerful", 0, POPT_ARG_NONE, &powerful, 0, "Debug"},
 	  {"dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump"},
-	  {"protocol", 0, POPT_ARG_INT, &protocol, 0, "Reported protocol version"},
+	  {"on", 0, POPT_ARG_NONE, &init_state.power, 0, "Power on"},
+	  {"mode", 0, POPT_ARG_INT, &init_state.mode, 0, "Mode", "0=F,1=H,2=C,3=A,7=D"},
+	  {"fan", 0, POPT_ARG_INT, &init_state.fan, 0, "Fan", "0 = auto, 1-5 = set speed, 6 = quiet"},
+	  {"temp", 0, POPT_ARG_FLOAT, &init_state.temp, 0, "Temp", "C"},
+	  {"comprpm", 0, POPT_ARG_INT, &init_state.fanrpm, 0, "Fan rpm (divided by 10)"},
+	  {"comprpm", 0, POPT_ARG_INT, &init_state.comprpm, 0, "Compressor rpm"},
+	  {"powerful", 0, POPT_ARG_NONE, &init_state.powerful, 0, "Debug"},
+	  {"protocol", 0, POPT_ARG_INT, &init_state.protocol, 0, "Reported protocol version"},
+	  {"consumption", 0, POPT_ARG_INT, &init_state.consumption, 0, "Reported power consumption"},
 	  {"model", 0, POPT_ARG_STRING, &model, 0, "Reported model code"},
 	  POPT_AUTOHELP {}
    };
@@ -199,9 +232,21 @@ main(int argc, const char *argv[])
    }
    poptFreeContext(optCon);
 
-   if (!model || strlen(model) < 4) {
-	  fprintf(stderr, "Invalid --model code given, 4 characters required");
-	  return -1;
+   if (model) {
+	  if (strlen(model) < sizeof(init_state.model)) {
+	  	fprintf(stderr, "Invalid --model code given, %d characters required", sizeof(init_state.model));
+	  	return -1;
+	  }
+	  memcpy(init_state.model, model, sizeof(init_state.model));
+	  free(model);
+   }
+
+   // Create shared memory and initialize it with contents of init_state
+   struct S21State *state = create_shmem(SHARED_MEM_NAME, &init_state, sizeof(init_state));
+
+   if (!state) {
+	  fprintf(stderr, "Failed to create shared memory");
+	  exit(255);
    }
 
    int p = open(port, O_RDWR);
@@ -210,32 +255,8 @@ main(int argc, const char *argv[])
       fprintf(stderr, "Cannot open %s: %s", port, strerror(errno));
 	  exit(255);
    }
-#ifdef WIN32
-   DCB dcb = {0};
-   
-   dcb.DCBlength = sizeof(dcb);
-   dcb.BaudRate  = CBR_2400;
-   dcb.fBinary   = TRUE;
-   dcb.fParity   = TRUE;
-   dcb.ByteSize  = 8;
-   dcb.Parity    = EVENPARITY;
-   dcb.StopBits  = TWOSTOPBITS;
-   
-   if (!SetCommState((HANDLE)_get_osfhandle(p), &dcb)) {
-      fprintf(stderr, "Failed to set port parameters\n");
-	  exit(255);
-   }
-#else
-   struct termios  t;
-   if (tcgetattr(p, &t) < 0)
-      err(1, "Cannot get termios");
-   cfsetspeed(&t, 2400);
-   t.c_cflag = CREAD | CS8 | PARENB | CSTOPB;
-   if (tcsetattr(p, TCSANOW, &t) < 0)
-      err(1, "Cannot set termios");
-   usleep(100000);
-   tcflush(p, TCIOFLUSH);
-#endif
+
+   set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS);
 
    unsigned char buf[256];
    unsigned char response[256];
@@ -287,27 +308,27 @@ main(int argc, const char *argv[])
 
 		 switch (buf[2]) {
 	     case '1':
-		    power = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
-			mode  = buf[S21_PAYLOAD_OFFSET + 1] - '0'; // See AC_MODE_*
-			temp  = s21_decode_target_temp(buf[S21_PAYLOAD_OFFSET + 2]);
-			fan   = s21_decode_fan(buf[S21_PAYLOAD_OFFSET + 3]);
+		    state->power = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
+			state->mode  = buf[S21_PAYLOAD_OFFSET + 1] - '0'; // See AC_MODE_*
+			state->temp  = s21_decode_target_temp(buf[S21_PAYLOAD_OFFSET + 2]);
+			state->fan   = s21_decode_fan(buf[S21_PAYLOAD_OFFSET + 3]);
 
-			printf(" Set power %d mode %d temp %.1f fan %d\n", power, mode, temp, fan);
+			printf(" Set power %d mode %d temp %.1f fan %d\n", state->power, state->mode, state->temp, state->fan);
 			break;
 		 case '5':
-		    swing = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
+		    state->swing = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
 			// Payload offset 1 equals to '?' for "on" and '0' for "off
 			// Payload offset 2 and 3 are always '0', seem unused
 
-			printf(" Set swing %d spare bytes", swing);
+			printf(" Set swing %d spare bytes", state->swing);
 			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
 			break;
 		 case '6':
-		    powerful = buf[S21_PAYLOAD_OFFSET + 0] == '2'; // '2' or '0'
+		    state->powerful = buf[S21_PAYLOAD_OFFSET + 0] == '2'; // '2' or '0'
 			// My Daichi controller always sends 'D6 0 0 0 0' for 'Eco',
 			// both on and off. Bug or feature ?
 
-			printf(" Set powerful %d spare bytes", powerful);
+			printf(" Set powerful %d spare bytes", state->powerful);
 			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
 			break;
 		 default:
@@ -325,12 +346,12 @@ main(int argc, const char *argv[])
 		 switch (buf[2]) {
 	     case '1':
 		    if (debug)
-		       printf(" -> power %d mode %d temp %.1f\n", power, mode, temp);
-		    response[3] = power + '0'; // sent as ASCII
-			response[4] = mode + '0';
+		       printf(" -> power %d mode %d temp %.1f\n", state->power, state->mode, state->temp);
+		    response[3] = state->power + '0'; // sent as ASCII
+			response[4] = state->mode + '0';
 			// 18.0 + 0.5 * (signed) (payload[2] - '@')
-			response[5] = s21_encode_target_temp(temp);
-			response[6] = s21_encode_fan(fan);
+			response[5] = s21_encode_target_temp(state->temp);
+			response[6] = s21_encode_fan(state->fan);
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
@@ -347,11 +368,11 @@ main(int argc, const char *argv[])
 			break;
 		 case '3':
 		    if (debug)
-		       printf(" -> powerful ('F3') %d\n", powerful);
+		       printf(" -> powerful ('F3') %d\n", state->powerful);
 			response[3] = 0x30; // No idea what this is, taken from my FTXF20D
 			response[4] = 0xFE;
 			response[5] = 0xFE;
-			response[6] = powerful ? 2 : 0;
+			response[6] = state->powerful ? 2 : 0;
 
 		    s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
@@ -362,37 +383,37 @@ main(int argc, const char *argv[])
 			break;
 		 case '5':
 		    if (debug)
-		       printf(" -> swing %d\n", swing);
-		    response[3] = swing;
-			response[4] = 0;
-			response[5] = 0;
-			response[6] = 0;
+		       printf(" -> swing %d\n", state->swing);
+		    response[3] = '0' + state->swing;
+			response[4] = 0x3F;
+			response[5] = 0x30;
+			response[6] = 0x80;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '6':
 		    if (debug)
-		       printf(" -> powerful ('F6') %d\n", powerful);
-		    response[3] = powerful ? 2 : 0;
-			response[4] = 0;
-			response[5] = 0;
-			response[6] = 0;
+		       printf(" -> powerful ('F6') %d\n", state->powerful);
+		    response[3] = state->powerful ? '2' : '0';
+			response[4] = 0x30;
+			response[5] = 0x30;
+			response[6] = 0x30;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '7':
 		    if (debug)
-		       printf(" -> eco %d\n", eco);
-		    response[3] = 0;
-			response[4] = eco ? '2' : '0';
-			response[5] = 0;
-			response[6] = 0;
+		       printf(" -> eco %d\n", state->eco);
+		    response[3] = 0x30;
+			response[4] = state->eco ? '2' : '0';
+			response[5] = 0x30;
+			response[6] = 0x30;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		case '8':
 		    if (debug)
-		       printf(" -> Protocol version = %d\n", protocol);
+		       printf(" -> Protocol version = %d\n", state->protocol);
 			// 'F8' - this is found out to be protocol version.
 			// My FTXF20D replies with '0020' (assuming reading in reverse like everything else).
 			// If we say that, BRP069B41 then asks for F9 (we know it's different form of home/outside sensor)
@@ -401,21 +422,22 @@ main(int argc, const char *argv[])
 			// 'MM' command (see below), and then it goes online with our emulated A/C.
 			// '0010' gives the same results
 		    response[3] = '0';
-			response[4] = '0' + protocol;
+			response[4] = '0' + state->protocol;
 			response[5] = '0';
+			response[6] = '0';
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '9':
 			// In debug log temperature values will appear multiplied by 2
-		    response[3] = home / 5 + 0x80;
-			response[4] = outside / 5 + 0x80; // This is from Faikin sources, but FTXF20D returnx 0xFF here
+		    response[3] = state->home / 5 + 0x80;
+			response[4] = state->outside / 5 + 0x80; // This is from Faikin sources, but FTXF20D returnx 0xFF here
 			response[5] = 0xFF; // Copied from FTFX20D
 			response[6] = 0x30; // Copied from FTFX20D
 
 		    if (debug)
 		       printf(" -> home = 0x%02X (%.1f) outside = 0x%02X (%.1f)\n",
-			          response[3], home / 10.0, response[4], outside / 10.0);
+			          response[3], state->home / 10.0, response[4], state->outside / 10.0);
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
@@ -425,48 +447,72 @@ main(int argc, const char *argv[])
 			// Even if communication is broken, then recovered (sim restarted), it won't
 			// be sent again. Controller reboot would be required to accept the new value.
 		 	if (debug)
-		       printf(" -> model = %s\n", model);
+		       printf(" -> model = %.4s\n", state->model);
 
-		    response[3] = model[3];
-			response[4] = model[2];
-			response[5] = model[1];
-			response[6] = model[0];
+		    response[3] = state->model[3];
+			response[4] = state->model[2];
+			response[5] = state->model[1];
+			response[6] = state->model[0];
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
+			break;
+		 case 'M':
+		 	// Protocol v2 - power consumption in 100 Wh units
+		 	send_hex(p, response, buf, state->power, "Power comsumption");
 			break;
 		 // All unknown_cmd's below are queried by BRP069B41 for protocol version 2.
 		 // They are all mandatory; if we respond NAK, the controller keeps retrying
 		 // this command and doesn't proceed.
 		 // All response values are taken from FTXF20D
 		 case 'B':
-			unknown_cmd(p, response, buf, 0x30, 0x33, 0x36, 0x30); // 0630
+			unknown_cmd_a(p, response, buf, state->FB);
 			break;
 		 case 'G':
-			unknown_cmd(p, response, buf, 0x30, 0x34, 0x30, 0x30); // 0040
+			unknown_cmd_a(p, response, buf, state->FG);
 			break;
 		 case 'K':
-			unknown_cmd(p, response, buf, 0x71, 0x73, 0x35, 0x31); //15sq
-			break;
-		 case 'M':
-			unknown_cmd(p, response, buf, 0x33, 0x42, 0x30, 0x30); //00B3
+		    // Optional features. Displayed in /aircon/get_model_info:
+			// byte 0:
+			// - bit 2: acled=<bool>. LED control presence ?
+			// - bit 3: land=<bool>
+			// byte 1:
+			// - bit 0: elec=<bool>
+			// - bit 2: temp_rng=<bool>
+			// - bit 3: m_dtct 0=<bool>
+			// byte 2:
+			// - bit 0: Not understood
+			//   0 -> ac_dst=jp
+			//   1 -> ac_dst=--
+			// - bit 1: Not understood. Something with humidity ?
+			//   0 -> s_humd=0
+			//   1 -> s_humd=16
+			// - bit 2: Enable fan controls ???
+			//    0 -> en_frate=0 en_fdir=0 s_fdir=0
+			//    1 -> en_frate=1 en_fdir=1 s_fdir=3
+			//    When set to 0, the "Online controller" app always shows "fan off",
+			//    and attempts to control it do nothing.
+			// - bit 3: disp_dry=<bool>
+			// byte 3 - doesn't change anything
+			// FTXF20D values: 0x71, 0x73, 0x35, 0x31
+			unknown_cmd_a(p, response, buf, state->FK);
 			break;
 		 case 'N':
-			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); //0000
+			unknown_cmd_a(p, response, buf, state->FN);
 			break;
 		 case 'P':
-			unknown_cmd(p, response, buf, 0x37, 0x33, 0x30, 0x30); // 0037
+			unknown_cmd_a(p, response, buf, state->FP);
 			break;
 		 case 'Q':
-			unknown_cmd(p, response, buf, 0x45, 0x33, 0x30, 0x30); //003E
+			unknown_cmd_a(p, response, buf, state->FQ);
 			break;
 		 case 'R':
-			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); // 0000
+			unknown_cmd_a(p, response, buf, state->FR);
 			break;
 		 case 'S':
-			unknown_cmd(p, response, buf, 0x30, 0x30, 0x30, 0x30); // 0000
+			unknown_cmd_a(p, response, buf, state->FS);
 			break;
 		 case 'T':
-			unknown_cmd(p, response, buf, 0x31, 0x30, 0x30, 0x30); // 0001
+			unknown_cmd_a(p, response, buf, state->FT);
 			break;
 		 case 'V':
 		 	// This one is not sent by BRP069B41, but i quickly got tired of adding these
@@ -499,19 +545,19 @@ main(int argc, const char *argv[])
 		 // Query sensors
 		 switch (buf[S21_CMD1_OFFSET]) {
 	     case 'H':
-		    send_temp(p, response, buf, home, "home");
+		    send_temp(p, response, buf, state->home, "home");
 		    break;
 	     case 'I':
-		    send_temp(p, response, buf, inlet, "inlet");
+		    send_temp(p, response, buf, state->inlet, "inlet");
 		    break;
 	     case 'a':
-		    send_temp(p, response, buf, outside, "outside");
+		    send_temp(p, response, buf, state->outside, "outside");
 		    break;
 	     case 'L':
-		 	send_int(p, response, buf, fanrpm, "fanrpm");
+		 	send_int(p, response, buf, state->fanrpm, "fanrpm");
 		    break;
 		 case 'd':
-		 	send_int(p, response, buf, comprpm, "compressor rpm");
+		 	send_int(p, response, buf, state->comprpm, "compressor rpm");
 			break;
 	     case 'N':
 		 	// These two are queried by BRP069B41, at least for protocol version 1, but we have no idea
