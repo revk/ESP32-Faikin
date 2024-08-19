@@ -1829,7 +1829,7 @@ web_root (httpd_req_t * req)
                   "function w(n,v){var m=new Object();m[n]=v;ws.send(JSON.stringify(m));}"      //
                   "function t(n,v){s(n,v!=undefined?cf(v):'---');}"     //
                   "function c(){"       //
-                  "ws=new WebSocket('ws://'+window.location.host+'/status');"   //
+                  "ws=new WebSocket((location.protocol=='http'?'ws':'wss')+'://'+window.location.host+'/status');"   //
                   "ws.onopen=function(v){g('top').className='on';};"    //
                   "ws.onclose=function(v){ws=undefined;g('top').className='off';if(reboot)location.reload();};" //
                   "ws.onerror=function(v){ws.close();};"        //
