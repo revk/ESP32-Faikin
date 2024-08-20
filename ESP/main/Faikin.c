@@ -1081,8 +1081,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
             jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
             jo_bool (j, "nak", 1);
             revk_error ("comms", &j);
-         }
-         else if (b.dumping)
+         } else if (b.dumping)
          {
             // We want to see NAKs under info/<name>/rx because we could have sent
             // this command using command/<name>/send. We want to be informed if
@@ -1092,8 +1091,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
             revk_info ("rx", &j);
          }
          return RES_NAK;
-      }
-      else
+      } else
       {
          // Unexpected reply, protocol broken
          jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
@@ -1109,10 +1107,10 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
    else
    {
       if (cmd == 'D')
-      {         // No response expected
+      {                         // No response expected
          if (b.dumping)
-         {     // We may be probing commands manually using command/<name>/send,
-               // and we want to explicitly see ACKs
+         {                      // We may be probing commands manually using command/<name>/send,
+            // and we want to explicitly see ACKs
             jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
             jo_bool (j, "ack", 1);
             revk_info ("rx", &j);
@@ -3120,7 +3118,10 @@ app_main ()
                {
                   poll (F, 2, 0,);
                }
-               poll (F, 3, 0,);
+               if (s21.F6)
+               { // If F6 works we assume we don't need F3
+                  poll (F, 3, 0,);
+               }
                if (debug)
                {
                   poll (F, 4, 0,);
@@ -3226,17 +3227,16 @@ app_main ()
                      // Looks like it supports something else, we don't know what.
                      // https://github.com/revk/ESP32-Faikin/issues/441
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
-                  }
-                  else if (!s21.F3)
+                  } else if (!s21.F3)
                   {             // F3 or F6 depends on model
-                                // Actually many ACs (tested on FTXF20D5V1B and ATX20K2V1B) respond to
-                                // both F3 and F6, but F3 does not report "powerful" state, so we give
-                                // F6 a preference.
-                                // The current code assumes that only units, which don't respond to F6
-                                // at all, will report the flag in F3, and require D3 to control.
-                                // This suggestion must be true, because otherwise commit 0c5f769, which
-                                // introduced support for F3, wouldn't have worked, being overriden by F6
-                                // due to how poll sequence is organized.
+                     // Actually many ACs (tested on FTXF20D5V1B and ATX20K2V1B) respond to
+                     // both F3 and F6, but F3 does not report "powerful" state, so we give
+                     // F6 a preference.
+                     // The current code assumes that only units, which don't respond to F6
+                     // at all, will report the flag in F3, and require D3 to control.
+                     // This suggestion must be true, because otherwise commit 0c5f769, which
+                     // introduced support for F3, wouldn't have worked, being overriden by F6
+                     // due to how poll sequence is organized.
                      temp[0] = '0';
                      temp[1] = '0';
                      temp[2] = '0';
