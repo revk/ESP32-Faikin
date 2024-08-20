@@ -3212,14 +3212,6 @@ app_main ()
                                              CONTROL_sensor | CONTROL_quiet | CONTROL_led))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  if (!s21.F3)
-                  {             // F3 or F6 depends on model
-                     temp[0] = '0';
-                     temp[1] = '0';
-                     temp[2] = '0';
-                     temp[3] = '0' + (daikin.powerful ? 2 : 0);
-                     daikin_s21_command ('D', '3', S21_PAYLOAD_LEN, temp);
-                  }
                   if (!s21.F6)
                   {
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
@@ -3230,7 +3222,26 @@ app_main ()
                         temp[3] = '0' + (daikin.sensor ? 0x08 : 0) + (daikin.led ? 0x04 : 0);   // Messy but gives some controls
                      else
                         temp[3] = '0' + (daikin.led ? dark ? 8 : 4 : 12);
+                     // FIXME: ATX20K2V1B responds NAK to this command, but also doesn't react on D3.
+                     // Looks like it supports something else, we don't know what.
+                     // https://github.com/revk/ESP32-Faikin/issues/441
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
+                  }
+                  else if (!s21.F3)
+                  {             // F3 or F6 depends on model
+                                // Actually many ACs (tested on FTXF20D5V1B and ATX20K2V1B) respond to
+                                // both F3 and F6, but F3 does not report "powerful" state, so we give
+                                // F6 a preference.
+                                // The current code assumes that only units, which don't respond to F6
+                                // at all, will report the flag in F3, and require D3 to control.
+                                // This suggestion must be true, because otherwise commit 0c5f769, which
+                                // introduced support for F3, wouldn't have worked, being overriden by F6
+                                // due to how poll sequence is organized.
+                     temp[0] = '0';
+                     temp[1] = '0';
+                     temp[2] = '0';
+                     temp[3] = '0' + (daikin.powerful ? 2 : 0);
+                     daikin_s21_command ('D', '3', S21_PAYLOAD_LEN, temp);
                   }
                   xSemaphoreGive (daikin.mutex);
                }
