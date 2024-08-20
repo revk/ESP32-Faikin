@@ -1018,14 +1018,17 @@ is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2
       buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
 }
 
-static void
-jo_s21_payload (jo_t j, char *payload, int payload_len)
+static jo_t
+jo_s21_alloc (char cmd, char cmd2, const char *payload, int payload_len)
 {
+   jo_t j = jo_comms_alloc ();
+   jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
    if (payload_len)
    {
       jo_base16 (j, "payload", payload, payload_len);
-      jo_stringn (j, "text", (char *) payload, payload_len);
+      jo_stringn (j, "text", payload, payload_len);
    }
+   return j;
 }
 
 int
@@ -1033,9 +1036,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
 {
    if (debug && payload_len > 2 && !b.dumping)
    {
-      jo_t j = jo_comms_alloc ();
-      jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      jo_s21_payload (j, payload, payload_len);
+      jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
       revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking && !protofix)
@@ -1072,33 +1073,52 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
    if (rxlen != 1 || (temp != ACK && temp != STX))
    {
       // Got something else
-      jo_t j = jo_comms_alloc ();
-      jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      jo_s21_payload (j, payload, payload_len);
       if (rxlen == 1 && temp == NAK)
       {
          // Got an explicit NAK
          if (debug)
          {
+            jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
             jo_bool (j, "nak", 1);
             revk_error ("comms", &j);
-         } else
-            jo_free (&j);
+         }
+         else if (b.dumping)
+         {
+            // We want to see NAKs under info/<name>/rx because we could have sent
+            // this command using command/<name>/send. We want to be informed if
+            // the unit has NAKed it.
+            jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+            jo_bool (j, "nak", 1);
+            revk_info ("rx", &j);
+         }
          return RES_NAK;
       }
-      // Unexpected reply, protocol broken
-      daikin.talking = 0;
-      jo_bool (j, "noack", 1);
-      jo_stringf (j, "value", "%02X", temp);
-      revk_error ("comms", &j);
-      return RES_NOACK;
+      else
+      {
+         // Unexpected reply, protocol broken
+         jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+         daikin.talking = 0;
+         jo_bool (j, "noack", 1);
+         jo_stringf (j, "value", "%02X", temp);
+         revk_error ("comms", &j);
+         return RES_NOACK;
+      }
    }
    if (temp == STX)
       *buf = temp;              // No ACK, response started instead.
    else
    {
       if (cmd == 'D')
-         return RES_OK;         // No response expected
+      {         // No response expected
+         if (b.dumping)
+         {     // We may be probing commands manually using command/<name>/send,
+               // and we want to explicitly see ACKs
+            jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+            jo_bool (j, "ack", 1);
+            revk_info ("rx", &j);
+         }
+         return RES_OK;
+      }
       while (1)
       {
          rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
