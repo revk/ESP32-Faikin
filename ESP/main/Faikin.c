@@ -540,7 +540,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
          break;
       case '3':                // Seems to be an alternative to G6
-         if (check_length (cmd, cmd2, len, 1, payload))
+         // If F6 is supported, F3 does not provide "powerul" flag even if supported.
+         // We may still get G3 response for debug or from injection via MQTT "send".
+         if (s21.F6 && check_length (cmd, cmd2, len, 1, payload))
          {
             report_bool (powerful, payload[3] & 0x02);
          }
@@ -3118,7 +3120,7 @@ app_main ()
                {
                   poll (F, 2, 0,);
                }
-               if (s21.F6)
+               if (s21.F6 || debug)
                { // If F6 works we assume we don't need F3
                   poll (F, 3, 0,);
                }
