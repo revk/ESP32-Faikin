@@ -2586,7 +2586,7 @@ send_ha_config (void)
    addswitch (haswitches && (daikin.status_known & CONTROL_powerful), "powerful", "Powerful", "mdi:arm-flex");
    addswitch (haswitches && (daikin.status_known & CONTROL_comfort), "comfort", "Comfort mode", "mdi:teddy-bear");
    addswitch (haswitches && (daikin.status_known & CONTROL_quiet), "quiet", "Quiet outdoor", "mdi:volume-minus");
-   addswitch (haswitches && (daikin.status_known & CONTROL_econo), "econo", "Econo mode", "mdi:trending-down");
+   addswitch (haswitches && (daikin.status_known & CONTROL_econo), "econo", "Econo mode", "mdi:home-battery");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *name, const char *icon)
    {
