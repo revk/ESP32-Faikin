@@ -15,6 +15,9 @@ all: faikin-x50 faikin-s21 s21-control
 osal.o : osal.c osal.h
 	gcc $(CFLAGS) -c -o $@ $<
 
+s21_state_parser.o : s21_state_parser.c faikin-s21.h
+	gcc $(CFLAGS) -c -o $@ $<
+
 faikin-s21.o : faikin-s21.c faikin-s21.h osal.h ${ESP_DIR}/main/daikin_s21.h ${ESP_DIR}/main/faikin_enums.h
 	gcc $(CFLAGS) -c -o $@ $< -I${ESP_DIR} ${INCLUDES}
 
@@ -27,11 +30,11 @@ faikin-x50.o : faikin-x50.c osal.h
 faikin-x50: faikin-x50.o osal.o
 	gcc -o $@ $^ -lpopt ${LIBS}
 
-faikin-s21: faikin-s21.o osal.o
-	gcc -o $@ $^ -lpopt ${LIBS}
+faikin-s21: faikin-s21.o s21_state_parser.o osal.o
+	gcc -o $@ $^ ${LIBS}
 
-s21-control: s21-control.o osal.o
-	gcc -o $@ $^ -lpopt ${LIBS}
+s21-control: s21-control.o s21_state_parser.o osal.o
+	gcc -o $@ $^ ${LIBS}
 
 clean:
 	rm -f faikin-x50 faikin-s21 s21-control faikin-x50.exe faikin-s21.exe s21-control.exe *.o

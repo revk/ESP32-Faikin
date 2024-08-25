@@ -2,12 +2,10 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <popt.h>
 #include <time.h>
 #include <sys/time.h>
 #include <stdlib.h>
 #include <ctype.h>
-#include <popt.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdint.h>
@@ -16,8 +14,10 @@
 #include "faikin-s21.h"
 #include "osal.h"
 
-static int debug = 0; // Dump commands and responses (short form)
-static int dump  = 0; // Raw dump
+const char *port     = NULL; // Serial port to use
+const char *settings = NULL; // Settings file to load
+static int debug     = 0;    // Dump commands and responses (short form)
+static int dump      = 0;    // Raw dump
 
 // Initial state of a simulated A/C. Defaults are chosen to be distinct;
 // can be changed via command line.
@@ -54,6 +54,101 @@ static struct S21State init_state = {
    .FS       = {0x30, 0x30, 0x30, 0x30}, // 0000
    .FT       = {0x31, 0x30, 0x30, 0x30}  // 0001
 };
+
+static void usage(const char *progname)
+{
+	printf("Usage: %s <simulator options> <state options>\n"
+	       "Available simulator options:\n"
+		   " -p or --port <name> - serial port to use (mandatory option)\n"
+		   " -s or --settings <filename> - Load initial state data from the file\n"
+		   " -v or --debug - Enable dumping all commands\n" 
+		   " -V or --verbose - Enable dumping all protocol data\n", progname);
+	state_options_help();
+	printf("State options, given on command line, override options, specified in the settings file\n");
+}
+
+static const char *get_string_arg(int argc, const char **argv)
+{
+	if (argc < 2) {
+		fprintf(stderr, "%s option requires a value\n", argv[0]);
+		exit (255);
+	}
+
+	return argv[1];
+}
+
+static unsigned int parse_program_option(const char *progname, int argc, const char **argv)
+{
+	const char *opt;
+
+	if (argc < 1)
+		return 0;
+
+	opt = argv[0];
+
+	if (!strcmp(opt, "-h") || !strcmp(opt, "--help")) {
+		usage(progname);
+		exit(255);
+	} else if (!strcmp(opt, "-p") || !strcmp(opt, "--port")) {
+		port = get_string_arg(argc, argv);
+		return 2;
+	} else if (!strcmp(opt, "-s") || !strcmp(opt, "--settings")) {
+		settings = get_string_arg(argc, argv);
+		return 2;
+	} else if (!strcmp(opt, "-v") || !strcmp(opt, "--debug")) {
+		debug = 1;
+		return 1;
+	} else if (!strcmp(opt, "-V") || !strcmp(opt, "--verbose")) {
+		dump = 1;
+		return 1;
+	} else if (opt[0] == '-') {
+		fprintf(stderr, "%s: unknown option\n");
+		exit(255);
+	}
+	return 0;
+}
+
+static void load_settings(const char *filename)
+{
+	char line[1024];
+	FILE *f = fopen(filename, "r");
+
+	if (!f) {
+		perror("Failed to open settings file");
+		exit(255);
+	}
+
+	while (fgets(line, sizeof(line), f)) {
+		char *p = line;
+		const char *argv[5];
+		int argc = 0;
+	
+		for (int i = 0; i < 5; i++) {
+			while (isspace(*p))
+				p++;
+			if (!*p || *p == '#')
+				break;
+			argv[argc++] = p;
+			while (*p && !isspace(*p))
+				p++;
+			if (!*p)
+				break;
+			*p++ = 0;
+		}
+
+		if (argc) {
+			int nargs = parse_item(argc, argv, &init_state);
+
+			if (nargs < 0) {
+				fprintf(stderr, "Malformed data in settings file");
+				fclose(f);
+				exit(255);
+			}
+		}
+	}
+
+	fclose(f);
+}
 
 static void hexdump_raw(const unsigned char *buf, unsigned int len)
 {
@@ -202,49 +297,38 @@ static void send_hex(int p, unsigned char *response, const unsigned char *cmd, u
 int
 main(int argc, const char *argv[])
 {
-   const char  *port = NULL;
-   char        *model = NULL;
-   poptContext optCon;
-   const struct poptOption optionsTable[] = {
-	  {"port", 'p', POPT_ARG_STRING, &port, 0, "Port", "/dev/cu.usbserial..."},
-	  {"debug", 'v', POPT_ARG_NONE, &debug, 0, "Debug"},
-	  {"dump", 'V', POPT_ARG_NONE, &dump, 0, "Dump"},
-	  {"on", 0, POPT_ARG_NONE, &init_state.power, 0, "Power on"},
-	  {"mode", 0, POPT_ARG_INT, &init_state.mode, 0, "Mode", "0=F,1=H,2=C,3=A,7=D"},
-	  {"fan", 0, POPT_ARG_INT, &init_state.fan, 0, "Fan", "0 = auto, 1-5 = set speed, 6 = quiet"},
-	  {"temp", 0, POPT_ARG_FLOAT, &init_state.temp, 0, "Temp", "C"},
-	  {"comprpm", 0, POPT_ARG_INT, &init_state.fanrpm, 0, "Fan rpm (divided by 10)"},
-	  {"comprpm", 0, POPT_ARG_INT, &init_state.comprpm, 0, "Compressor rpm"},
-	  {"powerful", 0, POPT_ARG_NONE, &init_state.powerful, 0, "Debug"},
-	  {"protocol", 0, POPT_ARG_INT, &init_state.protocol, 0, "Reported protocol version"},
-	  {"consumption", 0, POPT_ARG_INT, &init_state.consumption, 0, "Reported power consumption"},
-	  {"model", 0, POPT_ARG_STRING, &model, 0, "Reported model code"},
-	  POPT_AUTOHELP {}
-   };
+   int nargs;
+   const char* progname = *argv++;
 
-   optCon = poptGetContext(NULL, argc, argv, optionsTable, 0);
-   //poptSetOtherOptionHelp(optCon, "");
+   argc--;
 
-   int             c;
-   if ((c = poptGetNextOpt(optCon)) < -1) {
-      fprintf(stderr, "%s: %s\n", poptBadOption(optCon, POPT_BADOPTION_NOALIAS), poptStrerror(c));
-      exit(255);
-   }
-
-   if (poptPeekArg(optCon) || !port)
-   {
-      poptPrintUsage(optCon, stderr, 0);
-      return -1;
-   }
-   poptFreeContext(optCon);
-
-   if (model) {
-	  if (strlen(model) < sizeof(init_state.model)) {
-	  	fprintf(stderr, "Invalid --model code given, %d characters required", sizeof(init_state.model));
-	  	return -1;
+   do {
+	  nargs = parse_program_option(progname, argc, argv);
+	  if (nargs) {
+		 argc -= nargs;
+		 argv += nargs;
 	  }
-	  memcpy(init_state.model, model, sizeof(init_state.model));
-	  free(model);
+   } while (nargs);
+
+   if (!port) {
+	  fprintf(stderr, "Serial port is not given; use -p or --port option\n");
+	  return 255;
+   }
+
+   // Load settings file first
+   if (settings) {
+	  load_settings(settings);
+   }
+
+   // Whatever specified on the command line, overrides settings file
+   while (argc) {
+	  nargs = parse_item(argc, argv, &init_state);
+	  if (nargs == -1) {
+		 fprintf(stderr, "Invalid state option given on command line\n");
+		 return 255;
+	  }
+	  argc -= nargs;
+	  argv += nargs;
    }
 
    // Create shared memory and initialize it with contents of init_state

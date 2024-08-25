@@ -31,3 +31,6 @@ struct S21State
 };
 
 #define SHARED_MEM_NAME "Faikin-S21"
+
+void state_options_help(void);
+int parse_item(int argc, const char **argv, struct S21State *state);
