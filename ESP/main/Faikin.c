@@ -2417,7 +2417,7 @@ send_ha_config (void)
          jo_string (j, "mdl", daikin.model);
       jo_string (j, "sw", revk_version);
       jo_string (j, "mf", "RevK");
-      jo_stringf (j, "cu", "http://%s.local/", hostname);
+      jo_stringf (j, "cu", "http://%s.%s/", hostname, hadomain);
       jo_close (j);
       if (icon)
          jo_string (j, "icon", icon);
@@ -3121,7 +3121,7 @@ app_main ()
                   poll (F, 2, 0,);
                }
                if (s21.F6 || debug)
-               { // If F6 works we assume we don't need F3
+               {                // If F6 works we assume we don't need F3
                   poll (F, 3, 0,);
                }
                if (debug)
