@@ -28,6 +28,7 @@ struct S21State
     unsigned char FR[4];
     unsigned char FS[4];
     unsigned char FT[4];
+    unsigned char M[4];
 };
 
 #define SHARED_MEM_NAME "Faikin-S21"

@@ -52,7 +52,8 @@ static struct S21State init_state = {
    .FQ       = {0x45, 0x33, 0x30, 0x30}, // 003E
    .FR       = {0x30, 0x30, 0x30, 0x30}, // 0000
    .FS       = {0x30, 0x30, 0x30, 0x30}, // 0000
-   .FT       = {0x31, 0x30, 0x30, 0x30}  // 0001
+   .FT       = {0x31, 0x30, 0x30, 0x30}, // 0001
+   .M        = {'F', 'F', 'F', 'F'}
 };
 
 static void usage(const char *progname)
@@ -631,17 +632,18 @@ main(int argc, const char *argv[])
 		 }
 	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
 		if (debug)
-		    printf(" -> unknown ('MM')\n");
+		    printf(" -> unknown ('MM') = 0x%02X 0x%02X 0x%02X 0x%02X\n",
+	               state->M[0], state->M[1], state->M[2], state->M[3]);
 		// This is sent by BRP069B41 and response is mandatory. The controller
 		// loops forever if NAK is received.
 		// I experimentally found out that this command doesn't have a second
 		// byte, and the A/C always responds with this. Note non-standard
 		// response form.
 		response[S21_CMD0_OFFSET] = 'M';
-		response[2] = 'F';
-		response[3] = 'F';
-		response[4] = 'F';
-		response[5] = 'F';
+		response[2] = state->M[0];
+		response[3] = state->M[1];
+		response[4] = state->M[2];
+		response[5] = state->M[3];
 
 		s21_nonstd_reply(p, response, 5);
 	  } else if (buf[S21_CMD0_OFFSET] == 'R') {

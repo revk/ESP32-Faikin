@@ -32,13 +32,18 @@ static int parse_bool(int argc, const char **argv, int *v)
 static int parse_int(int argc, const char **argv, int *v)
 {
     const char *opt = argv[0];
+    char *endp = NULL;
 
     if (argc < 2) {
         fprintf(stderr, "%s: integer value is required\n", opt);
         return -1;
     }
 
-    *v = strtoul(argv[1], NULL, 0);
+    *v = strtoul(argv[1], &endp, 0);
+    if (endp && *endp) {
+        fprintf(stderr, "%s: Invalid integer value: %s\n", opt, argv[1]);
+        return -1;
+    }
     return 2;
 }
 
@@ -79,7 +84,21 @@ static int parse_raw(int argc, const char **argv, unsigned char *v, unsigned int
     }
 
     for (i = 0; i < len; i++) {
-        v[i] = strtoul(argv[i], NULL, 0);
+        const char *val = argv[i];
+
+        // A single quote would've been more natural, but one has to shield it with
+        // '\' in bash, and that's inconvenient
+        if (val[0] == '^') {
+            v[i] = val[1];
+        } else {
+            char *endp = NULL;
+
+            v[i] = strtoul(val, &endp, 0);
+            if (endp && *endp) {
+                fprintf(stderr, "%s: Invalid integer value: %s\n", opt, val);
+                return -1;
+            }
+        }
     }
 
     return len + 1;
@@ -115,8 +134,11 @@ void state_options_help(void)
     raw_option("FR");
     raw_option("FS");
     raw_option("FT");
+    raw_option("M");
     printf("Supported boolean values: 'on', 'true', '1', 'off', 'false', '0'\n"
-           "Integer values can be prefixed with 0x for hex or 0 for octal\n");
+           "Integer values can be prefixed with 0x for hex or 0 for octal\n"
+           "Raw bytes can be specified either as integers or as character prefixed by ^\n"
+           "(for example: M ^3 ^E ^5 ^3)");
 }
 
 int parse_item(int argc, const char **argv, struct S21State *state)
@@ -158,6 +180,7 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     PARSE_RAW(FR)
     PARSE_RAW(FS)
     PARSE_RAW(FT)
+    PARSE_RAW(M)
     else {
         fprintf(stderr, "Unknown option %s\n", opt);
         return -1;
