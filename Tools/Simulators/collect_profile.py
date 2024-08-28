@@ -35,6 +35,10 @@ def parse_response(hex_str):
     if cmd != commands[cmd_index - 1]:
         return False;
 
+    # Reset 'error 252' flag
+    if cmd == "F4":
+        data[5] = data[5] & 0xDF
+
     if cmd == "FC":
         print("model", data[6:2:-1].decode("ascii"))
     else:

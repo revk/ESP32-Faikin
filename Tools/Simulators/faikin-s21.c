@@ -475,8 +475,10 @@ main(int argc, const char *argv[])
 		 	unknown_cmd_a(p, response, buf, state->F3);
 			break;
 		 case '4':
-		    // Also taken from CTXM60RVMA, CTXM35RVMA, and also error 252 if wrong
-			// FTXF20D: 30 00 A0 30
+		 	// byte[2] - A/C sometimes reports 0xA0, which then self-resets to 0x80
+			// - bit 5: if set to 1, BRP069B41 stops controlling the A/C and sets
+			//          error code 252. Some sort of "not ready" flag
+			// - bit 7: BRP069B41 seems to ignore it.
 			unknown_cmd_a(p, response, buf, state->F4);
 			break;
 		 case '5':
