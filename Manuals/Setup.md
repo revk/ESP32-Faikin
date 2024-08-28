@@ -22,6 +22,7 @@ If `dark` is set, then only loopback or offline show, otherwise the LED is off.
 
 |Colour|Meaning|
 |----|-----|
+|Green solid|Startup (first few seconds)|
 |Red|Heating (heat or auto mode)|
 |Blue|Cooling (cool or auto mode)|
 |Orange|Fan mode|
@@ -29,7 +30,6 @@ If `dark` is set, then only loopback or offline show, otherwise the LED is off.
 |Yellow|Power off|
 |Magenta|Daikin is offline|
 |Red/Green/Blue|Loopback test|
-|Green pulsing|Startup|
 |White|Rebooting|
 |White/Red|No wifi config|
 |White/Blue|AP+sta mode|
