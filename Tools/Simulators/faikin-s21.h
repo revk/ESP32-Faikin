@@ -5,6 +5,7 @@ struct S21State
     float        temp;     // Set point
     int          fan;      // Fan speed
     int          swing;    // Swing direction
+    int          humidity; // Humidity setting
     int          powerful; // Powerful mode
     int          eco;      // Eco mode
     int          home;     // Reported temparatures (multiplied by 10 here)

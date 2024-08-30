@@ -408,11 +408,12 @@ main(int argc, const char *argv[])
 			break;
 		 case '5':
 		    state->swing = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
+			state->humidity = buf[S21_PAYLOAD_OFFSET + 2];
 			// Payload offset 1 equals to '?' for "on" and '0' for "off
 			// Payload offset 2 and 3 are always '0', seem unused
 
-			printf(" Set swing %d spare bytes", state->swing);
-			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
+			printf(" Set swing %d humidity 0x%08X byte[1] 0x%08X byte[3] 0x%08X", state->swing, state->humidity,
+			       buf[S21_PAYLOAD_OFFSET + 1], buf[S21_PAYLOAD_OFFSET + 3]);
 			break;
 		 case '6':
 		    state->powerful = buf[S21_PAYLOAD_OFFSET + 0] == '2'; // '2' or '0'
@@ -458,8 +459,8 @@ main(int argc, const char *argv[])
 			// - bit 3: 0 => type=C, 1 => type=N - unknown
 			// byte 2: Zero value, perhaps not used
 			// byte 3: Something about humidity sensor, complicated:
-			// - bit 1: humd=<bool> - Humidity sensor available ???
-			// - bit 4:
+			// - bit 1: humd=<bool> - "Humidify" operation mode is available
+			// - bit 4: Humidity setting is available for "heat" and "auto" modes
 			//   0 => s_humd=165 when bit 1 == 1, or s_humd=0 when bit 1 == 0
 			//   1 => s_humd=183 when bit 1 == 1, or s_humd=146 when bit 1 == 0
             //   s_humd is forced to 16 regardless of bits 1 and 4 when byte 2 bit 1
@@ -486,7 +487,7 @@ main(int argc, const char *argv[])
 		       printf(" -> swing %d\n", state->swing);
 		    response[3] = '0' + state->swing;
 			response[4] = 0x3F;
-			response[5] = 0x30;
+			response[5] = state->humidity;
 			response[6] = 0x80;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
@@ -587,7 +588,8 @@ main(int argc, const char *argv[])
 			// - bit 0: Japanese market ?? But we don't know a real difference
 			//   0 -> ac_dst=jp
 			//   1 -> ac_dst=--
-			// - bit 1: When set to 1, forces s_humd=16 regardless of F2 command bits
+			// - bit 1: When set to 1, target humidity setting is not available. Forces s_humd=16
+			//          regardless of respective F2 bits
 			// - bit 2: Fan controls available
 			//    0 -> en_frate=0 en_fdir=0 s_fdir=0
 			//    1 -> en_frate=1 en_fdir=1 s_fdir=3
