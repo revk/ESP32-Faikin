@@ -176,7 +176,7 @@ void state_options_help(void)
     printf(" temp <float> - Target temperature in C\n"
            " fanrpm <int> - Fan rpm (divided by 10)\n"
 	       " comprpm <int> - Compressor rpm\n"
-	       " protocol <int> - Reported protocol version\n"
+	       " protocol <b0> <b1> <b2> <b3> - Reported protocol version (raw value, 4 bytes)\n"
 	       " consumption <int> - Reported power consumption\n");
     raw_option("F2");
     raw_option("F3");
@@ -220,7 +220,7 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     } else if (!strcmp(opt, "comprpm")) {
         return parse_int(argc, argv, &state->comprpm);
     } else if (!strcmp(opt, "protocol"))  {
-        return parse_int(argc, argv, &state->protocol);
+        return parse_raw(argc, argv, state->protocol, sizeof(state->protocol));
     } else if (!strcmp(opt, "model")) {
         return parse_string(argc, argv, state->model, sizeof(state->model));
     }

@@ -35,12 +35,9 @@ static struct S21State init_state = {
    .fanrpm   = 52,   // Fan RPM (divided by 10 here)
    .comprpm  = 42,   // Compressor RPM
    .power    = 2,	 // Power consumption in 100 Wh units
-   .protocol = 2,    // Protocol version
-   .model    = {'1', '3', '5', 'D'},     // Reported A/C model code. Default taken from FTXF20D5V1B
-   // Values are taken from FTXF20D5V1B, except F4.
-   // F4 corresponds to A/C models CTXM60RVMA, CTXM35RVMA. Kindly provided by
-   // a user in reverse engineering thread:
-   // https://github.com/revk/ESP32-Faikin/issues/408#issuecomment-2278296452
+   // The following Values are taken from FTXF20D5V1B
+   .protocol = {'0', '2', '0', '0'},    // Protocol version
+   .model    = {'1', '3', '5', 'D'},
    .F2       = {0x34, 0x3A, 0x00, 0x80},
    .F3       = {0x30, 0xFE, 0xFE, 0x00},
    .F4       = {0x30, 0x00, 0x80, 0x30},
@@ -514,7 +511,8 @@ main(int argc, const char *argv[])
 			break;
 		case '8':
 		    if (debug)
-		       printf(" -> Protocol version = %d\n", state->protocol);
+		       printf(" -> Protocol version = 0x%02X 0x%02X 0x%02X 0x%02X\n",
+			          state->protocol[0], state->protocol[1], state->protocol[2], state->protocol[3]);
 			// 'F8' - this is found out to be protocol version.
 			// My FTXF20D replies with '0020' (assuming reading in reverse like everything else).
 			// If we say that, BRP069B41 then asks for F9 (we know it's different form of home/outside sensor)
@@ -522,10 +520,10 @@ main(int argc, const char *argv[])
 			// all of them and tried to downgrade the response to '0000'. This caused the controller sending
 			// 'MM' command (see below), and then it goes online with our emulated A/C.
 			// '0010' gives the same results
-		    response[3] = '0';
-			response[4] = '0' + state->protocol;
-			response[5] = '0';
-			response[6] = '0';
+		    response[3] = state->protocol[0];
+			response[4] = state->protocol[1];
+			response[5] = state->protocol[2];
+			response[6] = state->protocol[3];
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;

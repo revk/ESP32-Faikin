@@ -14,8 +14,8 @@ struct S21State
     unsigned int fanrpm;      // Fan RPM (divided by 10 here)
     unsigned int comprpm;     // Compressor RPM
     unsigned int consumption; // Power consumption
-    unsigned int protocol;    // Protocol version
-    char         model[4];    // Reported A/C model code
+    unsigned char protocol[4]; // Protocol version
+    char          model[4];    // Reported A/C model code
     // The following aren't understood yet
     unsigned char F2[4];
     unsigned char F3[4];
