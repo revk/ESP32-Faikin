@@ -45,10 +45,14 @@ components/ESP32-RevK/revk_settings: components/ESP32-RevK/revk_settings.c
 components/ESP32-RevK/idfmon: components/ESP32-RevK/idfmon.c
 	make -C components/ESP32-RevK idfmon
 
-set:    settings.h wroom1 wroom solo pico s3
+set:    settings.h wroom1 wroom solo pico s3n8 s3
 
 s3:
 	components/ESP32-RevK/setbuildsuffix -S3-MINI-N4-R2
+	@make
+
+s3n8:
+	components/ESP32-RevK/setbuildsuffix -S3-MINI-N8
 	@make
 
 pico:
