@@ -286,6 +286,7 @@ struct
    uint8_t hysteresis:1;        // Thermostat hysteresis state
    uint8_t cnresend:2;          // Resends
    uint8_t action:3;            // hvac_action
+   uint8_t protocol_ver;
 } daikin = { 0 };
 
 enum
@@ -579,6 +580,13 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             if (!nodemand && payload[0] != '1')
                report_int (demand, 100 - (payload[0] - '0'));
             report_bool (econo, payload[1] & 0x02);
+         }
+         break;
+      case '8':
+         if (check_length (cmd, cmd2, len, 2, payload))
+         {
+            // v0 conditioners report '0' \0 \0 \0
+            daikin.protocol_ver = payload[1] & 0x30;
          }
          break;
       case '9':
@@ -1990,18 +1998,20 @@ legacy_ok (void)
    return j;
 }
 
-static esp_err_t
-legacy_send (httpd_req_t * req, jo_t * jp)
+static char *
+legacy_stringify (jo_t * jp)
 {
-   httpd_resp_set_type (req, "text/plain");
+   char *buf = NULL;
+
    if (jp && *jp)
    {
       jo_t j = *jp;
       int len = jo_len (j);
-      char *buf = mallocspi (len + 40),
-         *p = buf;;
+
+      buf = mallocspi (len + 40);
       if (buf)
       {
+         char *p = buf;
          jo_rewind (j);
          while (jo_next (j) == JO_TAG && p + 3 - buf < len)
          {
@@ -2023,10 +2033,23 @@ legacy_send (httpd_req_t * req, jo_t * jp)
             p += l;
          }
          *p = 0;
-         httpd_resp_sendstr (req, buf);
-         free (buf);
       }
       jo_free (jp);
+   }
+   return buf;
+}
+
+static esp_err_t
+legacy_send (httpd_req_t * req, jo_t * jp)
+{
+   char *buf;
+
+   httpd_resp_set_type (req, "text/plain");
+   buf = legacy_stringify (jp);
+   if (buf)
+   {
+      httpd_resp_sendstr (req, buf);
+      free (buf);
    }
    return ESP_OK;
 }
@@ -2103,8 +2126,8 @@ legacy_web_set_demand_control (httpd_req_t * req)
    return legacy_simple_response (req, err);
 }
 
-static esp_err_t
-legacy_web_get_basic_info (httpd_req_t * req)
+static jo_t
+legacy_get_basic_info (void)
 {
    time_t now = time (0);
    struct tm tm;
@@ -2120,21 +2143,30 @@ legacy_web_get_basic_info (httpd_req_t * req)
    jo_int (j, "location", 0);
    jo_string (j, "name", hostname);
    jo_int (j, "icon", 1);
-   jo_string (j, "method", "none");     // ??
-   jo_int (j, "port", 0);       // ??
-   jo_string (j, "id", revk_id);
+   jo_string (j, "method", "home only");     // "polling" for Daikin cloud
+   jo_int (j, "port", 30050);       // Cloud port ?
+   jo_string (j, "id", "");
    jo_string (j, "pw", "");
    jo_int (j, "lpw_flag", 0);
-   jo_int (j, "adp_kind", 0);   // ??
-   jo_int (j, "pv", 0);         // ?? versions?
-   jo_int (j, "cpv", 0);        //
-   jo_int (j, "cpv_minor", 0);  //
-   jo_int (j, "led", daikin.led);
+   jo_int (j, "adp_kind", 0);   // Controller HW type, for firmware update. We pretend to be GainSpan.
+   jo_int (j, "pv", daikin.protocol_ver);
+   jo_int (j, "cpv", 2);        // Controller protocol version 
+   jo_string (j, "cpv_minor", "00");  //
+   jo_int (j, "led", 1);        // Our LED is always on
    jo_int (j, "en_setzone", 0); // ??
    jo_string (j, "mac", revk_id);
-   jo_string (j, "ssid", revk_wifi ());
+   jo_string (j, "adp_mode", "run"); // Required for Daikin apps to see us
+   jo_string (j, "ssid", "");   // SSID in AP mode
+   jo_string (j, "ssid1", revk_wifi ()); // SSID in client mode
    jo_string (j, "grp_name", "");
    jo_int (j, "en_grp", 0);     //??
+   return j;
+}
+
+static esp_err_t
+legacy_web_get_basic_info (httpd_req_t * req)
+{
+   jo_t j = legacy_get_basic_info ();
    return legacy_send (req, &j);
 }
 
@@ -2378,6 +2410,68 @@ legacy_web_set_special_mode (httpd_req_t * req)
       }
    }
    return legacy_simple_response (req, err);
+}
+
+// Daikin's original auto-discovery mechanism. Reverse engineered from
+// Daikin online controller app.
+static void
+legacy_discovery_task (void *pvParameters)
+{
+   // This is request string
+   static const char daikin_udp_req[] = "DAIKIN_UDP/common/basic_info";
+   static const size_t daikin_udp_req_len = sizeof (daikin_udp_req) - 1;
+   int sock = socket (AF_INET, SOCK_DGRAM, IPPROTO_IP);
+   if (sock >= 0)
+   {
+      int res = 1;
+      setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, &res, sizeof (res));
+      {                         // Bind
+         struct sockaddr_in dest_addr_ip4 = {.sin_addr.s_addr = htonl (INADDR_ANY),.sin_family = AF_INET,.sin_port = htons (30050)
+         };
+         res = bind (sock, (struct sockaddr *) &dest_addr_ip4, sizeof (dest_addr_ip4));
+      }
+      if (!res)
+      {
+         ESP_LOGI (TAG, "UDP discovery responder start");
+         while (true) // We don't stop
+         {                      // Process
+            jo_t basic_info;
+            char *response;
+            fd_set r;
+            FD_ZERO (&r);
+            FD_SET (sock, &r);
+            struct timeval t = { 1, 0 };
+            res = select (sock + 1, &r, NULL, NULL, &t);
+            if (res < 0)
+               break;
+            if (!res)
+               continue;
+            uint8_t buf[daikin_udp_req_len];
+            struct sockaddr_storage source_addr;
+            socklen_t socklen = sizeof (source_addr);
+            res = recvfrom (sock, buf, daikin_udp_req_len, 0, (struct sockaddr *) &source_addr, &socklen);
+            if (res < daikin_udp_req_len)
+               continue;        // Too short
+            if (memcmp (buf, daikin_udp_req, daikin_udp_req_len))
+               continue;        // Wrong data
+            // Reply is the same as /common/get_basic_info
+            basic_info = legacy_get_basic_info ();
+            response = legacy_stringify (&basic_info);
+            if (response)
+            {
+               ((struct sockaddr_in *)&source_addr)->sin_port = htons (30000);
+               sendto (sock, response, strlen(response), 0, (struct sockaddr *) &source_addr, socklen);
+               free (response);
+            }
+            ESP_LOGI (TAG, "UDP discovery reply (stack free %d)", uxTaskGetStackHighWaterMark (NULL));
+         }
+         ESP_LOGI (TAG, "UDP discovery stop");
+      } else
+         ESP_LOGE (TAG, "UDP discovery could not bind");
+      close (sock);
+   } else
+      ESP_LOGE (TAG, "UDP discovery no socket");
+   vTaskDelete (NULL);
 }
 
 static void
@@ -2892,6 +2986,8 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
+   revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);
+
    b.dumping = dump;
    revk_blink (0, 0, "");
 
@@ -3131,10 +3227,7 @@ app_main ()
                poll (F, 5, 0,);
                poll (F, 6, 0,);
                poll (F, 7, 0,);
-               if (debug)
-               {
-                  poll (F, 8, 0,);
-               }
+               poll (F, 8, 0,);
                poll (F, 9, 0,);
                if (debug)
                {
