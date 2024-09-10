@@ -2126,6 +2126,14 @@ legacy_web_set_demand_control (httpd_req_t * req)
    return legacy_simple_response (req, err);
 }
 
+static void
+jo_protocol_version (jo_t j)
+{
+   jo_int (j, "pv", daikin.protocol_ver); //Conditioner protocol version
+   jo_int (j, "cpv", 3);        // Controller protocol version 
+   jo_string (j, "cpv_minor", "20");  //
+}
+
 static jo_t
 legacy_get_basic_info (void)
 {
@@ -2149,9 +2157,7 @@ legacy_get_basic_info (void)
    jo_string (j, "pw", "");
    jo_int (j, "lpw_flag", 0);
    jo_int (j, "adp_kind", 0);   // Controller HW type, for firmware update. We pretend to be GainSpan.
-   jo_int (j, "pv", daikin.protocol_ver);
-   jo_int (j, "cpv", 2);        // Controller protocol version 
-   jo_string (j, "cpv_minor", "00");  //
+   jo_protocol_version (j);
    jo_int (j, "led", 1);        // Our LED is always on
    jo_int (j, "en_setzone", 0); // ??
    jo_string (j, "mac", revk_id);
@@ -2173,8 +2179,34 @@ legacy_web_get_basic_info (httpd_req_t * req)
 static esp_err_t
 legacy_web_get_model_info (httpd_req_t * req)
 {
+   int en_fdir = 0;
+   int s_fdir = 0;
+   int en_spmode = 0;
+
+   if (daikin.status_known & CONTROL_swingh)
+   {
+      s_fdir |= (1 << 1);
+      en_fdir = 1;
+   }
+   if (daikin.status_known & CONTROL_swingv)
+   {
+      s_fdir |= 1;
+      en_fdir = 1;
+   }
+   if (daikin.status_known & CONTROL_streamer)
+      en_spmode |= (1 << 2);
+   if (daikin.status_known & CONTROL_econo)
+      en_spmode |= (1 << 1);
+   if (daikin.status_known & CONTROL_powerful)
+      en_spmode |= 1;
+
    jo_t j = legacy_ok ();
    jo_string (j, "model", daikin.model);
+   jo_protocol_version (j);
+   jo_int (j, "en_frate", (daikin.status_known & CONTROL_fan) ? 1 : 0);
+   jo_int (j, "en_fdir",  en_fdir);
+   jo_int (j, "s_fdir", s_fdir);
+   jo_int (j, "en_spmode", en_spmode);
    return legacy_send (req, &j);
 }
 
