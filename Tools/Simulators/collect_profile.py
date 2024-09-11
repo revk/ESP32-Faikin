@@ -10,7 +10,7 @@ import sys
 import time
 
 faikin_name = ""
-commands = ["FC", "F2", "F3", "F4", "FB", "FG", "FK", "FN", "FP", "FQ", "FR", "FS", "FT"]
+commands = ["F8", "FC", "F2", "F3", "F4", "FB", "FG", "FK", "FN", "FP", "FQ", "FR", "FS", "FT"]
 cmd_index = 0
 
 def send_command(client):
@@ -35,10 +35,16 @@ def parse_response(hex_str):
     if cmd != commands[cmd_index - 1]:
         return False;
 
+    # Reset 'error 252' flag
+    if cmd == "F4":
+        data[5] = data[5] & 0xDF
+
     if cmd == "FC":
         print("model", data[6:2:-1].decode("ascii"))
-    else:
-        print("%s 0x%02X 0x%02X 0x%02X 0x%02X" % (cmd, data[3], data[4], data[5], data[6]))
+        return True
+    if cmd == "F8":
+        cmd = "protocol"
+    print("%s 0x%02X 0x%02X 0x%02X 0x%02X" % (cmd, data[3], data[4], data[5], data[6]))
 
     return True
 

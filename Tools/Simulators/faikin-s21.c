@@ -35,12 +35,9 @@ static struct S21State init_state = {
    .fanrpm   = 52,   // Fan RPM (divided by 10 here)
    .comprpm  = 42,   // Compressor RPM
    .power    = 2,	 // Power consumption in 100 Wh units
-   .protocol = 2,    // Protocol version
-   .model    = {'1', '3', '5', 'D'},     // Reported A/C model code. Default taken from FTXF20D5V1B
-   // Values are taken from FTXF20D5V1B, except F4.
-   // F4 corresponds to A/C models CTXM60RVMA, CTXM35RVMA. Kindly provided by
-   // a user in reverse engineering thread:
-   // https://github.com/revk/ESP32-Faikin/issues/408#issuecomment-2278296452
+   // The following Values are taken from FTXF20D5V1B
+   .protocol = {'0', '2', '0', '0'},    // Protocol version
+   .model    = {'1', '3', '5', 'D'},
    .F2       = {0x34, 0x3A, 0x00, 0x80},
    .F3       = {0x30, 0xFE, 0xFE, 0x00},
    .F4       = {0x30, 0x00, 0x80, 0x30},
@@ -52,7 +49,8 @@ static struct S21State init_state = {
    .FQ       = {0x45, 0x33, 0x30, 0x30}, // 003E
    .FR       = {0x30, 0x30, 0x30, 0x30}, // 0000
    .FS       = {0x30, 0x30, 0x30, 0x30}, // 0000
-   .FT       = {0x31, 0x30, 0x30, 0x30}  // 0001
+   .FT       = {0x31, 0x30, 0x30, 0x30}, // 0001
+   .M        = {'F', 'F', 'F', 'F'}
 };
 
 static void usage(const char *progname)
@@ -407,11 +405,12 @@ main(int argc, const char *argv[])
 			break;
 		 case '5':
 		    state->swing = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
+			state->humidity = buf[S21_PAYLOAD_OFFSET + 2];
 			// Payload offset 1 equals to '?' for "on" and '0' for "off
 			// Payload offset 2 and 3 are always '0', seem unused
 
-			printf(" Set swing %d spare bytes", state->swing);
-			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
+			printf(" Set swing %d humidity 0x%08X byte[1] 0x%08X byte[3] 0x%08X", state->swing, state->humidity,
+			       buf[S21_PAYLOAD_OFFSET + 1], buf[S21_PAYLOAD_OFFSET + 3]);
 			break;
 		 case '6':
 		    state->powerful = buf[S21_PAYLOAD_OFFSET + 0] == '2'; // '2' or '0'
@@ -457,8 +456,8 @@ main(int argc, const char *argv[])
 			// - bit 3: 0 => type=C, 1 => type=N - unknown
 			// byte 2: Zero value, perhaps not used
 			// byte 3: Something about humidity sensor, complicated:
-			// - bit 1: humd=<bool> - Humidity sensor available ???
-			// - bit 4:
+			// - bit 1: humd=<bool> - "Humidify" operation mode is available
+			// - bit 4: Humidity setting is available for "heat" and "auto" modes
 			//   0 => s_humd=165 when bit 1 == 1, or s_humd=0 when bit 1 == 0
 			//   1 => s_humd=183 when bit 1 == 1, or s_humd=146 when bit 1 == 0
             //   s_humd is forced to 16 regardless of bits 1 and 4 when byte 2 bit 1
@@ -474,8 +473,10 @@ main(int argc, const char *argv[])
 		 	unknown_cmd_a(p, response, buf, state->F3);
 			break;
 		 case '4':
-		    // Also taken from CTXM60RVMA, CTXM35RVMA, and also error 252 if wrong
-			// FTXF20D: 30 00 A0 30
+		 	// byte[2] - A/C sometimes reports 0xA0, which then self-resets to 0x80
+			// - bit 5: if set to 1, BRP069B41 stops controlling the A/C and sets
+			//          error code 252. Some sort of "not ready" flag
+			// - bit 7: BRP069B41 seems to ignore it.
 			unknown_cmd_a(p, response, buf, state->F4);
 			break;
 		 case '5':
@@ -483,7 +484,7 @@ main(int argc, const char *argv[])
 		       printf(" -> swing %d\n", state->swing);
 		    response[3] = '0' + state->swing;
 			response[4] = 0x3F;
-			response[5] = 0x30;
+			response[5] = state->humidity;
 			response[6] = 0x80;
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
@@ -510,7 +511,8 @@ main(int argc, const char *argv[])
 			break;
 		case '8':
 		    if (debug)
-		       printf(" -> Protocol version = %d\n", state->protocol);
+		       printf(" -> Protocol version = 0x%02X 0x%02X 0x%02X 0x%02X\n",
+			          state->protocol[0], state->protocol[1], state->protocol[2], state->protocol[3]);
 			// 'F8' - this is found out to be protocol version.
 			// My FTXF20D replies with '0020' (assuming reading in reverse like everything else).
 			// If we say that, BRP069B41 then asks for F9 (we know it's different form of home/outside sensor)
@@ -518,10 +520,10 @@ main(int argc, const char *argv[])
 			// all of them and tried to downgrade the response to '0000'. This caused the controller sending
 			// 'MM' command (see below), and then it goes online with our emulated A/C.
 			// '0010' gives the same results
-		    response[3] = '0';
-			response[4] = '0' + state->protocol;
-			response[5] = '0';
-			response[6] = '0';
+		    response[3] = state->protocol[0];
+			response[4] = state->protocol[1];
+			response[5] = state->protocol[2];
+			response[6] = state->protocol[3];
 
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
@@ -584,7 +586,8 @@ main(int argc, const char *argv[])
 			// - bit 0: Japanese market ?? But we don't know a real difference
 			//   0 -> ac_dst=jp
 			//   1 -> ac_dst=--
-			// - bit 1: When set to 1, forces s_humd=16 regardless of F2 command bits
+			// - bit 1: When set to 1, target humidity setting is not available. Forces s_humd=16
+			//          regardless of respective F2 bits
 			// - bit 2: Fan controls available
 			//    0 -> en_frate=0 en_fdir=0 s_fdir=0
 			//    1 -> en_frate=1 en_fdir=1 s_fdir=3
@@ -631,17 +634,18 @@ main(int argc, const char *argv[])
 		 }
 	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
 		if (debug)
-		    printf(" -> unknown ('MM')\n");
+		    printf(" -> unknown ('MM') = 0x%02X 0x%02X 0x%02X 0x%02X\n",
+	               state->M[0], state->M[1], state->M[2], state->M[3]);
 		// This is sent by BRP069B41 and response is mandatory. The controller
 		// loops forever if NAK is received.
 		// I experimentally found out that this command doesn't have a second
 		// byte, and the A/C always responds with this. Note non-standard
 		// response form.
 		response[S21_CMD0_OFFSET] = 'M';
-		response[2] = 'F';
-		response[3] = 'F';
-		response[4] = 'F';
-		response[5] = 'F';
+		response[2] = state->M[0];
+		response[3] = state->M[1];
+		response[4] = state->M[2];
+		response[5] = state->M[3];
 
 		s21_nonstd_reply(p, response, 5);
 	  } else if (buf[S21_CMD0_OFFSET] == 'R') {

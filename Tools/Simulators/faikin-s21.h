@@ -5,6 +5,7 @@ struct S21State
     float        temp;     // Set point
     int          fan;      // Fan speed
     int          swing;    // Swing direction
+    int          humidity; // Humidity setting
     int          powerful; // Powerful mode
     int          eco;      // Eco mode
     int          home;     // Reported temparatures (multiplied by 10 here)
@@ -13,8 +14,8 @@ struct S21State
     unsigned int fanrpm;      // Fan RPM (divided by 10 here)
     unsigned int comprpm;     // Compressor RPM
     unsigned int consumption; // Power consumption
-    unsigned int protocol;    // Protocol version
-    char         model[4];    // Reported A/C model code
+    unsigned char protocol[4]; // Protocol version
+    char          model[4];    // Reported A/C model code
     // The following aren't understood yet
     unsigned char F2[4];
     unsigned char F3[4];
@@ -28,6 +29,7 @@ struct S21State
     unsigned char FR[4];
     unsigned char FS[4];
     unsigned char FT[4];
+    unsigned char M[4];
 };
 
 #define SHARED_MEM_NAME "Faikin-S21"
