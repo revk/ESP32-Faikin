@@ -31,39 +31,44 @@ static const char TAG[] = "Faikin";
 #define	daikin_set_e(name,value)	daikin_set_enum(#name,&daikin.name,CONTROL_##name,value,CONTROL_##name##_VALUES)
 #define	daikin_set_t(name,value)	daikin_set_temp(#name,&daikin.name,CONTROL_##name,value)
 
-#define	S21MAXTRY	20
+typedef struct poll_s
+{
+   uint8_t ack:1;               //      We got an ACK so this is valid
+   uint8_t nak:2;               //      Count of NAKs in a row - if too many we set bad
+   uint8_t bad:1;               //      Too many NAKs, assume not supported
+} poll_t;
 struct
 {                               // Status of S21 messages that get a valid response - this is a count of NAKs, so 0 means working...
-   uint8_t F1;
-   uint8_t F2;
-   uint8_t F3;
-   uint8_t F4;
-   uint8_t F5;
-   uint8_t F6;
-   uint8_t F7;
-   uint8_t F8;
-   uint8_t F9;
-   uint8_t FA;
-   uint8_t FB;
-   uint8_t FC;
-   uint8_t FG;
-   uint8_t FK;
-   uint8_t FN;
-   uint8_t FM;
-   uint8_t FP;
-   uint8_t FQ;
-   uint8_t FS;
-   uint8_t FT;
-   uint8_t RD;
-   uint8_t RG;
-   uint8_t RI;
-   uint8_t RM;
-   uint8_t RL;
-   uint8_t RN;
-   uint8_t RH;
-   uint8_t RX;
-   uint8_t Ra;
-   uint8_t Rd;
+   poll_t F1;
+   poll_t F2;
+   poll_t F3;
+   poll_t F4;
+   poll_t F5;
+   poll_t F6;
+   poll_t F7;
+   poll_t F8;
+   poll_t F9;
+   poll_t FA;
+   poll_t FB;
+   poll_t FC;
+   poll_t FG;
+   poll_t FK;
+   poll_t FN;
+   poll_t FM;
+   poll_t FP;
+   poll_t FQ;
+   poll_t FS;
+   poll_t FT;
+   poll_t RD;
+   poll_t RG;
+   poll_t RI;
+   poll_t RM;
+   poll_t RL;
+   poll_t RN;
+   poll_t RH;
+   poll_t RX;
+   poll_t Ra;
+   poll_t Rd;
 } s21 = { 0 };
 
 // Settings (RevK library used by MQTT setting command)
@@ -529,7 +534,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                report_float (temp, daikin.temp);        // Does not have temp in other modes
-            if (s21.RG)
+            if (s21.RG.bad)
             {                   // RG is better, so we only look at G1 if RG does not work
                if (payload[3] != 'A')   // Set fan speed
                   report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
@@ -541,9 +546,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          }
          break;
       case '3':                // Seems to be an alternative to G6
-         // If F6 is supported, F3 does not provide "powerul" flag even if supported.
+         // If F6 is supported, F3 does not provide "powerful" flag even if supported.
          // We may still get G3 response for debug or from injection via MQTT "send".
-         if (s21.F6 && check_length (cmd, cmd2, len, 1, payload))
+         if (s21.F6.bad && check_length (cmd, cmd2, len, 1, payload))
          {
             report_bool (powerful, payload[3] & 0x02);
          }
@@ -586,8 +591,6 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          if (check_length (cmd, cmd2, len, 2, payload))
          {
             daikin.protocol_ver = payload[1] & (~0x30);
-            // Stop polling after getting a reply, this doesn't change
-            s21.F8 = S21MAXTRY;
          }
          break;
       case '9':
@@ -606,8 +609,6 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             for (int i = 0; i < limit; i++)     // The string is provided in reverse
                daikin.model[i] = payload[len - i - 1];
             daikin.model[limit] = 0;
-            // Stop polling after getting a reply, this doesn't change
-            s21.FC = S21MAXTRY;
          }
          break;
       case 'M':                // Power meter
@@ -2132,9 +2133,9 @@ legacy_web_set_demand_control (httpd_req_t * req)
 static void
 jo_protocol_version (jo_t j)
 {
-   jo_int (j, "pv", daikin.protocol_ver); //Conditioner protocol version
+   jo_int (j, "pv", daikin.protocol_ver);       //Conditioner protocol version
    jo_int (j, "cpv", 3);        // Controller protocol version 
-   jo_string (j, "cpv_minor", "20");  //
+   jo_string (j, "cpv_minor", "20");    //
 }
 
 static jo_t
@@ -2154,8 +2155,8 @@ legacy_get_basic_info (void)
    jo_int (j, "location", 0);
    jo_string (j, "name", hostname);
    jo_int (j, "icon", 1);
-   jo_string (j, "method", "home only");     // "polling" for Daikin cloud
-   jo_int (j, "port", 30050);       // Cloud port ?
+   jo_string (j, "method", "home only");        // "polling" for Daikin cloud
+   jo_int (j, "port", 30050);   // Cloud port ?
    jo_string (j, "id", "");
    jo_string (j, "pw", "");
    jo_int (j, "lpw_flag", 0);
@@ -2164,9 +2165,9 @@ legacy_get_basic_info (void)
    jo_int (j, "led", 1);        // Our LED is always on
    jo_int (j, "en_setzone", 0); // ??
    jo_string (j, "mac", revk_id);
-   jo_string (j, "adp_mode", "run"); // Required for Daikin apps to see us
+   jo_string (j, "adp_mode", "run");    // Required for Daikin apps to see us
    jo_string (j, "ssid", "");   // SSID in AP mode
-   jo_string (j, "ssid1", revk_wifi ()); // SSID in client mode
+   jo_string (j, "ssid1", revk_wifi ());        // SSID in client mode
    jo_string (j, "grp_name", "");
    jo_int (j, "en_grp", 0);     //??
    return j;
@@ -2207,7 +2208,7 @@ legacy_web_get_model_info (httpd_req_t * req)
    jo_string (j, "model", daikin.model);
    jo_protocol_version (j);
    jo_int (j, "en_frate", (daikin.status_known & CONTROL_fan) ? 1 : 0);
-   jo_int (j, "en_fdir",  en_fdir);
+   jo_int (j, "en_fdir", en_fdir);
    jo_int (j, "s_fdir", s_fdir);
    jo_int (j, "en_spmode", en_spmode);
    return legacy_send (req, &j);
@@ -2468,7 +2469,7 @@ legacy_discovery_task (void *pvParameters)
       if (!res)
       {
          ESP_LOGI (TAG, "UDP discovery responder start");
-         while (true) // We don't stop
+         while (true)           // We don't stop
          {                      // Process
             jo_t basic_info;
             char *response;
@@ -2494,8 +2495,8 @@ legacy_discovery_task (void *pvParameters)
             response = legacy_stringify (&basic_info);
             if (response)
             {
-               ((struct sockaddr_in *)&source_addr)->sin_port = htons (30000);
-               sendto (sock, response, strlen(response), 0, (struct sockaddr *) &source_addr, socklen);
+               ((struct sockaddr_in *) &source_addr)->sin_port = htons (30000);
+               sendto (sock, response, strlen (response), 0, (struct sockaddr *) &source_addr, socklen);
                free (response);
             }
             ESP_LOGI (TAG, "UDP discovery reply (stack free %d)", uxTaskGetStackHighWaterMark (NULL));
@@ -3236,74 +3237,107 @@ app_main ()
                // Poll the AC status.
                // Each value has a smart NAK counter (see macro below), which allows
                // for autodetecting unsupported commands
-#define poll(a,b,c,d)                         \
-   if(s21.a##b##d<S21MAXTRY){                               \
-      int r=daikin_s21_command(*#a,*#b,c,#d); \
-      if (r==RES_OK)                          \
-         s21.a##b##d=0;                         \
-      else if(r==RES_NAK)                     \
-         s21.a##b##d++;                           \
-   }                                          \
-   if(!daikin.talking)                        \
-      s21.a##b##d=0;
+               // Not the do{}while(0); logic is so this works as a single C statement can so can  be used as if()poll(); safely
+#define poll(a,b,c,d)                         		\
+   do							\
+   {							\
+   	if(!s21.a##b##d.bad)				\
+	{						\
+      	    int r=daikin_s21_command(*#a,*#b,c,#d);	\
+      	    if (r==RES_OK)                          	\
+      	    {                         	 		\
+        	s21.a##b##d.ack=1;            		\
+        	s21.a##b##d.nak=0;            		\
+        	s21.a##b##d.bad=0;            		\
+	    }                         	 		\
+      	    else if(r==RES_NAK)                     	\
+      	    {                         	 		\
+         	s21.a##b##d.nak++;                      \
+		if(!s21.a##b##d.nak)			\
+		    s21.a##b##d.bad=1;			\
+	    }                         	 		\
+   	}                                          	\
+   	if(!daikin.talking)                        	\
+      	    s21.a##b##d.ack=s21.a##b##d.nak=s21.a##b##d.bad=0;\
+    } while(0)
+
                poll (F, 1, 0,);
                if (debug)
-               {
                   poll (F, 2, 0,);
-               }
-               if (s21.F6 || debug)
-               {                // If F6 works we assume we don't need F3
-                  poll (F, 3, 0,);
-               }
+               if (s21.F6.bad || debug)
+                  poll (F, 3, 0,);      // If F6 works we assume we don't need F3
                if (debug)
-               {
                   poll (F, 4, 0,);
-               }
                poll (F, 5, 0,);
                poll (F, 6, 0,);
                poll (F, 7, 0,);
-               poll (F, 8, 0,);
+               if (!s21.F8.ack)
+                  poll (F, 8, 0,);      // One time static value
                poll (F, 9, 0,);
                if (debug)
-               {
                   poll (F, A, 0,);
-                  poll (F, B, 0,);
-               }
-               poll (F, C, 0,);
                if (debug)
-               {
+                  poll (F, B, 0,);
+               if (!s21.FC.ack)
+                  poll (F, C, 0,);      // One time static value
+               if (debug)
                   poll (F, G, 0,);
+               if (debug)
                   poll (F, K, 0,);
-               }
                poll (F, M, 0,);
                if (debug)
-               {
                   poll (F, N, 0,);
+               if (debug)
                   poll (F, P, 0,);
-               }
                if (debug)
-               {
                   poll (F, Q, 0,);
-                  poll (F, S, 0,);
-                  poll (F, T, 0,);
-                  //poll (F, U, 2, 02);
-                  //poll (F, U, 2, 04);
-               }
-               poll (R, H, 0,);
-               poll (R, I, 0,);
-               poll (R, a, 0,);
-               poll (R, L, 0,); // Fan speed
-               poll (R, d, 0,); // Compressor
-               poll (R, N, 0,); // Angle
-               poll (R, G, 0,); // Fan
                if (debug)
+                  poll (F, S, 0,);
+               if (debug)
+                  poll (F, T, 0,);
+               //if(debug)poll (F, U, 2, 02);
+               //if(debug)poll (F, U, 2, 04);
+
+               static uint8_t rcycle = 0;       // R polling one per cycle
+               switch (rcycle++)
                {
+               case 0:
+                  poll (R, H, 0,);
+                  break;
+               case 1:
+                  poll (R, I, 0,);
+                  break;
+               case 2:
+                  poll (R, a, 0,);
+                  break;
+               case 3:
+                  poll (R, L, 0,);      // Fan speed
+                  break;
+               case 4:
+                  poll (R, d, 0,);      // Compressor
+                  break;
+               case 5:
+                  poll (R, N, 0,);      // Angle
+                  break;
+               case 6:
+                  poll (R, G, 0,);      // Fan
+                  if (!debug)
+                     rcycle = 0;        // End of normal R polling - the following are debug only
+                  break;
+               case 7:
                   poll (R, M, 0,);
+                  break;
+               case 8:
                   poll (R, X, 0,);
+                  break;
+               case 9:
                   poll (R, D, 0,);
+                  rcycle = 0;   // End of debug cycle
+                  break;
                }
-               if (!s21.RH && !s21.Ra)
-                  s21.F9 = 255; // Don't use F9
+
+               if (!s21.RH.bad && !s21.Ra.bad)
+                  s21.F9.bad = 1;       // Don't use F9
                if (*debugsend)
                {
                   b.dumping = 1;        // Force dumping
@@ -3343,7 +3377,7 @@ app_main ()
                                              CONTROL_sensor | CONTROL_quiet | CONTROL_led))
                {                // D6
                   xSemaphoreTake (daikin.mutex, portMAX_DELAY);
-                  if (!s21.F6)
+                  if (!s21.F6.bad)
                   {
                      temp[0] = '0' + (daikin.powerful ? 2 : 0) + (daikin.comfort ? 0x40 : 0) + (daikin.quiet ? 0x80 : 0);
                      temp[1] = '0' + (daikin.streamer ? 0x80 : 0);
@@ -3357,7 +3391,7 @@ app_main ()
                      // Looks like it supports something else, we don't know what.
                      // https://github.com/revk/ESP32-Faikin/issues/441
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
-                  } else if (!s21.F3)
+                  } else if (!s21.F3.bad)
                   {             // F3 or F6 depends on model
                      // Actually many ACs (tested on FTXF20D5V1B and ATX20K2V1B) respond to
                      // both F3 and F6, but F3 does not report "powerful" state, so we give
