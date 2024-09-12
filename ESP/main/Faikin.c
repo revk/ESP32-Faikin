@@ -585,8 +585,9 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '8':
          if (check_length (cmd, cmd2, len, 2, payload))
          {
-            // v0 conditioners report '0' \0 \0 \0
-            daikin.protocol_ver = payload[1] & 0x30;
+            daikin.protocol_ver = payload[1] & (~0x30);
+            // Stop polling after getting a reply, this doesn't change
+            s21.F8 = S21MAXTRY;
          }
          break;
       case '9':
@@ -605,6 +606,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             for (int i = 0; i < limit; i++)     // The string is provided in reverse
                daikin.model[i] = payload[len - i - 1];
             daikin.model[limit] = 0;
+            // Stop polling after getting a reply, this doesn't change
+            s21.FC = S21MAXTRY;
          }
          break;
       case 'M':                // Power meter
