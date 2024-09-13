@@ -34,7 +34,7 @@ static struct S21State init_state = {
    .inlet    = 185,
    .fanrpm   = 52,   // Fan RPM (divided by 10 here)
    .comprpm  = 42,   // Compressor RPM
-   .power    = 2,	 // Power consumption in 100 Wh units
+   .consumption = 2, // Power consumption in 100 Wh units
    // The following Values are taken from FTXF20D5V1B
    .protocol = {'0', '2', '0', '0'},    // Protocol version
    .model    = {'1', '3', '5', 'D'},
