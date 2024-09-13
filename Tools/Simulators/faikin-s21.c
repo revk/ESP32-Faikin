@@ -152,7 +152,6 @@ static void hexdump_raw(const unsigned char *buf, unsigned int len)
 {
    for (int i = 0; i < len; i++)
       printf(" %02X", buf[i]);
-   printf("\n");
 }
 
 static void hexdump(const char *header, const unsigned char *buf, unsigned int len)
@@ -160,6 +159,7 @@ static void hexdump(const char *header, const unsigned char *buf, unsigned int l
    if (dump) {
       printf("%s:", header);
       hexdump_raw(buf, len);
+	  printf("\n");
    }
 }
 
@@ -181,11 +181,13 @@ static void serial_write(int p, const unsigned char *response, unsigned int pkt_
    }
 }
 
-static void s21_nak(int p, unsigned char *buf)
+static void s21_nak(int p, unsigned char *buf, int len)
 {
    static unsigned char response = NAK;
 
-   printf(" -> Unknown command %c%c, sending NAK\n", buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET]);
+   printf(" -> Unknown command %c%c", buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET]);
+   hexdump_raw(&buf[S21_PAYLOAD_OFFSET], len - 2 - S21_FRAMING_LEN);
+   printf(", sending NAK\n");
    serial_write(p, &response, 1);
    
    buf[0] = 0; // Clear read buffer
@@ -419,10 +421,12 @@ main(int argc, const char *argv[])
 
 			printf(" Set powerful %d spare bytes", state->powerful);
 			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
+			printf("\n");
 			break;
 		 default:
             printf(" Set unknown:");
 		    hexdump_raw(buf, len);
+			printf("\n");
 		    break;
 		 }
 
@@ -629,7 +633,7 @@ main(int argc, const char *argv[])
 		 // also don't recognize it.
 		 default:
 		    // Respond NAK to an unknown command. My FTXF20D does the same.
-		    s21_nak(p, buf);
+		    s21_nak(p, buf, len);
 		    continue;
 		 }
 	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
@@ -682,11 +686,11 @@ main(int argc, const char *argv[])
 		    send_temp(p, response, buf, 215, "unknown ('RX')");
 		    break;
 		 default:
-		    s21_nak(p, buf);
+		    s21_nak(p, buf, len);
 		    continue;
 		 }
 	  } else {
-		  s21_nak(p, buf);
+		  s21_nak(p, buf, len);
 		  continue;
 	  }
 
