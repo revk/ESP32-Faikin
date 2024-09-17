@@ -2866,7 +2866,7 @@ revk_state_extra (jo_t j)
       const char *modes[] = { "fan_only", "heat", "cool", "heat_cool", "4", "5", "6", "dry" };  // FHCA456D
       jo_string (j, "mode", daikin.power ? autor && !lockmode ? "heat_cool" : modes[daikin.mode] : "off");      // If we are controlling, it is auto
    }
-   if (!nohvacaction && daikin.action != HVAC_IDLE)
+   if (!nohvacaction)
       jo_string (j, "action", hvac_action[daikin.action]);
    if (daikin.status_known & CONTROL_fan)
    {
