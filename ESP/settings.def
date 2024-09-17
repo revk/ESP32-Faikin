@@ -57,7 +57,7 @@ bit	lockmode								// Do not auto switch heat/cool modes in Faikin auto
 u8	protocol			.hide=1					// Internal protocol as found, saved when found, can be used with protofix
 bit	protofix			.hide=1					// Protofix forces no change, use nos21, nox50a, etc instead maybe
 
-u32	reporting	60							// Status report period
+u32	reporting	60							// Status report period (s)
 
 u8	uart		1		.fix=1 .hide=1				// UART number
 
