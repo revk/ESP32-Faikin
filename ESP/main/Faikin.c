@@ -69,6 +69,7 @@ struct
    poll_t RX;
    poll_t Ra;
    poll_t Rd;
+   uint8_t rgfan:1;             // Use RG for fan
 } s21 = { 0 };
 
 // Settings (RevK library used by MQTT setting command)
@@ -291,7 +292,7 @@ struct
    uint8_t hysteresis:1;        // Thermostat hysteresis state
    uint8_t cnresend:2;          // Resends
    uint8_t action:3;            // hvac_action
-   uint8_t protocol_ver;
+   uint8_t protocol_ver;        // Protocol version
 } daikin = { 0 };
 
 enum
@@ -534,7 +535,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
                report_float (temp, s21_decode_target_temp (payload[2]));
             else if (!isnan (daikin.temp))
                report_float (temp, daikin.temp);        // Does not have temp in other modes
-            if (s21.RG.bad)
+            if (!s21.rgfan)
             {                   // RG is better, so we only look at G1 if RG does not work
                if (payload[3] != 'A')   // Set fan speed
                   report_uint8 (fan, "00012345"[payload[3] & 0x7] - '0');       // XXX12345 mapped to A12345Q
@@ -624,12 +625,17 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
             switch (cmd2)
             {
             case 'G':
-               if (payload[0] >= '3' && payload[0] <= '7')
-                  report_uint8 (fan, payload[0] - '3' + 1);     // 1-5
-               else if (payload[0] == 'A')
-                  report_uint8 (fan, 0);        // Auto
-               else if (payload[0] == 'B')
-                  report_uint8 (fan, 6);        // Quiet
+               if (strchr ("34567AB", payload[0]))
+               {                // Sensible FAN, else us F1
+                  if (payload[0] >= '3' && payload[0] <= '7')
+                     report_uint8 (fan, payload[0] - '3' + 1);  // 1-5
+                  else if (payload[0] == 'A')
+                     report_uint8 (fan, 0);     // Auto
+                  else if (payload[0] == 'B')
+                     report_uint8 (fan, 6);     // Quiet
+                  s21.rgfan = 1;
+               } else
+                  s21.rgfan = 0;
                break;
             }
          }
