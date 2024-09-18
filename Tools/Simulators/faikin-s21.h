@@ -11,11 +11,12 @@ struct S21State
     int          home;     // Reported temparatures (multiplied by 10 here)
     int          outside;
     int          inlet;
-    unsigned int fanrpm;      // Fan RPM (divided by 10 here)
-    unsigned int comprpm;     // Compressor RPM
-    unsigned int consumption; // Power consumption
-    unsigned char protocol[4]; // Protocol version
-    char          model[4];    // Reported A/C model code
+    unsigned int  fanrpm;         // Fan RPM (divided by 10 here)
+    unsigned int  comprpm;        // Compressor RPM
+    unsigned int  consumption;    // Power consumption
+    unsigned char protocol_major; // Protocol version
+    unsigned char protocol_minor;
+    char          model[4];       // Reported A/C model code
     // The following aren't understood yet
     unsigned char F2[4];
     unsigned char F3[4];
@@ -29,7 +30,14 @@ struct S21State
     unsigned char FR[4];
     unsigned char FS[4];
     unsigned char FT[4];
+    unsigned char FV[4];
     unsigned char M[4];
+    unsigned char V[4];
+    unsigned char VS000M[14];
+    unsigned char FU00[32];
+    unsigned char FU02[32];
+    unsigned char FY10[8];
+    unsigned char FY20[4];
 };
 
 // POSIX shm requires the name to start with '/' for portability reasons.

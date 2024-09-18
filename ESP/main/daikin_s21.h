@@ -25,6 +25,12 @@
 // A minimum length of a packet (with no payload): framing + CMD0 + CMD1
 #define S21_MIN_PKT_LEN (S21_FRAMING_LEN + 2)
 
+// v3 packets use 4-character command codes
+#define S21_V3_CMD2_OFFSET 3
+#define S21_V3_CMD3_OFFSET 4
+#define S21_V3_PAYLOAD_OFFSET 5
+#define S21_MIN_V3_PKT_LEN (S21_FRAMING_LEN + 4)
+
 // Encoding for minimum target temperature value, correspond to 18 deg.C.
 #define AC_MIN_TEMP_VALUE '@'
 
