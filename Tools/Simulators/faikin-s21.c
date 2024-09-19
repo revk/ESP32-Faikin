@@ -1,5 +1,6 @@
 /* Daikin conditioner simulator for S21 protocol testing */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -335,7 +336,7 @@ main(int argc, const char *argv[])
    struct S21State *state = create_shmem(SHARED_MEM_NAME, &init_state, sizeof(init_state));
 
    if (!state) {
-	  fprintf(stderr, "Failed to create shared memory");
+	  fputs("Failed to create shared memory\n", stderr);
 	  exit(255);
    }
 
@@ -346,7 +347,10 @@ main(int argc, const char *argv[])
 	  exit(255);
    }
 
-   set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS);
+   if (set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS)) {
+	  fputs("Failed to set up serial port\n", stderr);
+	  exit(255);
+   }
 
    unsigned char buf[256];
    unsigned char response[256];

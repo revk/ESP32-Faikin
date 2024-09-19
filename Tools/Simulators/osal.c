@@ -1,11 +1,12 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 
 #include "osal.h"
 
 #ifdef WIN32
 
-void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
+int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
 {
    DCB dcb = {0};
    
@@ -19,8 +20,10 @@ void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parit
    
    if (!SetCommState((HANDLE)_get_osfhandle(p), &dcb)) {
       fprintf(stderr, "Failed to set port parameters\n");
-	  exit(255);
+	   return -1;
    }
+
+   return 0;
 }
 
 // This implementation is not tested, sorry
@@ -95,17 +98,22 @@ void close_shmem(void *mem)
 
 #else
 
-void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
+int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
 {
    struct termios  t;
-   if (tcgetattr(p, &t) < 0)
-      err(1, "Cannot get termios");
-   cfsetspeed(&t, speed;
+   if (tcgetattr(p, &t) < 0) {
+      perror("Cannot get termios");
+      return -1;
+   }
+   cfsetspeed(&t, speed);
    t.c_cflag = CREAD | bits | parity | stop;
-   if (tcsetattr(p, TCSANOW, &t) < 0)
-      err(1, "Cannot set termios");
+   if (tcsetattr(p, TCSANOW, &t) < 0) {
+      perror("Cannot set termios");
+      return -1;
+   }
    usleep(100000);
    tcflush(p, TCIOFLUSH);
+   return 0;
 }
 
 int wait_read(int p, unsigned int timeout)
