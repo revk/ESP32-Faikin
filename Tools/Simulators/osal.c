@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "osal.h"
@@ -98,6 +99,10 @@ void close_shmem(void *mem)
 
 #else
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
 {
    struct termios  t;
@@ -132,16 +137,55 @@ int wait_read(int p, unsigned int timeout)
     return select(p + 1, &r, NULL, NULL, &tv);
 }
 
+static int shm_fd;
+static int owner;
+
+void *create_shmem_internal(const char *name, unsigned int len, int oflag)
+{
+   void *pBuf;
+
+   shm_fd = shm_open(name, oflag, 0600);
+
+   if (shm_fd < 0)
+   {
+      perror("Could not open shared memory object");
+      return NULL;
+   }
+
+   if ((oflag & O_CREAT) && ftruncate(shm_fd, len))
+   {
+      perror("Could not ftruncate() shared memory object");
+      close(shm_fd);
+      return NULL;
+   }
+
+   pBuf = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+   if (pBuf == MAP_FAILED)
+   {
+       perror("Could not map view of file");
+       close(shm_fd);
+       return NULL;
+   }
+
+   return pBuf;
+}
+
 void *create_shmem(const char *name, void* data, unsigned int len)
 {
-    return data;
+   void *pBuf = create_shmem_internal(name, len, O_RDWR|O_CREAT);
+
+   if (pBuf)
+      memcpy(pBuf, data, len);
+   else if (shm_fd != -1)
+      shm_unlink(name);
+
+   return pBuf;
 }
 
 void *open_shmem(const char *name, unsigned int len)
 {
-    fprintf(stderr, "Sorry, shared memory is not implemented for UNIX targets\n");
-    exit(255);
-    return NULL;
+   return create_shmem_internal(name, len, O_RDWR);
 }
 
 void close_shmem(void *mem)
