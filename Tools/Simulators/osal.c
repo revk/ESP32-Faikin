@@ -106,7 +106,12 @@ int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity
       return -1;
    }
    cfsetspeed(&t, speed);
-   t.c_cflag = CREAD | bits | parity | stop;
+   cfmakeraw(&t);
+   t.c_iflag &= ~(IGNBRK | IXON | IXOFF | IXANY);
+   t.c_cflag = CLOCAL | CREAD | bits | parity | stop;
+   t.c_cc[VMIN] = 1;
+   t.c_cc[VTIME] = 0;
+
    if (tcsetattr(p, TCSANOW, &t) < 0) {
       perror("Cannot set termios");
       return -1;
