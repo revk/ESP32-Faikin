@@ -15,11 +15,41 @@
 
 #include "osal.h"
 
+int debug = 0,
+    dump = 0,
+    p = -1;
+
+void acsend(unsigned char cmd, const unsigned char *payload, int len) {
+    if (debug) {
+        printf("[32mTx %02X", cmd);
+        for (int i = 0; i < len; i++)
+            printf(" %02X", payload[i]);
+        printf("\n");
+    }
+    unsigned char buf[256];
+    buf[0] = 0x06;
+    buf[1] = cmd;
+    buf[2] = len + 6;
+    buf[3] = 1;
+    buf[4] = cmd == 0xB7 ? 0x12 : 0x06;
+    if (len)
+        memcpy(buf + 5, payload, len);
+    uint8_t c = 0;
+    for (int i = 0; i < 5 + len; i++)
+        c += buf[i];
+    buf[5 + len] = 0xFF - c;
+    if (dump) {
+        printf("[32;1mTx");
+        for (int i = 0; i < len + 6; i++)
+            printf(" %02X", buf[i]);
+        printf("\n");
+    }
+    write(p, buf, len + 6);
+}
+
 int
 main (int argc, const char *argv[])
 {
-   int debug = 0,
-      dump = 0;
    int power = 0;
    int mode = 3;
    int comp = 1;
@@ -82,44 +112,13 @@ main (int argc, const char *argv[])
       }
    }
 
-   int p = open (port, O_RDWR);
+   p = open (port, O_RDWR);
    if (p < 0) {
       fprintf(stderr, "Cannot open %s: %s", port, strerror(errno));
 	  exit(255);
    }
 
    set_serial(p, 9600, CS8, EVENPARITY, TWOSTOPBITS);
-
-   void acsend (unsigned char cmd, const unsigned char *payload, int len)
-   {
-      if (debug)
-      {
-         printf ("[32mTx %02X", cmd);
-         for (int i = 0; i < len; i++)
-            printf (" %02X", payload[i]);
-         printf ("\n");
-      }
-      unsigned char buf[256];
-      buf[0] = 0x06;
-      buf[1] = cmd;
-      buf[2] = len + 6;
-      buf[3] = 1;
-      buf[4] = cmd == 0xB7 ? 0x12 : 0x06;
-      if (len)
-         memcpy (buf + 5, payload, len);
-      uint8_t c = 0;
-      for (int i = 0; i < 5 + len; i++)
-         c += buf[i];
-      buf[5 + len] = 0xFF - c;
-      if (dump)
-      {
-         printf ("[32;1mTx");
-         for (int i = 0; i < len + 6; i++)
-            printf (" %02X", buf[i]);
-         printf ("\n");
-      }
-      write (p, buf, len + 6);
-   }
 
    while (1)
    {

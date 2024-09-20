@@ -1,9 +1,23 @@
-ifeq ($(shell uname),Darwin)
-INCLUDES := -I/usr/local/include/
-LIBS := -L/usr/local/Cellar/popt/1.18/lib/
-else
+OS := $(shell uname)
+UNAME_V := $(shell uname -v)
 LIBS :=
 INCLUDES :=
+# Detect Mac Apple Silicon
+ifeq (${OS},Darwin)
+ifeq ($(UNAME_V),*ARM64*)
+INCLUDES := -I/usr/local/include/
+LIBS := -L/usr/local/Cellar/popt/1.18/lib/
+endif
+endif
+# Detect Mac Intel
+ifeq (${OS},Darwin)
+ifneq ($(UNAME_V),*ARM64*)
+INCLUDES := -I/opt/homebrew/include/
+LIBS := -L/opt/homebrew/Cellar/popt/1.19/lib/
+endif
+endif
+ifneq (,$(findstring MINGW,${OS}))
+LIBS := -lintl -liconv -static
 endif
 
 CFLAGS := -g -O
