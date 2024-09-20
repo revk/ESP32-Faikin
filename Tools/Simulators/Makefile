@@ -1,21 +1,19 @@
 OS := $(shell uname)
-UNAME_V := $(shell uname -v)
 LIBS :=
 INCLUDES :=
-# Detect Mac Apple Silicon
 ifeq (${OS},Darwin)
+UNAME_V := $(shell uname -v)
 ifeq ($(UNAME_V),*ARM64*)
+# Detect Mac Apple Silicon
 INCLUDES := -I/usr/local/include/
 LIBS := -L/usr/local/Cellar/popt/1.18/lib/
-endif
-endif
+else
 # Detect Mac Intel
-ifeq (${OS},Darwin)
-ifneq ($(UNAME_V),*ARM64*)
 INCLUDES := -I/opt/homebrew/include/
 LIBS := -L/opt/homebrew/Cellar/popt/1.19/lib/
 endif
 endif
+# Detect Windows/MinGW. Use -static in order for .exe file to be easily shareable
 ifneq (,$(findstring MINGW,${OS}))
 LIBS := -lintl -liconv -static
 endif
