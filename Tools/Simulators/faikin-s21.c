@@ -1,5 +1,6 @@
 /* Daikin conditioner simulator for S21 protocol testing */
 
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -34,7 +35,7 @@ static struct S21State init_state = {
    .inlet    = 185,
    .fanrpm   = 52,   // Fan RPM (divided by 10 here)
    .comprpm  = 42,   // Compressor RPM
-   .power    = 2,	 // Power consumption in 100 Wh units
+   .consumption = 2, // Power consumption in 100 Wh units
    // The following Values are taken from FTXF20D5V1B
    .protocol = {'0', '2', '0', '0'},    // Protocol version
    .model    = {'1', '3', '5', 'D'},
@@ -152,7 +153,6 @@ static void hexdump_raw(const unsigned char *buf, unsigned int len)
 {
    for (int i = 0; i < len; i++)
       printf(" %02X", buf[i]);
-   printf("\n");
 }
 
 static void hexdump(const char *header, const unsigned char *buf, unsigned int len)
@@ -160,6 +160,7 @@ static void hexdump(const char *header, const unsigned char *buf, unsigned int l
    if (dump) {
       printf("%s:", header);
       hexdump_raw(buf, len);
+	  printf("\n");
    }
 }
 
@@ -181,11 +182,13 @@ static void serial_write(int p, const unsigned char *response, unsigned int pkt_
    }
 }
 
-static void s21_nak(int p, unsigned char *buf)
+static void s21_nak(int p, unsigned char *buf, int len)
 {
    static unsigned char response = NAK;
 
-   printf(" -> Unknown command %c%c, sending NAK\n", buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET]);
+   printf(" -> Unknown command %c%c", buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET]);
+   hexdump_raw(&buf[S21_PAYLOAD_OFFSET], len - 2 - S21_FRAMING_LEN);
+   printf(", sending NAK\n");
    serial_write(p, &response, 1);
    
    buf[0] = 0; // Clear read buffer
@@ -333,7 +336,7 @@ main(int argc, const char *argv[])
    struct S21State *state = create_shmem(SHARED_MEM_NAME, &init_state, sizeof(init_state));
 
    if (!state) {
-	  fprintf(stderr, "Failed to create shared memory");
+	  fputs("Failed to create shared memory\n", stderr);
 	  exit(255);
    }
 
@@ -344,7 +347,10 @@ main(int argc, const char *argv[])
 	  exit(255);
    }
 
-   set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS);
+   if (set_serial(p, 2400, CS8, EVENPARITY, TWOSTOPBITS)) {
+	  fputs("Failed to set up serial port\n", stderr);
+	  exit(255);
+   }
 
    unsigned char buf[256];
    unsigned char response[256];
@@ -419,10 +425,12 @@ main(int argc, const char *argv[])
 
 			printf(" Set powerful %d spare bytes", state->powerful);
 			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
+			printf("\n");
 			break;
 		 default:
             printf(" Set unknown:");
 		    hexdump_raw(buf, len);
+			printf("\n");
 		    break;
 		 }
 
@@ -629,7 +637,7 @@ main(int argc, const char *argv[])
 		 // also don't recognize it.
 		 default:
 		    // Respond NAK to an unknown command. My FTXF20D does the same.
-		    s21_nak(p, buf);
+		    s21_nak(p, buf, len);
 		    continue;
 		 }
 	  } else if (buf[S21_CMD0_OFFSET] == 'M') {
@@ -682,11 +690,11 @@ main(int argc, const char *argv[])
 		    send_temp(p, response, buf, 215, "unknown ('RX')");
 		    break;
 		 default:
-		    s21_nak(p, buf);
+		    s21_nak(p, buf, len);
 		    continue;
 		 }
 	  } else {
-		  s21_nak(p, buf);
+		  s21_nak(p, buf, len);
 		  continue;
 	  }
 

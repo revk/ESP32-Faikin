@@ -33,9 +33,9 @@ static int parse_bool(int argc, const char **argv, int *v)
 
     val = argv[1];
 
-    if (val[0] == '1' || !stricmp(val, "true") || !stricmp(val, "on"))
+    if (val[0] == '1' || !strcasecmp(val, "true") || !strcasecmp(val, "on"))
         *v = 1;
-    else if (val[0] == '0' || !stricmp(val, "false") || !stricmp(val, "off"))
+    else if (val[0] == '0' || !strcasecmp(val, "false") || !strcasecmp(val, "off"))
         *v = 0;
     else {
         fprintf(stderr, "%s: Invalid boolean value '%s'\n", opt, val);
@@ -100,7 +100,7 @@ static int parse_enum(int argc, const char **argv, unsigned int*v, const struct 
     }
 
     while (opts->name) {
-        if (!stricmp(argv[1], opts->name)) {
+        if (!strcasecmp(argv[1], opts->name)) {
             *v = opts->value;
             return 2;
         }

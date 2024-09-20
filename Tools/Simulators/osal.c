@@ -1,11 +1,13 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include "osal.h"
 
 #ifdef WIN32
 
-void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
+int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
 {
    DCB dcb = {0};
    
@@ -19,8 +21,10 @@ void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parit
    
    if (!SetCommState((HANDLE)_get_osfhandle(p), &dcb)) {
       fprintf(stderr, "Failed to set port parameters\n");
-	  exit(255);
+	   return -1;
    }
+
+   return 0;
 }
 
 // This implementation is not tested, sorry
@@ -95,17 +99,31 @@ void close_shmem(void *mem)
 
 #else
 
-void set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
+int set_serial(int p, unsigned int speed, unsigned int bits, unsigned int parity, unsigned int stop)
 {
    struct termios  t;
-   if (tcgetattr(p, &t) < 0)
-      err(1, "Cannot get termios");
-   cfsetspeed(&t, speed;
-   t.c_cflag = CREAD | bits | parity | stop;
-   if (tcsetattr(p, TCSANOW, &t) < 0)
-      err(1, "Cannot set termios");
+   if (tcgetattr(p, &t) < 0) {
+      perror("Cannot get termios");
+      return -1;
+   }
+   cfsetspeed(&t, speed);
+   cfmakeraw(&t);
+   t.c_iflag &= ~(IGNBRK | IXON | IXOFF | IXANY);
+   t.c_cflag = CLOCAL | CREAD | bits | parity | stop;
+   t.c_cc[VMIN] = 1;
+   t.c_cc[VTIME] = 0;
+
+   if (tcsetattr(p, TCSANOW, &t) < 0) {
+      perror("Cannot set termios");
+      return -1;
+   }
    usleep(100000);
    tcflush(p, TCIOFLUSH);
+   return 0;
 }
 
 int wait_read(int p, unsigned int timeout)
@@ -119,16 +137,55 @@ int wait_read(int p, unsigned int timeout)
     return select(p + 1, &r, NULL, NULL, &tv);
 }
 
+static int shm_fd;
+static int owner;
+
+void *create_shmem_internal(const char *name, unsigned int len, int oflag)
+{
+   void *pBuf;
+
+   shm_fd = shm_open(name, oflag, 0600);
+
+   if (shm_fd < 0)
+   {
+      perror("Could not open shared memory object");
+      return NULL;
+   }
+
+   if ((oflag & O_CREAT) && ftruncate(shm_fd, len))
+   {
+      perror("Could not ftruncate() shared memory object");
+      close(shm_fd);
+      return NULL;
+   }
+
+   pBuf = mmap(NULL, len, PROT_READ|PROT_WRITE, MAP_SHARED, shm_fd, 0);
+
+   if (pBuf == MAP_FAILED)
+   {
+       perror("Could not map view of file");
+       close(shm_fd);
+       return NULL;
+   }
+
+   return pBuf;
+}
+
 void *create_shmem(const char *name, void* data, unsigned int len)
 {
-    return data;
+   void *pBuf = create_shmem_internal(name, len, O_RDWR|O_CREAT);
+
+   if (pBuf)
+      memcpy(pBuf, data, len);
+   else if (shm_fd != -1)
+      shm_unlink(name);
+
+   return pBuf;
 }
 
 void *open_shmem(const char *name, unsigned int len)
 {
-    fprintf(stderr, "Sorry, shared memory is not implemented for UNIX targets\n");
-    exit(255);
-    return NULL;
+   return create_shmem_internal(name, len, O_RDWR);
 }
 
 void close_shmem(void *mem)

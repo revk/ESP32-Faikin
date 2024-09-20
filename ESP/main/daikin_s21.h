@@ -9,7 +9,6 @@
 // Some common S21 definitions
 #define	STX	2
 #define	ETX	3
-#define	ENQ	5
 #define	ACK	6
 #define	NAK	21
 
@@ -54,8 +53,11 @@ s21_checksum (uint8_t * buf, int len)
    for (int i = 1; i < len - 2; i++)
       c += buf[i];
 
-   // Seems checksum of 03 actually sends as 05 in order not to clash with ETX
-   return (c == ETX) ? ENQ : c;
+   // Special bytes are forbidden even as checksum bytes, they are promoted
+   if (c == STX || c == ETX || c == ACK)
+      c += 2;
+
+   return c;
 }
 
 // Target temperature is encoded as one character
