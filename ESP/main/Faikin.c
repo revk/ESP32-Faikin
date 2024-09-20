@@ -3799,6 +3799,10 @@ app_main ()
                      set -= coolover;   // Ensure cooling by applying A/C offset to force it
                      daikin.action = HVAC_COOLING;
                   }
+                  if (!noled && autolcontrol)
+                  {
+                    daikin_set_v (led, 1);
+                  }
                } else
                {                // At or beyond temp - stop heat/cool - try and ensure it stops heating or cooling
                   daikin.action = HVAC_IDLE;
@@ -3813,6 +3817,10 @@ app_main ()
                      set -= heatback;   // Heating mode but apply negative offset to not actually heat any more than this
                   else
                      set += coolback;   // Cooling mode but apply positive offset to not actually cool any more than this
+                  if (!noled && autolcontrol)
+                  {
+                     daikin_set_v (led, 0);
+                   }
                }
 
                // Limit settings to acceptable values

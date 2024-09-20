@@ -84,6 +84,7 @@ bit	auto.p				.live=1					// Enable auto power on/off
 s	auto.b				.live=1					// BLE sensor ID
 u8	auto.fmax	5		.live=1	.old="fmaxauto"			// Max fan setting when starting heat/cool way off from target
 u8	auto.ptemp	0.5		.live=1	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
+bit	auto.lcontrol	0		.live=1					// Auto toggle on/off LED based on current HVAC action
 
 bit	thermostat			.live=1					// Faikin auto simple thermostat mode (heat to max, cool to min)
 
