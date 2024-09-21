@@ -18,7 +18,7 @@ commands = [
     # Discovered by analyzing v3 protocol, but at least v2 A/Cs also have it
     "VS000M",
     # v3 extended commands
-    "FY00", "FY10", "FY20", "FU00", "FU02"
+    "FY00", "FY10", "FY20", "FU00", "FU02", "FU04"
 ]
 cmd_index = 0
 
