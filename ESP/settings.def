@@ -36,6 +36,8 @@ bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
 bit	no.icons			.live=1					// Do not show icons on web UI
 
+bit udp_discovery                           // Enable Daikin BRP-compatible UDP discovery
+
 bit	dark									// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
 bit	ha.switches								// Set additional HA switches
