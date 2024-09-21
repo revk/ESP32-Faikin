@@ -46,7 +46,7 @@ static struct S21State init_state = {
    .F4       = {0x30, 0x00, 0x80, 0x30},
    .FB       = {0x30, 0x33, 0x36, 0x30}, // 0630
    .FG       = {0x30, 0x34, 0x30, 0x30}, // 0040
-   .FK       = {0x79, 0x73, 0x35, 0x31}, // Modified: land=1
+   .FK       = {0x39, 0x73, 0x35, 0x31}, // Modified: land=1,atlmt_l=0,atlmt_h=0
    .FN       = {0x30, 0x30, 0x30, 0x30}, // 0000
    .FP       = {0x37, 0x33, 0x30, 0x30}, // 0037
    .FQ       = {0x45, 0x33, 0x30, 0x30}, // 003E
@@ -487,9 +487,25 @@ main(int argc, const char *argv[])
 		 switch (buf[S21_V3_CMD3_OFFSET])
 		 {
 		 case '0':
+		    // FU00 - Special modes availability
+            // byte 0 - "Powerful" mode availability flag. 0x33 - enabled, 0x30 - disabled
+            // byte 1 - "Econo" mode availability flag. 0x33 - enabled, 0x30 - disabled
+            // byte 3 - unknown. Set to 0x33 (enabled) on FTXF20D5V1B, but no mode_info flag was found.
+            // byte 3 - unknown
+            // byte 4 - unknown. Set to 0x33 (enabled) on FTXF20D5V1B, but no mode_info flag was found.
+            // byte 5 - "Streamer" mode availability flag. 0x33 - enabled, 0x30 - disabled
+            // the rest - unknown, could be reserved.
 			unknown_v3_cmd(p, response, buf, state->FU00, sizeof(state->FU00));
 			break;
 		 case '2':
+		 	// FU02 - temperature ranges (perhaps). Displayed in /aircon/get_model_info:
+			// byte 1 - Unknown parameter (atlmt_h). Valid values are from 0xA0 to 0xB0 (inclusive).
+			//          Actual value is calculated as: atlmt_l = (byte - 0xA0) / 2.0.
+			//          If byte value is outside of the valid range, atlmt_h=0 is shown.
+			// byte 2 - Maximum allowed temperature for Heat mode (hmlmt_l). Valid values
+			//          are from 0x30 to 0x6F (inclusive); Actual value is calculated as:
+			//          hmlmt_l = (byte - 0x30) / 2.0 + 10.0. If byte value is outside of
+			//          the valid range, the hmlmt_t parameter is not shown.
 			unknown_v3_cmd(p, response, buf, state->FU02, sizeof(state->FU02));
 			break;
 		 case '4':
@@ -711,10 +727,12 @@ main(int argc, const char *argv[])
 			unknown_cmd(p, response, buf, state->FG, S21_PAYLOAD_LEN);
 			break;
 		 case 'K':
-		    // Optional features. Displayed in /aircon/get_model_info:
+		    // Optional v2+ features. Displayed in /aircon/get_model_info:
 			// byte 0:
 			// - bit 2: acled=<bool>. LED control available ?
 			// - bit 3: land=<bool>
+			// - bit 6: When set to 0, atlmt_l=0,atlmt_h=0 parameters are displayed by the controller. 1 = hidden
+			//          Only for protocol v3; ignored on lower versions
 			// byte 1:
 			// - bit 0: elec=<bool>
 			// - bit 2: temp_rng=<bool>
@@ -734,11 +752,13 @@ main(int argc, const char *argv[])
 			//    app always shows "fan off", and attempts to control it do nothing. If the app is restarted,
 			//    it doesn't show fan controls (neither speed nor swing) at all for this unit.
 			// - bit 3: disp_dry=<bool>
-			// byte 3 - doesn't change anything
+			// byte 3:
+			// - bit 0: Protocol v3: demand mode available. Ignored on <= v2.
 			// FTXF20D values: 0x71, 0x73, 0x35, 0x31
 			unknown_cmd(p, response, buf, state->FK, S21_PAYLOAD_LEN);
 			break;
 		 case 'N':
+		    // FN - unknown, reported as first 4 bytes of itelc= in /aircon/get_monitordata
 			unknown_cmd(p, response, buf, state->FN, S21_PAYLOAD_LEN);
 			break;
 		 case 'P':
@@ -785,18 +805,16 @@ main(int argc, const char *argv[])
 		 	send_int(p, response, buf, state->comprpm, "compressor rpm");
 			break;
 	     case 'N':
-		 	// These two are queried by BRP069B41, at least for protocol version 1, but we have no idea
-			// what they mean. Not found anywhere in controller's http responses. We're replying with
-			// some distinct values for possible identification in case if they pop up somewhere.
-			// The following is what my FTX20D returns, also with known commands from above, for comparison:
-			// {"protocol":"S21","dump":"0253483035322B5D03","SH":"052+"} - home
-			// {"protocol":"S21","dump":"0253493535322B6303","SI":"552+"} - inlet
-			// {"protocol":"S21","dump":"0253613035312B7503","Sa":"051+"} - outside
-			// {"protocol":"S21","dump":"02534E3532312B6403","SN":"521+"} - ???
-			// {"protocol":"S21","dump":"0253583033322B6B03","SX":"032+"} - ???
+            // Target temperature. Reported in /aircon/get_monitordata as trtmp=
+			// The temperature the indoor unit is actually trying to match, accounts
+			// for any powerful mode or intelligent eye modifiers or similar.
+			// Heuristics are detailled in service manuals:
+			// https://www.daikinac.com/content/assets/DOC/ServiceManuals/SiUS091133-FTXS-LFDXS-L-Inverter-Pair-Service-Manual.pdf#page=38
 		    send_temp(p, response, buf, 235, "unknown ('RN')");
 		    break;
 	     case 'X':
+		    // According to https://github.com/revk/ESP32-Faikin/issues/408#issue-2437817696,
+			// louver vertical angle. Reported in /aircon/get_monitordata as fangl=
 		    send_temp(p, response, buf, 215, "unknown ('RX')");
 		    break;
 		 default:
