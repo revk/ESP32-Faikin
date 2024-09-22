@@ -88,7 +88,7 @@ def parse_response(hex_str):
     if cmd == "F8":
         protocol_ver = payload[1] & ~0x30
     elif cmd == "FC":
-        profile_data.append(["model", payload.decode("ascii")])
+        profile_data.append(["model", payload[::-1].decode("ascii")])
     elif cmd == "FY00":
         ver_string = payload.decode("ascii")
         protocol_ver = ver_string[2] + '.' + ver_string[1] + ver_string[0]
