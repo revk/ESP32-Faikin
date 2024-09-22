@@ -3028,7 +3028,9 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
-   revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);
+
+   if (udp_discovery)
+      revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);
 
    b.dumping = dump;
    revk_blink (0, 0, "");
