@@ -7,10 +7,17 @@ struct S21State
     int          swing;    // Swing direction
     int          humidity; // Humidity setting
     int          powerful; // Powerful mode
+    int          comfort;  // Comfort mode
+    int          quiet;    // Quiet mode
+    int          sensor;   // Sensor mode
+    int          led;      // LED on/off
+    int          streamer; // Streamer mode
     int          eco;      // Eco mode
+    int          demand;   // Demand setting
     int          home;     // Reported temparatures (multiplied by 10 here)
     int          outside;
     int          inlet;
+    int          hum_sensor; // Humidity sensor value
     unsigned int  fanrpm;         // Fan RPM (divided by 10 here)
     unsigned int  comprpm;        // Compressor RPM
     unsigned int  consumption;    // Power consumption
@@ -39,6 +46,19 @@ struct S21State
     unsigned char FU04[32];
     unsigned char FY10[8];
     unsigned char FY20[4];
+    unsigned char FX00[2];
+    unsigned char FX10[2];
+    unsigned char FX20[4];
+    unsigned char FX30[2];
+    unsigned char FX40[2];
+    unsigned char FX50[2];
+    unsigned char FX60[4];
+    unsigned char FX70[4];
+    unsigned char FX80[4];
+    unsigned char FX90[4];
+    unsigned char FXA0[4];
+    unsigned char FXB0[2];
+    unsigned char FXC0[2];
 };
 
 // POSIX shm requires the name to start with '/' for portability reasons.
