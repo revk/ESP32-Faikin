@@ -20,6 +20,15 @@ static struct EnumOption humidity[] =
     {NULL, 0}
 };
 
+static struct EnumOption demand[] =
+{
+    {"Off", 0},
+    {"Low", 60},
+    {"Medium", 50},
+    {"High", 30},
+    {NULL, 0}
+};
+
 static int parse_protocol(int argc, const char **argv, struct S21State *state)
 {
     const char *opt = argv[0];
@@ -202,17 +211,22 @@ void state_options_help(void)
 
     printf("Supported state options:\n"
            " power <bool> - power on/off\n"
-           " powerful <bool> - powerful mode on/off\n"
-           " eco <bool> - eco mode on/off\n"
            " mode <integer> - Operation mode: 0 = Fan, 1 = Heat, 2 = Cool, 3 = Auto, 7 = Dry\n"
            " fan <integer> - Fan speed: 0 = auto, 1-5 = set speed, 6 = quiet\n");
     enum_option("humidity", "Humidity setting", humidity);
-    printf(" temp <float> - Target temperature in C\n"
+    printf(" powerful <bool> - powerful mode on/off\n"
+           " eco <bool> - eco mode on/off\n"
+           " comfort <bool> - comfort mode on/off\n"
+           " quiet <bool> - quiet mode on/off\n"
+           " streamer <bool> - streamer mode on/off\n"
+           " sensor <bool> - sensor mode on/off\n"
+           " temp <float> - Target temperature in C\n"
            " hum_sensor <int> - Reported indoor humidity\n"
            " fanrpm <int> - Fan rpm (divided by 10)\n"
-	       " comprpm <int> - Compressor rpm\n"
-	       " protocol <major>.<minor> - Reported protocol version. Major and minor are 2 digits max.\n"
-	       " consumption <int> - Reported power consumption\n");
+	       " comprpm <int> - Compressor rpm\n");
+    enum_option("demand", "Demand mode setting", demand);
+    printf(" consumption <int> - Reported power consumption\n"
+           " protocol <major>.<minor> - Reported protocol version. Major and minor are 2 digits max.\n");
 #define RAW_OPTION(cmd) raw_option(#cmd, sizeof(state->cmd))
     RAW_OPTION(F2);
     RAW_OPTION(F3);
@@ -262,22 +276,34 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     // Only options which i needed are currently implemented here. Please feel free to extend.
     if (!strcmp(opt, "power")) {
         return parse_bool(argc, argv, &state->power);
-    } else if (!strcmp(opt, "powerful")) {
-        return parse_bool(argc, argv, &state->powerful);
-    } else if (!strcmp(opt, "eco")) {
-        return parse_bool(argc, argv, &state->eco);
     } else if (!strcmp(opt, "mode")) {
         return parse_int(argc, argv, &state->mode);
     } else if (!strcmp(opt, "fan")) {
         return parse_int(argc, argv, &state->fan);
     } else if (!strcmp(opt, "humidity")) {
         return parse_enum(argc, argv, &state->humidity, humidity);
+    }
+#define PARSE_BOOL(cmd)           \
+     else if (!strcmp(opt, #cmd)) \
+        return parse_bool(argc, argv, &state->cmd);
+    PARSE_BOOL(powerful)
+    PARSE_BOOL(comfort)
+    PARSE_BOOL(quiet)
+    PARSE_BOOL(streamer)
+    PARSE_BOOL(sensor)
+    PARSE_BOOL(eco)
+    else if (!strcmp(opt, "eco")) {
+        return parse_bool(argc, argv, &state->eco);
     } else if (!strcmp(opt, "temp")) {
         return parse_float(argc, argv, &state->temp);
     } else if (!strcmp(opt, "hum_sensor")) {
         return parse_int(argc, argv, &state->hum_sensor);
     } else if (!strcmp(opt, "comprpm")) {
         return parse_int(argc, argv, &state->comprpm);
+    } else if (!strcmp(opt, "demand")) {
+        return parse_enum(argc, argv, &state->demand, demand);
+    } else if (!strcmp(opt, "consumption")) {
+        return parse_int(argc, argv, &state->consumption);
     } else if (!strcmp(opt, "protocol"))  {
         return parse_protocol(argc, argv, state);
     } else if (!strcmp(opt, "model")) {

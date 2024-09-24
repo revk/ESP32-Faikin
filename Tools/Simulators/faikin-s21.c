@@ -744,6 +744,9 @@ main(int argc, const char *argv[])
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '7':
+		    // F7 - demand and eco modes
+			// Demand mode setting is a "percentage of energy saving", i. e. 0 stands for off,
+			// and 100 stands for theoretical maximum ("save 100%").
 		    if (debug)
 		       printf(" -> demand %d eco %d\n", state->demand, state->eco);
 		    response[3] = 0x30 + state->demand;
