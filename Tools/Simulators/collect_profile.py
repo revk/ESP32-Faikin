@@ -18,7 +18,8 @@ commands = [
     # Discovered by analyzing v3 protocol, but at least v2 A/Cs also have it
     "VS000M",
     # v3 extended commands
-    "FY00", "FY10", "FY20", "FU00", "FU02", "FU04"
+    "FY00", "FY10", "FY20", "FU00", "FU02", "FU04",
+    "FX00", "FX10", "FX20", "FX30", "FX40", "FX50", "FX60", "FX70", "FX80", "FX90", "FXA0", "FXB0", "FXC0"
 ]
 cmd_index = 0
 
@@ -70,13 +71,12 @@ def parse_response(hex_str):
     else:
         data[1] = data[1] - 1
         cmd = data[1:3].decode("ascii")
-        if cmd == 'FU' or cmd == 'FY':
+        if cmd == 'FU' or cmd == 'FX' or cmd == 'FY':
             # These commands are 4-char long
             cmd = data[1:5].decode("ascii")
         payload_offset = 1 + len(cmd)
 
     if cmd != commands[cmd_index - 1]:
-        print("Bad reply", cmd, "vs", commands[cmd_index - 1])
         return False; # Response to something else, ignore
 
     payload = data[payload_offset:-2]

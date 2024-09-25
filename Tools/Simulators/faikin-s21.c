@@ -28,11 +28,19 @@ static struct S21State init_state = {
    .temp     = 22.5, // Set point
    .fan      = 3,    // Fan speed
    .swing    = 0,    // Swing direction
+   .humidity = 0x30, // Humidity setting
    .powerful = 0,    // Powerful mode
+   .comfort  = 0,    // Comfort mode
+   .quiet    = 0,    // Quiet mode
+   .streamer = 0,    // Streamer mode
+   .sensor   = 0,    // Sensor mode
+   .led      = 0,    // LED mode
    .eco      = 0,    // Eco mode
+   .demand   = 0,    // Demand setting
    .home     = 245,  // Reported temparatures (multiplied by 10 here)
    .outside  = 205,
    .inlet    = 185,
+   .hum_sensor = 50, // Humidity sensor value
    .fanrpm   = 52,   // Fan RPM (divided by 10 here)
    .comprpm  = 42,   // Compressor RPM
    .consumption = 2, // Power consumption in 100 Wh units
@@ -46,7 +54,7 @@ static struct S21State init_state = {
    .F4       = {0x30, 0x00, 0x80, 0x30},
    .FB       = {0x30, 0x33, 0x36, 0x30}, // 0630
    .FG       = {0x30, 0x34, 0x30, 0x30}, // 0040
-   .FK       = {0x39, 0x73, 0x35, 0x31}, // Modified: land=1,atlmt_l=0,atlmt_h=0
+   .FK       = {0x3D, 0x7B, 0x35, 0x31}, // Modified: acled=1,land=1,en_rtemp_a=1,m_dtct=1
    .FN       = {0x30, 0x30, 0x30, 0x30}, // 0000
    .FP       = {0x37, 0x33, 0x30, 0x30}, // 0037
    .FQ       = {0x45, 0x33, 0x30, 0x30}, // 003E
@@ -64,7 +72,19 @@ static struct S21State init_state = {
    .FU04     = {0x36, 0x43, 0x37, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, // 00000000000007C6
                 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
    .FY10     = {'A', '8', 'D', '3', '6', '6', '6', 'F'},
-   .FY20     = {'E', '4', '0', '2'}
+   .FY20     = {'E', '4', '0', '2'},
+   .FX00     = {'A', '2'},
+   .FX10     = {'7', '6'},
+   .FX20     = {'0', '0', '0', '0'},
+   .FX30     = {'0', '0'},
+   .FX40     = {'0', '4'},
+   .FX50     = {'0', '0'},
+   .FX60     = {'0', '0', '0', '0'},
+   .FX70     = {'0', '9', '1', '0'},
+   .FX90     = {'F', 'F', 'F', 'F'},
+   .FXA0     = {'A', '0', '4', '7'},
+   .FXB0     = {'0', '0'},
+   .FXC0     = {'0', '0'}
 };
 
 static void usage(const char *progname)
@@ -456,20 +476,30 @@ main(int argc, const char *argv[])
 		    state->swing = buf[S21_PAYLOAD_OFFSET + 0] - '0'; // ASCII char
 			state->humidity = buf[S21_PAYLOAD_OFFSET + 2];
 			// Payload offset 1 equals to '?' for "on" and '0' for "off
-			// Payload offset 2 and 3 are always '0', seem unused
 
-			printf(" Set swing %d humidity 0x%08X byte[1] 0x%08X byte[3] 0x%08X", state->swing, state->humidity,
+			printf(" Set swing %d humidity %d byte[1] 0x%02X byte[3] 0x%02X\n", state->swing, state->humidity,
 			       buf[S21_PAYLOAD_OFFSET + 1], buf[S21_PAYLOAD_OFFSET + 3]);
 			break;
 		 case '6':
-		    state->powerful = buf[S21_PAYLOAD_OFFSET + 0] == '2'; // '2' or '0'
-			// My Daichi controller always sends 'D6 0 0 0 0' for 'Eco',
-			// both on and off. Bug or feature ?
+		    state->powerful = (buf[S21_PAYLOAD_OFFSET] & 0x02) ? 1 : 0;
+			state->comfort  = (buf[S21_PAYLOAD_OFFSET] & 0x40) ? 1 : 0;
+			state->quiet    = (buf[S21_PAYLOAD_OFFSET] & 0x80) ? 1 : 0;
+			state->streamer = (buf[S21_PAYLOAD_OFFSET + 1] & 0x80) ? 1 : 0;
+			state->sensor   = (buf[S21_PAYLOAD_OFFSET + 3] & 0x08) ? 1 : 0;
+			state->led      = (buf[S21_PAYLOAD_OFFSET + 3] & 0x04) ? 1 : 0;
 
-			printf(" Set powerful %d spare bytes", state->powerful);
-			hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 1], S21_PAYLOAD_LEN - 1);
-			printf("\n");
+			printf(" Set powerful %d comfort %d quiet %d streamer %d sensor %d led %d\n",
+			       state->powerful, state->comfort, state->quiet, state->streamer,
+				   state->sensor, state->led);
 			break;
+		 case '7':
+		 	 state->demand = buf[S21_PAYLOAD_OFFSET] - 0x30;
+		 	 state->eco = buf[S21_PAYLOAD_OFFSET + 1]  == '2'; // '2' or '0'
+
+			 printf(" Set demand %d eco %d spare bytes", state->demand, state->eco);
+			 hexdump_raw(&buf[S21_PAYLOAD_OFFSET + 2], S21_PAYLOAD_LEN - 2);
+			 putchar('\n');
+		     break;
 		 default:
             printf(" Set unknown:");
 		    hexdump_raw(buf, len);
@@ -548,6 +578,53 @@ main(int argc, const char *argv[])
 			s21_nak(p, buf, len);
 			continue;
 		}
+	    } else if (state->protocol_major > 2 && len >= S21_MIN_V3_PKT_LEN &&
+	               buf[S21_CMD0_OFFSET] == 'F' && buf[S21_CMD1_OFFSET] == 'X' && buf[S21_V3_CMD3_OFFSET] == '0') {
+		   switch (buf[S21_V3_CMD2_OFFSET])
+		   {
+		   case '0':
+			  unknown_v3_cmd(p, response, buf, state->FX00, sizeof(state->FX00));
+			  break;
+		   case '1':
+			  unknown_v3_cmd(p, response, buf, state->FX10, sizeof(state->FX10));
+			  break;
+		   case '2':
+			  unknown_v3_cmd(p, response, buf, state->FX20, sizeof(state->FX20));
+			  break;
+		   case '3':
+			  unknown_v3_cmd(p, response, buf, state->FX30, sizeof(state->FX30));
+			  break;
+		   case '4':
+			  unknown_v3_cmd(p, response, buf, state->FX40, sizeof(state->FX40));
+			  break;
+		   case '5':
+			  unknown_v3_cmd(p, response, buf, state->FX50, sizeof(state->FX50));
+			  break;
+		   case '6':
+			  unknown_v3_cmd(p, response, buf, state->FX60, sizeof(state->FX60));
+			  break;
+		   case '7':
+			  unknown_v3_cmd(p, response, buf, state->FX70, sizeof(state->FX70));
+			  break;
+		   case '8':
+			  unknown_v3_cmd(p, response, buf, state->FX80, sizeof(state->FX80));
+			  break;
+		   case '9':
+			  unknown_v3_cmd(p, response, buf, state->FX90, sizeof(state->FX90));
+			  break;
+		   case 'A':
+			  unknown_v3_cmd(p, response, buf, state->FXA0, sizeof(state->FXA0));
+			  break;
+		   case 'B':
+			  unknown_v3_cmd(p, response, buf, state->FXB0, sizeof(state->FXB0));
+			  break;
+		   case 'C':
+			  unknown_v3_cmd(p, response, buf, state->FXC0, sizeof(state->FXC0));
+			  break;
+		   default:
+			  s21_nak(p, buf, len);
+			  continue;;
+		   }
 	  } else if (len >= S21_FRAMING_LEN + 6 && !memcmp(&buf[S21_CMD0_OFFSET], "VS000M", 6)) {
 		 // This is sent by BRP069B41 for protocol v3. Note non-standard response form
 		 // (no first byte increment). Purpose is currently unknown.
@@ -608,7 +685,8 @@ main(int argc, const char *argv[])
 			//   is reported as 1.
 			// byte 1:
 			// - bit 3: 0 => type=C, 1 => type=N - unknown
-			// byte 2: Zero value, perhaps not used
+			// byte 2:
+			// - bit 7: Becomes 1 after DJ command is issued
 			// byte 3: Something about humidity sensor, complicated:
 			// - bit 1: humd=<bool> - "Humidify" operation mode is available
 			// - bit 4: Humidity setting is available for "heat" and "auto" modes
@@ -622,8 +700,8 @@ main(int argc, const char *argv[])
 			unknown_cmd(p, response, buf, state->F2, S21_PAYLOAD_LEN);
 			break;
 		 case '3':
-		 	// Faikin treats byte[3] of payload as "powerful" flag, alternative to F6,
-			// but that's not true, at least on ATX20K2V1B and FTXF20D5.
+		 	// Actually on/off timer. Still part of the profile because we may be
+			// interested in byte 3; and also default values are different per unit.
 		 	unknown_cmd(p, response, buf, state->F3, S21_PAYLOAD_LEN);
 			break;
 		 case '4':
@@ -646,17 +724,29 @@ main(int argc, const char *argv[])
 		 case '6':
 		    if (debug)
 		       printf(" -> powerful ('F6') %d\n", state->powerful);
-		    response[3] = state->powerful ? '2' : '0';
-			response[4] = 0x30;
-			response[5] = 0x30;
-			response[6] = 0x30;
-
+			response[S21_PAYLOAD_OFFSET] = '0'; // Powerful, comfort, quiet
+			response[S21_PAYLOAD_OFFSET + 1] = '0'; // Streamer
+			response[S21_PAYLOAD_OFFSET + 2] = '0'; // Reserved ?
+			response[S21_PAYLOAD_OFFSET + 3] = '0'; // Sensor, LED
+			if (state->powerful)
+		       response[S21_PAYLOAD_OFFSET] |= 0x02;
+			if (state->comfort)
+			   response[S21_PAYLOAD_OFFSET] |= 0x40;
+            if (state->quiet)
+			   response[S21_PAYLOAD_OFFSET] |= 0x80;
+			if (state->streamer)
+				response[S21_PAYLOAD_OFFSET + 1] |= 0x80;
+			if (state->sensor)
+				response[S21_PAYLOAD_OFFSET + 3] |= 0x08;
+			if (state->led)
+				response[S21_PAYLOAD_OFFSET + 3] |= 0x0C;
+			
 			s21_reply(p, response, buf, S21_PAYLOAD_LEN);
 			break;
 		 case '7':
 		    if (debug)
-		       printf(" -> eco %d\n", state->eco);
-		    response[3] = 0x30;
+		       printf(" -> demand %d eco %d\n", state->demand, state->eco);
+		    response[3] = 0x30 + state->demand;
 			response[4] = state->eco ? '2' : '0';
 			response[5] = 0x30;
 			response[6] = 0x30;
@@ -731,12 +821,12 @@ main(int argc, const char *argv[])
 			// byte 0:
 			// - bit 2: acled=<bool>. LED control available ?
 			// - bit 3: land=<bool>
-			// - bit 6: When set to 0, atlmt_l=0,atlmt_h=0 parameters are displayed by the controller. 1 = hidden
-			//          Only for protocol v3; ignored on lower versions
+			// - bit 6: disable en_rtemp_a, i. e. en_rtemp_a=!bit. Only for protocol v3; ignored on lower versions
+			//          When set to 0 (enabled), atlmt_l=0,atlmt_h=0 parameters are also displayed by the controller.
 			// byte 1:
 			// - bit 0: elec=<bool>
 			// - bit 2: temp_rng=<bool>
-			// - bit 3: m_dtct 0=<bool>. Supposedly "human presence detector AKA "intelligent eye(tm) is available"
+			// - bit 3: m_dtct=<bool>. Motion detector AKA "intelligent eye(tm): is available
 			// byte 2:
 			// - bit 0: Japanese market ?? But we don't know a real difference
 			//   0 -> ac_dst=jp
@@ -803,6 +893,13 @@ main(int argc, const char *argv[])
 		    break;
 		 case 'd':
 		 	send_int(p, response, buf, state->comprpm, "compressor rpm");
+			break;
+		 case 'e':
+		    // Indoor humidity sensor. Known to report 50% if the sensor is not present in the A/C.
+			// BRP069B41 should support it (it has hhum= parameter in /aircom/get_sensor_info),
+			// but so far i was unable to get the controller reading it. Looks like something else
+			// is missing, some feature bits, we don't know which ones.
+		 	send_int(p, response, buf, state->hum_sensor, "indoor humidity");
 			break;
 	     case 'N':
             // Target temperature. Reported in /aircon/get_monitordata as trtmp=
