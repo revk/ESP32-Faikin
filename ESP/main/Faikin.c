@@ -3051,7 +3051,7 @@ app_main ()
          if (webcontrol)
          {
             register_get_uri ("/apple-touch-icon.png", web_icon);
-            register_ws_uri ("/status", web_status);
+            register_ws_uri ("/status", eb_status);
             register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
             register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
             register_get_uri ("/aircon/get_control_info", legacy_web_get_control_info);
