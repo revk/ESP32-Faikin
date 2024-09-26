@@ -208,6 +208,7 @@ void state_options_help(void)
            " fan <integer> - Fan speed: 0 = auto, 1-5 = set speed, 6 = quiet\n");
     enum_option("humidity", "Humidity setting", humidity);
     printf(" temp <float> - Target temperature in C\n"
+           " hum_sensor <int> - Reported indoor humidity\n"
            " fanrpm <int> - Fan rpm (divided by 10)\n"
 	       " comprpm <int> - Compressor rpm\n"
 	       " protocol <major>.<minor> - Reported protocol version. Major and minor are 2 digits max.\n"
@@ -234,6 +235,19 @@ void state_options_help(void)
     RAW_OPTION(FU04);
     RAW_OPTION(FY10);
     RAW_OPTION(FY20);
+    RAW_OPTION(FX00);
+    RAW_OPTION(FX10);
+    RAW_OPTION(FX20);
+    RAW_OPTION(FX30);
+    RAW_OPTION(FX40);
+    RAW_OPTION(FX50);
+    RAW_OPTION(FX60);
+    RAW_OPTION(FX70);
+    RAW_OPTION(FX80);
+    RAW_OPTION(FX90);
+    RAW_OPTION(FXA0);
+    RAW_OPTION(FXB0);
+    RAW_OPTION(FXC0);
     printf("Supported boolean values: 'on', 'true', '1', 'off', 'false', '0'\n"
            "Integer values can be prefixed with 0x for hex or 0 for octal\n"
            "Enum can also be specified as raw integer value for experimental purposes\n"
@@ -260,6 +274,8 @@ int parse_item(int argc, const char **argv, struct S21State *state)
         return parse_enum(argc, argv, &state->humidity, humidity);
     } else if (!strcmp(opt, "temp")) {
         return parse_float(argc, argv, &state->temp);
+    } else if (!strcmp(opt, "hum_sensor")) {
+        return parse_int(argc, argv, &state->hum_sensor);
     } else if (!strcmp(opt, "comprpm")) {
         return parse_int(argc, argv, &state->comprpm);
     } else if (!strcmp(opt, "protocol"))  {
@@ -291,6 +307,19 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     PARSE_RAW(FU04)
     PARSE_RAW(FY10)
     PARSE_RAW(FY20)
+    PARSE_RAW(FX00)
+    PARSE_RAW(FX10)
+    PARSE_RAW(FX20)
+    PARSE_RAW(FX30)
+    PARSE_RAW(FX40)
+    PARSE_RAW(FX50)
+    PARSE_RAW(FX60)
+    PARSE_RAW(FX70)
+    PARSE_RAW(FX80)
+    PARSE_RAW(FX90)
+    PARSE_RAW(FXA0)
+    PARSE_RAW(FXB0)
+    PARSE_RAW(FXC0)
     else {
         fprintf(stderr, "Unknown option %s\n", opt);
         return -1;

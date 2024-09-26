@@ -1,12 +1,13 @@
 protocol 2
 model 0000
 F2 0x34 0x3A 0x00 0x80
-# F3 0x30 0x30 0x30 0x00
-# For some reason my BRP096B41 refuses to start up and loops forever NAKing simulator's
-# response if we use here value, obtained from the A/C (above). So we temporarily substitute
-# the value to something that makes the profile working. My controller verified to work with
-# this A/C. To be investigated.
-F3 0x30 0x30 0x31 0x00
+# Actually F3 value on powerup is 0x30 0x30 0x30 0x00, but if we send this,
+# my BRP096B41 refuses to start up and loops forever NAKing simulator's response.
+# I failed to discover why so, snooping real A/C boot process reveals absolutely
+# identical data, which works. As a workaround i changed byte 3 to 0x30, which
+# on a real A/C only happens after the controller issues DJ command. But this makes
+# it happy with the simulator too.
+F3 0x30 0x30 0x30 0x30
 F4 0x30 0x00 0x80 0x00
 FB 0x30 0x30 0x30 0x30
 FG 0x30 0x30 0x30 0x30
