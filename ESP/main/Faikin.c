@@ -1399,7 +1399,8 @@ daikin_control (jo_t j)
 }
 
 // --------------------------------------------------------------------------------
-char debugsend[10] = "";
+jo_t debugsend = NULL;
+
 // Called by an MQTT client inside the revk library
 const char *
 mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
@@ -1420,9 +1421,13 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       if (haenable)
          daikin.ha_send = 1;
    }
-   if (!strcmp (suffix, "send") && jo_here (j) == JO_STRING)
+   if (!strcmp (suffix, "send"))
    {
-      jo_strncpy (j, debugsend, sizeof (debugsend));
+      if (!j)
+         return "Specify data to send";
+      if (debugsend)
+         return "Send pending";
+      debugsend = jo_copy (j);
       return "";
    }
    if (!strcmp (suffix, "control"))
@@ -3346,12 +3351,20 @@ app_main ()
 
                if (!s21.RH.bad && !s21.Ra.bad)
                   s21.F9.bad = 1;       // Don't use F9
-               if (*debugsend)
+               if (debugsend)
                {
                   b.dumping = 1;        // Force dumping
-                  if (debugsend[1])
-                     daikin_s21_command (debugsend[0], debugsend[1], strlen (debugsend + 2), debugsend + 2);
-                  *debugsend = 0;
+                  while (jo_here (debugsend) != JO_END)
+                  {
+                     if (jo_here (debugsend) == JO_STRING)
+                     {
+                        char temp[10];
+                        jo_strncpy (debugsend, temp, sizeof (temp));
+                        daikin_s21_command (temp[0], temp[1], strlen (temp + 2), temp + 2);
+                     }
+                     jo_next (debugsend);
+                  }
+                  jo_free (&debugsend);
                   b.dumping = dump;     // Back to setting
                }
 #undef poll
@@ -3803,7 +3816,7 @@ app_main ()
                   }
                   if (!noled && autolcontrol)
                   {
-                    daikin_set_v (led, 1);
+                     daikin_set_v (led, 1);
                   }
                } else
                {                // At or beyond temp - stop heat/cool - try and ensure it stops heating or cooling
@@ -3822,7 +3835,7 @@ app_main ()
                   if (!noled && autolcontrol)
                   {
                      daikin_set_v (led, 0);
-                   }
+                  }
                }
 
                // Limit settings to acceptable values
