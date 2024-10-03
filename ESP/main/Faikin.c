@@ -3371,7 +3371,7 @@ app_main ()
                            *o = i;
                         while (i < e)
                         {
-                           if (*i >= 0xC2 && *i <= 0xC3 && (i[1] & 0xC0) == 0x80)
+                           if (*i >= 0xC2 && *i <= 0xC3 && i + 1 < e && (i[1] & 0xC0) == 0x80)
                            {    // 0x80 to 0xFF encoded as UTF-8
                               *o++ = ((*i & 0x03) << 6) | (i[1] & 0x3F);
                               i += 2;
