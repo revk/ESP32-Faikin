@@ -3359,8 +3359,31 @@ app_main ()
                      if (jo_here (debugsend) == JO_STRING)
                      {
                         char temp[10];
-                        jo_strncpy (debugsend, temp, sizeof (temp));
-                        daikin_s21_command (temp[0], temp[1], strlen (temp + 2), temp + 2);
+                        ssize_t l = jo_strncpy (debugsend, temp, sizeof (temp));
+                        if (l > sizeof (temp))
+                        {
+                           ESP_LOGE (TAG, "send too long %d", l);
+                           l = sizeof (temp);
+                        }
+                        // JSON is UTF-8 coded, but that makes no sense, so pack to latin 1
+                        uint8_t *i = (uint8_t *) temp,
+                           *e = i + l,
+                           *o = i;
+                        while (i < e)
+                        {
+                           if (*i >= 0xC2 && *i <= 0xC3 && (i[1] & 0xC0) == 0x80)
+                           {    // 0x80 to 0xFF encoded as UTF-8
+                              *o++ = ((*i & 0x03) << 6) | (i[1] & 0x3F);
+                              i += 2;
+                              l--;
+                              continue;
+                           }
+                           *o++ = *i++;
+                        }
+                        if (l < 2)
+                           ESP_LOGE (TAG, "send too short %d", l);
+                        else
+                           daikin_s21_command (temp[0], temp[1], l - 2, temp + 2);
                      }
                      jo_next (debugsend);
                   }
