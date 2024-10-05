@@ -19,7 +19,9 @@ commands = [
     "VS000M",
     # v3 extended commands
     "FY00", "FY10", "FY20", "FU00", "FU02", "FU04",
-    "FX00", "FX10", "FX20", "FX30", "FX40", "FX50", "FX60", "FX70", "FX80", "FX90", "FXA0", "FXB0", "FXC0"
+    "FU05", "FU15", "FU25", "FU35", "FU45", "FU55", "FU65", "FU75", "FU85", "FU95",
+    "FX00", "FX10", "FX20", "FX30", "FX40", "FX50", "FX60", "FX70", "FX80", "FX90", "FXA0", "FXB0", "FXC0", "FXD0", "FXE0", "FXF0",
+    "FX01", "FX11", "FX21", "FX31", "FX41", "FX51", "FX61", "FX71", "FX81"
 ]
 cmd_index = 0
 
