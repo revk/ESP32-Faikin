@@ -20,6 +20,15 @@ static struct EnumOption humidity[] =
     {NULL, 0}
 };
 
+static struct EnumOption demand[] =
+{
+    {"Off", 0},
+    {"Low", 60},
+    {"Medium", 50},
+    {"High", 30},
+    {NULL, 0}
+};
+
 static int parse_protocol(int argc, const char **argv, struct S21State *state)
 {
     const char *opt = argv[0];
@@ -202,17 +211,22 @@ void state_options_help(void)
 
     printf("Supported state options:\n"
            " power <bool> - power on/off\n"
-           " powerful <bool> - powerful mode on/off\n"
-           " eco <bool> - eco mode on/off\n"
            " mode <integer> - Operation mode: 0 = Fan, 1 = Heat, 2 = Cool, 3 = Auto, 7 = Dry\n"
            " fan <integer> - Fan speed: 0 = auto, 1-5 = set speed, 6 = quiet\n");
     enum_option("humidity", "Humidity setting", humidity);
-    printf(" temp <float> - Target temperature in C\n"
+    printf(" powerful <bool> - powerful mode on/off\n"
+           " eco <bool> - eco mode on/off\n"
+           " comfort <bool> - comfort mode on/off\n"
+           " quiet <bool> - quiet mode on/off\n"
+           " streamer <bool> - streamer mode on/off\n"
+           " sensor <bool> - sensor mode on/off\n"
+           " temp <float> - Target temperature in C\n"
            " hum_sensor <int> - Reported indoor humidity\n"
            " fanrpm <int> - Fan rpm (divided by 10)\n"
-	       " comprpm <int> - Compressor rpm\n"
-	       " protocol <major>.<minor> - Reported protocol version. Major and minor are 2 digits max.\n"
-	       " consumption <int> - Reported power consumption\n");
+	       " comprpm <int> - Compressor rpm\n");
+    enum_option("demand", "Demand mode setting", demand);
+    printf(" consumption <int> - Reported power consumption\n"
+           " protocol <major>.<minor> - Reported protocol version. Major and minor are 2 digits max.\n");
 #define RAW_OPTION(cmd) raw_option(#cmd, sizeof(state->cmd))
     RAW_OPTION(F2);
     RAW_OPTION(F3);
@@ -233,6 +247,11 @@ void state_options_help(void)
     RAW_OPTION(FU00);
     RAW_OPTION(FU02);
     RAW_OPTION(FU04);
+    RAW_OPTION(FU05);
+    RAW_OPTION(FU15);
+    RAW_OPTION(FU25);
+    RAW_OPTION(FU35);
+    RAW_OPTION(FU45);
     RAW_OPTION(FY10);
     RAW_OPTION(FY20);
     RAW_OPTION(FX00);
@@ -248,6 +267,18 @@ void state_options_help(void)
     RAW_OPTION(FXA0);
     RAW_OPTION(FXB0);
     RAW_OPTION(FXC0);
+    RAW_OPTION(FXD0);
+    RAW_OPTION(FXE0);
+    RAW_OPTION(FXF0);
+    RAW_OPTION(FX01);
+    RAW_OPTION(FX11);
+    RAW_OPTION(FX21);
+    RAW_OPTION(FX31);
+    RAW_OPTION(FX41);
+    RAW_OPTION(FX51);
+    RAW_OPTION(FX61);
+    RAW_OPTION(FX71);
+    RAW_OPTION(FX81);
     printf("Supported boolean values: 'on', 'true', '1', 'off', 'false', '0'\n"
            "Integer values can be prefixed with 0x for hex or 0 for octal\n"
            "Enum can also be specified as raw integer value for experimental purposes\n"
@@ -262,22 +293,34 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     // Only options which i needed are currently implemented here. Please feel free to extend.
     if (!strcmp(opt, "power")) {
         return parse_bool(argc, argv, &state->power);
-    } else if (!strcmp(opt, "powerful")) {
-        return parse_bool(argc, argv, &state->powerful);
-    } else if (!strcmp(opt, "eco")) {
-        return parse_bool(argc, argv, &state->eco);
     } else if (!strcmp(opt, "mode")) {
         return parse_int(argc, argv, &state->mode);
     } else if (!strcmp(opt, "fan")) {
         return parse_int(argc, argv, &state->fan);
     } else if (!strcmp(opt, "humidity")) {
         return parse_enum(argc, argv, &state->humidity, humidity);
+    }
+#define PARSE_BOOL(cmd)           \
+     else if (!strcmp(opt, #cmd)) \
+        return parse_bool(argc, argv, &state->cmd);
+    PARSE_BOOL(powerful)
+    PARSE_BOOL(comfort)
+    PARSE_BOOL(quiet)
+    PARSE_BOOL(streamer)
+    PARSE_BOOL(sensor)
+    PARSE_BOOL(eco)
+    else if (!strcmp(opt, "eco")) {
+        return parse_bool(argc, argv, &state->eco);
     } else if (!strcmp(opt, "temp")) {
         return parse_float(argc, argv, &state->temp);
     } else if (!strcmp(opt, "hum_sensor")) {
         return parse_int(argc, argv, &state->hum_sensor);
     } else if (!strcmp(opt, "comprpm")) {
         return parse_int(argc, argv, &state->comprpm);
+    } else if (!strcmp(opt, "demand")) {
+        return parse_enum(argc, argv, &state->demand, demand);
+    } else if (!strcmp(opt, "consumption")) {
+        return parse_int(argc, argv, &state->consumption);
     } else if (!strcmp(opt, "protocol"))  {
         return parse_protocol(argc, argv, state);
     } else if (!strcmp(opt, "model")) {
@@ -305,6 +348,11 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     PARSE_RAW(FU00)
     PARSE_RAW(FU02)
     PARSE_RAW(FU04)
+    PARSE_RAW(FU05)
+    PARSE_RAW(FU15)
+    PARSE_RAW(FU25)
+    PARSE_RAW(FU35)
+    PARSE_RAW(FU45)
     PARSE_RAW(FY10)
     PARSE_RAW(FY20)
     PARSE_RAW(FX00)
@@ -320,6 +368,18 @@ int parse_item(int argc, const char **argv, struct S21State *state)
     PARSE_RAW(FXA0)
     PARSE_RAW(FXB0)
     PARSE_RAW(FXC0)
+    PARSE_RAW(FXD0)
+    PARSE_RAW(FXE0)
+    PARSE_RAW(FXF0)
+    PARSE_RAW(FX01)
+    PARSE_RAW(FX11)
+    PARSE_RAW(FX21)
+    PARSE_RAW(FX31)
+    PARSE_RAW(FX41)
+    PARSE_RAW(FX51)
+    PARSE_RAW(FX61)
+    PARSE_RAW(FX71)
+    PARSE_RAW(FX81)
     else {
         fprintf(stderr, "Unknown option %s\n", opt);
         return -1;
