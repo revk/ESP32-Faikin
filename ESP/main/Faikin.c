@@ -3157,9 +3157,11 @@ app_main ()
          daikin.online = 1;
       }
       daikin.ha_send = 1;
+      int poll = 0;
       do
       {
          // Polling loop. We exit from here only if we get a protocol error
+         poll++;
          if (proto_type () != PROTO_TYPE_CN_WIRED)
          {
             /* wait for next second. For CN_WIRED we don't need to actively poll the
@@ -3930,7 +3932,7 @@ app_main ()
                }
             }
          }
-         if (daikin.ha_send && protocol_set && daikin.talking)
+         if (poll > 10 && daikin.ha_send && protocol_set && daikin.talking)
          {
             send_ha_config ();
             ha_status ();       // Update status now sent
