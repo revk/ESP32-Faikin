@@ -38,7 +38,6 @@ bit	no.icons			.live=1					// Do not show icons on web UI
 
 bit udp_discovery                           // Enable Daikin BRP-compatible UDP discovery
 
-bit	dark				.live=1					// Dark mode
 bit	ha.enable	1		.old="ha"				// Home Assistance
 bit	ha.switches								// Set additional HA switches
 bit	ha.fanrpm								// Use RPM not Hz for HA fan speed
