@@ -1654,6 +1654,7 @@ web_head (httpd_req_t * req, const char *title)
                   "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"    //
                   "input.temp{min-width:300px;}"        //
                   "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}" //
+                  "a.pn{min-height:34px;min-width:34px;border-radius:30px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;margin:3px;padding:3px 10px;font-size:100%%;}"   //
                   "</style><body><h1>%s</h1>", title ? : "");
 }
 
@@ -1721,8 +1722,8 @@ web_root (httpd_req_t * req)
    {
       addh (tag);
       revk_web_send (req,
-                     "<td colspan=6><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><span id=T%s></span></td>",
-                     min, max, step, field, field, field);
+                     "<td colspan=6><a onclick=\"if(+document.F.%s.value>%d)w('%s',+document.F.%s.value-%s);\" class=pn>-</a><input type=range class=temp min=%d max=%d step=%s id=%s onchange=\"w('%s',+this.value);\"><a onclick=\"if(+document.F.%s.value<%d)w('%s',+document.F.%s.value+%s);\" class=pn>+</a><button id=\"T%s\" onclick=\"return false;\"></button></td>",
+                     field, min, field, field, step, min, max, step, field, field, field, max, field, field, step, field);
       addf (tag);
    }
    revk_web_send (req, "<tr>");
