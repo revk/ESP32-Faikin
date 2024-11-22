@@ -304,8 +304,9 @@ enum
    HVAC_DRYING,
    HVAC_FAN,
    HVAC_IDLE,
+   HVAC_DEFROSTING,
 };
-const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle" };
+const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle", "defrosting" };
 
 const char *
 daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
@@ -3890,7 +3891,7 @@ app_main ()
          {
             controlstop ();
             // Just based on mode
-            daikin.action = (!daikin.power ? HVAC_OFF : daikin.mode == FAIKIN_MODE_HEAT ? HVAC_HEATING :        //
+            daikin.action = (!daikin.power ? HVAC_OFF : daikin.antifreeze ? HVAC_DEFROSTING : daikin.mode == FAIKIN_MODE_HEAT ? HVAC_HEATING :     //
                              daikin.mode == FAIKIN_MODE_COOL ? HVAC_COOLING :   //
                              daikin.mode == FAIKIN_MODE_AUTO ? HVAC_IDLE :      //
                              daikin.mode == FAIKIN_MODE_DRY ? HVAC_DRYING :     //
