@@ -39,6 +39,7 @@ typedef struct poll_s
 } poll_t;
 struct
 {                               // Status of S21 messages that get a valid response - this is a count of NAKs, so 0 means working...
+   poll_t DH1000;
    poll_t F1;
    poll_t F2;
    poll_t F3;
@@ -139,6 +140,7 @@ struct
 {
    uint8_t loopback:1;
    uint8_t dumping:1;
+   uint8_t hourly:1;            // Hourly stuff
 } b = { 0 };
 
 static httpd_handle_t webserver = NULL;
@@ -3318,6 +3320,14 @@ app_main ()
                   poll (F, T, 0,);
                //if(debug)poll (F, U, 2, 02);
                //if(debug)poll (F, U, 2, 04);
+               {
+                  uint8_t n = ((time (0) / 3600) & 1);
+                  if (n != b.hourly)
+                  {             // Hourly
+                     b.hourly = n;
+                     poll (D, H, 4, 1000);
+                  }
+               }
 
                static uint8_t rcycle = 0;       // R polling one per cycle
                switch (rcycle++)
