@@ -2110,6 +2110,7 @@ legacy_web_set_holiday (httpd_req_t * req)
    else
    {
       // TODO - ignore for now
+      jo_free (&j);
    }
    return legacy_simple_response (req, err);
 }
@@ -2459,6 +2460,7 @@ legacy_web_set_special_mode (httpd_req_t * req)
       default:
          err = "Unknown kind";
       }
+      jo_free (&j);
    }
    return legacy_simple_response (req, err);
 }
@@ -3891,7 +3893,7 @@ app_main ()
          {
             controlstop ();
             // Just based on mode
-            daikin.action = (!daikin.power ? HVAC_OFF : daikin.antifreeze ? HVAC_DEFROSTING : daikin.mode == FAIKIN_MODE_HEAT ? HVAC_HEATING :     //
+            daikin.action = (!daikin.power ? HVAC_OFF : daikin.antifreeze ? HVAC_DEFROSTING : daikin.mode == FAIKIN_MODE_HEAT ? HVAC_HEATING :  //
                              daikin.mode == FAIKIN_MODE_COOL ? HVAC_COOLING :   //
                              daikin.mode == FAIKIN_MODE_AUTO ? HVAC_IDLE :      //
                              daikin.mode == FAIKIN_MODE_DRY ? HVAC_DRYING :     //
