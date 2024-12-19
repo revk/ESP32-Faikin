@@ -1493,6 +1493,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       if (!ble_sensor_connected ())
       {
+         if (daikin.env != env)
+            daikin.status_changed = 1;
          daikin.env = env;
          daikin.status_known |= CONTROL_env;    // So we report it
       }
@@ -3193,7 +3195,10 @@ app_main ()
             }
             if (bletemp && !bletemp->missing && bletemp->tempset)
             {                   // Use temp
-               daikin.env = bletemp->temp / 100.0;
+               float env = bletemp->temp / 100.0;
+               if (daikin.env != env)
+                  daikin.status_changed = 1;
+               daikin.env = env;
                daikin.status_known |= CONTROL_env;      // So we report it
             } else
                daikin.status_known &= ~CONTROL_env;     // So we don't report it
@@ -3808,6 +3813,7 @@ app_main ()
          {                      // End of auto mode and no env data either
             daikin.controlvalid = 0;
             daikin.status_known &= ~CONTROL_env;
+            daikin.status_changed = 1;
             daikin.env = NAN;
             daikin.remote = 0;
             controlstop ();
