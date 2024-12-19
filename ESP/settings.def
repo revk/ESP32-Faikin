@@ -16,7 +16,7 @@ bit	fahrenheit			.live=1					// Web shows Fahrenheit
 bit	no.s21				.live=1	.fix=1				// Do not try S21 protocol
 bit	no.x50a				.live=1	.fix=1				// Do not try X50A protocol
 bit	no.cnwired	1		.live=1	.fix=1				// Do not try CN_WIRED protocol
-bit	no.as		1		.live=1	.fix=1				// Do not try Altherma_S protocol
+bit	no.as		1		.live=1	.fix=1				// Do not try (experimental) Altherma_S protocol
 bit	no.swaptx			.live=1	.fix=1				// Do not try inverted Tx (use GPIO setting only)
 bit	no.swaprx			.live=1	.fix=1				// Do not try inverted Rx (use GPIO setting only)
 
