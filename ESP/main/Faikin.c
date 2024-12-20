@@ -1624,7 +1624,7 @@ daikin_status (void)
       if (bletemp->humset)
          jo_litf (j, "hum", "%.2f", bletemp->hum / 100.0);
       if (bletemp->batset)
-         jo_int (j, "bat", bletemp->temp);
+         jo_int (j, "bat", bletemp->bat);
       if (bletemp->voltset)
          jo_litf (j, "volt", "%.2f", bletemp->volt / 100.0);
       jo_close (j);
@@ -1633,8 +1633,11 @@ daikin_status (void)
       jo_string (j, "autob", autob);
 #endif
    if (daikin.remote)
+   {
       jo_bool (j, "remote", 1);
-   else
+      if (!isnan (daikin.env))
+         jo_litf (j, "env", "%.1f", daikin.env);
+   } else
    {
       jo_litf (j, "autor", "%.1f", (float) autor / autor_scale);
       jo_litf (j, "autot", "%.1f", (float) autot / autot_scale);
