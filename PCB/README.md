@@ -2,25 +2,27 @@
 
 The `Faikin` directory has the current working design. `Faikin` is the current shipping board. The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
-*Note: you can make your own boards, but you need to remove the AJK and A&A logos as these are trademarks.*
-
 Other directories such as `Faikin2` or `Faikin3` are work in progress and may not be tested yet. They will replace `Faikin` once tested.
 
 The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these are usually kept up to date as an `.stl` file in the `Faikin` directory. The `Makefile` simply runs this tool.
+
+## Trademark
+
+This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
+
+![324050](https://github.com/user-attachments/assets/435f97a7-19ce-46b1-9839-51377e505f84)
 
 ## Panel
 
 The PCB is supplied in a standard 70mm x 70mm panel - this is the minimum panel for assemply for JLCPCB.
 
-The panel incldues slots and v-cuts to allow the unwanted parts of the panel to be snapped off. On the thicker (1.6mm) boards this can be a tad un-nerving, but just bend along the v-cut to snap the board on the cut line. Some boards are made at 1.0mm thickness to make this easier.
+The panel incldues slots and v-cuts to allow the unwanted parts of the panel to be snapped off. On the thicker (1.6mm) boards this can be a tad un-nerving, but just bend along the v-cut to snap the board on the cut line. I make the boards at 1.2mm thickness to make this easier.
 
-The latest board designs allow the panel to be snapped off down to a 45mm x 36mm small board. This is the same size as commonly used for built-in Daikin WiFi modules, so if replacing the standard Daikin WiFi, it should fit exactly in the case. Obviously this only applies to some models.
+The board design also allows the panel to be snapped off down to a 45mm x 36mm small board. This is the same size as commonly used for built-in Daikin WiFi modules, so if replacing the standard Daikin WiFi, it should fit exactly in the case. Obviously this only applies to some models.
 
-You can further snap off down to the actual module, which is currently 35mm x 16mm. This is the usual way the module is used. The 3D print design is for this board.
+You can further snap off down to the actual module, which is currently 40mm x 16mm. This is the usual way the module is used. The 3D print design is for this board.
 
-<img src=../Manuals/panel.jpg width=33%><img src=../Manuals/knockout.jpg width=33%><img src=../Manuals/module.jpg width=33%>
-
-The back of the board has no components, making it simple to stick to a flat surface with gecko tape - you may want to crop the pins on the 5 pin connector if doing this. Do not stick to a metal surface as this may impact the WiFi.
+The back of the board has no components, making it simple to stick to a flat surface with tape - you may want to crop the pins on the 5 pin connector if doing this. Do not stick to a metal surface as this may impact the WiFi or short the pins.
 
 ## S21 Connector
 
@@ -44,18 +46,14 @@ However, there are jumper wires readily available that can be used easily with t
 
 ## GPIO
 
-<img src=../Manuals/back.jpg align=right width=50%>
-
 This board is designed to work with the Daikin air-con, but it is a general purpose board. The latest boards use `ESP32-S3-MINI-N4R2` processor, with previous being `ESP32-MINI-PICO-01` (S1).
 
 The current boards include the GPIO numbers clearly in inverse silk screen.
 
-For example, on this image, GPIO 34 and 48 for Tx and Rx, and GPIOs 47, 21 and 33 for RGB LED.
+For example, on this image, GPIO `34` and `48` for Tx and Rx. GPIO `47` is for the WS2812 style LED. GPIO `21` is one of two round pads which can be shorted three times in a row to factory reset the board.
 
-Note that Tx and Rx are now inverted, and the LED GPIOs are active low.
+![324051](https://github.com/user-attachments/assets/9665de5e-466a-4348-a0fd-d906280beb1d)
 
 ## Programming
 
-As you see, on the back of the current boards, there is a 5 pin and 4 pin header. The 5 pin header is the same as used in the Shelly 1, and work with a [Tasmotiser](https://www.amazon.co.uk/dp/B0C15K9ZC4) serial programming header.
-
-The 4 pins are direct to USB allowing faster flashing.
+The board has pads for a TC2030 USB lead for programming directly using `esptool`.
