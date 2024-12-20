@@ -8,6 +8,10 @@ PCB designs are included, and also available to buy on [Amazon UK](https://www.a
 
 I'd like to thank the contributors, but contributions are made and accepted on basis that you issue your contribution under the same GPL licence as the project. Forks are allowed on the basis that your forks are on the same GPL licence as the project.
 
+## Trademark
+
+This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
+
 ## Further manuals / links
 
 - [Work in progress / release notes](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress)
