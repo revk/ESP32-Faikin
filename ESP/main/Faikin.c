@@ -1626,7 +1626,7 @@ daikin_status (void)
       if (bletemp->batset)
          jo_int (j, "bat", bletemp->bat);
       if (bletemp->voltset)
-         jo_litf (j, "volt", "%.2f", bletemp->volt / 100.0);
+         jo_litf (j, "volt", "%.3f", bletemp->volt / 1000.0);
       jo_close (j);
    }
    if (ble_sensor_enabled ())
