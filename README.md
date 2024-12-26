@@ -100,3 +100,5 @@ If you want to purchase a pre-loaded assembled PCB, see [A&A circuit boards](htt
 ## Flashing code
 
 You will need to connect a suitable programming lead. Boards have a header for USB. The very latest design (expected on Amazon around Sep 2024) has a tag-connect compatible header for a [TC2030-USB-NL](https://www.tag-connect.com/product/tc2030-usb-nl) lead.
+
+See [https://github.com/revk/ESP32-RevK](https://github.com/revk/ESP32-RevK) for more details of how to flash the files easily.
