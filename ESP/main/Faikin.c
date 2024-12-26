@@ -22,6 +22,22 @@ static const char TAG[] = "Faikin";
 #error Need CONFIG_HTTPD_WS_SUPPORT
 #endif
 
+#if 0
+#define	SWING_OFF		"off"
+#define	SWING_ON		"on"
+#define	SWING_VERTICAL		"V"
+#define	SWING_HORIZONTAL	"H"
+#define	SWING_BOTH		"H+V"
+#define	SWING_COMFORT		"C"     // Not standard
+#else
+#define	SWING_OFF		"SWING_OFF"
+#define	SWING_ON		"SWING_ON"
+#define	SWING_VERTICAL		"SWING_VERTICAL"
+#define	SWING_HORIZONTAL	"SWING_HORIZONTAL"
+#define	SWING_BOTH		"SWING_BOTH"
+#define	SWING_COMFORT		"SWING_COMFORT"     // Not standard
+#endif
+
 // Macros for setting values
 // They set new values for parameters inside the big "daikin" state struct
 // and also set appropriate flags, so that changes are picked up by the main
@@ -1563,12 +1579,13 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       if (!strcmp (suffix, "swing"))
       {
-         if (*value == 'C')
+         if (!strcmp (value, SWING_COMFORT))
             jo_bool (s, "comfort", 1);
          else
          {
-            jo_bool (s, "swingh", strchr (value, 'H') ? 1 : 0);
-            jo_bool (s, "swingv", strchr (value, 'V') ? 1 : 0);
+            jo_bool (s, "swingh", !strcmp (value, SWING_HORIZONTAL) || !strcmp (value, SWING_BOTH)
+                     || !strcmp (value, SWING_ON) ? 1 : 0);
+            jo_bool (s, "swingv", !strcmp (value, SWING_VERTICAL) || !strcmp (value, SWING_BOTH) ? 1 : 0);
          }
       }
       if (!strcmp (suffix, "preset"))
@@ -2703,15 +2720,16 @@ send_ha_config (void)
          jo_string (j, "swing_mode_stat_t", hastatus);
          jo_string (j, "swing_mode_stat_tpl", "{{value_json.swing}}");
          jo_array (j, "swing_modes");
-         jo_string (j, NULL, "off");
-         if (daikin.status_known & CONTROL_swingh)
-            jo_string (j, NULL, "H");
-         if (daikin.status_known & CONTROL_swingv)
-            jo_string (j, NULL, "V");
+         jo_string (j, NULL, SWING_OFF);
          if ((daikin.status_known & (CONTROL_swingh | CONTROL_swingv)) == (CONTROL_swingh | CONTROL_swingv))
-            jo_string (j, NULL, "H+V");
+         {
+            jo_string (j, NULL, SWING_HORIZONTAL);
+            jo_string (j, NULL, SWING_VERTICAL);
+            jo_string (j, NULL, SWING_BOTH);
+         } else if (daikin.status_known & CONTROL_swingh)
+            jo_string (j, NULL, SWING_ON);
          if (daikin.status_known & CONTROL_comfort)
-            jo_string (j, NULL, "C");
+            jo_string (j, NULL, SWING_COMFORT);
          jo_close (j);
       }
       if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
@@ -2913,7 +2931,10 @@ revk_state_extra (jo_t j)
       jo_bool (j, "sensor", daikin.sensor);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
-                 daikin.comfort ? "C" : daikin.swingh & daikin.swingv ? "H+V" : daikin.swingh ? "H" : daikin.swingv ? "V" : "off");
+                 daikin.comfort ? SWING_COMFORT : daikin.swingh
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
