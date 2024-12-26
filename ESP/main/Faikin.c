@@ -22,7 +22,7 @@ static const char TAG[] = "Faikin";
 #error Need CONFIG_HTTPD_WS_SUPPORT
 #endif
 
-#if 0
+#if 1
 #define	SWING_OFF		"off"
 #define	SWING_ON		"on"
 #define	SWING_VERTICAL		"V"
