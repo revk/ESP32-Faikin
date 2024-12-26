@@ -35,7 +35,7 @@ static const char TAG[] = "Faikin";
 #define	SWING_VERTICAL		"SWING_VERTICAL"
 #define	SWING_HORIZONTAL	"SWING_HORIZONTAL"
 #define	SWING_BOTH		"SWING_BOTH"
-#define	SWING_COMFORT		"SWING_COMFORT"     // Not standard
+#define	SWING_COMFORT		"SWING_COMFORT" // Not standard
 #endif
 
 // Macros for setting values
@@ -2932,9 +2932,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
-                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
-                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.
+                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
+                 swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
@@ -3053,6 +3053,7 @@ revk_web_extra (httpd_req_t * req, int page)
 void
 app_main ()
 {
+   ESP_LOGE (TAG, "Started");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
    {                            // All unused input pins pull down
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
