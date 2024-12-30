@@ -2932,9 +2932,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
@@ -2945,8 +2945,16 @@ uart_setup (void)
    esp_err_t err = 0;
    ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
              tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
+   if (!err && !rx.set)
+      err = ESP_FAIL;
+   if (!err && !GPIO_IS_VALID_GPIO (rx.num))
+      err = ESP_FAIL;
    if (!err)
       err = gpio_reset_pin (rx.num);
+   if (!err && !tx.set)
+      err = ESP_FAIL;
+   if (!err && !GPIO_IS_VALID_OUTPUT_GPIO (tx.num))
+      err = ESP_FAIL;
    if (!err)
       err = gpio_reset_pin (tx.num);
    if (proto_type () == PROTO_TYPE_CN_WIRED)
@@ -2990,7 +2998,7 @@ uart_setup (void)
    if (err)
    {
       jo_t j = jo_object_alloc ();
-      jo_string (j, "error", "Failed to set up commmunication port");
+      jo_string (j, "error", "Failed to set up communication port");
       jo_int (j, "uart", uart);
       jo_string (j, "description", esp_err_to_name (err));
       revk_error ("uart", &j);
