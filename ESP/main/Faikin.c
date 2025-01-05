@@ -1953,7 +1953,7 @@ web_root (httpd_req_t * req)
 {
    if ((!webcontrol || revk_link_down ()) && websettings)
       return revk_web_settings (req);   // Direct to web set up
-   return web_control(req);
+   return web_control (req);
 }
 
 // Macros with error collection for HTTP
@@ -2406,7 +2406,10 @@ legacy_web_get_sensor_info (httpd_req_t * req)
    else
       jo_string (j, "otemp", "-");
    jo_int (j, "err", 0);
-   jo_string (j, "cmpfreq", "-");
+   if (daikin.status_known & CONTROL_comp)
+      jo_int (j, "cmpfreq", (hacomprpm ? 60 : 1) * daikin.comp);
+   else
+      jo_string (j, "cmpfreq", "-");
    return legacy_send (req, &j);
 }
 
@@ -2425,10 +2428,10 @@ static esp_err_t
 legacy_web_get_year_power (httpd_req_t * req)
 {
    jo_t j = legacy_ok ();
-   jo_string (j, "curr_year_heat", "0/0/0/0/0/0/0/0/0/0/0/0");
+   jo_stringf (j, "curr_year_heat", "%u/0/0/0/0/0/0/0/0/0/0/0", daikin.Wh/100);      // Bodge, does not resent each year yet
    jo_string (j, "prev_year_heat", "0/0/0/0/0/0/0/0/0/0/0/0");
    jo_string (j, "curr_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
-   jo_string (j, "prev_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
+   jo_string (j, "prevyear_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
    return legacy_send (req, &j);
 }
 
@@ -2938,9 +2941,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
