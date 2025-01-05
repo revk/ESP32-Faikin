@@ -1694,10 +1694,8 @@ web_icon (httpd_req_t * req)
 }
 
 static esp_err_t
-web_root (httpd_req_t * req)
+web_control (httpd_req_t * req)
 {
-   if ((!webcontrol || revk_link_down ()) && websettings)
-      return revk_web_settings (req);   // Direct to web set up
    web_head (req, hostname == revk_id ? appname : hostname);
    revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
@@ -1948,6 +1946,14 @@ web_root (httpd_req_t * req)
                   "setInterval(function() {if(!ws)c();else ws.send('');},1000);"        //
                   "</script>", fahrenheit ? "Math.round(10*((v*9/5)+32))/10+'℉'" : "v+'℃'");
    return revk_web_foot (req, 0, websettings, protocol_set ? proto_name () : NULL);
+}
+
+static esp_err_t
+web_root (httpd_req_t * req)
+{
+   if ((!webcontrol || revk_link_down ()) && websettings)
+      return revk_web_settings (req);   // Direct to web set up
+   return web_control(req);
 }
 
 // Macros with error collection for HTTP
@@ -2422,7 +2428,7 @@ legacy_web_get_year_power (httpd_req_t * req)
    jo_string (j, "curr_year_heat", "0/0/0/0/0/0/0/0/0/0/0/0");
    jo_string (j, "prev_year_heat", "0/0/0/0/0/0/0/0/0/0/0/0");
    jo_string (j, "curr_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
-   jo_string (j, "prevr_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
+   jo_string (j, "prev_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
    return legacy_send (req, &j);
 }
 
@@ -3092,15 +3098,16 @@ app_main ()
       config.stack_size += 2048;        // Being on the safe side
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
-      config.max_uri_handlers = 14 + revk_num_web_handlers ();
+      config.max_uri_handlers = 15 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
          if (websettings)
             revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
+         register_get_uri ("/apple-touch-icon.png", web_icon);
          if (webcontrol)
          {
-            register_get_uri ("/apple-touch-icon.png", web_icon);
+            register_get_uri ("/control", web_control);
             register_ws_uri ("/status", web_status);
             register_get_uri ("/common/basic_info", legacy_web_get_basic_info);
             register_get_uri ("/aircon/get_model_info", legacy_web_get_model_info);
