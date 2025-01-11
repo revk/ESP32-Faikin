@@ -1,6 +1,6 @@
 # PCB makefile (3d Cases)
 
-all: stl png
+all: png stl
 
 %.stl:	%.scad
 	echo "Making $@"
