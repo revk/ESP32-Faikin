@@ -32,9 +32,9 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 <img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
 
-Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes.
+Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 35x16mm.
 
-![Faikin](https://github.com/revk/ESP32-Faikin/assets/996983/fa01b0e1-a6e1-4b71-9f5f-688fb9a61192)
+![PCB](PCB/Faikin/top.png)
 
 ## Why I made this
 
