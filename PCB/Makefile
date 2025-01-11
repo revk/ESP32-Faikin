@@ -17,9 +17,9 @@ Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case M
 PCBCase/case: PCBCase/case.c
 	make -C PCBCase
 
-Faikin/top.png: Faikin/Faikin.kicad_pcb
+%/top.png: %/Faikin.kicad_pcb
 	/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb render -o $@ $< --perspective --rotate ' -40,0,30' --zoom=0.85 --floor --pan ' -0.9,2.3,0' --width=2300 --height=1900 --background=opaque
 
-Faikin/bottom.png: Faikin/Faikin.kicad_pcb
+%/bottom.png: %/Faikin.kicad_pcb
 	/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb render -o $@ $< --perspective --rotate ' -40,180,-30' --zoom=0.85 --floor --pan ' -0.9,2.3,0' --width=2300 --height=1900 --background=opaque
 
