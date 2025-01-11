@@ -27,12 +27,10 @@ beta:
 	git push
 
 issue:	
+	make -C ../PCB
 	-git pull
-	-git submodule update --recursive
 	-git commit -a
-	@make set
-	cp $(PROJECT_NAME)*.bin betarelease
-	cp $(PROJECT_NAME)*.bin release
+	cp -f betarelease/$(PROJECT_NAME)*.bin release
 	git commit -a -m Release
 	git push
 
