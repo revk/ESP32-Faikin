@@ -9,17 +9,16 @@ all: png stl
 
 stl: 	Faikin/Faikin.stl
 
-png:	Faikin/top.png Faikin/bottom.png
+png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
 
 Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case Makefile
 	PCBCase/case -o $@ $< --edge=2 --top=4.6 --bottom=2.6 --pcb=2
 
+PCBCase/clean: PCBCase/clean.c
+	make -C PCBCase
+
 PCBCase/case: PCBCase/case.c
 	make -C PCBCase
 
-%/top.png: %/Faikin.kicad_pcb
-	/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb render -o $@ $< --perspective --rotate ' -40,0,30' --zoom=0.85 --floor --pan ' -0.9,2.3,0' --width=2300 --height=1900 --background=opaque
-
-%/bottom.png: %/Faikin.kicad_pcb
-	/Applications/KiCad/KiCad.app/Contents/MacOS/kicad-cli pcb render -o $@ $< --perspective --rotate ' -40,180,-30' --zoom=0.85 --floor --pan ' -0.9,2.3,0' --width=2300 --height=1900 --background=opaque
-
+%.png:	%.kicad_pcb PCBCase/clean PCBCase/render Makefile
+	PCBCase/render $<
