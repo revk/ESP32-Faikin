@@ -10,7 +10,7 @@ The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these
 
 This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
 
-![Top](Faikin/top.png)
+![Top](Faikin/Faikin-90.png)
 
 ## Panel
 
@@ -52,7 +52,7 @@ The current boards include the GPIO numbers clearly in inverse silk screen.
 
 For example, on this image, GPIO `34` and `48` for Tx and Rx. GPIO `47` is for the WS2812 style LED. GPIO `21` is one of two round pads which can be shorted three times in a row to factory reset the board.
 
-![Bottom](Faikin/bottom.png)
+![Bottom](Faikin/Faikin-bottom.png)
 
 ## Programming
 
