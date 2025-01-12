@@ -30,11 +30,11 @@ For support, see issues and discussions.
 
 The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
-<img src=Manuals/Board1.jpg width=50%><img src=Manuals/Board2.jpg width=50%>
+<img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
 
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 35x16mm.
 
-![PCB](PCB/Faikin/top.png)
+<img src=PCB/Faikin/Faikin-panel.png>
 
 ## Why I made this
 
