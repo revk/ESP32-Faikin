@@ -10,7 +10,7 @@ ifeq ($(wildcard /bin/csh),)
 $(error	Please install /bin/csh or equivalent)
 endif
 
-all:	settings.h
+all:	main/settings.h
 	@echo Make: $(PROJECT_NAME)$(SUFFIX).bin
 	@idf.py build
 	@cp build/$(PROJECT_NAME).bin $(PROJECT_NAME)$(SUFFIX).bin
@@ -22,7 +22,7 @@ beta:
 	-git submodule update --recursive
 	-git commit -a
 	@make set
-	cp $(PROJECT_NAME)*.bin betarelease
+	cp $(PROJECT_NAME)*.bin release/beta
 	git commit -a -m Beta
 	git push
 
@@ -30,11 +30,11 @@ issue:
 	make -C ../PCB
 	-git pull
 	-git commit -a
-	cp -f betarelease/$(PROJECT_NAME)*.bin release
+	cp -f release/beta/$(PROJECT_NAME)*.bin release
 	git commit -a -m Release
 	git push
 
-settings.h:     components/ESP32-RevK/revk_settings settings.def components/ESP32-RevK/settings.def
+main/settings.h:     components/ESP32-RevK/revk_settings main/settings.def components/ESP32-RevK/settings.def
 	components/ESP32-RevK/revk_settings $^
 
 components/ESP32-RevK/revk_settings: components/ESP32-RevK/revk_settings.c
@@ -43,7 +43,7 @@ components/ESP32-RevK/revk_settings: components/ESP32-RevK/revk_settings.c
 components/ESP32-RevK/idfmon: components/ESP32-RevK/idfmon.c
 	make -C components/ESP32-RevK idfmon
 
-set:    settings.h c3 wroom1 wroom solo pico s3n8 s3
+set:    main/settings.h c3 wroom1 wroom solo pico s3n8 s3
 
 c3:
 	components/ESP32-RevK/setbuildsuffix -C3
