@@ -27,6 +27,7 @@ beta:
 	git push
 
 issue:	
+	-git pull
 	-git commit -a
 	cp -f betarelease/$(PROJECT_NAME)*.bin release
 	git commit -a -m Release
