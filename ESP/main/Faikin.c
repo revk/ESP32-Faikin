@@ -1357,68 +1357,66 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
 
 // Parse control JSON, arrived by MQTT, and apply values
 const char *
-daikin_control (jo_t j)
+daikin_control (jo_t j, uint8_t insecure)
 {                               // Control settings as JSON
-   if (!*password && !nofaikinauto)
+   jo_type_t t = jo_next (j);   // Start object
+   jo_t s = NULL;
+   while (t == JO_TAG)
    {
-      jo_type_t t = jo_next (j);        // Start object
-      jo_t s = NULL;
-      while (t == JO_TAG)
-      {
-         const char *err = NULL;
-         char tag[20] = "",
-            val[20] = "";
-         jo_strncpy (j, tag, sizeof (tag));
-         t = jo_next (j);
-         jo_strncpy (j, val, sizeof (val));
+      const char *err = NULL;
+      char tag[20] = "",
+         val[20] = "";
+      jo_strncpy (j, tag, sizeof (tag));
+      t = jo_next (j);
+      jo_strncpy (j, val, sizeof (val));
 #define	b(name)		if(!strcmp(tag,#name)&&(t==JO_TRUE||t==JO_FALSE))err=daikin_set_v(name,t==JO_TRUE?1:0);
 #define	t(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_t(name,strtof(val,NULL));
 #define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
-         if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
-         {                      // Stored settings
-            if (strlen (val) >= 5)
-            {
-               if (!s)
-                  s = jo_object_alloc ();
-               jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
-            }
-         }
-         if (!strcmp (tag, "autop"))
+      if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
+      {                         // Stored settings
+         if (strlen (val) >= 5)
          {
             if (!s)
                s = jo_object_alloc ();
-            jo_bool (s, tag, *val == 't');
+            jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
          }
-         if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
-         {                      // Stored settings
-            if (!s)
-               s = jo_object_alloc ();
-            jo_lit (s, tag, val);
-            daikin.status_changed = 1;
-         }
-         if (!strcmp (tag, "autob"))
-         {                      // Stored settings
-            if (!s)
-               s = jo_object_alloc ();
-            jo_string (s, tag, val);    // Set BLE value
-         }
-         if (err)
-         {                      // Error report
-            jo_t j = jo_object_alloc ();
-            jo_string (j, "field", tag);
-            jo_string (j, "error", err);
-            revk_error ("control", &j);
-            return err;
-         }
-         t = jo_skip (j);
       }
-      if (s)
+      if (!strcmp (tag, "autop"))
       {
-         revk_settings_store (s, NULL, 1);
-         jo_free (&s);
+         if (!s)
+            s = jo_object_alloc ();
+         jo_bool (s, tag, *val == 't');
       }
+      if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
+      {                         // Stored settings
+         if (!s)
+            s = jo_object_alloc ();
+         jo_lit (s, tag, val);
+         daikin.status_changed = 1;
+      }
+      if (!strcmp (tag, "autob"))
+      {                         // Stored settings
+         if (!s)
+            s = jo_object_alloc ();
+         jo_string (s, tag, val);       // Set BLE value
+      }
+      if (err)
+      {                         // Error report
+         jo_t j = jo_object_alloc ();
+         jo_string (j, "field", tag);
+         jo_string (j, "error", err);
+         revk_error ("control", &j);
+         return err;
+      }
+      t = jo_skip (j);
+   }
+   if (s)
+   {
+      if (insecure || !*password)
+         revk_settings_store (s, NULL, 1);
+      jo_free (&s);
    }
    return "";
 }
@@ -1434,7 +1432,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
    if (client || !prefix || target || strcmp (prefix, topiccommand))
       return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
-      return daikin_control (j);        // General setting
+      return daikin_control (j, 1);     // General setting - we allow the setting changes even with no password
    if (!strcmp (suffix, "reconnect"))
    {
       daikin.talking = 0;       // Disconnect and reconnect
@@ -1618,7 +1616,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
    if (jo_next (s) == JO_TAG)
    {
       jo_rewind (s);
-      ret = daikin_control (s);
+      ret = daikin_control (s, 1);
    }
    jo_free (&s);
    return ret;
@@ -2035,7 +2033,7 @@ web_status (httpd_req_t * req)
       jo_t j = jo_parse_mem (buf, ws_pkt.len);
       if (j)
       {
-         daikin_control (j);
+         daikin_control (j, 0);
          jo_free (&j);
       }
    }
