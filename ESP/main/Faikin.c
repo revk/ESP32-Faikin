@@ -2759,6 +2759,8 @@ send_ha_config (void)
       free (topic);
    }
    addtemp ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet), "inlet", "Inlet", "mdi:thermometer");        // Both defined so we used home as temp, so lets add inlet here
+   addtemp (daikin.status_known & CONTROL_target, "ac-target", "AC-Target", "mdi:thermometer");
+   addtemp (daikin.status_known & CONTROL_home, "ac-home", "AC-Home", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_outside, "outside", "Outside", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "Liquid", "mdi:coolant-temperature");
    addfreq (daikin.status_known & CONTROL_comp, "comp", "Compressor", hacomprpm ? "rpm" : "Hz", "mdi:sine-wave");
@@ -2876,14 +2878,17 @@ revk_state_extra (jo_t j)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_power)
       jo_bool (j, "power", daikin.power);
-   //if (daikin.status_known & CONTROL_temp) // HA always expects this
    jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp);    // Target - either internal or what we are using as reference
+   if (daikin.status_known & CONTROL_temp)
+      jo_litf (j, "ac-target", "%.2f", daikin.env);  // The actual target
    if (daikin.status_known & CONTROL_env)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
    else if (daikin.status_known & CONTROL_home)
       jo_litf (j, "temp", "%.2f", daikin.home); // We use home if present, else inlet
    else if (daikin.status_known & CONTROL_inlet)
       jo_litf (j, "temp", "%.2f", daikin.inlet);
+   if (daikin.status_known & CONTROL_home)
+      jo_litf (j, "ac-home", "%.2f", daikin.home);  // The actual home temp
    if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
       jo_litf (j, "inlet", "%.2f", daikin.inlet);       // Both so report inlet as well
    if (daikin.status_known & CONTROL_outside)
