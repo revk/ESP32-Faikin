@@ -1359,63 +1359,66 @@ daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
 const char *
 daikin_control (jo_t j)
 {                               // Control settings as JSON
-   jo_type_t t = jo_next (j);   // Start object
-   jo_t s = NULL;
-   while (t == JO_TAG)
+   if (!*password && !nofaikinauto)
    {
-      const char *err = NULL;
-      char tag[20] = "",
-         val[20] = "";
-      jo_strncpy (j, tag, sizeof (tag));
-      t = jo_next (j);
-      jo_strncpy (j, val, sizeof (val));
+      jo_type_t t = jo_next (j);        // Start object
+      jo_t s = NULL;
+      while (t == JO_TAG)
+      {
+         const char *err = NULL;
+         char tag[20] = "",
+            val[20] = "";
+         jo_strncpy (j, tag, sizeof (tag));
+         t = jo_next (j);
+         jo_strncpy (j, val, sizeof (val));
 #define	b(name)		if(!strcmp(tag,#name)&&(t==JO_TRUE||t==JO_FALSE))err=daikin_set_v(name,t==JO_TRUE?1:0);
 #define	t(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_t(name,strtof(val,NULL));
 #define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
-      if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
-      {                         // Stored settings
-         if (strlen (val) >= 5)
+         if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
+         {                      // Stored settings
+            if (strlen (val) >= 5)
+            {
+               if (!s)
+                  s = jo_object_alloc ();
+               jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
+            }
+         }
+         if (!strcmp (tag, "autop"))
          {
             if (!s)
                s = jo_object_alloc ();
-            jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
+            jo_bool (s, tag, *val == 't');
          }
+         if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
+         {                      // Stored settings
+            if (!s)
+               s = jo_object_alloc ();
+            jo_lit (s, tag, val);
+            daikin.status_changed = 1;
+         }
+         if (!strcmp (tag, "autob"))
+         {                      // Stored settings
+            if (!s)
+               s = jo_object_alloc ();
+            jo_string (s, tag, val);    // Set BLE value
+         }
+         if (err)
+         {                      // Error report
+            jo_t j = jo_object_alloc ();
+            jo_string (j, "field", tag);
+            jo_string (j, "error", err);
+            revk_error ("control", &j);
+            return err;
+         }
+         t = jo_skip (j);
       }
-      if (!strcmp (tag, "autop"))
+      if (s)
       {
-         if (!s)
-            s = jo_object_alloc ();
-         jo_bool (s, tag, *val == 't');
+         revk_settings_store (s, NULL, 1);
+         jo_free (&s);
       }
-      if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
-      {                         // Stored settings
-         if (!s)
-            s = jo_object_alloc ();
-         jo_lit (s, tag, val);
-         daikin.status_changed = 1;
-      }
-      if (!strcmp (tag, "autob"))
-      {                         // Stored settings
-         if (!s)
-            s = jo_object_alloc ();
-         jo_string (s, tag, val);       // Set BLE value
-      }
-      if (err)
-      {                         // Error report
-         jo_t j = jo_object_alloc ();
-         jo_string (j, "field", tag);
-         jo_string (j, "error", err);
-         revk_error ("control", &j);
-         return err;
-      }
-      t = jo_skip (j);
-   }
-   if (s)
-   {
-      revk_settings_store (s, NULL, 1);
-      jo_free (&s);
    }
    return "";
 }
@@ -1693,6 +1696,36 @@ web_icon (httpd_req_t * req)
    return ESP_OK;
 }
 
+static void
+settings_autob (httpd_req_t * req)
+{
+   revk_web_send (req, "<tr><td>BLE</td><td colspan=6>" //
+                  "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
+   if (!*autob)
+      revk_web_send (req, "<option value=\"\">-- None --");
+   char found = 0;
+   for (bleenv_t * e = bleenv; e; e = e->next)
+   {
+      revk_web_send (req, "<option value=\"%s\"", e->name);
+      if (*autob && !strcmp (autob, e->name))
+      {
+         revk_web_send (req, " selected");
+         found = 1;
+      }
+      revk_web_send (req, ">%s", e->name);
+      if (!e->missing && e->rssi)
+         revk_web_send (req, " %ddB", e->rssi);
+   }
+   if (!found && *autob)
+   {
+      revk_web_send (req, "<option selected value=\"%s\">%s", autob, autob);
+   }
+   revk_web_send (req, "</select>");
+   if (ble && (uptime () < 60 || !found))
+      revk_web_send (req, " (reload to refresh list)");
+   revk_web_send (req, "</td></tr>");
+}
+
 static esp_err_t
 web_control (httpd_req_t * req)
 {
@@ -1826,7 +1859,7 @@ web_control (httpd_req_t * req)
                   "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
                   "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 
-   if (autor || ble_sensor_enabled () || (!nofaikinauto && !daikin.remote))
+   if (!*password && (autor || ble_sensor_enabled () || (!nofaikinauto && !daikin.remote)))
    {
       void addnote (const char *note)
       {
@@ -1854,31 +1887,7 @@ web_control (httpd_req_t * req)
       if (ble)
       {
          addnote ("External temperature reference for Faikin-auto mode");
-         revk_web_send (req, "<tr><td>BLE</td><td colspan=6>"   //
-                        "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
-         if (!*autob)
-            revk_web_send (req, "<option value=\"\">-- None --");
-         char found = 0;
-         for (bleenv_t * e = bleenv; e; e = e->next)
-         {
-            revk_web_send (req, "<option value=\"%s\"", e->name);
-            if (*autob && !strcmp (autob, e->name))
-            {
-               revk_web_send (req, " selected");
-               found = 1;
-            }
-            revk_web_send (req, ">%s", e->name);
-            if (!e->missing && e->rssi)
-               revk_web_send (req, " %ddB", e->rssi);
-         }
-         if (!found && *autob)
-         {
-            revk_web_send (req, "<option selected value=\"%s\">%s", autob, autob);
-         }
-         revk_web_send (req, "</select>");
-         if (ble && (uptime () < 60 || !found))
-            revk_web_send (req, " (reload to refresh list)");
-         revk_web_send (req, "</td></tr>");
+         settings_autob (req);
       }
 #endif
       revk_web_send (req, "</table></div>");
@@ -2428,7 +2437,7 @@ static esp_err_t
 legacy_web_get_year_power (httpd_req_t * req)
 {
    jo_t j = legacy_ok ();
-   jo_stringf (j, "curr_year_heat", "%u/0/0/0/0/0/0/0/0/0/0/0", daikin.Wh/100);      // Bodge, does not resent each year yet
+   jo_stringf (j, "curr_year_heat", "%u/0/0/0/0/0/0/0/0/0/0/0", daikin.Wh / 100);       // Bodge, does not resent each year yet
    jo_string (j, "prev_year_heat", "0/0/0/0/0/0/0/0/0/0/0/0");
    jo_string (j, "curr_year_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
    jo_string (j, "prevyear_cool", "0/0/0/0/0/0/0/0/0/0/0/0");
@@ -2880,7 +2889,7 @@ revk_state_extra (jo_t j)
       jo_bool (j, "power", daikin.power);
    jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp);    // Target - either internal or what we are using as reference
    if (daikin.status_known & CONTROL_temp)
-      jo_litf (j, "ac-target", "%.2f", daikin.env);  // The actual target
+      jo_litf (j, "ac-target", "%.2f", daikin.env);     // The actual target
    if (daikin.status_known & CONTROL_env)
       jo_litf (j, "temp", "%.2f", daikin.env);  // The external temperature
    else if (daikin.status_known & CONTROL_home)
@@ -2888,7 +2897,7 @@ revk_state_extra (jo_t j)
    else if (daikin.status_known & CONTROL_inlet)
       jo_litf (j, "temp", "%.2f", daikin.inlet);
    if (daikin.status_known & CONTROL_home)
-      jo_litf (j, "ac-home", "%.2f", daikin.home);  // The actual home temp
+      jo_litf (j, "ac-home", "%.2f", daikin.home);      // The actual home temp
    if ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet))
       jo_litf (j, "inlet", "%.2f", daikin.inlet);       // Both so report inlet as well
    if (daikin.status_known & CONTROL_outside)
@@ -3061,13 +3070,15 @@ revk_web_extra (httpd_req_t * req, int page)
    if (haenable)
       revk_web_setting (req, "HA Extra switches", "haswitches");
    revk_web_setting (req, "Dark mode LED", "dark");
+   revk_web_setting (req, "Debug", "debug");
    if (!daikin.remote)
    {
-      revk_web_setting (req, "No Faikin auto mode", "nofaikinauto");
-      if (!nofaikinauto)
-         revk_web_setting (req, "BLE Sensors", "ble");
+      if (!*password)           // Not shown anyway if password
+         revk_web_setting (req, "No Faikin auto mode", "nofaikinauto");
+      revk_web_setting (req, "BLE Sensors", "ble");
+      if (ble)
+         settings_autob (req);
    }
-   revk_web_setting (req, "Debug", "debug");
 }
 
 // --------------------------------------------------------------------------------

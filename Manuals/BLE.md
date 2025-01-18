@@ -1,6 +1,6 @@
 # BLE sensors
 
-Supported temperature sensors - these appear in the list of found sensors.
+Supported temperature sensors - once BLE is enabled, these appear in the list of found sensors (on main page, unless settings are password locked).
 
 ## ELA BlueCoinT
 
@@ -24,11 +24,11 @@ It does need a CR2032 battery. But the battery is replaceable. Not waterproof.
 
 These sensors seem to require an app, and then to be activated. The app needs a login, I nearly did not add them at all. However, it seems someone has done some customer firmware and it is easy to reflash!
 
-The instructions are [here](https://github.com/pvvx/ATC_MiThermometer#flashing-or-updating-the-firmware-ota) and pretty easy to follow. You go to a [web page](https://pvvx.github.io/ATC_MiThermometer/TelinkMiFlasher.html), select `Connect` and find the sensor (e.g. `LYWSD03MMC`), select `Activate`, then `Custom Firmware`, then `Start flashing`. Simple as that, takes a few minutes.
+The instructions are [here](https://github.com/pvvx/ATC_MiThermometer#flashing-or-updating-the-firmware-ota) and pretty easy to follow. You go to a [web page](https://pvvx.github.io/ATC_MiThermometer/TelinkMiFlasher.html), select `Connect` and find the sensor, select `Activate`, then `Custom Firmware`, then `Start flashing`. Simple as that, takes a few minutes. Note the `LYWSD03MMC` may be more complex as only accepting signed updates now.
 
 You can reconnect (it changes its name to start `ATC_...`) but then you have loads of options.
 
-The default `custom format` advertisement is understood. The device will appear with its MAC address as its name. If you use Home Assistant, BTHome advertisement is also understood by Faikin and will be recognised automatically in HA so it may be worth sending BTHome config while you have the Telink paired.
+The default `custom format` advertisement is understood. The device will appear with its MAC address as its name. If you use Home Assistant, BTHome and BTHome2 advertisement are also understood by Faikin and will be recognised automatically in HA so it may be worth sending BTHome/BTHome2 config while you have the Telink paired.
 
 ## GoveeLife
 
