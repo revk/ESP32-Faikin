@@ -32,7 +32,7 @@ The board from [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Da
 
 <img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
 
-Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 35x16mm.
+Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
 <img src=PCB/Faikin/Faikin-panel.png width=49%><img src=PCB/Faikin/Faikin-alt-bottom.png width=49%>
 
