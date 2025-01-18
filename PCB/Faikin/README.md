@@ -1,16 +1,13 @@
-# PCB
+# Faikin
 
-These files are for use in [KiCad](https://www.kicad.org) so can be edited as needed.
+These files are for use in [KiCad](https://www.kicad.org).
 
-You should, technically, remove the A&A and AJK logos as they are trademark. If you are using for yourself, then fine, but you must not trade (i.e. sell boards you make) with these logos.
+## Trademark
 
-![Top](Faikin.png)
-![Top](Faikin-90.png)
-![Bottom](Faikin-bottom.png)
-![Panel](Faikin-panel.png)
+This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
 
-## Ordering
+## Images
 
-There are also `production` files for [JLCPCB](https://jlcpcb.com)
-
-When ordering, you need the `gerber.zip`, `bom.csv`, and `position.csv` files.
+<img src='Faikin.png' width=32%><img src='Faikin-90.png' width=32%><img src='Faikin-bottom.png' width=32%>
+<img src='Faikin-alt.png' width=32%><img src='Faikin-alt-90.png' width=32%><img src='Faikin-alt-bottom.png' width=32%>
+<img src='Faikin-panel.png' width=49%><img src='Faikin-panel-bottom.png' width=49%>

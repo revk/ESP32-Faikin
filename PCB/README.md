@@ -10,13 +10,15 @@ The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these
 
 This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
 
-![Top](Faikin/Faikin-90.png)
+<img src=Faikin/Faikin.png width=49%><img src=Faikin/Faikin-bottom.png width=49%>
 
 ## Panel
 
-The PCB is supplied in a standard 70mm x 70mm panel - this is the minimum panel for assemply for JLCPCB.
+Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
-The panel incldues slots and v-cuts to allow the unwanted parts of the panel to be snapped off. On the thicker (1.6mm) boards this can be a tad un-nerving, but just bend along the v-cut to snap the board on the cut line. I make the boards at 1.2mm thickness to make this easier.
+<img src=Faikin/Faikin-panel.png width=49%><img src=Faikin/Faikin-alt-bottom.png width=49%>
+
+The panel includes slots and v-cuts to allow the unwanted parts of the panel to be snapped off. On the thicker (1.6mm) boards this can be a tad un-nerving, but just bend along the v-cut to snap the board on the cut line. I make the boards at 1.2mm thickness to make this easier.
 
 The board design also allows the panel to be snapped off down to a 45mm x 36mm small board. This is the same size as commonly used for built-in Daikin WiFi modules, so if replacing the standard Daikin WiFi, it should fit exactly in the case. Obviously this only applies to some models.
 
