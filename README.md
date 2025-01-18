@@ -46,7 +46,7 @@ This whole project is almost entirely by me, but with some valuable contribution
 
 As mentioned, on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) - but not available to export everywhere. Forwarding companies are an option.
 
-But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You would also need something to program them, such as my [Tasmotiser](https://github.com/revk/Tasmotizer-PCB) board.
+But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You need to remove trademarks, etc, and you would also need something to program them (TC2030 lead).
 
 Someone has made (slightly older versions of) boards for sale in US on [Tindie](https://www.tindie.com/products/elfatronics/faikin-alternative-daikin-wifi-controller/) as well.
 
