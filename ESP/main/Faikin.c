@@ -2766,7 +2766,7 @@ send_ha_config (void)
       free (topic);
    }
    addtemp ((daikin.status_known & CONTROL_home) && (daikin.status_known & CONTROL_inlet), "inlet", "Inlet", "mdi:thermometer");        // Both defined so we used home as temp, so lets add inlet here
-   addtemp (daikin.status_known & CONTROL_target, "actarget", "AC-Target", "mdi:thermometer");
+   addtemp (daikin.status_known & CONTROL_temp, "actarget", "AC-Target", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_home, "achome", "AC-Home", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_outside, "outside", "Outside", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "Liquid", "mdi:coolant-temperature");
