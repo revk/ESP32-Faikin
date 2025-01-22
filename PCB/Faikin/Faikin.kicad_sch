@@ -973,7 +973,7 @@
 					(hide yes)
 				)
 			)
-			(property "LCSC Part #" "C193381"
+			(property "MPN" "C193381"
 				(at 9.525 5.969 0)
 				(effects
 					(font
@@ -982,7 +982,7 @@
 					(hide yes)
 				)
 			)
-			(property "JLCPCB Rotation Offset" "180"
+			(property "Rotation Offset" "180"
 				(at 0 0 0)
 				(effects
 					(font
@@ -1493,7 +1493,7 @@
 					(hide yes)
 				)
 			)
-			(property "LCSC Part #" "C5137770"
+			(property "MPN" "C5137770"
 				(at 0 -3.175 0)
 				(effects
 					(font
@@ -1634,7 +1634,7 @@
 					(hide yes)
 				)
 			)
-			(property "LCSC Part #" "C3013941"
+			(property "MPN" "C3013941"
 				(at 0 -32.385 0)
 				(effects
 					(font
@@ -3125,13 +3125,21 @@
 					(hide yes)
 				)
 			)
-			(property "LCSC Part #" "C2684786"
+			(property "MPN" "C2684786"
 				(at 0 -26.67 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
 					(hide yes)
+				)
+			)
+			(property "Rotation Offset" "180"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
 				)
 			)
 			(symbol "MD89420-RegBlock_1_1"
@@ -3967,7 +3975,7 @@
 					(hide yes)
 				)
 			)
-			(property "LCSC Part #" "C5349953"
+			(property "MPN" "C5349953"
 				(at 1.27 -11.43 0)
 				(effects
 					(font
@@ -5301,6 +5309,15 @@
 				(hide yes)
 			)
 		)
+		(property "MPN" "C5137770"
+			(at 163.83 124.46 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "670c4cd3-3a3f-4d3e-b3bf-bbb959f97640")
 		)
@@ -5362,6 +5379,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 262.255 170.815 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Enable" "0"
 			(at 262.255 170.815 0)
 			(effects
 				(font
@@ -5786,17 +5812,8 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C193381"
+		(property "MPN" "C193381"
 			(at 166.37 70.866 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "JLCPCB Rotation Offset" "180"
-			(at 156.845 76.835 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6167,6 +6184,24 @@
 				(hide yes)
 			)
 		)
+		(property "Part No" ""
+			(at 186.69 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Note" ""
+			(at 186.69 48.26 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6236,6 +6271,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 259.08 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6280,7 +6324,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" " ~"
+		(property "Datasheet" "~"
 			(at 125.73 138.43 0)
 			(effects
 				(font
@@ -6519,6 +6563,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 262.255 177.165 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6574,7 +6627,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 102.235 35.56 0)
 			(effects
 				(font
@@ -6933,6 +6986,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 262.255 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6997,6 +7059,15 @@
 			)
 		)
 		(property "LCSC Part #" "C5137770"
+			(at 163.83 75.565 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MPN" "C5137770"
 			(at 163.83 75.565 0)
 			(effects
 				(font
@@ -7079,6 +7150,23 @@
 					(size 1.27 1.27)
 				)
 				(hide yes)
+			)
+		)
+		(property "MPN" "C2684786"
+			(at 165.735 75.565 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Rotation Offset" "180"
+			(at 165.735 48.895 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
 			)
 		)
 		(pin "1"
@@ -7176,17 +7264,8 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C193381"
+		(property "MPN" "C193381"
 			(at 152.4 114.681 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "JLCPCB Rotation Offset" "180"
-			(at 161.925 120.65 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -7266,6 +7345,24 @@
 			)
 		)
 		(property "Description" ""
+			(at 186.69 50.165 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Part No" ""
+			(at 186.69 50.165 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Note" ""
 			(at 186.69 50.165 0)
 			(effects
 				(font
@@ -7641,6 +7738,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 265.43 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -7696,6 +7802,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 262.255 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Enable" "0"
 			(at 262.255 171.45 0)
 			(effects
 				(font
@@ -8084,7 +8199,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 181.61 88.9 0)
 			(effects
 				(font
@@ -8386,6 +8501,16 @@
 				(hide yes)
 			)
 		)
+		(property "MPN" "C5349953"
+			(at 100.33 123.825 0)
+			(effects
+				(font
+					(size 1 1)
+				)
+				(justify left top)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "196dc0ee-899a-4d56-bb32-1bfd77bdca7c")
 		)
@@ -8458,7 +8583,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Generic connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)"
 			(at 201.295 95.885 0)
 			(effects
 				(font
@@ -8987,7 +9112,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 167.005 107.315 0)
 			(effects
 				(font
@@ -9276,7 +9401,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 122.555 113.03 0)
 			(effects
 				(font
@@ -9415,7 +9540,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Resistor"
 			(at 122.555 105.41 0)
 			(effects
 				(font
@@ -9496,7 +9621,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "Unpolarized capacitor"
 			(at 95.885 35.56 0)
 			(effects
 				(font
@@ -9582,6 +9707,15 @@
 			)
 		)
 		(property "LCSC Part #" "C3013941"
+			(at 99.06 114.3 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MPN" "C3013941"
 			(at 99.06 114.3 0)
 			(effects
 				(font
