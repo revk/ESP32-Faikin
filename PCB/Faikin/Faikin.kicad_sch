@@ -982,14 +982,6 @@
 					(hide yes)
 				)
 			)
-			(property "Rotation Offset" "180"
-				(at 0 0 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-				)
-			)
 			(property "ki_fp_filters" "SOT?363*"
 				(at 0 0 0)
 				(effects
@@ -1625,7 +1617,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" ""
+			(property "Description" "ESP32S3"
 				(at 0 0 0)
 				(effects
 					(font
@@ -3116,7 +3108,7 @@
 					(hide yes)
 				)
 			)
-			(property "Description" ""
+			(property "Description" "Regulator and associated components."
 				(at 0 0 0)
 				(effects
 					(font
@@ -3126,20 +3118,12 @@
 				)
 			)
 			(property "MPN" "C2684786"
-				(at 0 -26.67 0)
-				(effects
-					(font
-						(size 1.27 1.27)
-					)
-					(hide yes)
-				)
-			)
-			(property "Rotation Offset" "180"
 				(at 0 0 0)
 				(effects
 					(font
 						(size 1.27 1.27)
 					)
+					(hide yes)
 				)
 			)
 			(symbol "MD89420-RegBlock_1_1"
@@ -5300,7 +5284,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C5137770"
+		(property "MPN" "C5137770"
 			(at 163.83 124.46 0)
 			(effects
 				(font
@@ -5379,15 +5363,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 170.815 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 170.815 0)
 			(effects
 				(font
@@ -6271,15 +6246,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 259.08 173.99 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -6555,15 +6521,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 177.165 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 177.165 0)
 			(effects
 				(font
@@ -6986,15 +6943,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 262.255 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -7058,7 +7006,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C5137770"
+		(property "MPN" "C5137770"
 			(at 163.83 75.565 0)
 			(effects
 				(font
@@ -7143,15 +7091,6 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C2684786"
-			(at 165.735 75.565 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(property "MPN" "C2684786"
 			(at 165.735 75.565 0)
 			(effects
@@ -7159,14 +7098,6 @@
 					(size 1.27 1.27)
 				)
 				(hide yes)
-			)
-		)
-		(property "Rotation Offset" "180"
-			(at 165.735 48.895 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
 			)
 		)
 		(pin "1"
@@ -7738,15 +7669,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 265.43 173.99 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -7802,15 +7724,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 171.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 171.45 0)
 			(effects
 				(font
@@ -7968,7 +7881,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C6341459"
+		(property "MPN" "C6341459"
 			(at 167.005 114.935 0)
 			(effects
 				(font
@@ -8113,7 +8026,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C1691"
+		(property "MPN" "C1691"
 			(at 186.69 44.45 0)
 			(effects
 				(font
@@ -8491,7 +8404,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C5349953"
+		(property "MPN" "C5349953"
 			(at 100.33 123.825 0)
 			(effects
 				(font
@@ -8592,16 +8505,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C265103"
-			(at 201.295 95.885 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "JLCPCB Position Offset" "0,-2.61"
+		(property "MPN" "C265103"
 			(at 201.295 95.885 0)
 			(effects
 				(font
@@ -8826,7 +8730,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C194427"
+		(property "MPN" "C194427"
 			(at 186.69 42.545 0)
 			(effects
 				(font
@@ -9706,7 +9610,7 @@
 				(hide yes)
 			)
 		)
-		(property "LCSC Part #" "C3013941"
+		(property "MPN" "C3013941"
 			(at 99.06 114.3 0)
 			(effects
 				(font
