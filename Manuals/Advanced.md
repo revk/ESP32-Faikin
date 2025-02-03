@@ -66,7 +66,17 @@ If `autop` is set, and the last two sample periods are entirely inside the targe
 
 ### Remote
 
-The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically containing JSON with `env` being current temperature, and `target` being an array of *min* and *max* target temperature. When remote working `autop` is assumed if `autoptemp` is not `0`.
+The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically.
+
+You can use for your own external control, which takes priority over *Faikin auto*, but you have to send the `control` command regularly.
+
+|Field|Meaning|
+|-----|-------|
+|`env`|Set the current room temperature.|
+|`target`|Set the target temperature, either an array of *min* and *max*, or a single number.|
+|`margin`|Mainly for when sending `target` as just a number, if present the *min* is reduced by half `margin` and the *max* is increased by half `margin`|
+
+When remote working `autop` is assumed if `autoptemp` is not `0`.
 
 ### Special settings
 
