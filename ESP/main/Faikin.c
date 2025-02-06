@@ -3079,7 +3079,7 @@ revk_web_extra (httpd_req_t * req, int page)
    if (!daikin.remote)
    {
       if (!*password)           // Not shown anyway if password
-         revk_web_setting (req, "No Faikin auto mode", "nofaikinauto");
+         revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
       revk_web_setting (req, "BLE Sensors", "ble");
       if (ble)
          settings_autob (req);
