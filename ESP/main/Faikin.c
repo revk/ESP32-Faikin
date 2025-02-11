@@ -1824,16 +1824,15 @@ web_control (httpd_req_t * req)
    if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected ())
       addt ("Env", "External reference temperature");
 #ifdef ELA
-   if (ble&&bletemp)
+   if (ble && bletemp)
    {
-      if(bletemp->tempset)
-      addt ("BLE", "External BLE temperature");
-      if(bletemp->humset)
-      addt ("Hum", "External BLE humidity");
-      if(bletemp->batset)
-      addt ("Bat", "External BLE battery");
-      else if(bletemp->voltset)
-      addt ("Bat", "External BLE battery");
+      revk_web_send (req, "</tr><tr><td>BLE</td>");
+      if (bletemp->tempset)
+         addt ("Temp", "External BLE temperature");
+      if (bletemp->humset)
+         addt ("Hum", "External BLE humidity");
+      if (bletemp->batset || bletemp->voltset)
+         addt ("Bat", "External BLE battery");
    }
 #endif
    revk_web_send (req, "</tr>");
@@ -1959,10 +1958,11 @@ web_control (httpd_req_t * req)
                   "t('Env',o.env);"     //
                   "t('Outside',o.outside);"     //
                   "t('Liquid',o.liquid);"       //
-                  "if(o.ble)t('BLE',o.ble.temp);"       //
-                  "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'---');"      //
-                  "if(o.ble)s('Bat',o.ble.bat?o.ble.bat+'%%':'---');"      //
-                  "else if(o.ble)s('Bat',o.ble.volt?o.ble.volt+'V':'---');"      //
+                  "if(o.ble){"  //
+                  "t('Temp',o.ble.temp);"       //
+                  "s('Hum',o.ble.hum?o.ble.hum+'%%':'---');"    //
+                  "s('Bat',o.ble.bat?o.ble.bat+'%%':o.ble.volt?o.ble.volt+'V':'---');"  //
+                  "};"          //
                   "n('demand',o.demand);"       //
                   "s('Tdemand',(o.demand!=undefined?o.demand+'%%':'---'));"     //
                   "n('temp',o.temp);"   //
