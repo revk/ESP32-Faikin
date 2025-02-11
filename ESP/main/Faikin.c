@@ -1828,6 +1828,7 @@ web_control (httpd_req_t * req)
    {
       addt ("BLE", "External BLE temperature");
       addt ("Hum", "External BLE humidity");
+      addt ("Bat", "External BLE battery");
    }
 #endif
    revk_web_send (req, "</tr>");
@@ -1955,6 +1956,7 @@ web_control (httpd_req_t * req)
                   "t('Liquid',o.liquid);"       //
                   "if(o.ble)t('BLE',o.ble.temp);"       //
                   "if(o.ble)s('Hum',o.ble.hum?o.ble.hum+'%%':'');"      //
+                  "if(o.ble)s('Bat',o.ble.hum?o.ble.bat+'%%':'');"      //
                   "n('demand',o.demand);"       //
                   "s('Tdemand',(o.demand!=undefined?o.demand+'%%':'---'));"     //
                   "n('temp',o.temp);"   //
