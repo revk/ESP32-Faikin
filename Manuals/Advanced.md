@@ -143,14 +143,19 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`swingv`|Boolean - vertical louvre swing|
 |`powerful`|Boolean|
 |`econo`|Boolean|
+|`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikin auto mode|
+|`env`|This is the temperature reference used for the Faikin auto mode|
+|`streamer`| Boolean|
+
+There are also settings that can impact the Faikin auto mode. These are also reported in the status messages, if not using remote `control`.
+
+|Attribute|Meaning|
+|---------|-------|
 |`autor`|Range for automation, `0.0` means off - this sets the `autor` setting to 10 times this value|
 |`autot`|Target temp for automation, This sets the `autot` setting to 10 times this value|
 |`autob`|The name of the BLE device. This sets the `autob` setting|
 |`auto0`|Time to turn off HH:MM, `00:00` is don't turn off. This sets the `auto0` setting|
 |`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
-|`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikin auto mode|
-|`env`|This is the temperature reference used for the Faikin auto mode|
-|`streamer`| Boolean|
 
 For remote controlled Faikin auto mode, you typically send a `control` message with `target` and `env` in the JSON payload. This needs to be sent regularly to avoid it revertign to normal (not Faikin auto mode).
 
