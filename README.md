@@ -28,7 +28,7 @@ For support, see issues and discussions.
 
 ## PCB
 
-The board from [Tindie]([Tindie](https://www.tindie.com/stores/revk/)), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
+The board from [Tindie](https://www.tindie.com/stores/revk/)), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
 <img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
 
