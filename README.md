@@ -44,11 +44,9 @@ This whole project is almost entirely by me, but with some valuable contribution
 
 ## How to get one
 
-As mentioned, on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) - but not available to export everywhere. Forwarding companies are an option.
+As mentioned, [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
 But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You need to remove trademarks, etc, and you would also need something to program them (TC2030 lead).
-
-Someone has made boards for sale in US on [Tindie](https://www.tindie.com/products/elfatronics/faikin-alternative-daikin-wifi-controller/) as well.
 
 # Set-up
 
