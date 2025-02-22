@@ -27,7 +27,6 @@ beta:
 	git push
 
 issue:	
-	make -C ../PCB
 	-git pull
 	-git commit -a
 	cp -f release/beta/$(PROJECT_NAME)*.bin release
