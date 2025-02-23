@@ -151,8 +151,8 @@ There are also settings that can impact the Faikin auto mode. These are also rep
 
 |Attribute|Meaning|
 |---------|-------|
-|`autor`|Range for automation, `0.0` means off - this sets the `autor` setting to 10 times this value|
-|`autot`|Target temp for automation, This sets the `autot` setting to 10 times this value|
+|`autor`|Range for automation, `0.0` means off - this sets the `autor` setting |
+|`autot`|Target temp for automation, This sets the `autot` setting|
 |`autob`|The name of the BLE device. This sets the `autob` setting|
 |`auto0`|Time to turn off HH:MM, `00:00` is don't turn off. This sets the `auto0` setting|
 |`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
