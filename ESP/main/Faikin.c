@@ -1374,20 +1374,29 @@ daikin_control (jo_t j, uint8_t insecure)
 #define	i(name)		if(!strcmp(tag,#name)&&t==JO_NUMBER)err=daikin_set_i(name,atoi(val));
 #define	e(name,values)	if(!strcmp(tag,#name)&&t==JO_STRING)err=daikin_set_e(name,val);
 #include "accontrols.m"
-      if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
-      {                         // Stored settings
-         if (strlen (val) >= 5)
+      if (insecure || !*password)
+      {
+         if (!strcmp (tag, "auto0") || !strcmp (tag, "auto1"))
+         {                      // Stored settings
+            if (strlen (val) >= 5)
+            {
+               if (!s)
+                  s = jo_object_alloc ();
+               jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
+            }
+         }
+         if (!strcmp (tag, "autob"))
+         {                      // Stored settings
+            if (!s)
+               s = jo_object_alloc ();
+            jo_string (s, tag, val);    // Set BLE value
+         }
+         if (!strcmp (tag, "autop"))
          {
             if (!s)
                s = jo_object_alloc ();
-            jo_int (s, tag, atoi (val) * 100 + atoi (val + 3));
+            jo_bool (s, tag, *val == 't');
          }
-      }
-      if (!strcmp (tag, "autop"))
-      {
-         if (!s)
-            s = jo_object_alloc ();
-         jo_bool (s, tag, *val == 't');
       }
       if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
       {                         // Stored settings
@@ -1395,12 +1404,6 @@ daikin_control (jo_t j, uint8_t insecure)
             s = jo_object_alloc ();
          jo_lit (s, tag, val);
          daikin.status_changed = 1;
-      }
-      if (!strcmp (tag, "autob"))
-      {                         // Stored settings
-         if (!s)
-            s = jo_object_alloc ();
-         jo_string (s, tag, val);       // Set BLE value
       }
       if (err)
       {                         // Error report
@@ -1414,8 +1417,7 @@ daikin_control (jo_t j, uint8_t insecure)
    }
    if (s)
    {
-      if (insecure || !*password)
-         revk_settings_store (s, NULL, 1);
+      revk_settings_store (s, NULL, 1);
       jo_free (&s);
    }
    return "";
@@ -1879,7 +1881,7 @@ web_control (httpd_req_t * req)
                   "<p id=control style='display:none'>✷ Automatic control means some functions are limited.</p>"      //
                   "<p id=antifreeze style='display:none'>❄ System is in anti-freeze now, so cooling is suspended.</p>");
 
-   if (!*password && (autor || ble_sensor_enabled () || (!nofaikinauto && !daikin.remote)))
+   if ((!*password && ble_sensor_enabled ()) || autor || (!nofaikinauto && !daikin.remote))
    {
       void addnote (const char *note)
       {
@@ -1896,18 +1898,21 @@ web_control (httpd_req_t * req)
                            tag, field, field);
          }
          revk_web_send (req,
-                        "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target), and timed and auto power on/off.</p><table>");
+                        "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target).</p><table>");
          add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
               fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
          addslider ("Target", "autot", tmin, tmax, get_temp_step ());
-         addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
-         revk_web_send (req, "<tr>");
-         addtime ("On", "auto1");
-         addtime ("Off", "auto0");
-         addb ("Auto ⏼", "autop", "Auto\non/off");
+         if (!*password)
+         {
+            addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
+            revk_web_send (req, "<tr>");
+            addtime ("On", "auto1");
+            addtime ("Off", "auto0");
+            addb ("Auto ⏼", "autop", "Auto\non/off");
+         }
          revk_web_send (req, "</tr>");
 #ifdef ELA
-         if (ble)
+         if (ble && !*password)
          {
             addnote ("External temperature reference for Faikin-auto mode");
             settings_autob (req);
@@ -2982,9 +2987,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
-                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
-                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.
+                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
+                 swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
@@ -3100,8 +3105,7 @@ revk_web_extra (httpd_req_t * req, int page)
    revk_web_setting (req, "Debug", "debug");
    if (!daikin.remote)
    {
-      if (!*password)           // Not shown anyway if password
-         revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
+      revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
       revk_web_setting (req, "BLE Sensors", "ble");
       if (ble)
          settings_autob (req);
