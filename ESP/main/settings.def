@@ -30,7 +30,7 @@ bit	no.sensor								// Unit does not have sensor mode
 bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 
-bit	no.faikinauto								// Do not show faikin auto controls
+bit	no.faikinauto								// Do not show faikin auto controls (unless already set up and no password)
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
