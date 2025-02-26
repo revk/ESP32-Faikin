@@ -1824,14 +1824,14 @@ web_control (httpd_req_t * req)
    if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected ())
       addt ("Env", "External reference temperature");
 #ifdef ELA
-   if (ble && bletemp)
+   if (ble && *autob)
    {
       revk_web_send (req, "</tr><tr><td>BLE</td>");
-      if (bletemp->tempset)
+      if (!bletemp || bletemp->tempset)
          addt ("Temp", "External BLE temperature");
-      if (bletemp->humset)
+      if (!bletemp || bletemp->humset)
          addt ("Hum", "External BLE humidity");
-      if (bletemp->batset || bletemp->voltset)
+      if (!bletemp || bletemp->batset || bletemp->voltset)
          addt ("Bat", "External BLE battery");
    }
 #endif
@@ -2849,9 +2849,9 @@ send_ha_config (void)
          free (topic);
       }
    }
-   addtemp (ble && bletemp && bletemp->tempset, "bletemp", "BLE Temp", "mdi:thermometer");
-   addhum (ble && bletemp && bletemp->humset, "blehum", "BLE Humidity", "mdi:water-percent");
-   addbat (ble && bletemp && bletemp->batset, "blebat", "BLE Battery", "mdi:battery-bluetooth-variant");
+   addtemp (ble && *autob && bletemp && bletemp->tempset, "bletemp", "BLE Temp", "mdi:thermometer");
+   addhum (ble && *autob && bletemp && bletemp->humset, "blehum", "BLE Humidity", "mdi:water-percent");
+   addbat (ble && *autob && bletemp && bletemp->batset, "blebat", "BLE Battery", "mdi:battery-bluetooth-variant");
 #endif
 #if 1
    if (asprintf (&topic, "%s/select/%sdemand/config", topicha, revk_id) >= 0)
@@ -2982,9 +2982,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
