@@ -1,8 +1,8 @@
 bit	dump									// Dump protocol on MQTT for each message
-bit	debug				.live=1					// Debug (extra messages and list replies in one long message on MQTT)
-bit	debughex			.live=1					// Debug in hex
+bit	debug				.live					// Debug (extra messages and list replies in one long message on MQTT)
+bit	debughex			.live					// Debug in hex
 bit	snoop									// Listen only (for debugging)
-bit	livestatus			.live=1					// Send status messages in real time
+bit	livestatus			.live					// Send status messages in real time
 bit	fixstatus								// Send status as fixed values not array
 
 bit	web.control	1							// Web based controls
@@ -11,14 +11,14 @@ bit	web.settings	1							// Web based settings
 s	model									// Set model name manually
 s	region		eu							// Region (legacy URLs)
 
-bit	fahrenheit			.live=1					// Web shows Fahrenheit
+bit	fahrenheit			.live					// Web shows Fahrenheit
 
-bit	no.s21				.live=1	.fix=1				// Do not try S21 protocol
-bit	no.x50a				.live=1	.fix=1				// Do not try X50A protocol
-bit	no.cnwired	1		.live=1	.fix=1				// Do not try CN_WIRED protocol
-bit	no.as		1		.live=1	.fix=1				// Do not try (experimental) Altherma_S protocol
-bit	no.swaptx			.live=1	.fix=1				// Do not try inverted Tx (use GPIO setting only)
-bit	no.swaprx			.live=1	.fix=1				// Do not try inverted Rx (use GPIO setting only)
+bit	no.s21				.live	.fix				// Do not try S21 protocol
+bit	no.x50a				.live	.fix				// Do not try X50A protocol
+bit	no.cnwired	1		.live	.fix				// Do not try CN_WIRED protocol
+bit	no.as		1		.live	.fix				// Do not try (experimental) Altherma_S protocol
+bit	no.swaptx			.live	.fix				// Do not try inverted Tx (use GPIO setting only)
+bit	no.swaprx			.live	.fix				// Do not try inverted Rx (use GPIO setting only)
 
 bit	no.demand								// Disable demand control
 bit	no.swingw								// Unit does not have swing (W)
@@ -30,11 +30,11 @@ bit	no.sensor								// Unit does not have sensor mode
 bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 
-bit	no.faikinauto								// Do not show faikin auto controls (unless already set up and no password)
+bit	no.faikinauto			.live					// Do not show faikin auto controls (unless already set up and no password)
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
 bit	no.fanauto								// Do not control fan in faikin auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
-bit	no.icons			.live=1					// Do not show icons on web UI
+bit	no.icons			.live					// Do not show icons on web UI
 
 bit udp_discovery                           // Enable Daikin BRP-compatible UDP discovery
 
@@ -45,55 +45,55 @@ bit	ha.comprpm								// Use RPM not Hz for HA comp speed
 bit	ha.1c									// Force 1C steps in HA temp setting
 s	ha.domain	"local"							// Local domain for HA links
 
-bit	cn.mark900			.live=1					// CN_WIRED. mark using 900uS not 1000uS
+bit	cn.mark900			.live					// CN_WIRED. mark using 900uS not 1000uS
 
 u8	fanstep									// Fan steps
 
 bit	lockmode								// Do not auto switch heat/cool modes in Faikin auto
 
-u8	protocol			.hide=1					// Internal protocol as found, saved when found, can be used with protofix
-bit	protofix			.hide=1					// Protofix forces no change, use nos21, nox50a, etc instead maybe
+u8	protocol			.hide					// Internal protocol as found, saved when found, can be used with protofix
+bit	protofix			.hide					// Protofix forces no change, use nos21, nox50a, etc instead maybe
 
 u32	reporting	60							// Status report period (s)
 
-u8	uart		1		.fix=1 .hide=1				// UART number
+u8	uart		1		.fix .hide				// UART number
 
-u8	thermref	50		.live=1					// Percentage inlet rather than home temp used by your aircon
+u8	thermref	50		.live					// Percentage inlet rather than home temp used by your aircon
 
-u8	switchtemp	0.5		.live=1	.decimal=1	.old="switch10"	// Increase max (heating) or decrease min (cooling)
-u8	pushtemp	0.1		.live=1	.decimal=1	.old="push10"	// Increase min (heating) or decrease max (cooling)
+u8	switchtemp	0.5		.live	.decimal=1	.old="switch10"	// Increase max (heating) or decrease min (cooling)
+u8	pushtemp	0.1		.live	.decimal=1	.old="push10"	// Increase min (heating) or decrease max (cooling)
 
-s8	cool.over	6		.live=1					// For cooling, push (decrease) target sent to aircon by this from min to force cooling before reaching target
-u8	cool.back	6		.live=1					// For cooling, pull (increase) target sent to aircon by this from max to stop cooling after reaching target
+s8	cool.over	6		.live					// For cooling, push (decrease) target sent to aircon by this from min to force cooling before reaching target
+u8	cool.back	6		.live					// For cooling, pull (increase) target sent to aircon by this from max to stop cooling after reaching target
 
-s8	heat.over	6		.live=1					// For heating, push (increase) target sent to aircon by this from max to force heating before reaching target
-u8	heat.back	6		.live=1					// For heating, pull (decrease) target sent to aircon by this from min to stop heating after reaching target
+s8	heat.over	6		.live					// For heating, push (increase) target sent to aircon by this from max to force heating before reaching target
+u8	heat.back	6		.live					// For heating, pull (decrease) target sent to aircon by this from min to stop heating after reaching target
 
-bit	temp.track	0		.live=1					// Set target temp based on Daikin measured temp not required target
-bit	temp.adjust	1		.live=1					// Adjust target temp allowing for different Daikin measure to external measure
-u16	temp.noflap	0		.live=1					// Min time between target temp changes (seconds)
+bit	temp.track	0		.live					// Set target temp based on Daikin measured temp not required target
+bit	temp.adjust	1		.live					// Adjust target temp allowing for different Daikin measure to external measure
+u16	temp.noflap	0		.live					// Min time between target temp changes (seconds)
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble									// Enable BLE
-s	auto.b				.live=1					// BLE sensor ID
+s	auto.b				.live					// BLE sensor ID
 #endif
 
-u16	auto.0				.live=1					// HHMM format turn off time
-u16	auto.1				.live=1					// HHMM format turn on time
-u16	auto.t				.live=1	.decimal=1			// Faikin auto target temperature
-u8	auto.r				.live=1	.decimal=1			// Faikin auto margin either side of autot
-bit	auto.p				.live=1					// Enable auto power on/off
-u8	auto.fmax	5		.live=1	.old="fmaxauto"			// Max fan setting when starting heat/cool way off from target
-u8	auto.ptemp	0.5		.live=1	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
-bit	auto.lcontrol	0		.live=1					// Auto toggle on/off LED based on current HVAC action
+u16	auto.0				.live					// HHMM format turn off time
+u16	auto.1				.live					// HHMM format turn on time
+u16	auto.t				.live	.decimal=1			// Faikin auto target temperature
+u8	auto.r				.live	.decimal=1			// Faikin auto margin either side of autot
+bit	auto.p				.live					// Enable auto power on/off
+u8	auto.fmax	5		.live	.old="fmaxauto"			// Max fan setting when starting heat/cool way off from target
+u8	auto.ptemp	0.5		.live	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
+bit	auto.lcontrol	0		.live					// Auto toggle on/off LED based on current HVAC action
 
-bit	thermostat			.live=1					// Faikin auto simple thermostat mode (heat to max, cool to min)
+bit	thermostat			.live					// Faikin auto simple thermostat mode (heat to max, cool to min)
 
 
-u8	t.min		16		.live=1					// Min temp setting of system
-u8	t.coolmin	16		.live=1					// Min temp setting for Faikin auto when cooling
-u8	t.max		32		.live=1					// Max temp setting of system
-u8	t.heatmax	32		.live=1					// Max temp setting for Faikin auto when heating
+u8	t.min		16		.live					// Min temp setting of system
+u8	t.coolmin	16		.live					// Min temp setting for Faikin auto when cooling
+u8	t.max		32		.live					// Max temp setting of system
+u8	t.heatmax	32		.live					// Max temp setting for Faikin auto when heating
 u32	t.predicts	30							// Temp prediction sample time
 u32	t.predictt	120							// Temp prediction total time factor
 u32	t.sample	900							// Sample period for making adjustments
