@@ -4,7 +4,7 @@ Everyone knows Daikin make some of the best air conditioners out there, mechanic
 
 This code/module provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
-PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). There are other people making and selling, e.g. in [Australia](https://www.ebay.com.au/itm/186860658654).
 
 I'd like to thank the contributors, but contributions are made and accepted on basis that you issue your contribution under the same GPL licence as the project. Forks are allowed on the basis that your forks are on the same GPL licence as the project.
 
