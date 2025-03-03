@@ -2667,7 +2667,7 @@ send_ha_config (void)
          free (topic);
       }
    }
-   void addfreq (uint64_t ok, const char *tag, const char *name, const char *unit, const char *icon)
+   void addrpm (uint64_t ok, const char *tag, const char *name, const char *unit, const char *icon)
    {
       if (asprintf (&topic, "%s/sensor/%s%s/config", topicha, revk_id, tag) >= 0)
       {
@@ -2677,7 +2677,6 @@ send_ha_config (void)
          {
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
-            jo_string (j, "dev_cla", "frequency");
             jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", unit);
@@ -2801,8 +2800,8 @@ send_ha_config (void)
    addtemp (daikin.status_known & CONTROL_home, "achome", "AC-Home", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_outside, "outside", "Outside", "mdi:thermometer");
    addtemp (daikin.status_known & CONTROL_liquid, "liquid", "Liquid", "mdi:coolant-temperature");
-   addfreq (daikin.status_known & CONTROL_comp, "comp", "Compressor", hacomprpm ? "rpm" : "Hz", "mdi:sine-wave");
-   addfreq (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Fan", hafanrpm ? "rpm" : "Hz", "mdi:fan");
+   addrpm (daikin.status_known & CONTROL_comp, "comp", "Compressor", hacomprpm ? "rpm" : "Hz", "mdi:sine-wave");
+   addrpm (daikin.status_known & CONTROL_fanrpm, "fanfreq", "Fan", hafanrpm ? "rpm" : "Hz", "mdi:fan");
    addswitch (haswitches && (daikin.status_known & CONTROL_power), "power", "Power", "mdi:power");
    addswitch (haswitches && (daikin.status_known & CONTROL_streamer), "streamer", "Streamer", "mdi:air-filter");
    addswitch (haswitches && (daikin.status_known & CONTROL_sensor), "sensor", "Sensor mode", "mdi:motion-sensor");
