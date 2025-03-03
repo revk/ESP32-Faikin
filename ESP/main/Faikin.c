@@ -1886,7 +1886,7 @@ web_control (httpd_req_t * req)
       revk_web_send (req, "<tr><td colspan=6>%s</td></tr>", note);
    }
    if (nofaikinauto && (*password || !autor))
-      addnote ("Faikin auto controls are hidden.");      // Hide works if password set, or if not actually set up for auto, otherwise show
+      addnote ("Faikin auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
    else if (autor || (!nofaikinauto && !daikin.remote))
    {
       void addtime (const char *tag, const char *field)
@@ -2677,7 +2677,8 @@ send_ha_config (void)
          {
             jo_t j = make (tag, icon);
             jo_string (j, "name", tag);
-            jo_string (j, "dev_cla", "frequency");
+            if (!strcmp (unit, "Hz"))
+               jo_string (j, "dev_cla", "frequency");
             jo_string (j, "state_class", "measurement");
             jo_string (j, "stat_t", hastatus);
             jo_string (j, "unit_of_meas", unit);
@@ -2984,9 +2985,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
