@@ -2895,7 +2895,8 @@ send_ha_config (void)
       }
       free (topic);
    }
-   ha_config_sensor ("ram",.name = "RAM",.field = "ram",.unit = "B",.delete = !haram);
+   // TODO change above over gradually to new HA library stuff to make way neater
+   ha_config_sensor ("ram",.name = "RAM",.field = "mem",.unit = "B",.delete = !haram);
    ha_config_sensor ("spi",.name = "PSRAM",.field = "spi",.unit = "B",.delete = !haram);
    free (cmd);
    free (hastatus);
