@@ -43,6 +43,7 @@ bit	ha.switches								// Set additional HA switches
 bit	ha.fanrpm								// Use RPM not Hz for HA fan speed
 bit	ha.comprpm								// Use RPM not Hz for HA comp speed
 bit	ha.1c									// Force 1C steps in HA temp setting
+bit	ha.ram									// Log memory usage
 s	ha.domain	"local"							// Local domain for HA links
 
 bit	cn.mark900			.live					// CN_WIRED. mark using 900uS not 1000uS
