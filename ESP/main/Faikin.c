@@ -2638,7 +2638,11 @@ send_ha_config (void)
          jo_string (j, "mdl", daikin.model);
       jo_string (j, "sw", revk_version);
       jo_string (j, "mf", "RevK");
+      if(*hadomain)
       jo_stringf (j, "cu", "http://%s.%s/", hostname, hadomain);
+      else
+      {
+      }
       jo_close (j);
       if (icon)
          jo_string (j, "icon", icon);
