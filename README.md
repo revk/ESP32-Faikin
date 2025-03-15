@@ -4,7 +4,7 @@ Everyone knows Daikin make some of the best air conditioners out there, mechanic
 
 This code/module provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
-PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). There are other people making and selling, e.g. in [Australia](https://www.ebay.com.au/itm/186860658654).
+PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). There are other people making and selling, e.g. on [eBay Australia](https://www.ebay.com.au/itm/186860658654).
 
 I'd like to thank the contributors, but contributions are made and accepted on basis that you issue your contribution under the same GPL licence as the project. Forks are allowed on the basis that your forks are on the same GPL licence as the project.
 
@@ -28,7 +28,7 @@ For support, see issues and discussions.
 
 ## PCB
 
-The board from [Tindie](https://www.tindie.com/stores/revk/), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
+The boards from [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://www.ebay.com.au/itm/186860658654), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
 <img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
 
@@ -44,7 +44,7 @@ This whole project is almost entirely by me, but with some valuable contribution
 
 ## How to get one
 
-As mentioned, [Tindie](https://www.tindie.com/stores/revk/), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+As mentioned, [eBay](https://www.ebay.com.au/itm/186860658654), [Tindie](https://www.tindie.com/stores/revk/), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
 But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You need to remove trademarks, etc, and you would also need something to program them (TC2030 lead).
 
