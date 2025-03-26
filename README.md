@@ -46,7 +46,7 @@ This whole project is almost entirely by me, but with some valuable contribution
 
 As mentioned, [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://www.ebay.com.au/itm/186860658654), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
-But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You need to remove trademarks, etc, and you would also need something to program them (TC2030 lead).
+But also, the PCB designs are published, including production files for [JLCPCB](https://jlcpcb.com). You need to remove trademarks, etc, and you would also need something to program them (TC2030 lead). Obviously you need some experience with PCB ordering and diagnostics if getting your own boards made.
 
 # Set-up
 
