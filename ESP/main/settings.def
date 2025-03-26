@@ -29,6 +29,7 @@ bit	no.powerful								// Unit does not have powerful mode
 bit	no.sensor								// Unit does not have sensor mode
 bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
+bit	no.hourly			.live					// Do not do hourly S21 poll (DH)
 
 bit	no.faikinauto			.live					// Do not show faikin auto controls (unless already set up and no password)
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA

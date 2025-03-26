@@ -3428,6 +3428,7 @@ app_main ()
                   poll (F, T, 0,);
                //if(debug)poll (F, U, 2, 02);
                //if(debug)poll (F, U, 2, 04);
+	       if(!nohourly)
                {
                   uint8_t n = ((time (0) / 3600) & 1);
                   if (n != b.hourly)
