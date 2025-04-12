@@ -7383,17 +7383,8 @@
 				(hide yes)
 			)
 		)
-		(property "Part No" ""
-			(at 186.69 53.975 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Note" ""
-			(at 186.69 53.975 0)
+		(property "MPN" "C167879"
+			(at 186.69 53.975 90)
 			(effects
 				(font
 					(size 1.27 1.27)
