@@ -8,6 +8,7 @@ static const char TAG[] = "Faikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
+#include <driver/usb_serial_jtag.h>
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
@@ -2998,9 +2999,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
@@ -3428,7 +3429,7 @@ app_main ()
                   poll (F, T, 0,);
                //if(debug)poll (F, U, 2, 02);
                //if(debug)poll (F, U, 2, 04);
-	       if(!nohourly)
+               if (!nohourly)
                {
                   uint8_t n = ((time (0) / 3600) & 1);
                   if (n != b.hourly)
@@ -3660,7 +3661,10 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B");    // FHCA456D
+         if (usb_serial_jtag_is_connected ())
+            revk_blink (1, 1, "G");
+         else
+            revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
          uint32_t now = uptime ();
          // Basic temp tracking
          xSemaphoreTake (daikin.mutex, portMAX_DELAY);
