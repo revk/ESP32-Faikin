@@ -2999,9 +2999,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
-                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
-                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.
+                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
+                 swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
@@ -3151,7 +3151,10 @@ app_main ()
       revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);
 
    b.dumping = dump;
-   revk_blink (0, 0, "");
+   if (usb_serial_jtag_is_connected ())
+      revk_blink (1, 1, "G");
+   else
+      revk_blink (0, 0, "");
 
    if (webcontrol || websettings)
    {
