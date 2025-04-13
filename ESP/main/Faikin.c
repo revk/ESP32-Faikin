@@ -8,7 +8,6 @@ static const char TAG[] = "Faikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
-#include <driver/usb_serial_jtag.h>
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
@@ -19,6 +18,12 @@ static const char TAG[] = "Faikin";
 #include "cn_wired_driver.h"
 #include "daikin_s21.h"
 #include "halib.h"
+
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+#include <driver/usb_serial_jtag.h>
+#else
+#define usb_serial_jtag_is_connected() (0)
+#endif
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
 #error Need CONFIG_HTTPD_WS_SUPPORT
@@ -1898,9 +1903,6 @@ web_control (httpd_req_t * req)
       addnote ("Faikin auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
    else if (autor || (!nofaikinauto && !daikin.remote))
    {
-      revk_web_send (req, "<tr>");
-      addb ("Enable", "autoe", "Enable auto");
-      revk_web_send (req, "</tr>");
       void addtime (const char *tag, const char *field)
       {
          revk_web_send (req,
@@ -1909,16 +1911,22 @@ web_control (httpd_req_t * req)
       }
       revk_web_send (req,
                      "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target).</p><table>");
+      if (!*password)
+      {
+         revk_web_send (req, "<tr>");
+         addb ("Enable", "autoe", "Enable auto");
+         addb ("Auto ⏼", "autop", "Auto\non/off");
+         revk_web_send (req, "<td>(temp)</td></tr>");
+      }
       add ("Range", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
            fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
       addslider ("Target", "autot", tmin, tmax, get_temp_step ());
       if (!*password)
       {                         // Timed controls need password
-         addnote ("Timed on and off, and auto power on/off based on temp.");
+         addnote ("Timed on and off.");
          revk_web_send (req, "<tr>");
          addtime ("On", "auto1");
          addtime ("Off", "auto0");
-         addb ("Auto ⏼", "autop", "Auto\non/off");
       }
       revk_web_send (req, "</tr>");
 #ifdef ELA
@@ -3011,9 +3019,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
 }
