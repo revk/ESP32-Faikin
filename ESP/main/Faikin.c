@@ -1845,7 +1845,7 @@ web_control (httpd_req_t * req)
 #ifdef ELA
    if (ble && *autob)
    {
-      revk_web_send (req, "</tr><tr><td>%s</td>", bletemp->faikinset ? "BLE<br>Remote" : "BLE");
+      revk_web_send (req, "</tr><tr><td>%s</td>", bletemp && bletemp->faikinset ? "BLE<br>Remote" : "BLE");
       if (!bletemp || bletemp->tempset)
          addt ("Temp", "External BLE temperature");
       if (!bletemp || bletemp->humset)
@@ -3022,9 +3022,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    if (haswitches)
@@ -3361,6 +3361,11 @@ app_main ()
                }
                if (bletemp->fan && bletemp->fan < 7 && daikin.fan != bletemp->fan - 1 && !(daikin.control_changed & CONTROL_fan))
                   daikin_set_v (fan, bletemp->fan - 1); // Max fan at start
+            }
+            if (bletemp && bletemp->faikinset)
+            {
+               static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
+               bleenv_faikin (hostname, daikin.home, NAN, NAN, daikin.power, 0, map[daikin.mode], daikin.fan + 1);
             }
          }
 #endif
