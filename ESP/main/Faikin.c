@@ -3022,9 +3022,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
-                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
-                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.
+                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
+                 swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    if (haswitches)
@@ -3154,7 +3154,7 @@ revk_web_extra (httpd_req_t * req, int page)
 void
 app_main ()
 {
-   ESP_LOGE (TAG, "Started");
+   //ESP_LOGE (TAG, "Started");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
    {                            // All unused input pins pull down
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
@@ -3719,7 +3719,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         if (usb_serial_jtag_is_connected ())
+         if (usb_serial_jtag_is_connected () && !b.loopback)
             revk_blink (1, 1, "G");
          else
             revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
