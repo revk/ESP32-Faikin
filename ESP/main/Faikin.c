@@ -1746,7 +1746,7 @@ settings_autob (httpd_req_t * req)
          revk_web_send (req, " selected");
          found = 1;
       }
-      revk_web_send (req, ">%s%s", e->faikin ? "Remote: " : "", e->name);
+      revk_web_send (req, ">%s%s", e->faikinset ? "Remote: " : "", e->name);
       if (!e->missing && e->rssi)
          revk_web_send (req, " %ddB", e->rssi);
    }
