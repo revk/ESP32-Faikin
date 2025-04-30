@@ -3359,13 +3359,13 @@ app_main ()
                   if (!isnan (min) && daikin.temp != (min + max) / 2 && !(daikin.control_changed & CONTROL_temp))
                      daikin_set_t (temp, (min + max) / 2);
                }
-               if (bletemp->fan && bletemp->fan < 7 && daikin.fan != bletemp->fan - 1 && !(daikin.control_changed & CONTROL_fan))
+               if (bletemp->fan && daikin.fan != bletemp->fan - 1 && !(daikin.control_changed & CONTROL_fan))
                   daikin_set_v (fan, bletemp->fan - 1); // Max fan at start
             }
             if (bletemp && bletemp->faikinset)
             {
                static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
-               bleenv_faikin (hostname, daikin.home, NAN, NAN, daikin.power, 0, map[daikin.mode], daikin.fan + 1);
+               bleenv_faikin (hostname, daikin.home, daikin.temp, daikin.temp, daikin.power, 0, map[daikin.mode], daikin.fan + 1);
             }
          }
 #endif
