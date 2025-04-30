@@ -3154,7 +3154,7 @@ revk_web_extra (httpd_req_t * req, int page)
 void
 app_main ()
 {
-//   ESP_LOGE (TAG, "Started");
+   ESP_LOGE (TAG, "Started");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
    {                            // All unused input pins pull down
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
