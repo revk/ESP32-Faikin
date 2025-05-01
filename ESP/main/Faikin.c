@@ -8,7 +8,6 @@ static const char TAG[] = "Faikin";
 #include "esp_task_wdt.h"
 #include <driver/gpio.h>
 #include <driver/uart.h>
-#include <driver/usb_serial_jtag.h>
 #include "esp_http_server.h"
 #include <math.h>
 #include "mdns.h"
@@ -19,6 +18,12 @@ static const char TAG[] = "Faikin";
 #include "cn_wired_driver.h"
 #include "daikin_s21.h"
 #include "halib.h"
+
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+#include <driver/usb_serial_jtag.h>
+#else
+#define usb_serial_jtag_is_connected() (0)
+#endif
 
 #ifndef	CONFIG_HTTPD_WS_SUPPORT
 #error Need CONFIG_HTTPD_WS_SUPPORT
@@ -1399,6 +1404,13 @@ daikin_control (jo_t j, uint8_t insecure)
                s = jo_object_alloc ();
             jo_bool (s, tag, *val == 't');
          }
+         if (!strcmp (tag, "autoe"))
+         {
+            if (!s)
+               s = jo_object_alloc ();
+            jo_bool (s, tag, *val == 't');
+            daikin.status_changed = 1;
+         }
       }
       if (!strcmp (tag, "autot") || !strcmp (tag, "autor"))
       {                         // Stored settings
@@ -1494,7 +1506,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
                while (jo_here (j) > JO_CLOSE)
                   jo_next (j);  // Should not be more
                t = jo_next (j); // Pass the close
-               if (!autor && !ble_sensor_enabled ())
+               if ((!autoe || !autor) && !ble_sensor_enabled ())
                   daikin.remote = 1;    // Hides local automation settings
                continue;        // As we passed the close, don't skip}
             } else
@@ -1514,7 +1526,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       }
       xSemaphoreTake (daikin.mutex, portMAX_DELAY);
       daikin.controlvalid = uptime () + tcontrol;
-      if (!autor)
+      if (!autor || !autoe)
       {
          daikin.mintarget = min;
          daikin.maxtarget = max;
@@ -1561,7 +1573,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
       jo_strncpy (j, value, sizeof (value));
       if (!strcmp (suffix, "temp"))
       {
-         if (autor)
+         if (autoe && autor)
          {                      // Setting the control
             jo_t s = jo_object_alloc ();
             jo_litf (s, "autot", "%.1f", atof (value));
@@ -1621,6 +1633,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          jo_bool (s, "power", checkbool ());
       if (!strcmp (suffix, "streamer"))
          jo_bool (s, "streamer", checkbool ());
+      if (!strcmp (suffix, "autoe"))
+         jo_bool (s, "autoe", checkbool ());
    }
    jo_close (s);
    jo_rewind (s);
@@ -1673,6 +1687,7 @@ daikin_status (void)
       jo_stringf (j, "auto0", "%02d:%02d", auto0 / 100, auto0 % 100);
       jo_stringf (j, "auto1", "%02d:%02d", auto1 / 100, auto1 % 100);
       jo_bool (j, "autop", autop);
+      jo_bool (j, "autoe", autoe);
    }
    xSemaphoreGive (daikin.mutex);
    return j;
@@ -1731,7 +1746,7 @@ settings_autob (httpd_req_t * req)
          revk_web_send (req, " selected");
          found = 1;
       }
-      revk_web_send (req, ">%s", e->name);
+      revk_web_send (req, ">%s%s", e->faikinset ? "Remote: " : "", e->name);
       if (!e->missing && e->rssi)
          revk_web_send (req, " %ddB", e->rssi);
    }
@@ -1830,7 +1845,7 @@ web_control (httpd_req_t * req)
 #ifdef ELA
    if (ble && *autob)
    {
-      revk_web_send (req, "</tr><tr><td>BLE</td>");
+      revk_web_send (req, "</tr><tr><td>%s</td>", bletemp && bletemp->faikinset ? "BLE<br>Remote" : "BLE");
       if (!bletemp || bletemp->tempset)
          addt ("Temp", "External BLE temperature");
       if (!bletemp || bletemp->humset)
@@ -1899,16 +1914,22 @@ web_control (httpd_req_t * req)
       }
       revk_web_send (req,
                      "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target).</p><table>");
-      add ("Enable", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
+      if (!*password)
+      {
+         revk_web_send (req, "<tr>");
+         addb ("Enable", "autoe", "Enable auto");
+         addb ("Auto ⏼", "autop", "Auto\non/off");
+         revk_web_send (req, "<td>(temp)</td></tr>");
+      }
+      add ("Range", "autor", "Off", "0", fahrenheit ? "±0.9℉" : "±½℃", "0.5", fahrenheit ? "±1.8℉" : "±1℃", "1",
            fahrenheit ? "±3.6℉" : "±2℃", "2", NULL);
       addslider ("Target", "autot", tmin, tmax, get_temp_step ());
       if (!*password)
       {                         // Timed controls need password
-         addnote ("Timed on and off (set other than 00:00)<br>Automated on/off if temp is way off target.");
+         addnote ("Timed on and off.");
          revk_web_send (req, "<tr>");
          addtime ("On", "auto1");
          addtime ("Off", "auto0");
-         addb ("Auto ⏼", "autop", "Auto\non/off");
       }
       revk_web_send (req, "</tr>");
 #ifdef ELA
@@ -1972,6 +1993,7 @@ web_control (httpd_req_t * req)
                   "n('temp',o.temp);"   //
                   "s('Ttemp',(o.temp?cf(o.temp):'---')+(o.control?'✷':''));"  //
                   "b('autop',o.autop);" //
+                  "b('autoe',o.autoe);" //
                   "e('autor',o.autor);" //
                   "n('autob',o.autob);" //
                   "n('auto0',o.auto0);" //
@@ -2822,6 +2844,7 @@ send_ha_config (void)
    addswitch (haswitches && (daikin.status_known & CONTROL_comfort), "comfort", "Comfort mode", "mdi:teddy-bear");
    addswitch (haswitches && (daikin.status_known & CONTROL_quiet), "quiet", "Quiet outdoor", "mdi:volume-minus");
    addswitch (haswitches && (daikin.status_known & CONTROL_econo), "econo", "Econo mode", "mdi:home-battery");
+   addswitch (haswitches, "autoe", "Auto mode", "mdi:power");
 #ifdef ELA
    void addhum (uint64_t ok, const char *tag, const char *name, const char *icon)
    {
@@ -2931,7 +2954,7 @@ revk_state_extra (jo_t j)
       jo_bool (j, "online", daikin.online);
    if (daikin.status_known & CONTROL_power)
       jo_bool (j, "power", daikin.power);
-   jo_litf (j, "target", "%.2f", autor ? (float) autot / autot_scale : daikin.temp);    // Target - either internal or what we are using as reference
+   jo_litf (j, "target", "%.2f", autoe && autor ? (float) autot / autot_scale : daikin.temp);   // Target - either internal or what we are using as reference
    if (daikin.status_known & CONTROL_temp)
       jo_litf (j, "actarget", "%.2f", daikin.temp);     // The actual target
    if (daikin.status_known & CONTROL_env)
@@ -2975,7 +2998,7 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & CONTROL_mode)
    {
       const char *modes[] = { "fan_only", "heat", "cool", "heat_cool", "4", "5", "6", "dry" };  // FHCA456D
-      jo_string (j, "mode", daikin.power ? autor && !lockmode ? "heat_cool" : modes[daikin.mode] : "off");      // If we are controlling, it is auto
+      jo_string (j, "mode", daikin.power ? autoe && autor && !lockmode ? "heat_cool" : modes[daikin.mode] : "off");     // If we are controlling, it is auto
    }
    if (!nohvacaction)
       jo_string (j, "action", hvac_action[daikin.action]);
@@ -3004,6 +3027,8 @@ revk_state_extra (jo_t j)
                  swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
+   if (haswitches)
+      jo_bool (j, "autoe", autoe);
 }
 
 void
@@ -3129,7 +3154,11 @@ revk_web_extra (httpd_req_t * req, int page)
 void
 app_main ()
 {
+<<<<<<< HEAD
    ESP_LOGE (TAG, "Started");
+=======
+   //ESP_LOGE (TAG, "Started");
+>>>>>>> 121d3ff1cf5bb53cee21302b9606c4f86ef607f3
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
    {                            // All unused input pins pull down
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
@@ -3286,7 +3315,7 @@ app_main ()
          }
 #ifdef ELA
          if (ble_sensor_enabled ())
-         {                      // Automatic external temperature logic - only really useful if autor/autot set
+         {                      // Automatic external temperature logic - only really useful if autor/autot set, or Faikin remote
             bleenv_expire (120);
             if (!bletemp || strcmp (bletemp->name, autob))
             {
@@ -3309,9 +3338,45 @@ app_main ()
                daikin.status_known |= CONTROL_env;      // So we report it
             } else
                daikin.status_known &= ~CONTROL_env;     // So we don't report it
+            if (bletemp && !bletemp->missing && bletemp->faikinset)
+            {
+               float min = NAN,
+                  max = NAN;
+               if (bletemp->targetlowset)
+                  min = (float) bletemp->targetlow / 100;
+               if (bletemp->targethighset)
+                  max = (float) bletemp->targethigh / 100;
+               if (isnan (max))
+                  max = min;
+               if (bletemp->mode == 7)
+               {                // Faikin auto
+                  daikin.controlvalid = uptime () + tcontrol;
+                  daikin.mintarget = min;
+                  daikin.maxtarget = max;
+                  daikin.remote = 1;    // Hides local automation settings
+               } else
+               {                // Simple remote
+                  static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
+                  if (bletemp->mode && daikin.mode != map[bletemp->mode] && !(daikin.control_changed & CONTROL_mode))
+                     daikin_set_v (mode, map[bletemp->mode]);   // Max fan at start
+                  if (daikin.power != bletemp->power && !(daikin.control_changed & CONTROL_power))
+                     daikin_set_v (power, bletemp->power);
+                  if (!isnan (min) && daikin.temp != (min + max) / 2 && !(daikin.control_changed & CONTROL_temp))
+                     daikin_set_t (temp, (min + max) / 2);
+                  if (daikin.remote)
+                     daikin.controlvalid = uptime ();
+               }
+               if (bletemp->fan && daikin.fan != bletemp->fan - 1 && !(daikin.control_changed & CONTROL_fan))
+                  daikin_set_v (fan, bletemp->fan - 1); // Max fan at start
+            }
+            if (bletemp && bletemp->faikinset)
+            {
+               static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
+               bleenv_faikin (hostname, daikin.home, daikin.temp, daikin.temp, daikin.power, 0, map[daikin.mode], daikin.fan + 1);
+            }
          }
 #endif
-         if (autor && autot)
+         if (autoe && autor && autot)
          {                      // Automatic setting of "external" controls, autot is temp(*autot_scale), autor is range(*autor_scale), autob is BLE name
             daikin.controlvalid = uptime () + 10;
             daikin.mintarget = (float) autot / autot_scale - (float) autor / autor_scale;
@@ -3342,7 +3407,6 @@ app_main ()
             {                   // CN WIRED
                uint8_t buf[CNW_PKT_LEN];
                esp_err_t e = cn_wired_read_bytes (buf, protofix ? 20000 : 5000);
-
                if (e == ESP_ERR_TIMEOUT)
                {
                   daikin.online = false;
@@ -3350,7 +3414,6 @@ app_main ()
                } else if (e == ESP_OK)
                {
                   daikin_cn_wired_incoming_packet (buf);
-
                   // Send new modes to the AC. We have just received a data packet; CN_WIRED devices
                   // may dislike being interrupted, so we delay for 20 ms in order for the packet
                   // trailer pulse (which we ignore) passes
@@ -3395,7 +3458,6 @@ app_main ()
    	if(!daikin.talking)                        	\
       	    s21.a##b##d.ack=s21.a##b##d.nak=s21.a##b##d.bad=0;\
     } while(0)
-
                poll (F, 1, 0,);
                if (debug)
                   poll (F, 2, 0,);
@@ -3664,7 +3726,7 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         if (usb_serial_jtag_is_connected ())
+         if (usb_serial_jtag_is_connected () && !b.loopback)
             revk_blink (1, 1, "G");
          else
             revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
@@ -3678,7 +3740,6 @@ app_main ()
          if (isnan (measured_temp))     // No env temp available, so use A/C internal temp
             measured_temp = daikin.home;
          xSemaphoreGive (daikin.mutex);
-
          // Predict temperature changes
          // Take 2 delta temps of the last 3 measured env temperatures
          // If there is no opposite movement (both cooler or both hotter or at least no change),
@@ -3733,7 +3794,6 @@ app_main ()
             daikin.hysteresis = 0;
             report_uint8 (control, 1);
             samplestart ();
-
             // Switch modes (heating or cooling) depending on currently measured 
             //  temperature related to min/max
             if (!lockmode)
@@ -3781,7 +3841,7 @@ app_main ()
          // END OF controlstop()
 
 
-         if ((auto0 || auto1) && (auto0 != auto1))
+         if (autoe && (auto0 || auto1) && (auto0 != auto1))
          {                      // Auto on/off, 00:00 is not considered valid, use 00:01. Also setting same on and off is not considered valid
             static int last = 0;
             time_t now = time (0);
@@ -3828,7 +3888,6 @@ app_main ()
                int count_approaching_2_samples = daikin.countApproaching + daikin.countApproachingPrev; // Approaching counter of this and previous cycle
                int countBeyond2Samples = daikin.countBeyond + daikin.countBeyondPrev;   // Beyond counter of this and previous cycle
                int count_total_2_samples = daikin.countTotal + daikin.countTotalPrev;   // Total counter of this and previous cycle (includes neither approaching or beyond, i.e. in range)
-
                // Prepare reporting structure for "automation"
                jo_t j = jo_object_alloc ();
                jo_bool (j, "hot", hot);
@@ -3842,13 +3901,11 @@ app_main ()
                jo_litf (j, "temp", "%.2f", measured_temp);
                jo_litf (j, "min", "%.2f", min);
                jo_litf (j, "max", "%.2f", max);
-
                if (daikin.countTotalPrev)       // Skip first cycle
                {                // Power, mode, fan, automation
                   if (daikin.power)     // Daikin is on
                   {
                      int step = (fanstep ? : (proto_type () == PROTO_TYPE_S21) ? 1 : 2);
-
                      // A lot more beyond than total counts and no approaching in the last two cycles
                      // Time to switch modes (heating/cooling) and reduce fan to minimum
                      if ((countBeyond2Samples * 2 > count_total_2_samples || daikin.slave) && !count_approaching_2_samples)
@@ -3857,7 +3914,6 @@ app_main ()
                         {
                            jo_string (j, "set-mode", hot ? "C" : "H");
                            daikin_set_e (mode, hot ? "C" : "H");        // Swap mode
-
                            if (!nofanauto && step && daikin.fan > 1 && daikin.fan <= 5)
                            {
                               jo_int (j, "set-fan", 1);
@@ -3867,17 +3923,19 @@ app_main ()
                      }
                      // Less approaching, but still close to min in heating or max in cooling
                      // Time to reduce the fan a bit
-                     else if (!nofanauto && count_approaching_2_samples * 10 < count_total_2_samples * 7
-                              && step && daikin.fan > 1 && daikin.fan <= 5)
+                     else
+                        if (!nofanauto && count_approaching_2_samples * 10 < count_total_2_samples * 7
+                            && step && daikin.fan > 1 && daikin.fan <= 5)
                      {
                         jo_int (j, "set-fan", daikin.fan - step);
                         daikin_set_v (fan, daikin.fan - step);  // Reduce fan
                      }
                      // A lot of approaching means still far away from desired temp
                      // Time to increase the fan speed
-                     else if (!nofanauto && !daikin.slave
-                              && count_approaching_2_samples * 10 > count_total_2_samples * 9
-                              && step && daikin.fan >= 1 && daikin.fan < autofmax)
+                     else
+                        if (!nofanauto && !daikin.slave
+                            && count_approaching_2_samples * 10 > count_total_2_samples * 9
+                            && step && daikin.fan >= 1 && daikin.fan < autofmax)
                      {
                         jo_int (j, "set-fan", daikin.fan + step);
                         daikin_set_v (fan, daikin.fan + step);  // Increase fan
@@ -3885,14 +3943,16 @@ app_main ()
                      // No Approaching and no Beyond, so it's in desired range (autot +/- autor)
                      // Only affects if autop is active
                      // Turn off as 100% in band for last two period
-                     else if ((autop || (daikin.remote && autoptemp)) && !count_approaching_2_samples && !countBeyond2Samples)
+                     else
+                        if (autoe && (autop || (daikin.remote && autoptemp)) && !count_approaching_2_samples
+                            && !countBeyond2Samples)
                      {          // Auto off
                         jo_bool (j, "set-power", 0);
                         daikin_set_v (power, 0);        // Turn off as 100% in band for last two period
                      }
                   }
                   // Daikin is off
-                  else if ((autop || (daikin.remote && autoptemp))      // AutoP Mode only
+                  else if (autoe && (autop || (daikin.remote && autoptemp))     // AutoP Mode only
                            && (daikin.countApproaching == daikin.countTotal || daikin.countBeyond == daikin.countTotal) // full cycle approaching or full cycle beyond
                            && (measured_temp >= max + (float) autoptemp / autoptemp_scale       // temp out of desired range
                                || measured_temp <= min - (float) autoptemp / autoptemp_scale) && (!lockmode || countBeyond2Samples != count_total_2_samples))   // temp out of desired range
@@ -3910,7 +3970,6 @@ app_main ()
                   revk_info ("automation", &j);
                else
                   jo_free (&j);
-
                // Next sample
                daikin.countApproachingPrev = daikin.countApproaching;
                daikin.countBeyondPrev = daikin.countBeyond;
@@ -3938,7 +3997,6 @@ app_main ()
             else
             {                   // Control
                controlstart (); // Will do nothing if control already active
-
                // What the A/C is using as current temperature
                float reference = NAN;
                if ((daikin.status_known & (CONTROL_home | CONTROL_inlet)) == (CONTROL_home | CONTROL_inlet))    // Both values are known

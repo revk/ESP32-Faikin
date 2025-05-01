@@ -56,6 +56,8 @@ Note that web settings can be disabled with `websettings`, and the web based con
 
 ### Automatic on/off
 
+Auto mode can be enabled/dissbled via `autoe`.
+
 Every `tsample` seconds the relationship of the adjusted *min*, *max* and *current* are assessed to consider how much time was *approaching* the target band, in the target band, or *beyond* the target band. Two whole samples in a row are considered. Sampling is reset on change of power or mode.
 
 If `auto1` is set, the power on at start of that minute. If `auto0` is set, the power off at start of that minute.

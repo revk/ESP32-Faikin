@@ -76,15 +76,16 @@ bit	temp.adjust	1		.live					// Adjust target temp allowing for different Daikin
 u16	temp.noflap	0		.live					// Min time between target temp changes (seconds)
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
-bit	ble									// Enable BLE
+bit	ble									// Enable BLE for sensors or remote
 s	auto.b				.live					// BLE sensor ID
 #endif
 
+bit	auto.e		1		.live					// Enable auto time and power operations
 u16	auto.0				.live					// HHMM format turn off time
 u16	auto.1				.live					// HHMM format turn on time
 u16	auto.t				.live	.decimal=1			// Faikin auto target temperature
 u8	auto.r				.live	.decimal=1			// Faikin auto margin either side of autot
-bit	auto.p				.live					// Enable auto power on/off
+bit	auto.p				.live					// Enable auto power on/off (regardless of times)
 u8	auto.fmax	5		.live	.old="fmaxauto"			// Max fan setting when starting heat/cool way off from target
 u8	auto.ptemp	0.5		.live	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
 bit	auto.lcontrol	0		.live					// Auto toggle on/off LED based on current HVAC action
