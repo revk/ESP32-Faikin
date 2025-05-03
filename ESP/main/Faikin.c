@@ -165,6 +165,7 @@ struct
    uint8_t dumping:1;
    uint8_t hourly:1;            // Hourly stuff
    uint8_t protocol_set:1;
+   uint8_t faikinon:1;          // Last faikin power state
 } b = { 0 };
 
 static httpd_handle_t webserver = NULL;
@@ -1904,7 +1905,7 @@ web_control (httpd_req_t * req)
    }
    if (nofaikinauto && (*password || !autor))
       addnote ("Faikin auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
-   else if (autor || (!nofaikinauto && !daikin.remote))
+   else if (!daikin.remote && (autor || !nofaikinauto))
    {
       void addtime (const char *tag, const char *field)
       {
@@ -3022,9 +3023,9 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
                  daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 && daikin.swingv ? SWING_BOTH : daikin.swingh ? (daikin.
+                                                                  status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :
+                 daikin.swingv ? SWING_VERTICAL : SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    if (haswitches)
@@ -3350,13 +3351,15 @@ app_main ()
                   daikin.mintarget = min;
                   daikin.maxtarget = max;
                   daikin.remote = 1;    // Hides local automation settings
+                  if (b.faikinon != bletemp->power)
+                     daikin_set_v (power, b.faikinon = bletemp->power); // Change in power state - only on change so autop can work
                } else
                {                // Simple remote
                   static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
                   if (bletemp->mode && daikin.mode != map[bletemp->mode] && !(daikin.control_changed & CONTROL_mode))
                      daikin_set_v (mode, map[bletemp->mode]);   // Max fan at start
                   if (daikin.power != bletemp->power && !(daikin.control_changed & CONTROL_power))
-                     daikin_set_v (power, bletemp->power);
+                     daikin_set_v (power, b.faikinon = bletemp->power);
                   if (!isnan (min) && daikin.temp != (min + max) / 2 && !(daikin.control_changed & CONTROL_temp))
                      daikin_set_t (temp, (min + max) / 2);
                   if (daikin.remote)
@@ -3372,7 +3375,7 @@ app_main ()
             }
          }
 #endif
-         if (autoe && autor && autot)
+         if (!daikin.remote && autoe && autor && autot)
          {                      // Automatic setting of "external" controls, autot is temp(*autot_scale), autor is range(*autor_scale), autob is BLE name
             daikin.controlvalid = uptime () + 10;
             daikin.mintarget = (float) autot / autot_scale - (float) autor / autor_scale;
@@ -3837,7 +3840,7 @@ app_main ()
          // END OF controlstop()
 
 
-         if (autoe && (auto0 || auto1) && (auto0 != auto1))
+         if (!daikin.remote && autoe && (auto0 || auto1) && (auto0 != auto1))
          {                      // Auto on/off, 00:00 is not considered valid, use 00:01. Also setting same on and off is not considered valid
             static int last = 0;
             time_t now = time (0);
@@ -3940,7 +3943,7 @@ app_main ()
                      // Only affects if autop is active
                      // Turn off as 100% in band for last two period
                      else
-                        if (autoe && (autop || (daikin.remote && autoptemp)) && !count_approaching_2_samples
+                        if (((autoe && autop) || (daikin.remote && autoptemp)) && !count_approaching_2_samples
                             && !countBeyond2Samples)
                      {          // Auto off
                         jo_bool (j, "set-power", 0);
@@ -3948,7 +3951,7 @@ app_main ()
                      }
                   }
                   // Daikin is off
-                  else if (autoe && (autop || (daikin.remote && autoptemp))     // AutoP Mode only
+                  else if (((autoe && autop) || (daikin.remote && autoptemp))   // AutoP Mode only
                            && (daikin.countApproaching == daikin.countTotal || daikin.countBeyond == daikin.countTotal) // full cycle approaching or full cycle beyond
                            && (measured_temp >= max + (float) autoptemp / autoptemp_scale       // temp out of desired range
                                || measured_temp <= min - (float) autoptemp / autoptemp_scale) && (!lockmode || countBeyond2Samples != count_total_2_samples))   // temp out of desired range
