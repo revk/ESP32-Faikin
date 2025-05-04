@@ -6171,16 +6171,7 @@
 				(hide yes)
 			)
 		)
-		(property "Part No" ""
-			(at 186.69 48.26 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Note" ""
+		(property "MPN" "C138062"
 			(at 186.69 48.26 0)
 			(effects
 				(font
@@ -7296,17 +7287,8 @@
 				(hide yes)
 			)
 		)
-		(property "Part No" ""
-			(at 186.69 50.165 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Note" ""
-			(at 186.69 50.165 0)
+		(property "MPN" "C7467415"
+			(at 186.69 50.165 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -8117,6 +8099,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 181.61 88.9 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MPN" "C25744"
+			(at 181.61 88.9 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9028,6 +9019,15 @@
 				(hide yes)
 			)
 		)
+		(property "MPN" "C25744"
+			(at 167.005 107.315 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "7c68dc48-2354-415e-8911-63fa2bfbee4d")
 		)
@@ -9229,16 +9229,7 @@
 				(hide yes)
 			)
 		)
-		(property "Part No" ""
-			(at 186.69 52.07 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Note" ""
+		(property "MPN" "C26083"
 			(at 186.69 52.07 0)
 			(effects
 				(font
@@ -9449,6 +9440,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 122.555 105.41 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MPN" "C25744"
+			(at 122.555 105.41 90)
 			(effects
 				(font
 					(size 1.27 1.27)
