@@ -8378,7 +8378,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "RevK:SMD1010+"
+		(property "Footprint" "RevK:SMD1010"
 			(at 100.33 127.635 0)
 			(effects
 				(font
