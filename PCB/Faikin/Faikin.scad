@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-02-22 10:17:38
+// Generated 2025-05-04 12:35:58
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -28,30 +28,30 @@ pcbwidth=35.000000;
 pcblength=16.000000;
 // Parts to go on PCB (top)
 module parts_top(part=false,hole=false,block=false){
-translate([21.600000,13.000000,1.200000])rotate([0,0,90.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
+translate([21.500000,13.000000,1.200000])rotate([0,0,90.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 translate([21.230000,4.185000,1.200000])rotate([0,0,90.000000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
-translate([16.700000,11.275000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // RevK:SMD1010+ SMD1010 (back)
-translate([21.600000,14.850000,1.200000])rotate([0,0,-90.000000])m3(part,hole,block,casetop); // D3 (back)
+translate([17.000000,11.300000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // D1 (back)
+translate([21.500000,14.800000,1.200000])rotate([0,0,-90.000000])m3(part,hole,block,casetop); // D3 (back)
 translate([16.500000,14.400000,1.200000])m4(part,hole,block,casetop); // RevK:C_0402 C_0402_1005Metric (back)
 translate([16.930000,1.000000,1.200000])rotate([0,0,180.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
-translate([20.700000,14.850000,1.200000])rotate([0,0,90.000000])m3(part,hole,block,casetop); // D3 (back)
+translate([20.650000,14.800000,1.200000])rotate([0,0,90.000000])m3(part,hole,block,casetop); // D3 (back)
 translate([18.600000,13.400000,1.200000])rotate([0,0,180.000000])m5(part,hole,block,casetop); // Q1 (back)
 translate([18.730000,2.885000,1.200000])rotate([0,0,180.000000])m6(part,hole,block,casetop); // RevK:SOT-23-6-MD8942 SOT-23-6 (back)
 translate([17.200000,15.300000,1.200000])rotate([0,0,180.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
-translate([20.700000,13.000000,1.200000])rotate([0,0,90.000000])m3(part,hole,block,casetop); // D3 (back)
+translate([20.650000,13.000000,1.200000])rotate([0,0,90.000000])m3(part,hole,block,casetop); // D3 (back)
 translate([20.530000,1.000000,1.200000])rotate([0,0,180.000000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 translate([21.100000,10.500000,1.200000])rotate([0,0,90.000000])m4(part,hole,block,casetop); // RevK:C_0402 C_0402_1005Metric (back)
 translate([7.830000,8.000000,1.200000])rotate([0,0,90.000000])m7(part,hole,block,casetop); // U4 (back)
 translate([18.730000,4.885000,1.200000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
 translate([23.555000,13.000000,1.200000])rotate([0,0,-90.000000])m8(part,hole,block,casetop,05); // J1 (back)
 translate([20.100000,10.800000,1.200000])rotate([0,0,90.000000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
-translate([18.730000,7.485000,1.200000])rotate([-0.000000,-0.000000,-90.000000])m9(part,hole,block,casetop); // RevK:L_4x4_ TYA4020 (back)
-translate([19.400000,15.300000,1.200000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
+translate([18.730000,7.485000,1.200000])scale([1.000000,1.000000,1.400000])rotate([0.000000,0.000000,-90.000000])m9(part,hole,block,casetop); // RevK:L_4x4_ TYA4020 (back)
+translate([19.300000,15.300000,1.200000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 translate([16.230000,4.185000,1.200000])rotate([0,0,-90.000000])m1(part,hole,block,casetop); // RevK:C_0603_ C_0603_1608Metric (back)
 translate([18.730000,0.985000,1.200000])m0(part,hole,block,casetop); // RevK:R_0402 R_0402_1005Metric (back)
 }
 
-parts_top=5;
+parts_top=6;
 // Parts to go on PCB (bottom)
 module parts_bottom(part=false,hole=false,block=false){
 }
@@ -79,7 +79,7 @@ if(part)
 }
 
 module m2(part=false,hole=false,block=false,height)
-{ // RevK:SMD1010+ SMD1010
+{ // D1
 // 1x1mm LED
 if(part)
 {
