@@ -615,6 +615,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          {
             if (!nodemand && payload[0] != '1')
                report_int (demand, 100 - (payload[0] - '0'));
+	    if(!noecono)
             report_bool (econo, payload[1] & 0x02);
          }
          break;
