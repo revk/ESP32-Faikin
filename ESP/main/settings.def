@@ -21,7 +21,7 @@ bit	no.swaptx			.live	.fix				// Do not try inverted Tx (use GPIO setting only)
 bit	no.swaprx			.live	.fix				// Do not try inverted Rx (use GPIO setting only)
 
 bit	no.demand								// Disable demand control
-bit	no.swingw								// Unit does not have swing (W)
+bit	no.swingv			.old="noswingw"					// Unit does not have swing (V)
 bit 	no.swingh								// Unit does not have swing (H)
 bit	no.comfort								// Unit does not have comfort mode
 bit	no.streamer								// Unit does not have streamer mode

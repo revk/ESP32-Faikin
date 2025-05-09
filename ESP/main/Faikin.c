@@ -587,7 +587,7 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
       case '5':                // 'G5' - swing status
          if (check_length (cmd, cmd2, len, 1, payload))
          {
-            if (!noswingw)
+            if (!noswingv)
                report_bool (swingv, payload[0] & 1);
             if (!noswingh)
                report_bool (swingh, payload[0] & 2);
@@ -1610,7 +1610,7 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          {
             jo_bool (s, "swingh", !strcmp (value, SWING_HORIZONTAL) || !strcmp (value, SWING_BOTH)
                      || !strcmp (value, SWING_ON) ? 1 : 0);
-            jo_bool (s, "swingv", !strcmp (value, SWING_VERTICAL) || !strcmp (value, SWING_BOTH) ? 1 : 0);
+            jo_bool (s, "swingv", !strcmp (value, SWING_VERTICAL) || !strcmp (value, SWING_BOTH) || !strcmp (value, SWING_ON) ? 1 : 0);
          }
       }
       if (!strcmp (suffix, "preset"))
@@ -2808,7 +2808,7 @@ send_ha_config (void)
             jo_string (j, NULL, SWING_HORIZONTAL);
             jo_string (j, NULL, SWING_VERTICAL);
             jo_string (j, NULL, SWING_BOTH);
-         } else if (daikin.status_known & CONTROL_swingh)
+         } else if (daikin.status_known & (CONTROL_swingh|CONTROL_swingv))
             jo_string (j, NULL, SWING_ON);
          if (daikin.status_known & CONTROL_comfort)
             jo_string (j, NULL, SWING_COMFORT);
@@ -3022,10 +3022,11 @@ revk_state_extra (jo_t j)
       jo_bool (j, "sensor", daikin.sensor);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
       jo_string (j, "swing",
-                 daikin.comfort ? SWING_COMFORT : daikin.swingh
-                 && daikin.swingv ? SWING_BOTH : daikin.
-                 swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : daikin.
-                 swingv ? SWING_VERTICAL : SWING_OFF);
+                 daikin.comfort ? SWING_COMFORT :	//
+		 daikin.swingh && daikin.swingv ? SWING_BOTH : //
+		 daikin.swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :	//
+		 daikin.swingv ? (daikin.status_known & CONTROL_swingh) ? SWING_VERTICAL : SWING_ON :	//
+		 SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    if (haswitches)
