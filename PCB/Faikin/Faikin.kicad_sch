@@ -8408,16 +8408,6 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "C5349953"
-			(at 100.33 123.825 0)
-			(effects
-				(font
-					(size 1 1)
-				)
-				(justify left top)
-				(hide yes)
-			)
-		)
 		(pin "1"
 			(uuid "196dc0ee-899a-4d56-bb32-1bfd77bdca7c")
 		)
