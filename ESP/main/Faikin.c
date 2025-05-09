@@ -3341,10 +3341,10 @@ app_main ()
             {
                float min = NAN,
                   max = NAN;
-               if (bletemp->targetlowset)
-                  min = (float) bletemp->targetlow / 100;
-               if (bletemp->targethighset)
-                  max = (float) bletemp->targethigh / 100;
+               if (bletemp->targetminset)
+                  min = (float) bletemp->targetmin / 100;
+               if (bletemp->targetmaxset)
+                  max = (float) bletemp->targetmax / 100;
                if (isnan (max))
                   max = min;
                if (bletemp->mode == 7)
