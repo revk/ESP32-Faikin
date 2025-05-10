@@ -6,7 +6,7 @@ This code/module provides local control via web interface, MQTT, and HomeAssista
 
 <img src=https://github.com/user-attachments/assets/110f49e2-de9f-41c9-82de-0c65e32430b9 width=33% align=right>
 
-There is also a new [Faikin Remote Control](https://remote.revk.uk/) available, BLE linked to the Faikin, with environmental sensors.
+* There is also a new [Faikin Remote Control](https://remote.revk.uk/) available, BLE linked to the Faikin, with environmental sensors, available on Tindie now.
 
 PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). There are other people making and selling, e.g. on [eBay Australia](https://www.ebay.com.au/itm/186860658654).
 
