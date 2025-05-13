@@ -3220,7 +3220,7 @@ app_main ()
    }
 #ifdef	ELA
    if (bleenable)
-      bleenv_run (blepassive);
+      bleenv_run ();
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif

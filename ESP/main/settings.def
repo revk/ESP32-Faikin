@@ -78,7 +78,6 @@ u16	temp.noflap	0		.live					// Min time between target temp changes (seconds)
 
 #ifdef CONFIG_BT_NIMBLE_ENABLED
 bit	ble.enable			.old="ble"				// Enable BLE for sensors or remote
-bit	ble.passive	1							// Passive scanning (does not get all names)
 s	auto.b				.live					// BLE sensor ID
 #endif
 
