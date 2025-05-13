@@ -3146,7 +3146,7 @@ revk_web_extra (httpd_req_t * req, int page)
    if (!daikin.remote)
    {
       revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
-      revk_web_setting (req, "BLE Sensors", "ble");
+      revk_web_setting (req, "BLE Sensors", "bleenable");
       if (bleenable)
          settings_autob (req);
    }
