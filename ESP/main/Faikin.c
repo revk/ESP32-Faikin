@@ -3322,7 +3322,7 @@ app_main ()
                bletemp = NULL;
                bleenv_clean ();
                for (bleenv_t * e = bleenv; e; e = e->next)
-                  if (!strcmp (e->name, autob) || !strcmp (d->mac, autob))
+                  if (!strcmp (e->name, autob) || !strcmp (e->mac, autob))
                   {
                      bletemp = e;
                      daikin.ha_send = 1;
