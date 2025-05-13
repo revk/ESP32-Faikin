@@ -1743,8 +1743,8 @@ settings_autob (httpd_req_t * req)
    char found = 0;
    for (bleenv_t * e = bleenv; e; e = e->next)
    {
-      revk_web_send (req, "<option value=\"%s\"", e->name);
-      if (*autob && !strcmp (autob, e->name))
+      revk_web_send (req, "<option value=\"%s\"", e->mac);
+      if (*autob && (!strcmp (autob, e->name) || !strcmp (autob, e->mac)))
       {
          revk_web_send (req, " selected");
          found = 1;
@@ -3317,12 +3317,12 @@ app_main ()
          if (ble_sensor_enabled ())
          {                      // Automatic external temperature logic - only really useful if autor/autot set, or Faikin remote
             bleenv_expire (120);
-            if (!bletemp || strcmp (bletemp->name, autob))
+            if (!bletemp || (strcmp (bletemp->name, autob) && strcmp (bletemp->mac, autob)))
             {
                bletemp = NULL;
                bleenv_clean ();
                for (bleenv_t * e = bleenv; e; e = e->next)
-                  if (!strcmp (e->name, autob))
+                  if (!strcmp (e->name, autob) || !strcmp (d->mac, autob))
                   {
                      bletemp = e;
                      daikin.ha_send = 1;
