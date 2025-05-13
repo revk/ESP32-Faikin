@@ -256,13 +256,13 @@ static bleenv_t *bletemp = NULL;
 static int
 ble_sensor_connected (void)
 {                               // We actually have BLE configured and connected and not missing
-   return (ble && bletemp && !bletemp->missing) ? 1 : 0;
+   return (bleenable && bletemp && !bletemp->missing) ? 1 : 0;
 }
 
 static int
 ble_sensor_enabled (void)
 {                               // We have BLE enabled and a BLE sensor defeined
-   return (ble && *autob) ? 1 : 0;
+   return (bleenable && *autob) ? 1 : 0;
 }
 
 #else // ELA
@@ -1757,7 +1757,7 @@ settings_autob (httpd_req_t * req)
       revk_web_send (req, "<option selected value=\"%s\">%s", autob, autob);
    }
    revk_web_send (req, "</select>");
-   if (ble && (uptime () < 60 || !found))
+   if (bleenable && (uptime () < 60 || !found))
       revk_web_send (req, " (reload to refresh list)");
    revk_web_send (req, "</td></tr>");
 }
@@ -1845,7 +1845,7 @@ web_control (httpd_req_t * req)
    if ((daikin.status_known & CONTROL_env) && !ble_sensor_connected ())
       addt ("Env", "External reference temperature");
 #ifdef ELA
-   if (ble && *autob)
+   if (bleenable && *autob)
    {
       revk_web_send (req, "</tr><tr><td>%s</td>", bletemp && bletemp->faikinset ? "BLE<br>Remote" : "BLE");
       if (!bletemp || bletemp->tempset)
@@ -1935,7 +1935,7 @@ web_control (httpd_req_t * req)
       }
       revk_web_send (req, "</tr>");
 #ifdef ELA
-      if (ble && !*password)
+      if (bleenable && !*password)
       {                         // BLE setting needs password
          addnote ("External temperature reference for Faikin-auto mode");
          settings_autob (req);
@@ -2888,9 +2888,9 @@ send_ha_config (void)
          free (topic);
       }
    }
-   addtemp (ble && *autob && bletemp && bletemp->tempset, "bletemp", "BLE Temp", "mdi:thermometer");
-   addhum (ble && *autob && bletemp && bletemp->humset, "blehum", "BLE Humidity", "mdi:water-percent");
-   addbat (ble && *autob && bletemp && bletemp->batset, "blebat", "BLE Battery", "mdi:battery-bluetooth-variant");
+   addtemp (bleenable && *autob && bletemp && bletemp->tempset, "bletemp", "BLE Temp", "mdi:thermometer");
+   addhum (bleenable && *autob && bletemp && bletemp->humset, "blehum", "BLE Humidity", "mdi:water-percent");
+   addbat (bleenable && *autob && bletemp && bletemp->batset, "blebat", "BLE Battery", "mdi:battery-bluetooth-variant");
 #endif
 #if 1
    if (asprintf (&topic, "%s/select/%sdemand/config", topicha, revk_id) >= 0)
@@ -2987,7 +2987,7 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & CONTROL_comp)
       jo_int (j, "comp", (hacomprpm ? 60 : 1) * daikin.comp);
 #ifdef ELA
-   if (ble && bletemp)
+   if (bleenable && bletemp)
    {
       if (bletemp->tempset)
          jo_litf (j, "bletemp", "%.2f", bletemp->temp / 100.0);
@@ -3147,7 +3147,7 @@ revk_web_extra (httpd_req_t * req, int page)
    {
       revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
       revk_web_setting (req, "BLE Sensors", "ble");
-      if (ble)
+      if (bleenable)
          settings_autob (req);
    }
 }
@@ -3219,8 +3219,8 @@ app_main ()
       }
    }
 #ifdef	ELA
-   if (ble)
-      bleenv_run ();
+   if (bleenable)
+      bleenv_run (blepassive);
    else
       esp_wifi_set_ps (WIFI_PS_NONE);
 #endif
