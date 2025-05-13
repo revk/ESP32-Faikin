@@ -615,8 +615,8 @@ daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
          {
             if (!nodemand && payload[0] != '1')
                report_int (demand, 100 - (payload[0] - '0'));
-	    if(!noecono)
-            report_bool (econo, payload[1] & 0x02);
+            if (!noecono)
+               report_bool (econo, payload[1] & 0x02);
          }
          break;
       case '8':
@@ -1611,7 +1611,8 @@ mqtt_client_callback (int client, const char *prefix, const char *target, const 
          {
             jo_bool (s, "swingh", !strcmp (value, SWING_HORIZONTAL) || !strcmp (value, SWING_BOTH)
                      || !strcmp (value, SWING_ON) ? 1 : 0);
-            jo_bool (s, "swingv", !strcmp (value, SWING_VERTICAL) || !strcmp (value, SWING_BOTH) || !strcmp (value, SWING_ON) ? 1 : 0);
+            jo_bool (s, "swingv", !strcmp (value, SWING_VERTICAL) || !strcmp (value, SWING_BOTH)
+                     || !strcmp (value, SWING_ON) ? 1 : 0);
          }
       }
       if (!strcmp (suffix, "preset"))
@@ -2809,7 +2810,7 @@ send_ha_config (void)
             jo_string (j, NULL, SWING_HORIZONTAL);
             jo_string (j, NULL, SWING_VERTICAL);
             jo_string (j, NULL, SWING_BOTH);
-         } else if (daikin.status_known & (CONTROL_swingh|CONTROL_swingv))
+         } else if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv))
             jo_string (j, NULL, SWING_ON);
          if (daikin.status_known & CONTROL_comfort)
             jo_string (j, NULL, SWING_COMFORT);
@@ -3022,12 +3023,11 @@ revk_state_extra (jo_t j)
    if (daikin.status_known & CONTROL_sensor)
       jo_bool (j, "sensor", daikin.sensor);
    if (daikin.status_known & (CONTROL_swingh | CONTROL_swingv | CONTROL_comfort))
-      jo_string (j, "swing",
-                 daikin.comfort ? SWING_COMFORT :	//
-		 daikin.swingh && daikin.swingv ? SWING_BOTH : //
-		 daikin.swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON :	//
-		 daikin.swingv ? (daikin.status_known & CONTROL_swingh) ? SWING_VERTICAL : SWING_ON :	//
-		 SWING_OFF);
+      jo_string (j, "swing", daikin.comfort ? SWING_COMFORT :   //
+                 daikin.swingh && daikin.swingv ? SWING_BOTH :  //
+                 daikin.swingh ? (daikin.status_known & CONTROL_swingv) ? SWING_HORIZONTAL : SWING_ON : //
+                 daikin.swingv ? (daikin.status_known & CONTROL_swingh) ? SWING_VERTICAL : SWING_ON :   //
+                 SWING_OFF);
    if (daikin.status_known & (CONTROL_econo | CONTROL_powerful))
       jo_string (j, "preset", daikin.econo ? "eco" : daikin.powerful ? "boost" : nohomepreset ? "none" : "home");       // Limited modes
    if (haswitches)
@@ -3144,8 +3144,9 @@ revk_web_extra (httpd_req_t * req, int page)
    revk_web_setting (req, "Dark mode LED", "dark");
    revk_web_setting (req, "Debug", "debug");
    if (!daikin.remote)
-   {
       revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
+   if (!daikin.remote || (bleenable && *autob))
+   {
       revk_web_setting (req, "BLE Sensors", "bleenable");
       if (bleenable)
          settings_autob (req);
