@@ -1,17 +1,32 @@
-#!/bin/csh
+#!/bin/csh -f
+setenv bin ""
+if("$1" =~ *.bin) then
+	setenv bin "$1"
+	shift
+endif
+
 if("$1" != "") then
 	set d=($1)
+	shift
 else
-	set d=(/dev/cu.usbmodem612*)
+	set d=(`ls -t /dev/*usb* /dev/ttyACM*|head -1`)
 endif
 
 if($#d == 0) then
 	echo No device
 	exit 0
 endif
-again:
-idf.py flash --port $d[1]
-if($status) goto again
 
+#git pull
+make -C components/ESP32-RevK idfmon
+
+again:
 components/ESP32-RevK/idfmon $d[1]
+
+if("$bin" == "") then
+	idf.py flash -p $d[1]
+else
+	esptool.py --chip esp32s3 -p $d[1] -b 460800 --before=default_reset --after=hard_reset write_flash --flash_mode dio --flash_freq 80m --flash_size 4MB 0x0 "$bin"
+endif
+
 goto again
