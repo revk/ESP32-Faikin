@@ -1115,9 +1115,9 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
       uart_write_bytes (uart, buf, txlen);
    }
    int rxlen = 0;
-   do
-   {
-      // Wait ACK. Apparently some models omit it.
+   while (1)
+   {                            // Allows for continue if unexpected message
+      // Wait ACK. Apparently some models omit it so we allow for a message anyway
       rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
       if (rxlen == 0)
       {
@@ -1265,8 +1265,8 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
          if (buf[1] != cmd + 1 || buf[2] != cmd2)
             continue;           // We got an extra unexpected message, so wait for another
       }
+      break;
    }
-   while (0);
    return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
 }
 
