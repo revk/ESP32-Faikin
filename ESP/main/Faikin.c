@@ -1114,152 +1114,159 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
       }
       uart_write_bytes (uart, buf, txlen);
    }
-   // Wait ACK. Apparently some models omit it.
-   int rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
-   if (rxlen == 0)
+   int rxlen = 0;
+   do
    {
-      comm_timeout (NULL, 0);
-      return RES_TIMEOUT;
-   }
-   if (rxlen != 1 || (temp != ACK && temp != STX))
-   {
-      // Got something else
-      if (rxlen == 1 && temp == NAK)
+      // Wait ACK. Apparently some models omit it.
+      rxlen = uart_read_bytes (uart, &temp, 1, READ_TIMEOUT);
+      if (rxlen == 0)
       {
-         // Got an explicit NAK
-         if (debug)
-         {
-            jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
-            jo_bool (j, "nak", 1);
-            revk_error ("comms", &j);
-         } else if (b.dumping)
-         {
-            // We want to see NAKs under info/<name>/rx because we could have sent
-            // this command using command/<name>/send. We want to be informed if
-            // the unit has NAKed it.
-            jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
-            jo_bool (j, "nak", 1);
-            revk_info ("rx", &j);
-         }
-         return RES_NAK;
-      } else
-      {
-         // Unexpected reply, protocol broken
-         jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
-         daikin.talking = 0;
-         jo_bool (j, "noack", 1);
-         jo_stringf (j, "value", "%02X", temp);
-         revk_error ("comms", &j);
-         return RES_NOACK;
+         comm_timeout (NULL, 0);
+         return RES_TIMEOUT;
       }
-   }
-   if (temp == STX)
-      *buf = temp;              // No ACK, response started instead.
-   else
-   {
-      if (cmd == 'D')
-      {                         // No response expected
-         if (b.dumping)
-         {                      // We may be probing commands manually using command/<name>/send,
-            // and we want to explicitly see ACKs
+      if (rxlen != 1 || (temp != ACK && temp != STX))
+      {
+         // Got something else
+         if (rxlen == 1 && temp == NAK)
+         {
+            // Got an explicit NAK
+            if (debug)
+            {
+               jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+               jo_bool (j, "nak", 1);
+               revk_error ("comms", &j);
+            } else if (b.dumping)
+            {
+               // We want to see NAKs under info/<name>/rx because we could have sent
+               // this command using command/<name>/send. We want to be informed if
+               // the unit has NAKed it.
+               jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+               jo_bool (j, "nak", 1);
+               revk_info ("rx", &j);
+            }
+            return RES_NAK;
+         } else
+         {
+            // Unexpected reply, protocol broken
             jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
-            jo_bool (j, "ack", 1);
-            revk_info ("rx", &j);
+            daikin.talking = 0;
+            jo_bool (j, "noack", 1);
+            jo_stringf (j, "value", "%02X", temp);
+            revk_error ("comms", &j);
+            return RES_NOACK;
+         }
+      }
+      if (temp == STX)
+         *buf = temp;           // No ACK, response started instead.
+      else
+      {
+         if (cmd == 'D')
+         {                      // No response expected
+            if (b.dumping)
+            {                   // We may be probing commands manually using command/<name>/send,
+               // and we want to explicitly see ACKs
+               jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
+               jo_bool (j, "ack", 1);
+               revk_info ("rx", &j);
+            }
+            return RES_OK;
+         }
+         while (1)
+         {
+            rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
+            if (rxlen != 1)
+            {
+               comm_timeout (NULL, 0);
+               return RES_NOACK;
+            }
+            if (*buf == STX)
+               break;
+         }
+      }
+      // Receive the rest of response till ETX
+      while (rxlen < sizeof (buf))
+      {
+         if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
+         {
+            comm_timeout (buf, txlen);
+            return RES_NOACK;
+         }
+         rxlen++;
+         if (buf[rxlen - 1] == ETX)
+            break;
+      }
+      //ESP_LOG_BUFFER_HEX (TAG, buf, rxlen);        // TODO 
+      // Send ACK regardless of packet quality. If we don't ack due to checksum error,
+      // for example, the response will be sent again.
+      // Note not all ACs do that. My FTXF20D doesn't - Sonic-Amiga
+      temp = ACK;
+      uart_write_bytes (uart, &temp, 1);
+      if (b.dumping || snoop)
+      {
+         jo_t j = jo_comms_alloc ();
+         jo_base16 (j, "dump", buf, rxlen);
+         char c[3] = { buf[1], buf[2] };
+         jo_stringn (j, c, (char *) buf + 3, rxlen - 5);
+         revk_info ("rx", &j);
+      }
+      int s21_bad (jo_t j)
+      {                         // Report error and return RES_BAD - also pause/flush
+         jo_base16 (j, "data", buf, rxlen);
+         revk_error ("comms", &j);
+         if (!b.protocol_set)
+         {
+            sleep (1);
+            uart_flush (uart);
+         }
+         return RES_BAD;
+      }
+      // Check checksum
+      uint8_t c = s21_checksum (buf, rxlen);
+      if (c != buf[rxlen - 2])
+      {                         // Sees checksum of 03 actually sends as 05
+         jo_t j = jo_comms_alloc ();
+         jo_stringf (j, "badsum", "%02X", c);
+         return s21_bad (j);
+      }
+      // For reliability, verify that we've got back the exact transmitted data
+      // We're using the same buf for both tx and rx, so our sent packet is gone
+      // at this point, so we're verifying piece by piece
+      if (!snoop && rxlen == txlen && is_valid_s21_response (buf, rxlen, cmd, cmd2) &&
+          (payload_len == 0 || !memcmp (payload, buf + S21_PAYLOAD_OFFSET, payload_len)))
+      {                         // Loop back
+         daikin.talking = 0;
+         if (!b.loopback)
+         {
+            ESP_LOGE (TAG, "Loopback");
+            b.loopback = 1;
+            revk_blink (0, 0, "RGB");
+            jo_t j = jo_comms_alloc ();
+            jo_bool (j, "loopback", 1);
+            revk_error ("comms", &j);
          }
          return RES_OK;
       }
-      while (1)
-      {
-         rxlen = uart_read_bytes (uart, buf, 1, READ_TIMEOUT);
-         if (rxlen != 1)
-         {
-            comm_timeout (NULL, 0);
-            return RES_NOACK;
-         }
-         if (*buf == STX)
-            break;
-      }
-   }
-   // Receive the rest of response till ETX
-   while (rxlen < sizeof (buf))
-   {
-      if (uart_read_bytes (uart, buf + rxlen, 1, READ_TIMEOUT) != 1)
-      {
-         comm_timeout (buf, txlen);
-         return RES_NOACK;
-      }
-      rxlen++;
-      if (buf[rxlen - 1] == ETX)
-         break;
-   }
-   ESP_LOG_BUFFER_HEX (TAG, buf, rxlen);        // TODO 
-   // Send ACK regardless of packet quality. If we don't ack due to checksum error,
-   // for example, the response will be sent again.
-   // Note not all ACs do that. My FTXF20D doesn't - Sonic-Amiga
-   temp = ACK;
-   uart_write_bytes (uart, &temp, 1);
-   if (b.dumping || snoop)
-   {
-      jo_t j = jo_comms_alloc ();
-      jo_base16 (j, "dump", buf, rxlen);
-      char c[3] = { buf[1], buf[2] };
-      jo_stringn (j, c, (char *) buf + 3, rxlen - 5);
-      revk_info ("rx", &j);
-   }
-   int s21_bad (jo_t j)
-   {                            // Report error and return RES_BAD - also pause/flush
-      jo_base16 (j, "data", buf, rxlen);
-      revk_error ("comms", &j);
-      if (!b.protocol_set)
-      {
-         sleep (1);
-         uart_flush (uart);
-      }
-      return RES_BAD;
-   }
-   // Check checksum
-   uint8_t c = s21_checksum (buf, rxlen);
-   if (c != buf[rxlen - 2])
-   {                            // Sees checksum of 03 actually sends as 05
-      jo_t j = jo_comms_alloc ();
-      jo_stringf (j, "badsum", "%02X", c);
-      return s21_bad (j);
-   }
-   // For reliability, verify that we've got back the exact transmitted data
-   // We're using the same buf for both tx and rx, so our sent packet is gone
-   // at this point, so we're verifying piece by piece
-   if (!snoop && rxlen == txlen && is_valid_s21_response (buf, rxlen, cmd, cmd2) &&
-       (payload_len == 0 || !memcmp (payload, buf + S21_PAYLOAD_OFFSET, payload_len)))
-   {                            // Loop back
-      daikin.talking = 0;
-      if (!b.loopback)
-      {
-         ESP_LOGE (TAG, "Loopback");
-         b.loopback = 1;
-         revk_blink (0, 0, "RGB");
+      b.loopback = 0;
+      // If we've got an STX, S21 protocol is now confirmed; we won't change it any more
+      if (buf[0] == STX && !b.protocol_set)
+         protocol_found ();
+      // An expected S21 reply contains the first character of the command
+      // incremented by 1, the second character is left intact
+      if (!snoop && !is_valid_s21_response (buf, rxlen, cmd + 1, cmd2))
+      {                         // Malformed response, no proper S21
+         daikin.talking = 0;    // Protocol is broken, will restart communication
          jo_t j = jo_comms_alloc ();
-         jo_bool (j, "loopback", 1);
-         revk_error ("comms", &j);
+         jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
+         if (buf[0] != STX)
+            jo_bool (j, "badhead", 1);
+         if (buf[1] != cmd + 1 || buf[2] != cmd2)
+            jo_bool (j, "mismatch", 1);
+         s21_bad (j);
+         if (buf[1] != cmd + 1 || buf[2] != cmd2)
+            continue;           // We got an extra unexpected message, so wait for another
       }
-      return RES_OK;
    }
-   b.loopback = 0;
-   // If we've got an STX, S21 protocol is now confirmed; we won't change it any more
-   if (buf[0] == STX && !b.protocol_set)
-      protocol_found ();
-   // An expected S21 reply contains the first character of the command
-   // incremented by 1, the second character is left intact
-   if (!snoop && !is_valid_s21_response (buf, rxlen, cmd + 1, cmd2))
-   {                            // Malformed response, no proper S21
-      daikin.talking = 0;       // Protocol is broken, will restart communication
-      jo_t j = jo_comms_alloc ();
-      jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
-      if (buf[0] != STX)
-         jo_bool (j, "badhead", 1);
-      if (buf[1] != cmd + 1 || buf[2] != cmd2)
-         jo_bool (j, "mismatch", 1);
-      return s21_bad (j);
-   }
+   while (0);
    return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
 }
 
