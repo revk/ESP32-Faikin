@@ -1253,6 +1253,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
    {                            // Malformed response, no proper S21
       daikin.talking = 0;       // Protocol is broken, will restart communication
       jo_t j = jo_comms_alloc ();
+      jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
       if (buf[0] != STX)
          jo_bool (j, "badhead", 1);
       if (buf[1] != cmd + 1 || buf[2] != cmd2)
