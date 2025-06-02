@@ -3368,7 +3368,7 @@ app_main ()
                {                // Simple remote
                   static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
                   if (bletemp->mode && daikin.mode != map[bletemp->mode] && !(daikin.control_changed & CONTROL_mode))
-                     daikin_set_v (mode, map[bletemp->mode]);   // Max fan at start
+                     daikin_set_v (mode, map[bletemp->mode]);
                   if (daikin.power != bletemp->power && !(daikin.control_changed & CONTROL_power))
                      daikin_set_v (power, b.faikinon = bletemp->power);
                   if (!isnan (min) && daikin.temp != (min + max) / 2 && !(daikin.control_changed & CONTROL_temp))
@@ -3377,7 +3377,15 @@ app_main ()
                      daikin.controlvalid = uptime ();
                }
                if (bletemp->fan && daikin.fan != bletemp->fan - 1 && !(daikin.control_changed & CONTROL_fan))
-                  daikin_set_v (fan, bletemp->fan - 1); // Max fan at start
+               {
+                  uint8_t fan = bletemp->fan;
+                  if (fan == 7 && (proto_type () != PROTO_TYPE_CN_WIRED && !have_5_fan_speeds ()))
+                     fan = 0;   // No auto
+                  if ((fan == 3 || fan == 5) && !have_5_fan_speeds ())
+                     fan = 0;   // Only 3 speeds
+                  if (fan)
+                     daikin_set_v (fan, fan - 1);
+               }
             }
             if (bletemp && bletemp->faikinset)
             {
