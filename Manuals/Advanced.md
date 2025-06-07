@@ -80,6 +80,10 @@ You can use for your own external control, which takes priority over *Faikin aut
 
 When remote working `autop` is assumed if `autoptemp` is not `0`.
 
+### Reference temperature
+
+In addition to the above, `env` in `control` you can set `autotopic` to subscribe to, and `autopayload` as the field name in a JSON payload in that topic, which is sent periodically will set the reference temperature.
+
 ### Special settings
 
 Some more advances settings which you are unlikely to need to ever change.

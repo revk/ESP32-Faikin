@@ -1450,6 +1450,22 @@ daikin_control (jo_t j, uint8_t insecure)
 // --------------------------------------------------------------------------------
 jo_t debugsend = NULL;
 
+void
+autosub (void *json, const char *topic, jo_t j)
+{
+   if (!ble_sensor_connected () && jo_find (j, (char *) json) == JO_NUMBER)
+   {
+      xSemaphoreTake (daikin.mutex, portMAX_DELAY);
+      daikin.controlvalid = uptime () + tcontrol;
+      float env = jo_read_float (j);
+      if (daikin.env != env)
+         daikin.status_changed = 1;
+      daikin.env = env;
+      daikin.status_known |= CONTROL_env;       // So we report it
+      xSemaphoreGive (daikin.mutex);
+   }
+}
+
 // Called by an MQTT client inside the revk library
 const char *
 mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
@@ -3183,6 +3199,8 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
+   if (*autotopic)
+      revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
 
    if (udp_discovery)
       revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);

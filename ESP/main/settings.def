@@ -91,6 +91,9 @@ u8	auto.fmax	5		.live	.old="fmaxauto"			// Max fan setting when starting heat/co
 u8	auto.ptemp	0.5		.live	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
 bit	auto.lcontrol	0		.live					// Auto toggle on/off LED based on current HVAC action
 
+s	auto.topic								// Topic to follow for reference temperature for Faikin auto
+s	auto.payload								// JSON field in payload of above topic for reference temp
+
 bit	thermostat			.live					// Faikin auto simple thermostat mode (heat to max, cool to min)
 
 
