@@ -50,7 +50,7 @@ s	ha.domain	"local"							// Local domain for HA links (blank for IP)
 
 bit	cn.mark900			.live					// CN_WIRED. mark using 900uS not 1000uS
 
-u8	fanstep									// Fan steps (1 or 2, 0 for auto)
+enum	fantype				.enums="Default,5 level+auto,3 level,3 level+auto"	.old="fanstep"	// Fan type override
 
 bit	lockmode								// Do not auto switch heat/cool modes in Faikin auto
 
