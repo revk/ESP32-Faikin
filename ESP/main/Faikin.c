@@ -3203,7 +3203,6 @@ app_main ()
    revk_start ();
 
    revk_blink (1, 0, "B");
-#ifdef  CONFIG_IDF_TARGET_ESP32S3
    ESP_LOGD (TAG, "USB %d", usb_serial_jtag_is_connected ());
    if (tx.set && rx.set)
    {                            // Direct loopback check
@@ -3223,7 +3222,6 @@ app_main ()
          revk_blink (1, 0, b.loopback ? "G" : "R");
       }
    }
-#endif
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
@@ -3797,7 +3795,7 @@ app_main ()
             daikin.control_count = 0;
          }
          if (usb_serial_jtag_is_connected ())
-            revk_blink (1, 0, b.loopback ? "G" : "R");
+            revk_blink (9, 1, b.loopback ? "G" : "R");
          else
             revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
          uint32_t now = uptime ();
