@@ -3184,7 +3184,7 @@ revk_web_extra (httpd_req_t * req, int page)
 void
 app_main ()
 {
-   ESP_LOGE (TAG, "Started");
+   //ESP_LOGE (TAG, "Started");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
    {                            // All unused input pins pull down
       gpio_config_t c = {.pull_down_en = 1,.mode = GPIO_MODE_DISABLE };
@@ -3222,7 +3222,7 @@ app_main ()
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
-   //revk_blink_do (); // Show LED ASAP
+   revk_blink_do (); // Show LED ASAP
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
@@ -3796,7 +3796,7 @@ app_main ()
             daikin.control_count = 0;
          }
          if (usb_serial_jtag_is_connected ())
-            revk_blink (19, 1, b.loopback ? "G" : "R");
+            revk_blink (18, 2, b.loopback ? "G" : "R");
          else
             revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
          uint32_t now = uptime ();
