@@ -3202,7 +3202,6 @@ app_main ()
    revk_boot (&mqtt_client_callback);
    revk_start ();
 
-   revk_blink (1, 0, "B");
    ESP_LOGD (TAG, "USB %d", usb_serial_jtag_is_connected ());
    if (tx.set && rx.set)
    {                            // Direct loopback check
@@ -3223,6 +3222,7 @@ app_main ()
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
+   revk_blink_do (); // Show LED ASAP
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
