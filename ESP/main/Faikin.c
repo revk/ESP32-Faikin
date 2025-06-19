@@ -204,19 +204,21 @@ proto_name (void)
 static inline int
 fan_5_auto (void)
 {                               // Fan is 5 levels and auto
-   return fantype == REVK_SETTINGS_FANTYPE_5_LEVEL_AUTO || (fantype==REVK_SETTINGS_FANTYPE_DEFAULT && proto_type () == PROTO_TYPE_S21);
+   return fantype == REVK_SETTINGS_FANTYPE_5_LEVEL_AUTO || (fantype == REVK_SETTINGS_FANTYPE_DEFAULT
+                                                            && proto_type () == PROTO_TYPE_S21);
 }
 
 static inline int
 fan_3_auto (void)
 {                               // Fan is 3 levels and auto
-   return fantype == REVK_SETTINGS_FANTYPE_3_LEVEL_AUTO || (fantype==REVK_SETTINGS_FANTYPE_DEFAULT &&proto_type () == PROTO_TYPE_CN_WIRED);
+   return fantype == REVK_SETTINGS_FANTYPE_3_LEVEL_AUTO || (fantype == REVK_SETTINGS_FANTYPE_DEFAULT
+                                                            && proto_type () == PROTO_TYPE_CN_WIRED);
 }
 
 static const struct FanMode *
 get_fan_modes (void)
 {
-   return fan_3_auto()?fans_3_auto: fans_5_auto;
+   return fan_3_auto ()? fans_3_auto : fans_5_auto;
 }
 
 // Decode fan mode by name into a character (A12345Q)
@@ -256,29 +258,33 @@ get_temp_step (void)
 #ifdef ELA
 static bleenv_t *bletemp = NULL;
 
-static int ble_sensor_connected (void)
+static int
+ble_sensor_connected (void)
 {                               // We actually have BLE configured and connected and not missing
    return (bleenable && bletemp && !bletemp->missing) ? 1 : 0;
 }
 
-static int ble_sensor_enabled (void)
+static int
+ble_sensor_enabled (void)
 {                               // We have BLE enabled and a BLE sensor defeined
    return (bleenable && *autob) ? 1 : 0;
 }
 
 #else // ELA
 
-static int ble_sensor_connected (void)
+static int
+ble_sensor_connected (void)
 {                               // No BLE
    return 0;
 }
 
-static int ble_sensor_enabled (void)
+static int
+ble_sensor_enabled (void)
 {                               // No BLE
    return 0;
 }
 
-#endif                          // ELA
+#endif // ELA
 
 // The current aircon state and stats
 struct
@@ -333,7 +339,8 @@ enum
 };
 const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle", "defrosting" };
 
-const char *daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
+const char *
+daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
 {                               // Setting a value (uint8_t)
    if (*ptr == value)
       return NULL;              // No change
@@ -347,7 +354,8 @@ const char *daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, ui
    return NULL;
 }
 
-const char *daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
+const char *
+daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
 {                               // Setting a value (uint8_t)
    if (*ptr == value)
       return NULL;              // No change
@@ -361,7 +369,8 @@ const char *daikin_set_int (const char *name, int *ptr, uint64_t flag, int value
    return NULL;
 }
 
-const char *daikin_set_enum (const char *name, uint8_t * ptr, uint64_t flag, char *value, const char *values)
+const char *
+daikin_set_enum (const char *name, uint8_t * ptr, uint64_t flag, char *value, const char *values)
 {                               // Setting a value (uint8_t) based on string which is expected to be single character from values set
    if (!value || !*value)
       return "No value";
@@ -369,12 +378,13 @@ const char *daikin_set_enum (const char *name, uint8_t * ptr, uint64_t flag, cha
       return "Value is meant to be one character";
    char *found = strchr (values, *value);
    if (!found)
-        return "Value is not a valid value";
-     daikin_set_value (name, ptr, flag, (int) (found - values));
-     return NULL;
+      return "Value is not a valid value";
+   daikin_set_value (name, ptr, flag, (int) (found - values));
+   return NULL;
 }
 
-const char *daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
+const char *
+daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
 {                               // Setting a value (float)
    if (*ptr == value)
       return NULL;              // No change
@@ -390,7 +400,8 @@ const char *daikin_set_temp (const char *name, float *ptr, uint64_t flag, float 
    return NULL;
 }
 
-void set_uint8 (const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
+void
+set_uint8 (const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
 {                               // Updating status
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
@@ -415,7 +426,8 @@ void set_uint8 (const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
    xSemaphoreGive (daikin.mutex);
 }
 
-void set_int (const char *name, int *ptr, uint64_t flag, int val)
+void
+set_int (const char *name, int *ptr, uint64_t flag, int val)
 {                               // Updating status
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
@@ -440,7 +452,8 @@ void set_int (const char *name, int *ptr, uint64_t flag, int val)
    xSemaphoreGive (daikin.mutex);
 }
 
-void set_float (const char *name, float *ptr, uint64_t flag, float val)
+void
+set_float (const char *name, float *ptr, uint64_t flag, float val)
 {                               // Updating status
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
@@ -472,12 +485,13 @@ void set_float (const char *name, float *ptr, uint64_t flag, float val)
 #define report_float(name,val) set_float(#name,&daikin.name,CONTROL_##name,val)
 #define report_bool(name,val) report_uint8(name, (val ? 1 : 0))
 
-jo_t jo_comms_alloc (void)
+jo_t
+jo_comms_alloc (void)
 {
    jo_t j = jo_object_alloc ();
-     jo_stringf (j, "protocol", "%s%s%s", b.loopback ? "loopback" : proto_name (),
-                 (proto & PROTO_TXINVERT) ? "¬Tx" : "", (proto & PROTO_RXINVERT) ? "¬Rx" : "");
-     return j;
+   jo_stringf (j, "protocol", "%s%s%s", b.loopback ? "loopback" : proto_name (),
+               (proto & PROTO_TXINVERT) ? "¬Tx" : "", (proto & PROTO_RXINVERT) ? "¬Rx" : "");
+   return j;
 }
 
 jo_t s21debug = NULL;
@@ -492,42 +506,46 @@ enum
    RES_TIMEOUT
 };
 
-static int check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * payload)
+static int
+check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * payload)
 {
    if (len >= required)
       return 1;
 
    jo_t j = jo_comms_alloc ();
-     jo_stringf (j, "badlength", "%d", len);
-     jo_stringf (j, "expected", "%d", required);
-     jo_stringf (j, "command", "%c%c", cmd, cmd2);
-     jo_base16 (j, "data", payload, len);
-     revk_error ("comms", &j);
+   jo_stringf (j, "badlength", "%d", len);
+   jo_stringf (j, "expected", "%d", required);
+   jo_stringf (j, "command", "%c%c", cmd, cmd2);
+   jo_base16 (j, "data", payload, len);
+   revk_error ("comms", &j);
 
-     return 0;
+   return 0;
 }
 
-static void comm_timeout (uint8_t * buf, int rxlen)
+static void
+comm_timeout (uint8_t * buf, int rxlen)
 {
    daikin.talking = 0;
    b.loopback = 0;
    jo_t j = jo_comms_alloc ();
-     jo_bool (j, "timeout", 1);
+   jo_bool (j, "timeout", 1);
    if (rxlen)
-        jo_base16 (j, "data", buf, rxlen);
-     revk_error ("comms", &j);
+      jo_base16 (j, "data", buf, rxlen);
+   revk_error ("comms", &j);
 }
 
-static void comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
+static void
+comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
 {
    jo_t j = jo_comms_alloc ();
-     jo_stringf (j, "badsum", "%02X", c);
-     jo_base16 (j, "data", buf, rxlen);
-     revk_error ("comms", &j);
+   jo_stringf (j, "badsum", "%02X", c);
+   jo_base16 (j, "data", buf, rxlen);
+   revk_error ("comms", &j);
 }
 
 // Decode S21 response payload
-int daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
+int
+daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
 {
    if (len >= 1 && s21debug)
    {
@@ -703,32 +721,35 @@ int daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
    return RES_OK;
 }
 
-void protocol_found (void)
+void
+protocol_found (void)
 {
    b.protocol_set = 1;
    if (proto != protocol)
    {
       jo_t j = jo_object_alloc ();
-        jo_int (j, "protocol", proto);
-        revk_settings_store (j, NULL, 1);
-        jo_free (&j);
+      jo_int (j, "protocol", proto);
+      revk_settings_store (j, NULL, 1);
+      jo_free (&j);
    }
 }
 
-void cn_wired_report_fan_speed (const uint8_t * packet)
+void
+cn_wired_report_fan_speed (const uint8_t * packet)
 {
    int8_t new_fan = cnw_decode_fan (packet);
 
    if (new_fan != FAIKIN_FAN_INVALID)
-        report_uint8 (fan, new_fan);
+      report_uint8 (fan, new_fan);
    // Powerful is a dedicated flag\ for us, because this is how
    // other protocols handle it
-     report_bool (powerful, packet[CNW_FAN_OFFSET] == CNW_FAN_POWERFUL);
+   report_bool (powerful, packet[CNW_FAN_OFFSET] == CNW_FAN_POWERFUL);
 }
 
 // Parse an incoming CN_WIRED packet
 // These packets always have a fixed length of CNW_PKT_LEN
-void daikin_cn_wired_incoming_packet (const uint8_t * payload)
+void
+daikin_cn_wired_incoming_packet (const uint8_t * payload)
 {
    static int cnw_retries = 0;
    int8_t new_mode;
@@ -811,7 +832,8 @@ void daikin_cn_wired_incoming_packet (const uint8_t * payload)
    }
 }
 
-void daikin_cn_wired_send_modes (void)
+void
+daikin_cn_wired_send_modes (void)
 {
    int new_fan;
    uint8_t specials = 0;
@@ -877,14 +899,15 @@ void daikin_cn_wired_send_modes (void)
    }
 }
 
-void daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
+void
+daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 {                               // Process response
    if (debug && len)
    {
       jo_t j = jo_comms_alloc ();
-        jo_stringf (j, "cmd", "%02X", cmd);
-        jo_base16 (j, "payload", payload, len);
-        revk_info ("rx", &j);
+      jo_stringf (j, "cmd", "%02X", cmd);
+      jo_base16 (j, "payload", payload, len);
+      revk_info ("rx", &j);
    }
    if (cmd == 0xAA && len >= 1)
    {                            // Initialisation response
@@ -962,7 +985,8 @@ void daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 // Timeout value for serial port read
 #define READ_TIMEOUT (500 / portTICK_PERIOD_MS)
 
-void daikin_as_response (int len, uint8_t * res)
+void
+daikin_as_response (int len, uint8_t * res)
 {
    report_uint8 (online, 1);
    switch (*res)
@@ -970,30 +994,31 @@ void daikin_as_response (int len, uint8_t * res)
    case 'U':
       // TODO
       break;
-      case 'T':
-         // TODO
+   case 'T':
+      // TODO
       break;
-      case 'P':
-         // TODO
+   case 'P':
+      // TODO
       break;
-      case 'S':
-         // TODO
+   case 'S':
+      // TODO
       break;
    }
 }
 
-int daikin_as_command (int len, uint8_t * buf)
+int
+daikin_as_command (int len, uint8_t * buf)
 {
    uint8_t cs = 0;
    for (int i = 0; i < len; i++)
-        cs += buf[i];
-     buf[len++] = ~cs;
+      cs += buf[i];
+   buf[len++] = ~cs;
    if (b.dumping)
    {
       jo_t j = jo_comms_alloc ();
-        jo_stringf (j, "cmd", "%c", buf[1]);
-        jo_base16 (j, "dump", buf, len);
-        revk_info ("tx", &j);
+      jo_stringf (j, "cmd", "%c", buf[1]);
+      jo_base16 (j, "dump", buf, len);
+      revk_info ("tx", &j);
    }
    uart_write_bytes (uart, buf, len);
    uint8_t res[18];
@@ -1033,24 +1058,27 @@ int daikin_as_command (int len, uint8_t * buf)
    return RES_OK;
 }
 
-int daikin_as_poll (char reg)
+int
+daikin_as_poll (char reg)
 {
    uint8_t temp[3];
-     temp[0] = 0x02;
-     temp[1] = reg;
-     return daikin_as_command (2, temp);
+   temp[0] = 0x02;
+   temp[1] = reg;
+   return daikin_as_command (2, temp);
 }
 
-static int is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2)
+static int
+is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2)
 {
    return rxlen >= S21_MIN_PKT_LEN && buf[S21_STX_OFFSET] == STX && buf[rxlen - 1] == ETX &&
       buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
 }
 
-static jo_t jo_s21_alloc (char cmd, char cmd2, const char *payload, int payload_len)
+static jo_t
+jo_s21_alloc (char cmd, char cmd2, const char *payload, int payload_len)
 {
    jo_t j = jo_comms_alloc ();
-     jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
+   jo_stringf (j, "cmd", "%c%c", cmd, cmd2);
    if (payload_len)
    {
       jo_base16 (j, "payload", payload, payload_len);
@@ -1059,15 +1087,16 @@ static jo_t jo_s21_alloc (char cmd, char cmd2, const char *payload, int payload_
    return j;
 }
 
-int daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
+int
+daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
 {
    if (debug && payload_len > 2 && !b.dumping)
    {
       jo_t j = jo_s21_alloc (cmd, cmd2, payload, payload_len);
-        revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
+      revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking && !protofix)
-        return RES_WAIT;        // Failed
+      return RES_WAIT;          // Failed
    uint8_t buf[256],
      temp;
    int txlen = S21_MIN_PKT_LEN + payload_len;
@@ -1246,17 +1275,18 @@ int daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payloa
    return daikin_s21_response (buf[S21_CMD0_OFFSET], buf[S21_CMD1_OFFSET], rxlen - S21_MIN_PKT_LEN, buf + S21_PAYLOAD_OFFSET);
 }
 
-void daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
+void
+daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
 {                               // Send a command and get response
    if (debug && txlen)
    {
       jo_t j = jo_comms_alloc ();
-        jo_stringf (j, "cmd", "%02X", cmd);
-        jo_base16 (j, "payload", payload, txlen);
-        revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
+      jo_stringf (j, "cmd", "%02X", cmd);
+      jo_base16 (j, "payload", payload, txlen);
+      revk_info (daikin.talking || protofix ? "tx" : "cannot-tx", &j);
    }
    if (!daikin.talking && !protofix)
-        return;                 // Failed
+      return;                   // Failed
    uint8_t buf[256];
    buf[0] = 0x06;
    buf[1] = cmd;
@@ -1348,7 +1378,8 @@ void daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
 }
 
 // Parse control JSON, arrived by MQTT, and apply values
-const char *daikin_control (jo_t j, uint8_t insecure)
+const char *
+daikin_control (jo_t j, uint8_t insecure)
 {                               // Control settings as JSON
    jo_type_t t = jo_next (j);   // Start object
    jo_t s = NULL;
@@ -1424,7 +1455,8 @@ const char *daikin_control (jo_t j, uint8_t insecure)
 // --------------------------------------------------------------------------------
 jo_t debugsend = NULL;
 
-void autosub (void *json, const char *topic, jo_t j)
+void
+autosub (void *json, const char *topic, jo_t j)
 {
    if (!ble_sensor_connected () && jo_find (j, (char *) json) == JO_NUMBER)
    {
@@ -1432,21 +1464,22 @@ void autosub (void *json, const char *topic, jo_t j)
       daikin.controlvalid = uptime () + tcontrol;
       float env = jo_read_float (j);
       if (daikin.env != env)
-           daikin.status_changed = 1;
-        daikin.env = env;
-        daikin.status_known |= CONTROL_env;     // So we report it
-        xSemaphoreGive (daikin.mutex);
+         daikin.status_changed = 1;
+      daikin.env = env;
+      daikin.status_known |= CONTROL_env;       // So we report it
+      xSemaphoreGive (daikin.mutex);
    }
 }
 
 // Called by an MQTT client inside the revk library
-const char *mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
+const char *
+mqtt_client_callback (int client, const char *prefix, const char *target, const char *suffix, jo_t j)
 {                               // MQTT app callback
    const char *ret = NULL;
    if (client || !prefix || target || strcmp (prefix, topiccommand))
-        return NULL;            // Not for us or not a command from main MQTT
+      return NULL;              // Not for us or not a command from main MQTT
    if (!suffix)
-        return daikin_control (j, 1);   // General setting - we allow the setting changes even with no password
+      return daikin_control (j, 1);     // General setting - we allow the setting changes even with no password
    if (!strcmp (suffix, "reconnect"))
    {
       daikin.talking = 0;       // Disconnect and reconnect
@@ -1646,7 +1679,8 @@ const char *mqtt_client_callback (int client, const char *prefix, const char *ta
    return ret;
 }
 
-jo_t daikin_status (void)
+jo_t
+daikin_status (void)
 {
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    jo_t j = jo_comms_alloc ();
@@ -1671,7 +1705,7 @@ jo_t daikin_status (void)
       jo_close (j);
    }
    if (ble_sensor_enabled ())
-        jo_string (j, "autob", autob);
+      jo_string (j, "autob", autob);
 #endif
    if (daikin.remote)
    {
@@ -1693,7 +1727,8 @@ jo_t daikin_status (void)
 
 // --------------------------------------------------------------------------------
 // Web
-static void web_head (httpd_req_t * req, const char *title)
+static void
+web_head (httpd_req_t * req, const char *title)
 {
    revk_web_head (req, title);
    revk_web_send (req, "<style>"        //
@@ -1707,25 +1742,28 @@ static void web_head (httpd_req_t * req, const char *title)
                   "</style><body><h1>%s</h1>", title ? : "");
 }
 
-static esp_err_t web_icon (httpd_req_t * req)
+static esp_err_t
+web_icon (httpd_req_t * req)
 {                               // serve image -  maybe make more generic file serve
-   extern const char istart[]asm ("_binary_apple_touch_icon_png_start");
-   extern const char iend[]asm ("_binary_apple_touch_icon_png_end");
+   extern const char istart[] asm ("_binary_apple_touch_icon_png_start");
+   extern const char iend[] asm ("_binary_apple_touch_icon_png_end");
    httpd_resp_set_type (req, "image/png");
    httpd_resp_send (req, istart, iend - istart);
    return ESP_OK;
 }
 
-static esp_err_t web_favicon (httpd_req_t * req)
+static esp_err_t
+web_favicon (httpd_req_t * req)
 {                               // serve image -  maybe make more generic file serve
-   extern const char fistart[]asm ("_binary_favicon_ico_start");
-   extern const char fiend[]asm ("_binary_favicon_ico_end");
+   extern const char fistart[] asm ("_binary_favicon_ico_start");
+   extern const char fiend[] asm ("_binary_favicon_ico_end");
    httpd_resp_set_type (req, "image/x-icon");
    httpd_resp_send (req, fistart, fiend - fistart);
    return ESP_OK;
 }
 
-static void settings_autob (httpd_req_t * req)
+static void
+settings_autob (httpd_req_t * req)
 {
    revk_web_send (req, "<tr><td>BLE</td><td colspan=6>" //
                   "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
@@ -1754,7 +1792,8 @@ static void settings_autob (httpd_req_t * req)
    revk_web_send (req, "</td></tr>");
 }
 
-static esp_err_t web_control (httpd_req_t * req)
+static esp_err_t
+web_control (httpd_req_t * req)
 {
    web_head (req, hostname == revk_id ? appname : hostname);
    revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
@@ -1770,13 +1809,13 @@ static esp_err_t web_control (httpd_req_t * req)
    {
       addh (tag);
       va_list ap;
-        va_start (ap, field);
+      va_start (ap, field);
       int n = 0;
       while (1)
       {
          const char *tag = va_arg (ap, char *);
          if (!tag)
-              break;
+            break;
          if (n == 5)
          {
             revk_web_send (req, "</tr><tr><td></td>");
@@ -1896,7 +1935,7 @@ static esp_err_t web_control (httpd_req_t * req)
       revk_web_send (req, "<tr><td colspan=6>%s</td></tr>", note);
    }
    if (nofaikinauto && (*password || !autor))
-        addnote ("Faikin auto controls are hidden.");   // Hide works if password set, or if not actually set up for auto, otherwise show
+      addnote ("Faikin auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
    else if (!daikin.remote && (autor || !nofaikinauto))
    {
       void addtime (const char *tag, const char *field)
@@ -2003,7 +2042,8 @@ static esp_err_t web_control (httpd_req_t * req)
    return revk_web_foot (req, 0, websettings, b.protocol_set ? proto_name () : NULL);
 }
 
-static esp_err_t web_root (httpd_req_t * req)
+static esp_err_t
+web_root (httpd_req_t * req)
 {
    if ((!webcontrol || revk_link_down ()) && websettings)
       return revk_web_settings (req);   // Direct to web set up
@@ -2030,7 +2070,8 @@ static esp_err_t web_root (httpd_req_t * req)
 
 // Our own JSON-based control interface starts here
 
-static esp_err_t web_status (httpd_req_t * req)
+static esp_err_t
+web_status (httpd_req_t * req)
 {                               // Web socket status report
    int fd = httpd_req_to_sockfd (req);
    void wsend (jo_t * jp)
@@ -2053,9 +2094,9 @@ static esp_err_t web_status (httpd_req_t * req)
       const char *reason;
       int t = revk_shutting_down (&reason);
       if (t)
-           jo_string (j, "shutdown", reason);
-        wsend (&j);
-        return ESP_OK;
+         jo_string (j, "shutdown", reason);
+      wsend (&j);
+      return ESP_OK;
    }
    if (req->method == HTTP_GET)
       return status ();         // Send status on initial connect
@@ -2092,14 +2133,16 @@ static esp_err_t web_status (httpd_req_t * req)
 // with original Daikin BRP series online controllers.
 // These functions make use of the JSON library, even though the requests are query form formatted, and replies are comma formatted
 
-static jo_t legacy_ok (void)
+static jo_t
+legacy_ok (void)
 {
    jo_t j = jo_object_alloc ();
-     jo_string (j, "ret", "OK");
-     return j;
+   jo_string (j, "ret", "OK");
+   return j;
 }
 
-static char *legacy_stringify (jo_t * jp)
+static char *
+legacy_stringify (jo_t * jp)
 {
    char *buf = NULL;
 
@@ -2139,7 +2182,8 @@ static char *legacy_stringify (jo_t * jp)
    return buf;
 }
 
-static esp_err_t legacy_send (httpd_req_t * req, jo_t * jp)
+static esp_err_t
+legacy_send (httpd_req_t * req, jo_t * jp)
 {
    char *buf;
 
@@ -2153,7 +2197,8 @@ static esp_err_t legacy_send (httpd_req_t * req, jo_t * jp)
    return ESP_OK;
 }
 
-static void legacy_adv (jo_t j)
+static void
+legacy_adv (jo_t j)
 {
    jo_int (j, "adv",            //
            daikin.powerful ? 2 :        //
@@ -2162,7 +2207,8 @@ static void legacy_adv (jo_t j)
            0);
 }
 
-static esp_err_t legacy_simple_response (httpd_req_t * req, const char *err)
+static esp_err_t
+legacy_simple_response (httpd_req_t * req, const char *err)
 {
    jo_t j = jo_object_alloc ();
    if (err && *err)
@@ -2178,7 +2224,8 @@ static esp_err_t legacy_simple_response (httpd_req_t * req, const char *err)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_set_holiday (httpd_req_t * req)
+static esp_err_t
+legacy_web_set_holiday (httpd_req_t * req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2192,7 +2239,8 @@ static esp_err_t legacy_web_set_holiday (httpd_req_t * req)
    return legacy_simple_response (req, err);
 }
 
-static esp_err_t legacy_web_set_demand_control (httpd_req_t * req)
+static esp_err_t
+legacy_web_set_demand_control (httpd_req_t * req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2222,54 +2270,58 @@ static esp_err_t legacy_web_set_demand_control (httpd_req_t * req)
    return legacy_simple_response (req, err);
 }
 
-static void jo_protocol_version (jo_t j)
+static void
+jo_protocol_version (jo_t j)
 {
    jo_int (j, "pv", daikin.protocol_ver);       //Conditioner protocol version
    jo_int (j, "cpv", 3);        // Controller protocol version 
    jo_string (j, "cpv_minor", "20");    //
 }
 
-static jo_t legacy_get_basic_info (void)
+static jo_t
+legacy_get_basic_info (void)
 {
    time_t now = time (0);
    struct tm tm;
-     localtime_r (&now, &tm);
+   localtime_r (&now, &tm);
    jo_t j = legacy_ok ();
-     jo_string (j, "type", "aircon");
-     jo_string (j, "reg", region);
-     jo_int (j, "dst", tm.tm_isdst);    // Guess
-     jo_string (j, "ver", revk_version);
-     jo_string (j, "rev", revk_version);
-     jo_int (j, "pow", daikin.power);
-     jo_int (j, "err", 1 - daikin.online);
-     jo_int (j, "location", 0);
-     jo_string (j, "name", hostname);
-     jo_int (j, "icon", 1);
-     jo_string (j, "method", "home only");      // "polling" for Daikin cloud
-     jo_int (j, "port", 30050); // Cloud port ?
-     jo_string (j, "id", "");
-     jo_string (j, "pw", "");
-     jo_int (j, "lpw_flag", 0);
-     jo_int (j, "adp_kind", 0); // Controller HW type, for firmware update. We pretend to be GainSpan.
-     jo_protocol_version (j);
-     jo_int (j, "led", 1);      // Our LED is always on
-     jo_int (j, "en_setzone", 0);       // ??
-     jo_string (j, "mac", revk_id);
-     jo_string (j, "adp_mode", "run");  // Required for Daikin apps to see us
-     jo_string (j, "ssid", ""); // SSID in AP mode
-     jo_string (j, "ssid1", revk_wifi ());      // SSID in client mode
-     jo_string (j, "grp_name", "");
-     jo_int (j, "en_grp", 0);   //??
-     return j;
+   jo_string (j, "type", "aircon");
+   jo_string (j, "reg", region);
+   jo_int (j, "dst", tm.tm_isdst);      // Guess
+   jo_string (j, "ver", revk_version);
+   jo_string (j, "rev", revk_version);
+   jo_int (j, "pow", daikin.power);
+   jo_int (j, "err", 1 - daikin.online);
+   jo_int (j, "location", 0);
+   jo_string (j, "name", hostname);
+   jo_int (j, "icon", 1);
+   jo_string (j, "method", "home only");        // "polling" for Daikin cloud
+   jo_int (j, "port", 30050);   // Cloud port ?
+   jo_string (j, "id", "");
+   jo_string (j, "pw", "");
+   jo_int (j, "lpw_flag", 0);
+   jo_int (j, "adp_kind", 0);   // Controller HW type, for firmware update. We pretend to be GainSpan.
+   jo_protocol_version (j);
+   jo_int (j, "led", 1);        // Our LED is always on
+   jo_int (j, "en_setzone", 0); // ??
+   jo_string (j, "mac", revk_id);
+   jo_string (j, "adp_mode", "run");    // Required for Daikin apps to see us
+   jo_string (j, "ssid", "");   // SSID in AP mode
+   jo_string (j, "ssid1", revk_wifi ());        // SSID in client mode
+   jo_string (j, "grp_name", "");
+   jo_int (j, "en_grp", 0);     //??
+   return j;
 }
 
-static esp_err_t legacy_web_get_basic_info (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_basic_info (httpd_req_t * req)
 {
    jo_t j = legacy_get_basic_info ();
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_get_model_info (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_model_info (httpd_req_t * req)
 {
    int en_fdir = 0;
    int s_fdir = 0;
@@ -2302,7 +2354,8 @@ static esp_err_t legacy_web_get_model_info (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_get_control_info (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_control_info (httpd_req_t * req)
 {
    static float dt[8] = { 20, 20, 20, 20, 20, 20, 20, 20 };     // Used for some of the status
    static char dfr[8] = { 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A' };
@@ -2356,7 +2409,8 @@ static esp_err_t legacy_web_get_control_info (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_set_control_info (httpd_req_t * req)
+static esp_err_t
+legacy_web_set_control_info (httpd_req_t * req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2432,7 +2486,8 @@ static esp_err_t legacy_web_set_control_info (httpd_req_t * req)
    return legacy_simple_response (req, err);
 }
 
-static esp_err_t legacy_web_get_sensor_info (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_sensor_info (httpd_req_t * req)
 {
    jo_t j = legacy_ok ();
    if (daikin.status_known & CONTROL_home)
@@ -2452,7 +2507,8 @@ static esp_err_t legacy_web_get_sensor_info (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_register_terminal (httpd_req_t * req)
+static esp_err_t
+legacy_web_register_terminal (httpd_req_t * req)
 {
    // This is called with "?key=<security_key>" parameter if any other URL
    // responds with 403. It's supposed that we remember our client and enable access.
@@ -2462,7 +2518,8 @@ static esp_err_t legacy_web_register_terminal (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_get_year_power (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_year_power (httpd_req_t * req)
 {
    jo_t j = legacy_ok ();
    jo_stringf (j, "curr_year_heat", "%u/0/0/0/0/0/0/0/0/0/0/0", daikin.Wh / 100);       // Bodge, does not resent each year yet
@@ -2472,7 +2529,8 @@ static esp_err_t legacy_web_get_year_power (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_get_week_power (httpd_req_t * req)
+static esp_err_t
+legacy_web_get_week_power (httpd_req_t * req)
 {
    // ret=OK,s_dayw=2,week_heat=0/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
@@ -2482,7 +2540,8 @@ static esp_err_t legacy_web_get_week_power (httpd_req_t * req)
    return legacy_send (req, &j);
 }
 
-static esp_err_t legacy_web_set_special_mode (httpd_req_t * req)
+static esp_err_t
+legacy_web_set_special_mode (httpd_req_t * req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2535,7 +2594,8 @@ static esp_err_t legacy_web_set_special_mode (httpd_req_t * req)
 
 // Daikin's original auto-discovery mechanism. Reverse engineered from
 // Daikin online controller app.
-static void legacy_discovery_task (void *pvParameters)
+static void
+legacy_discovery_task (void *pvParameters)
 {
    // This is request string
    static const char daikin_udp_req[] = "DAIKIN_UDP/common/basic_info";
@@ -2544,7 +2604,7 @@ static void legacy_discovery_task (void *pvParameters)
    if (sock >= 0)
    {
       int res = 1;
-        setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, &res, sizeof (res));
+      setsockopt (sock, SOL_SOCKET, SO_REUSEADDR, &res, sizeof (res));
       {                         // Bind
          struct sockaddr_in dest_addr_ip4 = {.sin_addr.s_addr = htonl (INADDR_ANY),.sin_family = AF_INET,.sin_port = htons (30050)
          };
@@ -2594,11 +2654,12 @@ static void legacy_discovery_task (void *pvParameters)
    vTaskDelete (NULL);
 }
 
-static void addmodes (jo_t j, const struct FanMode *modes)
+static void
+addmodes (jo_t j, const struct FanMode *modes)
 {
    const struct FanMode *f;
 
-     jo_array (j, "fan_modes");
+   jo_array (j, "fan_modes");
    for (f = modes; f->name; f++)
    {
       // Only list modes, which are valid for current protocol
@@ -2610,7 +2671,8 @@ static void addmodes (jo_t j, const struct FanMode *modes)
 
 // Compose and send HomeAssistant MQTT auto-discovery message
 // According to https://www.home-assistant.io/integrations/mqtt/#mqtt-discovery
-static void send_ha_config (void)
+static void
+send_ha_config (void)
 {
    daikin.ha_send = 0;
    if (!haenable)
@@ -2621,34 +2683,34 @@ static void send_ha_config (void)
    jo_t make (const char *tag, const char *icon)
    {
       jo_t j = jo_object_alloc ();
-        jo_stringf (j, "unique_id", "%s%s", revk_id, tag);
-        jo_object (j, "dev");
-        jo_array (j, "ids");
-        jo_string (j, NULL, revk_id);
-        jo_close (j);
-        jo_string (j, "name", hostname);
+      jo_stringf (j, "unique_id", "%s%s", revk_id, tag);
+      jo_object (j, "dev");
+      jo_array (j, "ids");
+      jo_string (j, NULL, revk_id);
+      jo_close (j);
+      jo_string (j, "name", hostname);
       if (*daikin.model)
-           jo_string (j, "mdl", daikin.model);
-        jo_string (j, "sw", revk_version);
-        jo_string (j, "mf", "RevK");
+         jo_string (j, "mdl", daikin.model);
+      jo_string (j, "sw", revk_version);
+      jo_string (j, "mf", "RevK");
       if (*hadomain)
-           jo_stringf (j, "cu", "http://%s.%s/", hostname, hadomain);
+         jo_stringf (j, "cu", "http://%s.%s/", hostname, hadomain);
       else
       {
          char ip[40];
          if (revk_ipv6 (ip))
-              jo_stringf (j, "cu", "http://[%s]/", ip);
+            jo_stringf (j, "cu", "http://[%s]/", ip);
          else if (revk_ipv4 (ip))
-              jo_stringf (j, "cu", "http://%s/", ip);
+            jo_stringf (j, "cu", "http://%s/", ip);
       }
       jo_close (j);
       if (icon)
-           jo_string (j, "icon", icon);
-        jo_string (j, "avty_t", hastatus);
-        jo_string (j, "avty_tpl", "{{value_json.up}}");
-        jo_bool (j, "pl_avail", 1);
-        jo_bool (j, "pl_not_avail", 0);
-        return j;
+         jo_string (j, "icon", icon);
+      jo_string (j, "avty_t", hastatus);
+      jo_string (j, "avty_tpl", "{{value_json.up}}");
+      jo_bool (j, "pl_avail", 1);
+      jo_bool (j, "pl_not_avail", 0);
+      return j;
    }
    void addtemp (uint64_t ok, const char *tag, const char *name, const char *icon)
    {
@@ -2659,13 +2721,13 @@ static void send_ha_config (void)
          else
          {
             jo_t j = make (tag, icon);
-              jo_string (j, "name", name);
-              jo_string (j, "dev_cla", "temperature");
-              jo_string (j, "state_class", "measurement");
-              jo_string (j, "stat_t", hastatus);
-              jo_string (j, "unit_of_meas", "°C");
-              jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-              revk_mqtt_send (NULL, 1, topic, &j);
+            jo_string (j, "name", name);
+            jo_string (j, "dev_cla", "temperature");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", hastatus);
+            jo_string (j, "unit_of_meas", "°C");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
       }
@@ -2679,14 +2741,14 @@ static void send_ha_config (void)
          else
          {
             jo_t j = make (tag, icon);
-              jo_string (j, "name", tag);
+            jo_string (j, "name", tag);
             if (!strcmp (unit, "Hz"))
-                 jo_string (j, "dev_cla", "frequency");
-              jo_string (j, "state_class", "measurement");
-              jo_string (j, "stat_t", hastatus);
-              jo_string (j, "unit_of_meas", unit);
-              jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-              revk_mqtt_send (NULL, 1, topic, &j);
+               jo_string (j, "dev_cla", "frequency");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", hastatus);
+            jo_string (j, "unit_of_meas", unit);
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
       }
@@ -2700,13 +2762,13 @@ static void send_ha_config (void)
          else
          {
             jo_t j = make (tag, icon);
-              jo_string (j, "name", name);
-              jo_string (j, "stat_t", hastatus);
-              jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
-              jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-              jo_bool (j, "pl_on", 1);
-              jo_bool (j, "pl_off", 0);
-              revk_mqtt_send (NULL, 1, topic, &j);
+            jo_string (j, "name", name);
+            jo_string (j, "stat_t", hastatus);
+            jo_stringf (j, "cmd_t", "%s/%s", cmd, tag);
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            jo_bool (j, "pl_on", 1);
+            jo_bool (j, "pl_off", 0);
+            revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
       }
@@ -2758,7 +2820,7 @@ static void send_ha_config (void)
          jo_string (j, "fan_mode_stat_tpl", "{{value_json.fan}}");
          if (fan_5_auto ())
             addmodes (j, fans_5_auto);
-          else if (fan_3_auto ())
+         else if (fan_3_auto ())
             addmodes (j, fans_3_auto);
          // [“auto”, “low”, “medium”, “high”] is the default, no need to report
       }
@@ -2822,13 +2884,13 @@ static void send_ha_config (void)
          else
          {
             jo_t j = make (tag, icon);
-              jo_string (j, "name", name);
-              jo_string (j, "dev_cla", "humidity");
-              jo_string (j, "state_class", "measurement");
-              jo_string (j, "stat_t", hastatus);
-              jo_string (j, "unit_of_meas", "%");
-              jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-              revk_mqtt_send (NULL, 1, topic, &j);
+            jo_string (j, "name", name);
+            jo_string (j, "dev_cla", "humidity");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", hastatus);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
       }
@@ -2842,13 +2904,13 @@ static void send_ha_config (void)
          else
          {
             jo_t j = make (tag, icon);
-              jo_string (j, "name", name);
-              jo_string (j, "dev_cla", "battery");
-              jo_string (j, "state_class", "measurement");
-              jo_string (j, "stat_t", hastatus);
-              jo_string (j, "unit_of_meas", "%");
-              jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
-              revk_mqtt_send (NULL, 1, topic, &j);
+            jo_string (j, "name", name);
+            jo_string (j, "dev_cla", "battery");
+            jo_string (j, "state_class", "measurement");
+            jo_string (j, "stat_t", hastatus);
+            jo_string (j, "unit_of_meas", "%");
+            jo_stringf (j, "val_tpl", "{{value_json.%s}}", tag);
+            revk_mqtt_send (NULL, 1, topic, &j);
          }
          free (topic);
       }
@@ -2902,14 +2964,16 @@ static void send_ha_config (void)
    free (hastatus);
 }
 
-static void ha_status (void)
+static void
+ha_status (void)
 {                               // Home assistant message
    if (!haenable)
       return;
    revk_command ("status", NULL);
 }
 
-void revk_state_extra (jo_t j)
+void
+revk_state_extra (jo_t j)
 {
    if (!haenable)
       return;
@@ -2996,23 +3060,24 @@ void revk_state_extra (jo_t j)
       jo_bool (j, "autoe", autoe);
 }
 
-void uart_setup (void)
+void
+uart_setup (void)
 {
    esp_err_t err = 0;
-     ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
-               tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
+   ESP_LOGI (TAG, "Trying %s Tx %s%d Rx %s%d", proto_name (), (proto & PROTO_TXINVERT) ? "¬" : "",
+             tx.num, (proto & PROTO_RXINVERT) ? "¬" : "", rx.num);
    if (!err && !rx.set)
-        err = ESP_FAIL;
+      err = ESP_FAIL;
    if (!err && !GPIO_IS_VALID_GPIO (rx.num))
-        err = ESP_FAIL;
+      err = ESP_FAIL;
    if (!err)
-        err = gpio_reset_pin (rx.num);
+      err = gpio_reset_pin (rx.num);
    if (!err && !tx.set)
-        err = ESP_FAIL;
+      err = ESP_FAIL;
    if (!err && !GPIO_IS_VALID_OUTPUT_GPIO (tx.num))
-        err = ESP_FAIL;
+      err = ESP_FAIL;
    if (!err)
-        err = gpio_reset_pin (tx.num);
+      err = gpio_reset_pin (tx.num);
    if (proto_type () == PROTO_TYPE_CN_WIRED)
    {
       err = cn_wired_driver_install (rx.num, tx.num, invert_rx_line (), invert_tx_line ());
@@ -3061,7 +3126,8 @@ void uart_setup (void)
    }
 }
 
-static void register_uri (const httpd_uri_t * uri_struct)
+static void
+register_uri (const httpd_uri_t * uri_struct)
 {
    esp_err_t res = httpd_register_uri_handler (webserver, uri_struct);
    if (res != ESP_OK)
@@ -3070,7 +3136,8 @@ static void register_uri (const httpd_uri_t * uri_struct)
    }
 }
 
-static void register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
+static void
+register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 {
    httpd_uri_t uri_struct = {
       .uri = uri,
@@ -3080,7 +3147,8 @@ static void register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t
    register_uri (&uri_struct);
 }
 
-static void register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
+static void
+register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 {
    httpd_uri_t uri_struct = {
       .uri = uri,
@@ -3091,7 +3159,8 @@ static void register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t 
    register_uri (&uri_struct);
 }
 
-void revk_web_extra (httpd_req_t * req, int page)
+void
+revk_web_extra (httpd_req_t * req, int page)
 {
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
    revk_web_setting (req, "Text rather than icons", "noicons");
@@ -3112,7 +3181,8 @@ void revk_web_extra (httpd_req_t * req, int page)
 
 // --------------------------------------------------------------------------------
 // Main
-void app_main ()
+void
+app_main ()
 {
    ESP_LOGE (TAG, "Started");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
@@ -3131,6 +3201,22 @@ void app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
+
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+   ESP_LOGE (TAG, "USB %d", usb_serial_jtag_is_connected ());
+   if (tx.set && rx.set)
+   {                            // Direct loopback check
+      revk_gpio_input (rx);
+      ESP_LOGE (TAG, "Rx %d", revk_gpio_get (rx));
+      revk_gpio_output (tx, 0);
+      ESP_LOGE (TAG, "Rx %d", revk_gpio_get (rx));
+      revk_gpio_set (tx, 1);
+   }
+#endif
+
+   revk_blink (1, 0, "B");
+
+
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
 
@@ -3138,10 +3224,6 @@ void app_main ()
       revk_task ("daikin_discovery", legacy_discovery_task, NULL, 0);
 
    b.dumping = dump;
-   if (usb_serial_jtag_is_connected ())
-      revk_blink (1, 1, "G");
-   else
-      revk_blink (0, 0, "");
 
    if (webcontrol || websettings)
    {
@@ -3199,6 +3281,7 @@ void app_main ()
       b.protocol_set = 1;       // Fixed protocol - do not change
    else
       proto--;                  // We start by moving forward if protocol not set
+   sleep (1);                   // Ensure startup LED shows
    while (1)
    {                            // Main loop
       // We're (re)starting comms from scratch, so set "talking" flag.
@@ -3814,7 +3897,7 @@ void app_main ()
             }
             // We were controlling, so set to a non controlling mode, best guess at sane settings for now
             if (!isnan (daikin.mintarget) && !isnan (daikin.maxtarget))
-                 daikin_set_t (temp, daikin.heat ? daikin.maxtarget : daikin.mintarget);
+               daikin_set_t (temp, daikin.heat ? daikin.maxtarget : daikin.mintarget);
             daikin.mintarget = NAN;
             daikin.maxtarget = NAN;
          }
