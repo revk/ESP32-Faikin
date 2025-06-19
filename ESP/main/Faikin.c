@@ -3202,19 +3202,28 @@ app_main ()
    revk_boot (&mqtt_client_callback);
    revk_start ();
 
+   revk_blink (1, 0, "B");
 #ifdef  CONFIG_IDF_TARGET_ESP32S3
-   ESP_LOGE (TAG, "USB %d", usb_serial_jtag_is_connected ());
+   ESP_LOGD (TAG, "USB %d", usb_serial_jtag_is_connected ());
    if (tx.set && rx.set)
    {                            // Direct loopback check
       revk_gpio_input (rx);
-      ESP_LOGE (TAG, "Rx %d", revk_gpio_get (rx));
-      revk_gpio_output (tx, 0);
-      ESP_LOGE (TAG, "Rx %d", revk_gpio_get (rx));
-      revk_gpio_set (tx, 1);
+      if (revk_gpio_get (rx))
+      {
+         ESP_LOGD (TAG, "Rx %d", revk_gpio_get (rx));
+         revk_gpio_output (tx, 0);
+         if (!revk_gpio_get (rx))
+            b.loopback = 1;
+         ESP_LOGD (TAG, "Rx %d", revk_gpio_get (rx));
+         revk_gpio_set (tx, 1);
+      }
+      if (usb_serial_jtag_is_connected ())
+      {                         // ATE mode
+         ESP_LOGE (TAG, "ATE: %s", b.loopback ? "PASS" : "FAIL");
+         revk_blink (1, 0, b.loopback ? "G" : "R");
+      }
    }
 #endif
-
-   revk_blink (1, 0, "B");
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
@@ -3280,7 +3289,6 @@ app_main ()
       b.protocol_set = 1;       // Fixed protocol - do not change
    else
       proto--;                  // We start by moving forward if protocol not set
-   sleep (1);                   // Ensure startup LED shows
    while (1)
    {                            // Main loop
       // We're (re)starting comms from scratch, so set "talking" flag.
@@ -3788,8 +3796,8 @@ app_main ()
             daikin.control_changed = 0; // Give up on changes
             daikin.control_count = 0;
          }
-         if (usb_serial_jtag_is_connected () && !b.loopback)
-            revk_blink (1, 1, "G");
+         if (usb_serial_jtag_is_connected ())
+            revk_blink (1, 0, b.loopback ? "G" : "R");
          else
             revk_blink (0, 0, b.loopback ? "RGB" : !daikin.online ? "M" : dark ? "" : !daikin.power ? "y" : daikin.mode == 0 ? "O" : daikin.mode == 7 ? "C" : daikin.heat ? "R" : "B"); // FHCA456D
          uint32_t now = uptime ();
