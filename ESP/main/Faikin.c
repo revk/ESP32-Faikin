@@ -3216,12 +3216,13 @@ app_main ()
          ESP_LOGD (TAG, "Rx %d", revk_gpio_get (rx));
          revk_gpio_set (tx, 1);
       }
-      if (usb_serial_jtag_is_connected ())
-      {                         // ATE mode
-         ESP_LOGE (TAG, "ATE: %s", b.loopback ? "PASS" : "FAIL");
-         revk_blink (1, 0, b.loopback ? "G" : "R");
-      }
    }
+   if (usb_serial_jtag_is_connected ())
+   {                            // ATE mode
+      ESP_LOGE (TAG, "ATE: %s", b.loopback ? "PASS" : "FAIL");
+      revk_blink (1, 0, b.loopback ? "G" : "R");
+   } else
+      revk_blink (1, 0, b.loopback ? "B" : "G");
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
