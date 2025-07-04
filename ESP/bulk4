@@ -1,0 +1,14 @@
+#/bin/bash -f
+# Adrian's triple flashing script for Mac
+osascript -e 'tell app "Terminal"
+    do script "cd ~/git/ESP32-Faikin/ESP;get_idf;./bulk /dev/cu.usbmodem51101"
+end tell'
+osascript -e 'tell app "Terminal"
+    do script "cd ~/git/ESP32-Faikin/ESP;get_idf;./bulk /dev/cu.usbmodem51201"
+end tell'
+osascript -e 'tell app "Terminal"
+    do script "cd ~/git/ESP32-Faikin/ESP;get_idf;./bulk /dev/cu.usbmodem51301"
+end tell'
+osascript -e 'tell app "Terminal"
+    do script "cd ~/git/ESP32-Faikin/ESP;get_idf;./bulk /dev/cu.usbmodem51401"
+end tell'
