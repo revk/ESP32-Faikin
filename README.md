@@ -27,7 +27,7 @@ This is an open source project, but bear in mind you cannot sell boards bearing 
 - [Controls](Manuals/Controls.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
 - [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code
-- [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi
+- [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi (please update as needed)
 - [DoC](Manuals/DoC.md) and Vulnerability disclosure policy
 - [S21](Manuals/S21.md) reverse engineered details of `S21` protocol
 
