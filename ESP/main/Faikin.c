@@ -965,7 +965,9 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
    {                            // Status/flags?
       report_int (fanrpm, (payload[2] + (payload[3] << 8)));
       // Flag4 ?
+      if(!noflap)
       report_uint8 (flap, payload[5]);
+      if(!noantifreeze)
       report_uint8 (antifreeze, payload[6]);
       // Flag7 ?
       // Flag8 ?
