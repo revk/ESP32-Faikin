@@ -1733,15 +1733,9 @@ static void
 web_head (httpd_req_t * req, const char *title)
 {
    revk_web_head (req, title);
-   revk_web_send (req, "<style>"        //
-                  "body{font-family:sans-serif;background:#8cf;}"       //
-                  ".on{opacity:1;transition:1s;}"       // 
-                  ".off{opacity:0;transition:1s;}"      // 
-                  "select{min-height:34px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}"    //
-                  "input.temp{min-width:230px;}"        //
-                  "input.time{min-height:34px;min-width:64px;border-radius:34px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;}" //
-                  "a.pn{min-height:34px;min-width:34px;border-radius:30px;background-color:#ccc;border:1px solid gray;color:black;box-shadow:3px 3px 3px #0008;margin:3px;padding:3px 10px;font-size:100%%;}"   //
-                  "</style><body><h1>%s</h1>", title ? : "");
+   revk_web_send (req,
+      "<link rel=\"stylesheet\" type=\"text/css\" href=\"/webapp.css\">"
+      "<body><h1>%s</h1>", title ? : "");
 }
 
 static esp_err_t
@@ -3181,6 +3175,14 @@ revk_web_extra (httpd_req_t * req, int page)
    }
 }
 
+static esp_err_t webapp_css_handler(httpd_req_t *req) {
+    httpd_resp_set_type(req, "text/css");
+    extern const char _binary_webapp_css_start[];
+    extern const char _binary_webapp_css_end[];
+    httpd_resp_send(req, _binary_webapp_css_start, _binary_webapp_css_end - _binary_webapp_css_start);
+    return ESP_OK;
+}
+
 // --------------------------------------------------------------------------------
 // Main
 void
@@ -3241,12 +3243,13 @@ app_main ()
       config.stack_size += 4096;        // Being on the safe side
       // When updating the code below, make sure this is enough
       // Note that we're also adding revk's own web config handlers
-      config.max_uri_handlers = 16 + revk_num_web_handlers ();
+      config.max_uri_handlers = 17 + revk_num_web_handlers ();
       if (!httpd_start (&webserver, &config))
       {
          if (websettings)
             revk_web_settings_add (webserver);
          register_get_uri ("/", web_root);
+         register_get_uri ("/webapp.css", webapp_css_handler);
          register_get_uri ("/apple-touch-icon.png", web_icon);
          register_get_uri ("/favicon.ico", web_favicon);
          if (webcontrol)
