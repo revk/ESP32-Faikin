@@ -4414,7 +4414,7 @@
 	)
 	(text "2/6 are loop back test\nvia TC2030m cable."
 		(exclude_from_sim no)
-		(at 211.836 109.22 0)
+		(at 211.836 110.998 0)
 		(effects
 			(font
 				(size 1.27 1.27)
