@@ -7170,7 +7170,7 @@
 				(hide yes)
 			)
 		)
-		(property "Rotation Offset" "-90"
+		(property "Rotation Offset" "180"
 			(at 80.01 171.45 0)
 			(effects
 				(font
