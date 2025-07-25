@@ -3,3 +3,4 @@
 build
 *.exe
 *.o
+.vscode/settings.json
