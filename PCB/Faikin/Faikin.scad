@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-07-31 14:54:07
+// Generated 2025-08-01 09:21:32
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -10,7 +10,7 @@
 margin=0.200000;
 lip=2.000000;
 casebottom=2.600000;
-casetop=6.000000;
+casetop=5.000000;
 casewall=3.000000;
 fit=0.000000;
 edge=2.000000;
@@ -137,7 +137,7 @@ translate([4.100000,-1.000000,1.200000])rotate([0,0,90.000000])m5(part,hole,bloc
 };
 module part_L1(part=true,hole=false,block=false)
 {
-translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])scale([1.250000,1.250000,1.900000])rotate([0.000000,0.000000,-90.000000])m7(part,hole,block,casetop); // RevK:L_5x5 TYA4020 (back)
+translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])m7(part,hole,block,casetop); // L1 (back)
 };
 module part_R2(part=true,hole=false,block=false)
 {
@@ -191,7 +191,7 @@ part_C4(part,hole,block);
 part_PCB1(part,hole,block);
 }
 
-parts_top=6;
+parts_top=7;
 module part_J2(part=true,hole=false,block=false)
 {
 };
@@ -333,11 +333,11 @@ if(hole)
 }
 
 module m7(part=false,hole=false,block=false,height)
-{ // RevK:L_5x5 TYA4020
-// 4x4 Inductor
+{ // L1
+// 5x5x4 Inductor
 if(part)
 {
-	b(0,0,0,4,4,3);
+	b(0,0,0,5,5,4);
 }
 }
 
@@ -593,4 +593,5 @@ module bottom()
 		pcb(height,r=margin);
 	}
 }
+translate([spacing*2,0,0])preview();
 bottom(); translate([spacing,0,0])top();

@@ -12,4 +12,4 @@ This is an open source project, but bear in mind you cannot sell boards bearing 
 <img src='Faikin-alt.png' width=32%><img src='Faikin-alt-90.png' width=32%><img src='Faikin-alt-bottom.png' width=32%>
 <img src='Faikin-panel.png' width=49%><img src='Faikin-panel-bottom.png' width=49%>
 
-*Auto generated 2025-07-31T14:54:07*
+*Auto generated 2025-08-01T09:17:19*
