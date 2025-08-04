@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-04 11:38:07
+// Generated 2025-08-04 11:39:14
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -405,24 +405,25 @@ module top_half(step=false)
 		translate([-casebottom-100,-casewall-100,pcbthickness-lip/2+0.01]) cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
 		if(step)translate([0,0,pcbthickness-lip/2-0.03])
         	{
-            	difference()
-            	{
-                	pcb_hulled(lip,casewall);
-                	pcb_hulled(lip,casewall/2+fit);
-                	hull()
-                	{
-                    	translate([lip/2,-casewall-100,0])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
-                    	translate([-lip/2,-casewall-100,lip])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
-                	}
-            	}
-            	difference()
-            	{
-                	pcb_hulled(lip,casewall/2+fit);
-                	hull()
-                	{
-                    	translate([-casebottom-100-lip/2,-casewall-100,0])cube([casebottom+100,pcblength+casewall*2+200,height]);
-                    	translate([-casebottom-100+lip/2,-casewall-100,lip])cube([casebottom+100,pcblength+casewall*2+200,height]);
-                	}
+            		difference()
+            		{
+                		pcb_hulled(lip,casewall);
+                		pcb_hulled(lip,casewall/2+fit);
+                		hull()
+                		{
+                    		translate([lip/2,-casewall-100,0])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
+                    		translate([-lip/2,-casewall-100,lip])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
+                		}
+            		}
+            		difference()
+            		{
+                		pcb_hulled(lip,casewall/2+fit);
+                		hull()
+                		{
+                    		translate([-casebottom-100-lip/2,-casewall-100,0])cube([casebottom+100,pcblength+casewall*2+200,height]);
+                    		translate([-casebottom-100+lip/2,-casewall-100,lip])cube([casebottom+100,pcblength+casewall*2+200,height]);
+                		}
+			}
             	}
         }
 }
