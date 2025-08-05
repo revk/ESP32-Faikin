@@ -12,7 +12,7 @@ stl: 	Faikin/Faikin.stl
 png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
 
 Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case Makefile PCBCase/case Makefile
-	PCBCase/case -o $@ $< --edge=2 --top=5 --bottom=2.6 --pcb=2
+	PCBCase/case -o $@ $< --edge=2 --top=5.5 --bottom=2.6 --pcb=2
 
 PCBCase/clean: PCBCase/clean.c
 	make -C PCBCase
