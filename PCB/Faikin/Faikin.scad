@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-08 14:46:03
+// Generated 2025-08-09 10:52:33
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -8,7 +8,7 @@
 
 // Globals
 margin=0.200000;
-lip=2.000000;
+lip=3.000000;
 casebottom=2.600000;
 casetop=5.500000;
 casewall=3.000000;
@@ -334,9 +334,6 @@ translate([-15.4/2,-15.45/2,0])
 	{
 		cube([15.4,20.5,0.8]);
 		translate([0.7,0.5,0])cube([14,13.55,2.4]);
-	}
-	if(hole)
-	{
 		cube([15.4,20.5,0.8]);
 	}
 }
@@ -423,19 +420,19 @@ module top_half(step=false)
             		{
                 		pcb_hulled(lip,casewall);
                 		pcb_hulled(lip,casewall/2+fit);
-                		hull()
+				for(a=[0,180])rotate(a)hull()
                 		{
-                    		translate([lip/2,-casewall-100,0])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
-                    		translate([-lip/2,-casewall-100,lip])cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
+                            		translate([lip/2,lip/2,-lip])cube([pcbwidth,pcblength,lip]);
+                            		translate([-lip/2,-lip/2,lip])cube([pcbwidth,pcblength,lip]);
                 		}
             		}
             		difference()
             		{
                 		pcb_hulled(lip,casewall/2+fit);
-                		hull()
+				for(a=[90,270])rotate(a)hull()
                 		{
-                    		translate([-casebottom-100-lip/2,-casewall-100,0])cube([casebottom+100,pcblength+casewall*2+200,height]);
-                    		translate([-casebottom-100+lip/2,-casewall-100,lip])cube([casebottom+100,pcblength+casewall*2+200,height]);
+                            		translate([lip/2,lip/2,-lip])cube([pcbwidth,pcblength,lip]);
+                            		translate([-lip/2,-lip/2,lip])cube([pcbwidth,pcblength,lip]);
                 		}
 			}
             	}
