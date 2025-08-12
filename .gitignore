@@ -4,3 +4,4 @@ build
 *.exe
 *.o
 .vscode/settings.json
+PCB/home
