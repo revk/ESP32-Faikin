@@ -4,3 +4,4 @@ build
 *.exe
 *.o
 PCB/home
+.vscode
