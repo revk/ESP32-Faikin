@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-12 10:32:51
+// Generated 2025-08-12 11:23:19
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -423,7 +423,8 @@ module top_half(fit=0)
 		translate([-casebottom-100,-casewall-100,pcbthickness+0.01]) cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
 		translate([0,0,pcbthickness])
         	{
-			snaph=(lip-snap*2)/6;
+			snape=lip/5;
+			snaph=(lip-snape*2)/3;
 			if(lipt==1)rotate(lipa)hull()
 			{
 				translate([0,-pcblength,lip/2])cube([0.001,pcblength*2,0.001]);
@@ -441,13 +442,13 @@ module top_half(fit=0)
 					hull()
 					{
 						pcb_hulled(0.1,casewall/2-snap/2+fit);
-						translate([0,0,snap])pcb_hulled(snaph,casewall/2+snap/2+fit);
-						translate([0,0,lip-snap-snaph])pcb_hulled(0.1,casewall/2-snap/2+fit);
+						translate([0,0,snape])pcb_hulled(snaph,casewall/2+snap/2+fit);
+						translate([0,0,lip-snape-snaph])pcb_hulled(0.1,casewall/2-snap/2+fit);
 					}
-					translate([0,0,lip-snap-snaph])pcb_hulled(snaph,casewall/2-snap/2+fit);
+					translate([0,0,lip-snape-snaph])pcb_hulled(snaph,casewall/2-snap/2+fit);
 					hull()
 					{
-						translate([0,0,lip-snap])pcb_hulled(0.1,casewall/2-snap/2+fit);
+						translate([0,0,lip-snape])pcb_hulled(0.1,casewall/2-snap/2+fit);
 						translate([0,0,lip])pcb_hulled(0.1,casewall/2+snap/2+fit);
 					}
                         	}
@@ -471,13 +472,13 @@ module top_half(fit=0)
 					hull()
 					{
 						translate([0,0,-0.1])pcb_hulled(0.1,casewall/2+snap/2-fit);
-						translate([0,0,snap-0.1])pcb_hulled(0.1,casewall/2-snap/2-fit);
+						translate([0,0,snape-0.1])pcb_hulled(0.1,casewall/2-snap/2-fit);
 					}
-					translate([0,0,snap])pcb_hulled(snaph,casewall/2-snap/2-fit);
+					translate([0,0,snape])pcb_hulled(snaph,casewall/2-snap/2-fit);
 					hull()
 					{
-						translate([0,0,snap+snaph])pcb_hulled(0.1,casewall/2-snap/2-fit);
-						translate([0,0,lip-snap-snaph])pcb_hulled(snaph,casewall/2+snap/2-fit);
+						translate([0,0,snape+snaph])pcb_hulled(0.1,casewall/2-snap/2-fit);
+						translate([0,0,lip-snape-snaph])pcb_hulled(snaph,casewall/2+snap/2-fit);
 						translate([0,0,lip-0.1])pcb_hulled(0.1,casewall/2-snap/2-fit);
 					}
                         	}
