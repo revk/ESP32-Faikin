@@ -12,13 +12,13 @@ stl: 	Faikin/Faikin.stl Faikin/FaikinT.stl Faikin/FaikinB.stl
 png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
 
 Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=2.6 --pcb=2 --snap=0 --fit=0
+	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 --snap=0 --fit=0
 
 Faikin/FaikinB.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=2.6 --pcb=2 -B
+	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 -B
 
 Faikin/FaikinT.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=2.6 --pcb=2 -T
+	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 -T
 
 PCBCase/clean: PCBCase/clean.c
 	make -C PCBCase

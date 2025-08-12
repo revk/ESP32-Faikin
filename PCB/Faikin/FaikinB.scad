@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-11 14:59:09
+// Generated 2025-08-12 07:20:54
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -9,10 +9,11 @@
 // Globals
 margin=0.200000;
 lip=3.000000;
+lipa=0;
 casebottom=2.600000;
 casetop=6.000000;
 casewall=3.000000;
-fit=0.100000;
+fit=0.000000;
 snap=0.100000;
 edge=2.000000;
 pcbthickness=1.200000;
@@ -356,7 +357,7 @@ if(part)
 {
 	b(2.5*(N/2)-1.25,3.6,0,2.5*N+2.5,6,4);
 	b(2.5*(N/2)-1.25,0,0,2.5*N+2.5,3.2,1.5);
-	for(a=[0:1:N-1])translate([2.5*a,0,-3])cylinder(d1=0.5,d2=2.5,h=3,$fn=12);
+	for(a=[0:1:N-1])translate([2.5*a,0,-3.2])cylinder(d1=0.5,d2=2.5,h=3.21-pcbthickness,$fn=12);
 }
 if(hole)
 {
@@ -425,7 +426,7 @@ module top_half(step=false,fit=0)
                             		pcb_hulled(0.1,casewall/2+fit);
                             		translate([0,0,lip-0.1])pcb_hulled(0.101,casewall/2-snap+fit);
                         	}
-				for(a=[45,225])rotate(a)hull()
+				for(a=[0,180])rotate(a+lipa)hull()
                 		{
                             		translate([lip/2,lip/2,0])cube([pcbwidth+pcblength,pcbwidth+pcblength,lip]);
                             		translate([-lip/2,-lip/2,lip])cube([pcbwidth+pcblength,pcbwidth+pcblength,lip]);
@@ -438,7 +439,7 @@ module top_half(step=false,fit=0)
                             		pcb_hulled(0.1,casewall/2-fit);
                             		translate([0,0,lip-0.1])pcb_hulled(0.101,casewall/2+snap-fit);
                         	}
-				for(a=[135,315])rotate(a)hull()
+				for(a=[90,270])rotate(a+lipa)hull()
                 		{
                             		translate([lip/2,lip/2,0])cube([pcbwidth+pcblength,pcbwidth+pcblength,lip]);
                             		translate([-lip/2,-lip/2,lip])cube([pcbwidth+pcblength,pcbwidth+pcblength,lip]);
