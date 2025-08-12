@@ -12,7 +12,7 @@ stl: 	Faikin/FaikinT.stl Faikin/FaikinB.stl
 png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
 
 Faikin/FaikinT.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 --two-file
+	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 --two-file --lip-type=1
 
 PCBCase/clean: PCBCase/clean.c
 	make -C PCBCase
