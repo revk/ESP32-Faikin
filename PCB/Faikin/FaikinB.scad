@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-12 10:31:23
+// Generated 2025-08-12 10:32:51
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -416,14 +416,23 @@ module preview()
 	color("#00f8")parts_bottom(block=true);
 }
 
-module top_half(step=false,fit=0)
+module top_half(fit=0)
 {
 	difference()
 	{
 		translate([-casebottom-100,-casewall-100,pcbthickness+0.01]) cube([pcbwidth+casewall*2+200,pcblength+casewall*2+200,height]);
-		if(step)translate([0,0,pcbthickness])
+		translate([0,0,pcbthickness])
         	{
 			snaph=(lip-snap*2)/6;
+			if(lipt==1)rotate(lipa)hull()
+			{
+				translate([0,-pcblength,lip/2])cube([0.001,pcblength*2,0.001]);
+				translate([-lip/2,-pcblength,0])cube([lip,pcblength*2,0.001]);
+			} else if(lipt==2)for(a=[0,90,180,270])rotate(a+lipa)hull()
+			{
+				translate([0,-pcblength-pcbwidth,lip/2])cube([0.001,pcblength*2+pcbwidth*2,0.001]);
+				translate([-lip/2,-pcblength-pcbwidth,0])cube([lip,pcblength*2+pcbwidth*2,0.001]);
+			}
             		difference()
             		{
                 		pcb_hulled(lip,casewall);
@@ -558,7 +567,7 @@ module top_cut(fit=0)
 {
 	difference()
 	{
-		top_half(true,fit);
+		top_half(fit);
 		if(parts_top)difference()
 		{
 			minkowski()
@@ -606,7 +615,6 @@ module top_body()
 		{
 			solid_case();
 			pcb_hulled(height);
-			top_half();
 		}
 		if(parts_top)minkowski()
 		{
