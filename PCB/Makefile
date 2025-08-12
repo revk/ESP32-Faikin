@@ -7,12 +7,9 @@ all: png stl
 	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
 	echo "Made $@"
 
-stl: 	Faikin/Faikin.stl Faikin/FaikinT.stl Faikin/FaikinB.stl
+stl: 	Faikin/FaikinT.stl Faikin/FaikinB.stl
 
 png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
-
-Faikin/Faikin.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
-	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2
 
 Faikin/FaikinB.scad: Faikin/Faikin.kicad_pcb PCBCase/case PCBCase/case
 	PCBCase/case -o $@ $< --edge=2 --top=6 --bottom=3 --pcb=2 -B
