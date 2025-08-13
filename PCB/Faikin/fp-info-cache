@@ -1,4 +1,4 @@
-26441277279017109
+26446582759356149
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -96495,6 +96495,13 @@ WAGO-2060-451-998-404
 2
 1
 RevK
+WAGO-2060-451-998-404-S
+
+
+0
+2
+1
+RevK
 WAGO-2060-452-998-404
 
 
@@ -96502,7 +96509,21 @@ WAGO-2060-452-998-404
 4
 2
 RevK
+WAGO-2060-452-998-404-S
+
+
+0
+4
+2
+RevK
 WAGO-2060-453-998-404
+
+
+0
+6
+3
+RevK
+WAGO-2060-453-998-404-S
 
 
 0
