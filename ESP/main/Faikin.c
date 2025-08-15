@@ -965,10 +965,10 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
    {                            // Status/flags?
       report_int (fanrpm, (payload[2] + (payload[3] << 8)));
       // Flag4 ?
-      if(!noflap)
-      report_uint8 (flap, payload[5]);
-      if(!noantifreeze)
-      report_uint8 (antifreeze, payload[6]);
+      if (!noflap)
+         report_uint8 (flap, payload[5]);
+      if (!noantifreeze)
+         report_uint8 (antifreeze, payload[6]);
       // Flag7 ?
       // Flag8 ?
       // Flag9 ?
@@ -3224,7 +3224,7 @@ app_main ()
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
-   revk_blink_do (); // Show LED ASAP
+   revk_blink_do ();            // Show LED ASAP
 
    if (*autotopic)
       revk_mqtt_sub (0, autotopic, autosub, *autopayload ? autopayload : "env");
@@ -3519,11 +3519,11 @@ app_main ()
       	    s21.a##b##d.ack=s21.a##b##d.nak=s21.a##b##d.bad=0;\
     } while(0)
                poll (F, 1, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, 2, 0,);
-               if (s21.F6.bad || debug)
+               if (s21.F6.bad || s21extra)
                   poll (F, 3, 0,);      // If F6 works we assume we don't need F3
-               if (debug)
+               if (s21extra)
                   poll (F, 4, 0,);
                poll (F, 5, 0,);
                poll (F, 6, 0,);
@@ -3531,29 +3531,29 @@ app_main ()
                if (!s21.F8.ack)
                   poll (F, 8, 0,);      // One time static value
                poll (F, 9, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, A, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, B, 0,);
                if (!s21.FC.ack)
                   poll (F, C, 0,);      // One time static value
-               if (debug)
+               if (s21extra)
                   poll (F, G, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, K, 0,);
                poll (F, M, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, N, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, P, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, Q, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, S, 0,);
-               if (debug)
+               if (s21extra)
                   poll (F, T, 0,);
-               //if(debug)poll (F, U, 2, 02);
-               //if(debug)poll (F, U, 2, 04);
+               //if(s21extra)poll (F, U, 2, 02);
+               //if(s21extra)poll (F, U, 2, 04);
                if (!nohourly)
                {
                   uint8_t n = ((time (0) / 3600) & 1);
@@ -3586,15 +3586,15 @@ app_main ()
                   break;
                case 5:
                   poll (R, N, 0,);      // Angle
-                  if (!debug && s21.rgfan)
+                  if (!s21extra && s21.rgfan)
                      rcycle = 0;        // End as RG done anyway
                   break;
                case 6:
                   if (!s21.rgfan)
                      poll (R, G, 0,);   // Fan
-                  if (!debug)
+                  if (!s21extra)
                   {
-                     rcycle = 0;        // End of normal R polling - the following are debug only
+                     rcycle = 0;        // End of normal R polling - the following are extra/debug only
                      break;
                   }
                   if (s21.rgfan)
@@ -3609,7 +3609,7 @@ app_main ()
                   break;
                case 9:
                   poll (R, D, 0,);
-                  rcycle = 0;   // End of debug cycle
+                  rcycle = 0;   // End of extra/debug cycle
                   break;
                }
 
