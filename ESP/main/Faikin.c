@@ -56,8 +56,8 @@ static const char TAG[] = "Faikin";
 
 typedef struct poll_s
 {
+   uint8_t nak:3;               //      Count of NAKs in a row - if too many we set bad
    uint8_t ack:1;               //      We got an ACK so this is valid
-   uint8_t nak:2;               //      Count of NAKs in a row - if too many we set bad
    uint8_t bad:1;               //      Too many NAKs, assume not supported
 } poll_t;
 struct
