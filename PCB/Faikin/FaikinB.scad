@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-13 12:42:34
+// Generated 2025-08-17 11:05:22
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -292,7 +292,7 @@ if(block)
 {
         hull()
         {
-                b(0,0,0,2.4,2.4,1);
+                b(0,0,.8,2.8,2.8,1);
                 translate([0,0,height])cylinder(d=4,h=1,$fn=16);
         }
 }
