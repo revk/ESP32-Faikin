@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-17 11:05:22
+// Generated 2025-08-17 16:04:15
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -100,6 +100,9 @@ module part_D2(part=true,hole=false,block=false)
 {
 translate([2.500000,5.000000,1.200000])rotate([0,0,90.000000])m4(part,hole,block,casetop); // D3 (back)
 };
+module part_FID2(part=true,hole=false,block=false)
+{
+};
 module part_U1(part=true,hole=false,block=false)
 {
 translate([0.200000,-1.387500,1.200000])rotate([0,0,90.000000])m6(part,hole,block,casetop); // U1 (back)
@@ -113,7 +116,7 @@ module part_TP1(part=true,hole=false,block=false)
 };
 module part_U4(part=true,hole=false,block=false)
 {
-translate([-9.670000,0.000000,1.200000])rotate([0,0,90.000000])m7(part,hole,block,casetop); // U4 (back)
+translate([-9.750000,0.000000,1.200000])rotate([0,0,90.000000])m7(part,hole,block,casetop); // U4 (back)
 };
 module part_C1(part=true,hole=false,block=false)
 {
@@ -130,6 +133,9 @@ module part_J1(part=true,hole=false,block=false)
 {
 translate([6.055000,5.000000,1.200000])rotate([0,0,-90.000000])m9(part,hole,block,casetop,05); // J1 (back)
 };
+module part_FID3(part=true,hole=false,block=false)
+{
+};
 module part_R8(part=true,hole=false,block=false)
 {
 translate([-1.100000,-0.600000,1.200000])rotate([0,0,180.000000])m1(part,hole,block,casetop); // RevK:R_0201 R_0201_0603Metric (back)
@@ -141,6 +147,9 @@ translate([4.100000,-1.000000,1.200000])rotate([0,0,90.000000])m8(part,hole,bloc
 module part_L1(part=true,hole=false,block=false)
 {
 translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])m10(part,hole,block,casetop); // L1 (back)
+};
+module part_FID1(part=true,hole=false,block=false)
+{
 };
 module part_R2(part=true,hole=false,block=false)
 {
@@ -177,6 +186,7 @@ part_Q1(part,hole,block);
 part_C2(part,hole,block);
 part_R3(part,hole,block);
 part_D2(part,hole,block);
+part_FID2(part,hole,block);
 part_U1(part,hole,block);
 part_C3(part,hole,block);
 part_TP1(part,hole,block);
@@ -185,9 +195,11 @@ part_C1(part,hole,block);
 part_V2(part,hole,block);
 part_C15(part,hole,block);
 part_J1(part,hole,block);
+part_FID3(part,hole,block);
 part_R8(part,hole,block);
 part_C17(part,hole,block);
 part_L1(part,hole,block);
+part_FID1(part,hole,block);
 part_R2(part,hole,block);
 part_C18(part,hole,block);
 part_C4(part,hole,block);
