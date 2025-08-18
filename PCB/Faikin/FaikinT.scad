@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-17 16:04:15
+// Generated 2025-08-18 16:40:33
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -15,7 +15,7 @@ casebottom=3.000000;
 casetop=6.000000;
 casewall=3.000000;
 fit=0.000000;
-snap=0.100000;
+snap=0.150000;
 edge=2.000000;
 pcbthickness=1.200000;
 nohull=false;
