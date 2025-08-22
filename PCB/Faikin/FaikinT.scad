@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-22 13:15:36
+// Generated 2025-08-22 15:32:03
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -12,7 +12,7 @@ lip=3.000000;
 lipa=0;
 lipt=1;
 casebottom=3.000000;
-casetop=6.000000;
+casetop=7.000000;
 casewall=3.000000;
 fit=0.000000;
 snap=0.150000;
@@ -148,9 +148,6 @@ module part_L1(part=true,hole=false,block=false)
 {
 translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])m10(part,hole,block,casetop); // L1 (back)
 };
-module part_FID1(part=true,hole=false,block=false)
-{
-};
 module part_R2(part=true,hole=false,block=false)
 {
 translate([1.600000,6.900000,1.200000])rotate([0,0,90.000000])m1(part,hole,block,casetop); // RevK:R_0201 R_0201_0603Metric (back)
@@ -199,7 +196,6 @@ part_FID3(part,hole,block);
 part_R8(part,hole,block);
 part_C17(part,hole,block);
 part_L1(part,hole,block);
-part_FID1(part,hole,block);
 part_R2(part,hole,block);
 part_C18(part,hole,block);
 part_C4(part,hole,block);
