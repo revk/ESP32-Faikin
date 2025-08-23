@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-22 15:32:03
+// Generated 2025-08-23 14:37:26
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -391,7 +391,7 @@ module m10(part=false,hole=false,block=false,height)
 // 5x5x4 Inductor
 if(part)
 {
-	b(0,0,0,5,5,4);
+	b(0,0,0,5,5,4.3);
 }
 }
 
