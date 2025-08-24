@@ -730,4 +730,9 @@ module bottom()
 		pcb(height,r=margin);
 	}
 }
-bottom();
+difference()
+{
+    bottom();
+    linear_extrude(0.25)
+    text("2025-08-24",size=2,halign="center",valign="center",font="OCR-B");
+}
