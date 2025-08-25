@@ -1,6 +1,6 @@
 # PCB makefile (3d Cases)
 
-all: png stl
+all: png stl */README.md
 
 %.stl:	%.scad
 	echo "Making $@"
@@ -22,3 +22,6 @@ PCBCase/case: PCBCase/case.c
 
 %.png:	%.kicad_pcb PCBCase/clean PCBCase/render
 	PCBCase/render $<
+
+%/README.md: %/*.kicad_pcb %/*.stl PCBCase/readme
+	PCBCase/readme $@
