@@ -3,8 +3,8 @@
 Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. Sadly their WiFi control modules are not so good, especially the latest models which are all cloud based, require an internet connection to even work, and are slow.
 
 [<img src="https://github.com/user-attachments/assets/338f32f4-08dc-4355-88a8-cc47ec79a074" width=30% alt="Faikin">](https://www.youtube.com/watch?v=2QziOhK4P70 "Faikin")
-<img src="https://github.com/user-attachments/assets/81cdd6ae-362e-4a48-8efd-c60beae9d125" width=30% align="right" Alt="Optional cable">
-<img src="https://github.com/user-attachments/assets/0440ac24-a70a-4868-b08f-b65f3cc79f80" width=30% align="right" Alt="Optional cable">
+<img src="https://github.com/user-attachments/assets/81cdd6ae-362e-4a48-8efd-c60beae9d125" width=30% align="right" Alt="Optional cabel">
+<img src="https://github.com/user-attachments/assets/0dbb6cf9-0fd9-482d-a2ed-75dde9e37b82" width=30% align="right" Alt="Optional case">
 
 This code/module provides local control via web interface, MQTT, and HomeAssistant integration, all with no cloud crap.
 
