@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-25 14:05:03
+// Generated 2025-08-25 15:14:00
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -27,7 +27,7 @@ datey=0.000000;
 datet=0.500000;
 dateh=3.000000;
 datea=0;
-date="2025-08-24";
+date="2025-08-25";
 datef="OCRB";
 spacing=51.000000;
 pcbwidth=35.000000;
@@ -740,6 +740,10 @@ module bottom()
 
 module datecode()
 {
-	translate([datex,dateyf,-0.001])rotate(datea)scale([-1,1])linear_extrude(datet)text(date,size=dateh,halign="center",valign="center",font=datef);
+	minkowski()
+	{
+		translate([datex,datey,-1])rotate(datea)scale([-1,1])linear_extrude(1)text(date,size=dateh,halign="center",valign="center",font=datef);
+		cylinder(d1=datet,d2=0,h=datet,$fn=6);
+	}
 }
 top();
