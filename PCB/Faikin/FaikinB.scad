@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-08-24 16:52:09
+// Generated 2025-08-25 12:26:47
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -730,4 +730,4 @@ module bottom()
 		pcb(height,r=margin);
 	}
 }
-difference(){bottom();translate([0.000000,0.000000,-0.001])scale([-1,1])linear_extrude(0.500000)text("2025-08-24",size=3.000000,halign="center",valign="center",font="OCRB");}
+difference(){bottom();translate([0.000000,0.000000,-0.001])rotate(0)scale([-1,1])linear_extrude(0.500000)text("2025-08-24",size=3.000000,halign="center",valign="center",font="OCRB");}
