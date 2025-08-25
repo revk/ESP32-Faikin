@@ -2,8 +2,6 @@
 
 The `Faikin` directory has the current working design. `Faikin` is the current shipping board. The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
-Other directories such as `Faikin2` or `Faikin3` are work in progress and may not be tested yet. They will replace `Faikin` once tested.
-
 The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these are usually kept up to date as an `.stl` file in the `Faikin` directory. The `Makefile` simply runs this tool.
 
 ## Trademark
@@ -48,11 +46,15 @@ However, there are jumper wires readily available that can be used easily with t
 
 ## GPIO
 
-This board is designed to work with the Daikin air-con, but it is a general purpose board. The latest boards use `ESP32-S3-MINI-N4R2` processor, with previous being `ESP32-MINI-PICO-01` (S1).
+This board is designed to work with the Daikin air-con, but it is a general purpose board. The latest boards use `ESP32-S3-MINI-N4R2` processor, with previous being `ESP32-MINI-PICO-01`.
 
 The current boards include the GPIO numbers clearly in inverse silk screen.
 
-For example, on this image, GPIO `34` and `48` for Tx and Rx. GPIO `47` is for the WS2812 style LED. GPIO `21` is one of two round pads which can be shorted three times in a row to factory reset the board.
+For example, on this image, GPIO `34` and `48` for Tx and Rx. GPIO `47` is for the WS2812 style LED. GPIO `21` is one of two round pads.
+
+The two round pads in the A&A logo can be shorted three times in a row to factory reset.
+
+There are also test pins which allow connection for USB, and for diagnostics during production. A TC2030 connector is used for production programming.
 
 ![Bottom](Faikin/Faikin-bottom.png)
 
