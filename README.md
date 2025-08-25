@@ -34,7 +34,7 @@ This is an open source project, but bear in mind you cannot sell boards bearing 
 
 For support, see issues and discussions.
 
-## PCB
+## PCB and case
 
 The boards from [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://www.ebay.com.au/itm/186860658654), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
@@ -43,6 +43,8 @@ The boards from [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://ww
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
 <img src=PCB/Faikin/Faikin-panel.png width=49%><img src=PCB/Faikin/Faikin-alt-bottom.png width=49%>
+
+A 3D print case design (ideal for resin printer, but should work for FDM as well) is created from the PCB design to match exactly. [Bottom](PCB/Faikin/FaikinB.stl) [Top](PCB/Faikin/FaikinT.stl)
 
 ## Why I made this
 
