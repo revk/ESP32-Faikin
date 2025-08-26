@@ -33,7 +33,7 @@ bit	no.quiet								// Unit does not have quiet mode
 bit	no.led		1							// Unit does not have LED control
 bit	no.flap									// Unit does not have flap mode
 bit	no.antifreeze								// Unit does not have antifreeze mode
-bit	no.hourly			.live					// Do not do hourly S21 poll (DH)
+bit	no.hourly	1		.live					// Do not do hourly S21 poll (DH)
 
 bit	no.faikinauto			.live					// Do not show faikin auto controls (unless already set up and no password)
 bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
