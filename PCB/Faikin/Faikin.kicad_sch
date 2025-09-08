@@ -5,7 +5,7 @@
 	(uuid "46c350bb-7de4-4e81-aafd-4af55e37aab0")
 	(paper "A4")
 	(title_block
-		(title "Daikin ESP32-PICO-MINI module")
+		(title "Faikin")
 		(rev "1")
 		(comment 1 "@TheRealRevK")
 		(comment 2 "www.me.uk")
@@ -6528,10 +6528,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "0fe46bf0-6706-48a9-99fb-22f8d6956ff2")
 		(property "Reference" "TP2"
-			(at 171.323 141.2705 90)
+			(at 174.752 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6539,7 +6538,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 171.323 143.6948 90)
+			(at 174.752 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9063,10 +9062,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "8beb4ac3-2d06-412f-af3b-18167c5fc22b")
 		(property "Reference" "TP5"
-			(at 209.423 141.2705 90)
+			(at 212.852 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9074,7 +9072,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 209.423 143.6948 90)
+			(at 212.852 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9638,10 +9636,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "a3d751c9-cd30-4525-85b5-7851617cba57")
 		(property "Reference" "TP4"
-			(at 196.723 141.2705 90)
+			(at 200.152 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9649,7 +9646,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 196.723 143.6948 90)
+			(at 200.152 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10442,10 +10439,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "bb704d39-d3a9-445c-9320-d640c97e646e")
 		(property "Reference" "TP8"
-			(at 247.523 141.2705 90)
+			(at 250.952 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10453,7 +10449,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 247.523 143.6948 90)
+			(at 250.952 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10717,10 +10713,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ca314f39-0b42-46d2-95bd-103352cb32dd")
 		(property "Reference" "TP6"
-			(at 222.123 141.2705 90)
+			(at 225.552 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10728,7 +10723,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 222.123 143.6948 90)
+			(at 225.552 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10992,7 +10987,7 @@
 		(dnp no)
 		(uuid "da63aaf5-07aa-4b54-9251-ea288c53acf7")
 		(property "Reference" "R3"
-			(at 124.46 105.41 90)
+			(at 125.222 105.41 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11078,10 +11073,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "ddc404c2-fb9a-4c0f-8ebd-00bb308b1cf0")
 		(property "Reference" "TP10"
-			(at 145.923 141.2705 90)
+			(at 149.352 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11089,7 +11083,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 145.923 143.6948 90)
+			(at 149.352 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11297,10 +11291,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "dfcaa0af-4896-4997-bac9-6590478cbab3")
 		(property "Reference" "TP3"
-			(at 184.023 141.2705 90)
+			(at 187.452 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11308,7 +11301,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 184.023 143.6948 90)
+			(at 187.452 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11917,10 +11910,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "f487d560-aa16-4d7f-af56-17f8c6563bbf")
 		(property "Reference" "TP7"
-			(at 234.823 141.2705 90)
+			(at 238.252 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11928,7 +11920,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 234.823 143.6948 90)
+			(at 238.252 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11982,10 +11974,9 @@
 		(in_bom no)
 		(on_board yes)
 		(dnp no)
-		(fields_autoplaced yes)
 		(uuid "f7fb8aa2-2024-4bae-b0ab-b5136d768a21")
 		(property "Reference" "TP9"
-			(at 158.623 141.2705 90)
+			(at 162.052 140.8317 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11993,7 +11984,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 158.623 143.6948 90)
+			(at 162.052 143.256 90)
 			(effects
 				(font
 					(size 1.27 1.27)
