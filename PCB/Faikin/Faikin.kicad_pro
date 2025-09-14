@@ -260,16 +260,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      [
-        "lib_symbol_mismatch|1568450|768350|2d804dda-889f-48e3-81ae-8ce1d0227e87|00000000-0000-0000-0000-000000000000|||",
-        "Footprint fix"
-      ],
-      [
-        "lib_symbol_mismatch|1619250|1206500|7d28d119-185d-473e-82a8-311fba6817d7|00000000-0000-0000-0000-000000000000|||",
-        "Footprint fix"
-      ]
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
