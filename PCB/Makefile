@@ -4,7 +4,7 @@ all: png stl */README.md
 
 %.stl:	%.scad
 	echo "Making $@"
-	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
+	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD --backend CGAL $< -o $@
 	echo "Made $@"
 
 stl: 	Faikin/FaikinT.stl Faikin/FaikinB.stl
