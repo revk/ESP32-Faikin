@@ -4585,6 +4585,12 @@
 		(uuid "40bf891b-e12c-4b24-8b73-06eaf6eb3221")
 	)
 	(junction
+		(at 127.635 184.15)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "41200376-750e-44ad-b679-29cc89048128")
+	)
+	(junction
 		(at 114.3 109.22)
 		(diameter 0)
 		(color 0 0 0 0)
@@ -5442,6 +5448,16 @@
 	)
 	(wire
 		(pts
+			(xy 127.635 184.15) (xy 122.555 184.15)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "c98a112f-0726-4700-acad-1801eb80d084")
+	)
+	(wire
+		(pts
 			(xy 137.795 184.15) (xy 132.715 184.15)
 		)
 		(stroke
@@ -5592,7 +5608,7 @@
 	)
 	(wire
 		(pts
-			(xy 132.715 184.15) (xy 122.555 184.15)
+			(xy 132.715 184.15) (xy 127.635 184.15)
 		)
 		(stroke
 			(width 0)
@@ -10102,7 +10118,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 80.01 184.15 0)
+		(at 157.48 184.15 90)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -10110,7 +10126,7 @@
 		(dnp no)
 		(uuid "b07455c6-adca-451c-9571-64c433c84446")
 		(property "Reference" "#PWR0108"
-			(at 80.01 190.5 0)
+			(at 163.83 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10119,7 +10135,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 80.01 191.135 90)
+			(at 164.465 184.15 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10128,7 +10144,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 80.01 184.15 0)
+			(at 157.48 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10137,7 +10153,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 80.01 184.15 0)
+			(at 157.48 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10146,7 +10162,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 80.01 184.15 0)
+			(at 157.48 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11630,7 +11646,7 @@
 	)
 	(symbol
 		(lib_id "power:PWR_FLAG")
-		(at 157.48 184.15 270)
+		(at 127.635 184.15 180)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -11638,7 +11654,7 @@
 		(dnp no)
 		(uuid "ed3faf6e-834e-486c-a007-2262be4f485f")
 		(property "Reference" "#FLG03"
-			(at 159.385 184.15 0)
+			(at 127.635 186.055 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11647,7 +11663,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 158.75 182.118 90)
+			(at 127.762 187.96 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11655,7 +11671,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 157.48 184.15 0)
+			(at 127.635 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11664,7 +11680,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 157.48 184.15 0)
+			(at 127.635 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11673,7 +11689,7 @@
 			)
 		)
 		(property "Description" "Special symbol for telling ERC where power comes from"
-			(at 157.48 184.15 0)
+			(at 127.635 184.15 0)
 			(effects
 				(font
 					(size 1.27 1.27)
