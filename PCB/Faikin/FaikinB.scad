@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-09-16 12:30:15
+// Generated 2025-09-24 16:33:40
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -568,8 +568,8 @@ module top_half(fit=0)
                 {
                 	union()
                 	{
-                		parts_top(part=true);
-                		parts_bottom(part=true);
+                		parts_top(part=true,hole=true);
+                		parts_bottom(part=true,hole=true);
                 	}
                 	translate([-0.01,-0.01,-height])cube([0.02,0.02,height]);
                 }
@@ -578,8 +578,8 @@ module top_half(fit=0)
         {
         	union()
                 {
-                	parts_top(part=true);
-                	parts_bottom(part=true);
+                	parts_top(part=true,hole=true);
+                	parts_bottom(part=true,hole=true);
                 }
                 translate([-0.01,-0.01,0])cube([0.02,0.02,height]);
         }
@@ -603,7 +603,7 @@ module top_side_hole()
 			parts_top(hole=true);
 			case_wall();
 		}
-		translate([0,0,-casebottom])pcb_hulled(height,casewall-edge);
+		translate([0,0,-casebottom])pcb_hulled(height,casewall);
 	}
 }
 
@@ -695,7 +695,7 @@ module top_body()
 	}
 	intersection()
 	{
-		pcb_hulled(casetop+pcbthickness);
+		pcb_hulled(casetop+pcbthickness,0.03);
 		union()
 		{
 			parts_top(block=true);
@@ -755,7 +755,7 @@ module bottom_body()
 	}
 	intersection()
 	{
-		translate([0,0,-casebottom])pcb_hulled(casebottom+pcbthickness);
+		translate([0,0,-casebottom])pcb_hulled(casebottom+pcbthickness,0.03);
 		union()
 		{
 			parts_top(block=true);
