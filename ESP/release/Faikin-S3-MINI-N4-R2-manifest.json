@@ -1,0 +1,25 @@
+{
+  "url": "https://ota.revk.uk/Faikin-S3-MINI-N4-R2-manifest.json",
+  "chip": "ESP32S3MCN4R2",
+  "flash": [
+    {
+      "filename": "Faikin-S3-MINI-N4-R2-bootloader.bin",
+      "url":"https://ota.revk.uk/Faikin-S3-MINI-N4-R2-bootloader.bin"
+    },
+    {
+      "filename": "partition-table.bin",
+      "address": "8000",
+      "url":"https://ota.revk.uk/Faikin-S3-MINI-N4-R2-partition-table.bin"
+    },
+    {
+      "filename": "ota_data_initial.bin",
+      "address": "D000",
+      "url":"https://ota.revk.uk/Faikin-S3-MINI-N4-R2-ota_data_initial.bin"
+    },
+    {
+      "filename": "Faikin-S3-MINI-N4-R2.bin",
+      "address": "10000",
+      "url": "https://ota.revk.uk/Faikin-S3-MINI-N4-R2.bin"
+    }
+  ]
+}
