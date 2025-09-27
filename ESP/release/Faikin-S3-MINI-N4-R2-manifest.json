@@ -1,6 +1,7 @@
 {
   "url": "https://ota.revk.uk/Faikin-S3-MINI-N4-R2-manifest.json",
   "chip": "ESP32S3MCN4R2",
+  "button":false,
   "flash": [
     {
       "filename": "Faikin-S3-MINI-N4-R2-bootloader.bin",
