@@ -3970,7 +3970,7 @@
 			)
 			(embedded_fonts no)
 		)
-		(symbol "RevK:WS2812B-1mm"
+		(symbol "RevK:WS2812B-1.5mm"
 			(pin_names
 				(offset 0.254)
 			)
@@ -3986,7 +3986,7 @@
 					)
 				)
 			)
-			(property "Value" "XL-1010RGBC-WS2812B"
+			(property "Value" "XL-1615RGBC-WS2812B"
 				(at 1.27 5.715 0)
 				(effects
 					(font
@@ -3996,7 +3996,7 @@
 					(hide yes)
 				)
 			)
-			(property "Footprint" "RevK:SMD1010"
+			(property "Footprint" "RevK:SMD1615"
 				(at 1.27 7.62 0)
 				(effects
 					(font
@@ -4025,7 +4025,7 @@
 					(hide yes)
 				)
 			)
-			(property "MPN" "C5349953"
+			(property "MPN" "C5349954"
 				(at 1.27 11.43 0)
 				(effects
 					(font
@@ -4053,7 +4053,7 @@
 					(hide yes)
 				)
 			)
-			(symbol "WS2812B-1mm_1_1"
+			(symbol "WS2812B-1.5mm_1_1"
 				(polyline
 					(pts
 						(xy 0 -3.175) (xy 3.175 0) (xy 0 3.175) (xy -3.175 0) (xy 0 -3.175)
@@ -4076,7 +4076,7 @@
 							)
 						)
 					)
-					(number "4"
+					(number "2"
 						(effects
 							(font
 								(size 1 1)
@@ -4094,7 +4094,7 @@
 							)
 						)
 					)
-					(number "2"
+					(number "3"
 						(effects
 							(font
 								(size 1 1)
@@ -4112,7 +4112,7 @@
 							)
 						)
 					)
-					(number "3"
+					(number "1"
 						(effects
 							(font
 								(size 1 1)
@@ -4130,7 +4130,7 @@
 							)
 						)
 					)
-					(number "1"
+					(number "4"
 						(effects
 							(font
 								(size 1 1)
@@ -6377,15 +6377,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 262.255 170.815 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -7947,15 +7938,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 259.08 173.99 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -8164,15 +8146,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 177.165 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 177.165 0)
 			(effects
 				(font
@@ -8511,15 +8484,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 176.53 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 176.53 0)
 			(effects
 				(font
@@ -9091,15 +9055,6 @@
 				(hide yes)
 			)
 		)
-		(property "Sim.Enable" "0"
-			(at 265.43 173.99 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -9155,15 +9110,6 @@
 			)
 		)
 		(property "Description" ""
-			(at 262.255 171.45 0)
-			(effects
-				(font
-					(size 1.27 1.27)
-				)
-				(hide yes)
-			)
-		)
-		(property "Sim.Enable" "0"
 			(at 262.255 171.45 0)
 			(effects
 				(font
@@ -9989,7 +9935,7 @@
 		)
 	)
 	(symbol
-		(lib_id "RevK:WS2812B-1mm")
+		(lib_id "RevK:WS2812B-1.5mm")
 		(at 161.925 46.355 0)
 		(unit 1)
 		(exclude_from_sim no)
@@ -10006,7 +9952,7 @@
 				)
 			)
 		)
-		(property "Value" "XL-1010RGBC-WS2812B"
+		(property "Value" "XL-1516RGBC-WS2812B"
 			(at 163.195 52.07 0)
 			(effects
 				(font
@@ -10016,8 +9962,8 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "RevK:SMD1010"
-			(at 163.195 53.975 0)
+		(property "Footprint" "RevK:SMD1615"
+			(at 163.195 38.735 0)
 			(effects
 				(font
 					(size 1 1)
@@ -10027,7 +9973,7 @@
 			)
 		)
 		(property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf"
-			(at 163.195 55.88 0)
+			(at 163.195 36.83 0)
 			(effects
 				(font
 					(size 1 1)
@@ -10045,8 +9991,8 @@
 				(hide yes)
 			)
 		)
-		(property "MPN" "C5349953"
-			(at 163.195 57.785 0)
+		(property "MPN" "C5349954"
+			(at 163.195 34.925 0)
 			(effects
 				(font
 					(size 1 1)

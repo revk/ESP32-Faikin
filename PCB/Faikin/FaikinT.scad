@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-09-24 16:33:40
+// Generated 2025-09-28 10:52:26
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -28,7 +28,7 @@ datey=0.000000;
 datet=0.500000;
 dateh=3.000000;
 datea=0;
-date="2025-09-14";
+date="2025-09-28";
 datef="OCRB";
 spacing=51.000000;
 pcbwidth=35.000000;
@@ -65,14 +65,14 @@ module V4(){translate([-4.500000,-18.000000,1.200000])children();}
 module part_V4(part=true,hole=false,block=false)
 {
 };
-module J2(){translate([15.000000,0.000000,1.200000])rotate([0,0,90.000000])children();}
+module J2(){translate([15.000000,0.000000,1.200000])rotate([0,0,-90.000000])children();}
 module part_J2(part=true,hole=false,block=false)
 {
 };
-module D1(){translate([0.300000,2.800000,1.200000])rotate([0,0,180.000000])children();}
+module D1(){translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])children();}
 module part_D1(part=true,hole=false,block=false)
 {
-translate([0.300000,2.800000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // D1 (back)
+translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])scale([1.600000,1.500000,1.000000])m2(part,hole,block,casetop); // RevK:SMD1615 SMD1010 (back)
 };
 module V5(){translate([-27.500000,0.000000,1.200000])rotate([0,0,90.000000])children();}
 module part_V5(part=true,hole=false,block=false)
@@ -247,7 +247,7 @@ part_C4(part,hole,block);
 part_PCB1(part,hole,block);
 }
 
-parts_top=8;
+parts_top=7;
 module TP10(){translate([-4.250000,4.700000,0.000000])rotate([180,0,0])children();}
 module part_TP10(part=true,hole=false,block=false)
 {
@@ -335,7 +335,7 @@ if(part)
 }
 
 module m2(part=false,hole=false,block=false,height)
-{ // D1
+{ // RevK:SMD1615 SMD1010
 // 1x1mm LED
 if(part)
 {
