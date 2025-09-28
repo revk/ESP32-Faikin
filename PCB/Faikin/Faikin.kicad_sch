@@ -3987,7 +3987,7 @@
 				)
 			)
 			(property "Value" "XL-1010RGBC-WS2812B"
-				(at 1.27 -5.715 0)
+				(at 1.27 5.715 0)
 				(effects
 					(font
 						(size 1 1)
@@ -3996,8 +3996,8 @@
 					(hide yes)
 				)
 			)
-			(property "Footprint" ""
-				(at 1.27 -7.62 0)
+			(property "Footprint" "RevK:SMD1010"
+				(at 1.27 7.62 0)
 				(effects
 					(font
 						(size 1 1)
@@ -4007,7 +4007,7 @@
 				)
 			)
 			(property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf"
-				(at 1.27 -9.525 0)
+				(at 1.27 9.525 0)
 				(effects
 					(font
 						(size 1 1)
@@ -4026,7 +4026,7 @@
 				)
 			)
 			(property "MPN" "C5349953"
-				(at 1.27 -11.43 0)
+				(at 1.27 11.43 0)
 				(effects
 					(font
 						(size 1 1)
@@ -4056,7 +4056,7 @@
 			(symbol "WS2812B-1mm_1_1"
 				(polyline
 					(pts
-						(xy 0 3.175) (xy 3.175 0) (xy 0 -3.175) (xy -3.175 0) (xy 0 3.175)
+						(xy 0 -3.175) (xy 3.175 0) (xy 0 3.175) (xy -3.175 0) (xy 0 -3.175)
 					)
 					(stroke
 						(width 0)
@@ -4087,14 +4087,14 @@
 				(pin power_in line
 					(at 0 3.81 270)
 					(length 0.5)
-					(name "-"
+					(name "+"
 						(effects
 							(font
 								(size 1 1)
 							)
 						)
 					)
-					(number "3"
+					(number "2"
 						(effects
 							(font
 								(size 1 1)
@@ -4105,14 +4105,14 @@
 				(pin power_in line
 					(at 0 -3.81 90)
 					(length 0.5)
-					(name "+"
+					(name "-"
 						(effects
 							(font
 								(size 1 1)
 							)
 						)
 					)
-					(number "2"
+					(number "3"
 						(effects
 							(font
 								(size 1 1)
@@ -6377,6 +6377,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 262.255 170.815 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -7938,6 +7947,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 259.08 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -8146,6 +8164,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 262.255 177.165 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Enable" "0"
 			(at 262.255 177.165 0)
 			(effects
 				(font
@@ -8484,6 +8511,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 262.255 176.53 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Enable" "0"
 			(at 262.255 176.53 0)
 			(effects
 				(font
@@ -9055,6 +9091,15 @@
 				(hide yes)
 			)
 		)
+		(property "Sim.Enable" "0"
+			(at 265.43 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project "Faikin"
 				(path "/46c350bb-7de4-4e81-aafd-4af55e37aab0"
@@ -9110,6 +9155,15 @@
 			)
 		)
 		(property "Description" ""
+			(at 262.255 171.45 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Sim.Enable" "0"
 			(at 262.255 171.45 0)
 			(effects
 				(font
@@ -9937,7 +9991,6 @@
 	(symbol
 		(lib_id "RevK:WS2812B-1mm")
 		(at 161.925 46.355 0)
-		(mirror x)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -9954,7 +10007,7 @@
 			)
 		)
 		(property "Value" "XL-1010RGBC-WS2812B"
-			(at 163.195 40.64 0)
+			(at 163.195 52.07 0)
 			(effects
 				(font
 					(size 1 1)
@@ -9964,7 +10017,7 @@
 			)
 		)
 		(property "Footprint" "RevK:SMD1010"
-			(at 163.195 38.735 0)
+			(at 163.195 53.975 0)
 			(effects
 				(font
 					(size 1 1)
@@ -9974,7 +10027,7 @@
 			)
 		)
 		(property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf"
-			(at 163.195 36.83 0)
+			(at 163.195 55.88 0)
 			(effects
 				(font
 					(size 1 1)
@@ -9993,7 +10046,7 @@
 			)
 		)
 		(property "MPN" "C5349953"
-			(at 163.195 34.925 0)
+			(at 163.195 57.785 0)
 			(effects
 				(font
 					(size 1 1)
@@ -11276,7 +11329,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" ""
+		(property "Description" "ESP32S3"
 			(at 99.06 81.915 0)
 			(effects
 				(font
