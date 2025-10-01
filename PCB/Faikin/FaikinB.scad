@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-09-28 10:52:26
+// Generated 2025-10-01 16:36:11
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -11,9 +11,11 @@ margin=0.250000;
 lip=3.000000;
 lipa=0;
 lipt=1;
+casewall=3.000000;
 casebottom=3.000000;
 casetop=7.000000;
-casewall=3.000000;
+bottomthickness=0.000000;
+topthickness=0.000000;
 fit=0.000000;
 snap=0.150000;
 edge=2.000000;
@@ -72,7 +74,7 @@ module part_J2(part=true,hole=false,block=false)
 module D1(){translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])children();}
 module part_D1(part=true,hole=false,block=false)
 {
-translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])scale([1.600000,1.500000,1.000000])m2(part,hole,block,casetop); // RevK:SMD1615 SMD1010 (back)
+translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // D1 (back)
 };
 module V5(){translate([-27.500000,0.000000,1.200000])rotate([0,0,90.000000])children();}
 module part_V5(part=true,hole=false,block=false)
@@ -247,7 +249,7 @@ part_C4(part,hole,block);
 part_PCB1(part,hole,block);
 }
 
-parts_top=7;
+parts_top=8;
 module TP10(){translate([-4.250000,4.700000,0.000000])rotate([180,0,0])children();}
 module part_TP10(part=true,hole=false,block=false)
 {
@@ -335,17 +337,17 @@ if(part)
 }
 
 module m2(part=false,hole=false,block=false,height)
-{ // RevK:SMD1615 SMD1010
-// 1x1mm LED
+{ // D1
+// 1.6x1.5mm LED
 if(part)
 {
-        b(0,0,0,1.2,1.2,.8);
+        b(0,0,0,1.6+0.2,1.5+0.2,.6+0.2);
 }
 if(hole)
 {
         hull()
         {
-                b(0,0,.8,1.2,1.2,1);
+                b(0,0,.6+0.2,1.6+0.2,1.5+0.2,1);
                 translate([0,0,height])cylinder(d=1.001,h=0.001,$fn=16);
         }
 }
@@ -353,7 +355,7 @@ if(block)
 {
         hull()
         {
-                b(0,0,.8,2.8,2.8,1);
+                b(0,0,.6+0.2,2.8,2.8,1);
                 translate([0,0,height])cylinder(d=2,h=1,$fn=16);
         }
 }
@@ -686,10 +688,14 @@ module top_body()
 			solid_case();
 			pcb_hulled(casetop+pcbthickness,0.03);
 		}
-		if(parts_top)minkowski()
+		if(parts_top||topthickness)minkowski()
 		{
-			if(nohull)parts_top(part=true);
-			else hull(){parts_top(part=true);pcb_hulled();}
+			union()
+			{
+				if(nohull)parts_top(part=true);
+				else hull(){parts_top(part=true);pcb_hulled();}
+				if(topthickness)pcb_hulled(casetop+pcbthickness-topthickness,0);
+			}
 			translate([0,0,margin-height])cylinder(r=margin*2,h=height,$fn=8);
 		}
 	}
@@ -746,10 +752,14 @@ module bottom_body()
 			solid_case();
 			translate([0,0,-casebottom])pcb_hulled(casebottom+pcbthickness,0.03);
 		}
-		if(parts_bottom)minkowski()
+		if(parts_bottom||bottomthickness)minkowski()
 		{
-			if(nohull)parts_bottom(part=true);
-			else hull()parts_bottom(part=true);
+			union()
+			{
+				if(nohull)parts_bottom(part=true);
+				else hull()parts_bottom(part=true);
+				if(bottomthickness)translate([0,0,bottomthickness-casebottom])pcb_hulled(casebottom+pcbthickness-bottomthickness,0);
+			}
 			translate([0,0,-margin])cylinder(r=margin*2,h=height,$fn=8);
 		}
 	}
