@@ -18,7 +18,7 @@ These files are for use with [KiCAD](https://www.kicad.org).
 |------|------|---|
 |Faikin|<a href='FaikinB.stl'><img src='FaikinB.png' size=15%></a>|<a href='FaikinT.stl'><img src='FaikinT.png' size=15%></a>|
 
-## Images
+## PCB Images
 
 <img src='Faikin.png' width=32%><img src='Faikin-90.png' width=32%><img src='Faikin-bottom.png' width=32%>
 <img src='Faikin-alt.png' width=32%><img src='Faikin-alt-90.png' width=32%><img src='Faikin-alt-bottom.png' width=32%>
@@ -26,4 +26,4 @@ These files are for use with [KiCAD](https://www.kicad.org).
 
 ---
 
-*Auto generated README.md 2025-10-01T16:38:23*
+*Auto generated README.md 2025-10-01T16:57:53*
