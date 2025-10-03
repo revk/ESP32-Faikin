@@ -5,7 +5,7 @@
   "flash": [
     {
       "filename": "Faikin-S3-MINI-N4-R2-bootloader.bin",
-      "url":"https://ota.revk.uk/beta/Faikin-S3-MINI-N4-R2-bootloader.bin"
+      "url":"https://ota.revk.uk/Faikin-S3-MINI-N4-R2-bootloader.bin"
     },
     {
       "filename": "Faikin-S3-MINI-N4-R2-partition-table.bin",
@@ -20,7 +20,7 @@
     {
       "filename": "Faikin-S3-MINI-N4-R2.bin",
       "address": "10000",
-      "url": "https://ota.revk.uk/beta/Faikin-S3-MINI-N4-R2.bin",
+      "url": "https://ota.revk.uk/Faikin-S3-MINI-N4-R2.bin",
       "build":true
     }
   ]
