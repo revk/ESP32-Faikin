@@ -3242,7 +3242,10 @@ app_main ()
    }
    if (usb_serial_jtag_is_connected ())
    {                            // ATE mode
-      printf ("\nATE: %s\n", b.loopback ? "PASS" : "FAIL");
+      if (b.loopback)
+         revk_ate_pass ();
+      else
+         revk_ate_fail ();
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
