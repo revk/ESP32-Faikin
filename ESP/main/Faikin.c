@@ -3242,13 +3242,11 @@ app_main ()
    }
    if (usb_serial_jtag_is_connected ())
    {                            // ATE mode
-      if (b.loopback)
-         revk_ate_pass ();
-      else
-         revk_ate_fail ();
+      revk_ate_fail ("Loopback fail");
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
+   revk_ate_pass ();
    revk_blink_do ();            // Show LED ASAP
 
    if (*autotopic)
