@@ -3242,7 +3242,8 @@ app_main ()
    }
    if (usb_serial_jtag_is_connected ())
    {                            // ATE mode
-      revk_ate_fail ("Loopback fail");
+      if (!b.loopback)
+         revk_ate_fail ("Loopback fail");
       revk_blink (1, 0, b.loopback ? "G" : "R");
    } else
       revk_blink (1, 0, b.loopback ? "B" : "G");
