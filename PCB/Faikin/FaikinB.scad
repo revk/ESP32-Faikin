@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-10-06 13:37:05
+// Generated 2025-10-07 11:42:39
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -30,7 +30,7 @@ datey=0.000000;
 datet=0.500000;
 dateh=3.000000;
 datea=0;
-date="2025-10-04";
+date="2025-10-07";
 datef="OCRB";
 spacing=51.000000;
 pcbwidth=35.000000;
@@ -250,31 +250,31 @@ part_PCB1(part,hole,block);
 }
 
 parts_top=8;
-module TP10(){translate([-4.250000,4.700000,0.000000])rotate([180,0,0])children();}
+module TP10(){translate([-4.125000,4.700000,0.000000])rotate([180,0,0])children();}
 module part_TP10(part=true,hole=false,block=false)
 {
 };
-module TP8(){translate([-8.750000,4.750000,0.000000])rotate([180,0,0])children();}
+module TP8(){translate([-8.625000,4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP8(part=true,hole=false,block=false)
 {
 };
-module TP2(){translate([-6.500000,-4.750000,0.000000])rotate([180,0,0])children();}
+module TP2(){translate([-6.375000,-4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP2(part=true,hole=false,block=false)
 {
 };
-module TP3(){translate([-8.750000,-4.750000,0.000000])rotate([180,0,0])children();}
+module TP3(){translate([-8.625000,-4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP3(part=true,hole=false,block=false)
 {
 };
-module TP4(){translate([-11.000000,-4.750000,0.000000])rotate([180,0,0])children();}
+module TP4(){translate([-10.875000,-4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP4(part=true,hole=false,block=false)
 {
 };
-module TP6(){translate([-13.250000,4.750000,0.000000])rotate([180,0,0])children();}
+module TP6(){translate([-13.125000,4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP6(part=true,hole=false,block=false)
 {
 };
-module TP7(){translate([-4.250000,-4.750000,0.000000])rotate([180,0,0])children();}
+module TP7(){translate([-4.125000,-4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP7(part=true,hole=false,block=false)
 {
 };
@@ -282,7 +282,7 @@ module V1(){translate([-4.500000,8.000000,0.000000])rotate([0,0,180.000000])rota
 module part_V1(part=true,hole=false,block=false)
 {
 };
-module TP5(){translate([-11.000000,4.750000,0.000000])rotate([180,0,0])children();}
+module TP5(){translate([-10.875000,4.750000,0.000000])rotate([180,0,0])children();}
 module part_TP5(part=true,hole=false,block=false)
 {
 };
@@ -290,11 +290,11 @@ module V6(){translate([17.500000,0.000000,0.000000])rotate([0,0,90.000000])rotat
 module part_V6(part=true,hole=false,block=false)
 {
 };
-module TP9(){translate([-6.500000,4.700000,0.000000])rotate([180,0,0])children();}
+module TP9(){translate([-6.375000,4.700000,0.000000])rotate([180,0,0])children();}
 module part_TP9(part=true,hole=false,block=false)
 {
 };
-module J3(){translate([-9.670000,0.000000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])children();}
+module J3(){translate([-9.750000,0.000000,0.000000])rotate([0,0,-90.000000])rotate([180,0,0])children();}
 module part_J3(part=true,hole=false,block=false)
 {
 };
@@ -348,7 +348,7 @@ if(hole)
         hull()
         {
                 b(0,0,.6+0.2,1.6+0.2,1.5+0.2,1);
-                translate([0,0,height])cylinder(d=1.001,h=0.001,$fn=16);
+                translate([0,0,height-0.5])cylinder(d=1.001,h=0.001,$fn=16);
         }
 }
 if(block)
@@ -356,7 +356,7 @@ if(block)
         hull()
         {
                 b(0,0,.6+0.2,2.8,2.8,1);
-                translate([0,0,height])cylinder(d=2,h=1,$fn=16);
+                translate([0,0,height-0.5])cylinder(d=2,h=1,$fn=16);
         }
 }
 }

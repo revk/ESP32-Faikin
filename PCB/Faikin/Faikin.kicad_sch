@@ -9962,7 +9962,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "RevK:SMD1615"
+		(property "Footprint" "RevK:SMD1615-Blind"
 			(at 163.195 38.735 0)
 			(effects
 				(font
