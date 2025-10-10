@@ -23,6 +23,7 @@ beta:
 	-git commit -a
 	@make set
 	cp $(PROJECT_NAME)*.bin release/beta
+	rsync -az release/beta/$(PROJECT_NAME)* ota.faikin.uk:/var/www/otafaikin/beta/
 	git commit -a -m Beta
 	git push
 
@@ -30,6 +31,7 @@ issue:
 	-git pull
 	-git commit -a
 	cp -f release/beta/$(PROJECT_NAME)*.bin release
+	rsync -az release/$(PROJECT_NAME)* ota.faikin.uk:/var/www/otafaikin/
 	git commit -a -m Release
 	git push
 

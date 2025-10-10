@@ -3225,6 +3225,12 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
+   if (!strcmp (otahost, "ota.revk.uk"))
+   {
+      jo_t j = jo_object_alloc ();
+      jo_string (j, "otahost", "ota.faikin.uk");
+      revk_settings_store (j, NULL, REVK_SETTINGS_PASSOVERRIDE);
+   }
 
    ESP_LOGD (TAG, "USB %d", usb_serial_jtag_is_connected ());
    if (tx.set && rx.set)
