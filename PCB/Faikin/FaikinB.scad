@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-10-12 16:19:30
+// Generated 2025-10-12 16:26:47
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -341,13 +341,15 @@ module m2(part=false,hole=false,block=false,height)
 // 1.6x1.5mm LED
 if(part)
 {
-        b(0,0,0,1.6+0.2,1.5+0.2,.6+0.2);
+
+        b(0,0,0,1.5,1.6,0.28);
+        b(0,0,0,1.5,1,0.6);
 }
 if(hole)
 {
         hull()
         {
-                b(0,0,.6+0.2,1.6+0.2,1.5+0.2,1);
+                b(0,0,0.1,1.5,1.6,0.1);
                 translate([0,0,height-0.5])cylinder(d=1.001,h=0.001,$fn=16);
         }
 }
@@ -355,7 +357,7 @@ if(block)
 {
         hull()
         {
-                b(0,0,.6+0.2,2.8,2.8,1);
+                b(0,0,0.1,3.5,3.6,0.1);
                 translate([0,0,height-0.5])cylinder(d=2,h=1,$fn=16);
         }
 }
