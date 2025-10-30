@@ -12,7 +12,7 @@ The *Faikin* is a small circuit board that can replace the common Daikin air-con
 
 However, you do need a lead, and Daikin charge a lot for these. Typically it will be an S21 lead. However customers have reported simple header wires (i.e. wires with sockets on each wire intended to go on 0.1" pitch headers) work just as well. You need to locate the GND, Power, Tx, and Rx pins on the S21 connector and connect appropriately as marked on the PCB. The board is designed to handle 4V to 40V power, and the air-con typically provides 12V.
 
-A 3D prinabale case design is included on GitHub.
+A 3D printable case design is included on GitHub.
 
 ## LED
 
@@ -41,9 +41,9 @@ Note that the loopback is useful for testing, a simple link from Tx to Rx will s
 
 ## WiFi set up
 
-One installed, the LED should light up and blink.
+Once installed, the LED should light up and blink.
 
-Look for a WiF Access Point called Daikin (or Faikin), e.g.
+Look for a WiFi Access Point called Daikin (or Faikin), e.g.
 
 ![WiFiAP](WiFi1.png)
 
@@ -63,7 +63,7 @@ Pick a simple one work hostname to describe your air-con, e.g. GuestAC.
 
 ### SSID/Password
 
-Enter the details for your own WiFi. You will note a list of SSIDs that have been seen are shown - you can click on one to set the SSID to save typing it. Make sure you enter the passphrase carefully. If the device is unable to connect the page should show an error and allow you to put in settings again. Only 2.4GHz WiFi is supported, and some special characters in SSID may not be supported.
+Enter the details for your own WiFi. You will note a list of SSIDs that have been seen are shown - you can click one to set the SSID to save typing it. Make sure you enter the passphrase carefully. If the device is unable to connect the page should show an error and allow you to put in settings again. Only 2.4GHz WiFi is supported, and some special characters in SSID may not be supported.
 
 ### MQTT
 
@@ -73,9 +73,9 @@ In addition you will usually see the option for an MQTT *username* and *password
 
 ## Accessing controls
 
-One set up, the device connects to your WIFi. From the same WiFi you should be able to access from a web browser using the hostanme you have picked followed by `.local`, e.g. `GuestAC.local`.
+Once set up, the device connects to your WiFi. From the same WiFi you should be able to access from a web browser using the hostanme you have picked followed by `.local`, e.g. `GuestAC.local`.
 
-The controls page shows teh controls for your air-con, and also has a link for *WiFi settings* allowing you to change the WiFi and MQTT settings if needed.
+The controls page shows the controls for your air-con, and also has a link for *WiFi settings* allowing you to change the WiFi and MQTT settings if needed.
 
 # Software Upgrade
 

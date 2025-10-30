@@ -812,4 +812,5 @@ module datecode()
 		cylinder(d1=datet,d2=0,h=datet,$fn=6);
 	}
 }
-top();
+translate([0,0,casebottom+casetop+pcbthickness+0.1])rotate([180,0,0])top();
+difference(){bottom();datecode();}

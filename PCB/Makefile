@@ -4,10 +4,10 @@ all: png stl */README.md
 
 %.stl:	%.scad
 	echo "Making $@"
-	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD --backend CGAL $< -o $@
+	/Applications/OpenSCAD.app/Contents/MacOS/OpenSCAD $< -o $@
 	echo "Made $@"
 
-stl: 	Faikin/FaikinT.stl Faikin/FaikinB.stl
+stl: 	Faikin/Faikin[TCB].stl 
 
 png:	$(patsubst %.kicad_pcb,%.png,$(wildcard */*.kicad_pcb))
 

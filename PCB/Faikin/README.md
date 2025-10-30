@@ -14,9 +14,9 @@ These files are for use with [KiCAD](https://www.kicad.org).
 
 3D case designs are normally automatically created from the PCB so as to ensure correct details and placement of apertures, etc.
 
-|Design|Bottom|Top|
-|------|------|---|
-|Faikin|<a href='FaikinB.stl'><img src='FaikinB.png' size=15%></a>|<a href='FaikinT.stl'><img src='FaikinT.png' size=15%></a>|
+|Design|Bottom|Top|Combined|
+|------|------|---|--------|
+|Faikin|<a href='FaikinB.stl'><img src='FaikinB.png' size=15%></a>|<a href='FaikinT.stl'><img src='FaikinT.png' size=15%></a>|<a href='FaikinC.stl'><img src='FaikinC.png' size=15%></a>|
 
 ## PCB Images
 
@@ -26,4 +26,4 @@ These files are for use with [KiCAD](https://www.kicad.org).
 
 ---
 
-*Auto generated README.md 2025-10-07T11:43:59*
+*Auto generated README.md 2025-10-26T07:01:13*

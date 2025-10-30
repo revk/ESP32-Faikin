@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-10-07 11:42:39
+// Generated 2025-10-26 06:59:39
 // title:	PCB-FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -74,7 +74,7 @@ module part_J2(part=true,hole=false,block=false)
 module D1(){translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])children();}
 module part_D1(part=true,hole=false,block=false)
 {
-translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // D1 (back)
+translate([0.300000,3.000000,1.200000])rotate([0,0,180.000000])m2(part,hole,block,casetop); // D1
 };
 module V5(){translate([-27.500000,0.000000,1.200000])rotate([0,0,90.000000])children();}
 module part_V5(part=true,hole=false,block=false)
@@ -92,7 +92,7 @@ translate([-1.250000,-3.500000,1.200000])rotate([0,0,-90.000000])m3(part,hole,bl
 module D3(){translate([3.400000,6.700000,1.200000])rotate([0,0,-90.000000])children();}
 module part_D3(part=true,hole=false,block=false)
 {
-translate([3.400000,6.700000,1.200000])rotate([0,0,-90.000000])m4(part,hole,block,casetop); // D3 (back)
+translate([3.400000,6.700000,1.200000])rotate([0,0,-90.000000])m4(part,hole,block,casetop); // D3
 };
 module R5(){translate([0.300000,0.400000,1.200000])rotate([0,0,90.000000])children();}
 module part_R5(part=true,hole=false,block=false)
@@ -117,7 +117,7 @@ translate([2.500000,6.700000,1.200000])rotate([0,0,90.000000])m4(part,hole,block
 module Q1(){translate([0.100000,5.000000,1.200000])rotate([0,0,180.000000])children();}
 module part_Q1(part=true,hole=false,block=false)
 {
-translate([0.100000,5.000000,1.200000])rotate([0,0,180.000000])m5(part,hole,block,casetop); // Q1 (back)
+translate([0.100000,5.000000,1.200000])rotate([0,0,180.000000])m5(part,hole,block,casetop); // Q1
 };
 module C2(){translate([-1.250000,-7.100000,1.200000])rotate([0,0,90.000000])children();}
 module part_C2(part=true,hole=false,block=false)
@@ -132,7 +132,7 @@ translate([-0.429742,7.200000,1.200000])rotate([0,0,180.000000])m1(part,hole,blo
 module D2(){translate([2.500000,5.000000,1.200000])rotate([0,0,90.000000])children();}
 module part_D2(part=true,hole=false,block=false)
 {
-translate([2.500000,5.000000,1.200000])rotate([0,0,90.000000])m4(part,hole,block,casetop); // D3 (back)
+translate([2.500000,5.000000,1.200000])rotate([0,0,90.000000])m4(part,hole,block,casetop); // D3
 };
 module FID2(){translate([-9.750000,10.000000,1.200000])children();}
 module part_FID2(part=true,hole=false,block=false)
@@ -141,7 +141,7 @@ module part_FID2(part=true,hole=false,block=false)
 module U1(){translate([0.200000,-1.387500,1.200000])rotate([0,0,90.000000])children();}
 module part_U1(part=true,hole=false,block=false)
 {
-translate([0.200000,-1.387500,1.200000])rotate([0,0,90.000000])m6(part,hole,block,casetop); // U1 (back)
+translate([0.200000,-1.387500,1.200000])rotate([0,0,90.000000])m6(part,hole,block,casetop); // U1
 };
 module C3(){translate([4.800000,-3.700000,1.200000])rotate([0,0,-90.000000])children();}
 module part_C3(part=true,hole=false,block=false)
@@ -151,7 +151,7 @@ translate([4.800000,-3.700000,1.200000])rotate([0,0,-90.000000])m3(part,hole,blo
 module U4(){translate([-9.750000,0.000000,1.200000])rotate([0,0,90.000000])children();}
 module part_U4(part=true,hole=false,block=false)
 {
-translate([-9.750000,0.000000,1.200000])rotate([0,0,90.000000])m7(part,hole,block,casetop); // U4 (back)
+translate([-9.750000,0.000000,1.200000])rotate([0,0,90.000000])m7(part,hole,block,casetop); // U4
 };
 module C1(){translate([-1.350000,0.400000,1.200000])rotate([0,0,90.000000])children();}
 module part_C1(part=true,hole=false,block=false)
@@ -170,7 +170,7 @@ translate([4.100000,2.800000,1.200000])rotate([0,0,90.000000])m8(part,hole,block
 module J1(){translate([6.055000,5.000000,1.200000])rotate([0,0,-90.000000])children();}
 module part_J1(part=true,hole=false,block=false)
 {
-translate([6.055000,5.000000,1.200000])rotate([0,0,-90.000000])m9(part,hole,block,casetop,05); // J1 (back)
+translate([6.055000,5.000000,1.200000])rotate([0,0,-90.000000])m9(part,hole,block,casetop,05); // J1
 };
 module FID3(){translate([-9.750000,-10.000000,1.200000])children();}
 module part_FID3(part=true,hole=false,block=false)
@@ -189,7 +189,7 @@ translate([4.100000,-1.000000,1.200000])rotate([0,0,90.000000])m8(part,hole,bloc
 module L1(){translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])children();}
 module part_L1(part=true,hole=false,block=false)
 {
-translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])m10(part,hole,block,casetop); // L1 (back)
+translate([1.700000,-5.200000,1.200000])rotate([0,0,-90.000000])m10(part,hole,block,casetop); // L1
 };
 module R2(){translate([1.600000,6.900000,1.200000])rotate([0,0,90.000000])children();}
 module part_R2(part=true,hole=false,block=false)
@@ -341,13 +341,15 @@ module m2(part=false,hole=false,block=false,height)
 // 1.6x1.5mm LED
 if(part)
 {
-        b(0,0,0,1.6+0.2,1.5+0.2,.6+0.2);
+
+        b(0,0,0,1.5,1.6,0.28);
+        b(0,0,0,1.5,1,0.6);
 }
 if(hole)
 {
         hull()
         {
-                b(0,0,.6+0.2,1.6+0.2,1.5+0.2,1);
+                b(0,0,0.1,1.5,1.6,0.1);
                 translate([0,0,height-0.5])cylinder(d=1.001,h=0.001,$fn=16);
         }
 }
@@ -355,7 +357,7 @@ if(block)
 {
         hull()
         {
-                b(0,0,.6+0.2,2.8,2.8,1);
+                b(0,0,0.1,3.5,3.6,0.1);
                 translate([0,0,height-0.5])cylinder(d=2,h=1,$fn=16);
         }
 }
@@ -432,7 +434,7 @@ if(part)
 	for(a=[0:1:N-1])translate([2.5*a,0,-3.2])hull()
 	{ // messy but F5 was not showing at all
 		cylinder(d=0.64,h=0.1,$fn=12);
-		translate([0,0,3.2-pcbthickness])cylinder(d=2,h=pcbthickness,$fn=12);
+		translate([0,0,3.2001-pcbthickness])cylinder(d=2,h=pcbthickness,$fn=12);
 	}
 }
 if(hole)
