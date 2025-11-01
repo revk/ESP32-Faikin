@@ -2223,11 +2223,13 @@ legacy_send (httpd_req_t * req, jo_t * jp)
 static void
 legacy_adv (jo_t j)
 {
-   jo_int (j, "adv",            //
-           daikin.powerful ? 2 :        //
-           daikin.econo ? 12 :  //
-           daikin.streamer ? 13 :       //
-           0);
+   jo_string (j, "adv",         //
+              daikin.powerful && daikin.streamer ? "2/13" :     // A tad messy
+              daikin.econo && daikin.streamer ? "12/13" :       //
+              daikin.powerful ? "2" :   //
+              daikin.econo ? "12" :     //
+              daikin.streamer ? "13" :  //
+              "0");
 }
 
 static esp_err_t
