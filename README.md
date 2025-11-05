@@ -48,8 +48,6 @@ Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two si
 
 <img src=PCB/Faikin/Faikin-panel.png width=49%><img src=PCB/Faikin/Faikin-alt-bottom.png width=49%>
 
-A 3D print case design (ideal for resin printer, but should work for FDM as well) is created from the PCB design to match exactly. [Bottom](PCB/Faikin/FaikinB.stl) [Top](PCB/Faikin/FaikinT.stl)
-
 ## Why I made this
 
 The history is that, after years of using Daikin air-con in my old home, and using the local http control, in my new house in Wales the WiFi was all cloud based with no local control, and useless, and slow. Just configuring it was a nightmare. I spent all day reverse engineering it and making a new module to provide local control. Pull requests and feature ideas welcome.
