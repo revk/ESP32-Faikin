@@ -1,6 +1,6 @@
 # PCB designs
 
-The `Faikin` directory has the current working design. `Faikin` is the current shipping board. The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
+The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
 The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these are usually kept up to date as an `.stl` file in the `Faikin` directory. The `Makefile` simply runs this tool.
 

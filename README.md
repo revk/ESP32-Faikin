@@ -40,6 +40,10 @@ The boards from [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://ww
 
 <img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
 
+The case design matches the PCB (check dates match).
+
+<img src=PCB/Faikin/FaikinB.png width=32%><img src=PCB/Faikin/FaikinT.png width=32%><img src=PCB/Faikin/FaikinC.png width=32%>
+
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
 <img src=PCB/Faikin/Faikin-panel.png width=49%><img src=PCB/Faikin/Faikin-alt-bottom.png width=49%>
