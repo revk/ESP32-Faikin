@@ -9732,7 +9732,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "47uF 6V"
+		(property "Value" "47uF 6V3"
 			(at 123.317 179.07 0)
 			(effects
 				(font
@@ -9952,7 +9952,7 @@
 				)
 			)
 		)
-		(property "Value" "XL-1516RGBC-WS2812B"
+		(property "Value" "XL-1615RGBC-2812B"
 			(at 163.195 52.07 0)
 			(effects
 				(font
@@ -9972,7 +9972,7 @@
 				(hide yes)
 			)
 		)
-		(property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf"
+		(property "Datasheet" "https://www.lcsc.com/datasheet/C5349954.pdf"
 			(at 163.195 36.83 0)
 			(effects
 				(font
