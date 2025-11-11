@@ -1818,7 +1818,7 @@ settings_autob (httpd_req_t * req)
 static esp_err_t
 web_control (httpd_req_t * req)
 {
-   web_head (req, hostname == revk_id ? appname : hostname);
+   web_head (req, hostname == revk_id ? revk_app : hostname);
    revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
    void addh (const char *tag)
    {                            // Head (well, start of row)
@@ -4230,7 +4230,7 @@ app_main ()
                         daikin.min##name=0;daikin.total##name=0;daikin.max##name=0;}
 #define e(name,values)  if((daikin.status_known&CONTROL_##name)&&daikin.name<sizeof(CONTROL_##name##_VALUES)-1)jo_stringf(j,#name,"%c",CONTROL_##name##_VALUES[daikin.name]);
 #include "acextras.m"
-                  revk_mqtt_send_clients (appname, 0, NULL, &j, 1);
+                  revk_mqtt_send_clients (revk_app, 0, NULL, &j, 1);
                   daikin.statscount = 0;
                   ha_status ();
                }
