@@ -3986,7 +3986,7 @@
 					)
 				)
 			)
-			(property "Value" "XL-1615RGBC-WS2812B"
+			(property "Value" "XL-1615RGBC-2812B"
 				(at 1.27 5.715 0)
 				(effects
 					(font
@@ -4006,7 +4006,7 @@
 					(hide yes)
 				)
 			)
-			(property "Datasheet" "https://datasheet.lcsc.com/lcsc/2301111010_XINGLIGHT-XL-1010RGBC-WS2812B_C5349953.pdf"
+			(property "Datasheet" "https://www.lcsc.com/datasheet/C5349954.pdf"
 				(at 1.27 9.525 0)
 				(effects
 					(font
@@ -9962,7 +9962,7 @@
 				(hide yes)
 			)
 		)
-		(property "Footprint" "RevK:SMD1615-Blind"
+		(property "Footprint" "RevK:SMD1615"
 			(at 163.195 38.735 0)
 			(effects
 				(font
