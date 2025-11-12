@@ -14,9 +14,9 @@ The *hostname* you picked is used for these messages. The format for commands an
 |Info|`info/GuestAC/whatever`|Info messages are informational, and don't relate to a specific event happening.|
 |Error|`error/GuestAC/whatever`|Errors are reported using this.|
 
-## Faikin auto
+## Faikout auto
 
-The *Faikin auto* logic allows a set point (with a margin) and a reference to external temperature. It uses simple prediction to see if we are going to exceed the maximum or minimum or be within range (see below), and aims to stay in range by basically turning the aircon just *on* or *off*. It does the *on* or *off* by changing the set point given to the air con to be *higher* or *lower*, in simplest terms.
+The *Faikout auto* logic allows a set point (with a margin) and a reference to external temperature. It uses simple prediction to see if we are going to exceed the maximum or minimum or be within range (see below), and aims to stay in range by basically turning the aircon just *on* or *off*. It does the *on* or *off* by changing the set point given to the air con to be *higher* or *lower*, in simplest terms.
 
 However there are a few settings to control what *on* and *off* mean in this case. the simplest, default, is *much higher* than current temperature or *much lower* than current temperature, i.e. around ±6℃.
 
@@ -32,7 +32,7 @@ There is also a setting hold off adjustments (e.g. when tracking) for a time per
 
 The auto mode has a target range, a *min* and *max*. On the web page this is set by a target and tolerance, so if you set 21℃ with ±1℃ that is a range of 20℃ to 22℃. This is the comfort zone, the range in which you would like the temperature to stay.
 
-To achieve this the Faikin looks at the temperature and sets the heating/cooling *on* or *off* as explained above. When heating, it is basically looking to keep the temperature just above *min*, and for cooling just below *max*. Note, it it not *aiming* for the middle, just to be within the range.
+To achieve this the Faikout looks at the temperature and sets the heating/cooling *on* or *off* as explained above. When heating, it is basically looking to keep the temperature just above *min*, and for cooling just below *max*. Note, it it not *aiming* for the middle, just to be within the range.
 
 When looking at the current temperature it looks ahead, as the aircon has some inertia, it samples every `tpredicts` seconds and looks ahead `tpredictt` periods. This allows it to act before the temperature goes too far one way or the other.
 
@@ -48,9 +48,9 @@ Thermostat mode also disables the `pushtemp`/`switchtemp` adjustment, and makes 
 
 ## Settings
 
-There are a number of standard settings as per the [RevK library](https://github.com/revk/ESP32-RevK), including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikin module are as follows.
+There are a number of standard settings as per the [RevK library](https://github.com/revk/ESP32-RevK), including things like `hostname`, `mqtthost`, `wifissid`, etc. Settings specific to the Faikout module are as follows.
 
-The web pages provide settings for the basic WiFi/MQTT, the Faikin specific settings, and an Advanced settings page listing a lot of more detailed settings.
+The web pages provide settings for the basic WiFi/MQTT, the Faikout specific settings, and an Advanced settings page listing a lot of more detailed settings.
 
 Note that web settings can be disabled with `websettings`, and the web based control pages can be disabled with `webcontrol`. It is also possible to apply a password for the web settings 9this is not sent security, so use with care on a local network which you control).
 
@@ -70,7 +70,7 @@ If `autop` is set, and the last two sample periods are entirely inside the targe
 
 The system is designed to work with an external remote [Environmental monitor](https://github.com/revk/ESP32-EnvMon). This sends a command `control` periodically.
 
-You can use for your own external control, which takes priority over *Faikin auto*, but you have to send the `control` command regularly.
+You can use for your own external control, which takes priority over *Faikout auto*, but you have to send the `control` command regularly.
 
 |Field|Meaning|
 |-----|-------|
@@ -113,7 +113,7 @@ Some more advances settings which you are unlikely to need to ever change.
 Regular status messages are sent.
 
 - `state/` topic indicate current state, and are reported periodically and on some state changes.
-- `Faikin/` topic are sent, typically every minute, and intended for the `faikinlog` command to store in a database. 
+- `Faikout/` topic are sent, typically every minute, and intended for the `faikinlog` command to store in a database. 
 - `*MAC*/` topic are sent for HomeAssistant if enabled, and are reported periodically and on some state changes.
 
 The setting `livestatus` causes the `state/` topic on any change.
@@ -149,11 +149,11 @@ The controls are things you can change. These can be sent in a JSON payload in a
 |`swingv`|Boolean - vertical louvre swing|
 |`powerful`|Boolean|
 |`econo`|Boolean|
-|`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikin auto mode|
-|`env`|This is the temperature reference used for the Faikin auto mode|
+|`target`|This can be a single temperature, or an array of two temperatures (`min`/`max`) which forces Faikout auto mode|
+|`env`|This is the temperature reference used for the Faikout auto mode|
 |`streamer`| Boolean|
 
-There are also settings that can impact the Faikin auto mode. These are also reported in the status messages, if not using remote `control`.
+There are also settings that can impact the Faikout auto mode. These are also reported in the status messages, if not using remote `control`.
 
 |Attribute|Meaning|
 |---------|-------|
@@ -163,7 +163,7 @@ There are also settings that can impact the Faikin auto mode. These are also rep
 |`auto0`|Time to turn off HH:MM, `00:00` is don't turn off. This sets the `auto0` setting|
 |`auto1`|Time to turn off HH:MM, `00:00` is don't turn on. This sets the `auto1` setting|
 
-For remote controlled Faikin auto mode, you typically send a `control` message with `target` and `env` in the JSON payload. This needs to be sent regularly to avoid it revertign to normal (not Faikin auto mode).
+For remote controlled Faikout auto mode, you typically send a `control` message with `target` and `env` in the JSON payload. This needs to be sent regularly to avoid it revertign to normal (not Faikout auto mode).
 
 ## Debug
 
@@ -173,4 +173,4 @@ The `snoop` and `dump` and `debug` settings can help decode what is happening.
 
 For anyone in the UK trying to reverse engineer operations using an offical remote / control, we have a small number of dual port *pass through* modules to assist with debug.
 
-<img src='https://github.com/revk/ESP32-Faikin/assets/996983/5f998a5f-d99d-40ca-bf39-fd1206c664df' width=50%><img src='https://github.com/revk/ESP32-Faikin/assets/996983/6c45b348-035e-48a7-81fb-dc43c849b11e' width=50%>
+<img src='https://github.com/revk/ESP32-Faikout/assets/996983/5f998a5f-d99d-40ca-bf39-fd1206c664df' width=50%><img src='https://github.com/revk/ESP32-Faikout/assets/996983/6c45b348-035e-48a7-81fb-dc43c849b11e' width=50%>

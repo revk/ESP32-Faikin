@@ -1,7 +1,7 @@
 
 # Compliance statement
 
-The Faikin hardware is an open source PCB design in this repository, and so you can make it yourself. However, we (Andrews & Arnold) do have the boards made and imported and we sell them.
+The Faikout hardware is an open source PCB design in this repository, and so you can make it yourself. However, we (Andrews & Arnold) do have the boards made and imported and we sell them.
 
 # Not a product
 
@@ -9,21 +9,21 @@ The Faikin hardware is an open source PCB design in this repository, and so you 
 
 *Other regulations*: It is unclear if the UK law: [The Product Security and Telecommunications Infrastructure Act 2022](https://www.legislation.gov.uk/ukpga/2022/46/contents), and [The Product Security and Telecommunications Infrastructure (Security Requirements for Relevant Connectable Products) Regulations 2023](https://www.legislation.gov.uk/uksi/2023/1007/contents/made) apply here or not. As we say, it is not a "finished product". However, just in case it does apply, this statement is an attempt to meet the requirements.
 
-As the Faikin hardware can be made and distributed by anyone, obviously, if they make it, they have to consider compliance, so this statement only applies to cases where we (Andrews & Arnold) have made the Faikin hardware, or distribute it.
+As the Faikout hardware can be made and distributed by anyone, obviously, if they make it, they have to consider compliance, so this statement only applies to cases where we (Andrews & Arnold) have made the Faikout hardware, or distribute it.
 
 # The product (if somehow it is deemed a product)
 
-As the Faikin hardware is a general purpose module / circuit, it only really makes sense to make any statement about it "as supplied", which is with the Faikin software pre-loaded for your convenience.
+As the Faikout hardware is a general purpose module / circuit, it only really makes sense to make any statement about it "as supplied", which is with the Faikout software pre-loaded for your convenience.
 
-If you choose to load any other software, or even build a variation of the Faikin software with your own (or someone else's) changes, then it is no longer "as supplied", and you now have a different "product" (if it is a "product") that you have made, so compliance is then up to you.
+If you choose to load any other software, or even build a variation of the Faikout software with your own (or someone else's) changes, then it is no longer "as supplied", and you now have a different "product" (if it is a "product") that you have made, so compliance is then up to you.
 
-It may be that the regulations also apply to the Faikin software even when loaded on your own hardware, this too is not entirely clear, or entirely clear which country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
+It may be that the regulations also apply to the Faikout software even when loaded on your own hardware, this too is not entirely clear, or entirely clear which country's laws would apply, especially as that typically means you "build" the software yourself (so is it your software now, built in your country, from a regulatory point of view?).
 
 The code is also in a fork built for ESP8266, and may be in any number of other forks. Obviously I cannot make any statement for those forks, or clones, or copies based on this code.
 
 # Type/batch
 
-So, the "product" (if it is one) is the software on this repository, all batches and builds, on the Faikin hardware made and supplied by Andrews & Arnold, and "as supplied", or as updated from this repository or OTA server.
+So, the "product" (if it is one) is the software on this repository, all batches and builds, on the Faikout hardware made and supplied by Andrews & Arnold, and "as supplied", or as updated from this repository or OTA server.
 
 # Who
 
@@ -39,7 +39,7 @@ The hardware covered here is made by/for Andrews & Arnold. This statement is pre
 
 It is the opinion of the manufacturer that we have complied with Schedule 1 & 2, and 5.1-1 of ETSI EN 303 645. Specifically that where passwords are used, they are user specified, and that we have a vulnerability disclosure policy, etc.
 
-- Normal web access to controls for your aircon on the Faikin have no passwords.
+- Normal web access to controls for your aircon on the Faikout have no passwords.
 - Access to settings can have no password, or can have a user specified password.
 
 # Vulnerability disclosure policy

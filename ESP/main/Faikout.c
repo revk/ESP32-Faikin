@@ -1,7 +1,7 @@
-/* Faikin app */
+/* Faikout app */
 /* Copyright ©2022 Adrian Kennard, Andrews & Arnold Ltd. See LICENCE file for details .GPL 3.0 */
 
-static const char TAG[] = "Faikin";
+static const char TAG[] = "Faikout";
 
 #include "revk.h"
 #include "esp_sleep.h"
@@ -165,7 +165,7 @@ struct
    uint8_t dumping:1;
    uint8_t hourly:1;            // Hourly stuff
    uint8_t protocol_set:1;
-   uint8_t faikinon:1;          // Last faikin power state
+   uint8_t faikouton:1;          // Last faikout power state
    uint8_t startup:1;           // In a startup phase (i.e. full comms not yet confirmed)
 } b = { 0 };
 
@@ -1801,7 +1801,7 @@ settings_autob (httpd_req_t * req)
          revk_web_send (req, " selected");
          found = 1;
       }
-      revk_web_send (req, ">%s%s", e->faikinset ? "Remote: " : "", e->name);
+      revk_web_send (req, ">%s%s", e->faikoutset ? "Remote: " : "", e->name);
       if (!e->missing && e->rssi)
          revk_web_send (req, " %ddB", e->rssi);
    }
@@ -1900,7 +1900,7 @@ web_control (httpd_req_t * req)
 #ifdef ELA
    if (bleenable && *autob)
    {
-      revk_web_send (req, "</tr><tr><td>%s</td>", bletemp && bletemp->faikinset ? "BLE<br>Remote" : "BLE");
+      revk_web_send (req, "</tr><tr><td>%s</td>", bletemp && bletemp->faikoutset ? "BLE<br>Remote" : "BLE");
       if (!bletemp || bletemp->tempset)
          addt ("Temp", "External BLE temperature");
       if (!bletemp || bletemp->humset)
@@ -1957,9 +1957,9 @@ web_control (httpd_req_t * req)
    {
       revk_web_send (req, "<tr><td colspan=6>%s</td></tr>", note);
    }
-   if (nofaikinauto && (*password || !autor))
-      addnote ("Faikin auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
-   else if (!daikin.remote && (autor || !nofaikinauto))
+   if (nofaikoutauto && (*password || !autor))
+      addnote ("Faikout auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
+   else if (!daikin.remote && (autor || !nofaikoutauto))
    {
       void addtime (const char *tag, const char *field)
       {
@@ -1968,7 +1968,7 @@ web_control (httpd_req_t * req)
                         tag, field, field);
       }
       revk_web_send (req,
-                     "<div id=remote><hr><p>Faikin-auto mode (sets hot/cold and temp high/low to aim for the following target).</p><table>");
+                     "<div id=remote><hr><p>Faikout-auto mode (sets hot/cold and temp high/low to aim for the following target).</p><table>");
       if (!*password)
       {
          revk_web_send (req, "<tr>");
@@ -1990,7 +1990,7 @@ web_control (httpd_req_t * req)
 #ifdef ELA
       if (bleenable && !*password)
       {                         // BLE setting needs password
-         addnote ("External temperature reference for Faikin-auto mode");
+         addnote ("External temperature reference for Faikout-auto mode");
          settings_autob (req);
       }
 #endif
@@ -3195,7 +3195,7 @@ revk_web_extra (httpd_req_t * req, int page)
    revk_web_setting (req, "Dark mode LED", "dark");
    revk_web_setting (req, "Debug", "debug");
    if (!daikin.remote)
-      revk_web_setting (req, "Hide Faikin auto mode", "nofaikinauto");
+      revk_web_setting (req, "Hide Faikout auto mode", "nofaikoutauto");
    if (!daikin.remote || (bleenable && *autob))
    {
       revk_web_setting (req, "BLE Sensors", "bleenable");
@@ -3227,10 +3227,10 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
-   if (!strcmp (otahost, "ota.revk.uk"))
+   if (!strcmp (otahost, "ota.revk.uk")||!strcmp (otahost, "ota.faikin.uk"))
    {
       jo_t j = jo_object_alloc ();
-      jo_string (j, "otahost", "ota.faikin.uk");
+      jo_string (j, "otahost", "ota.faikout.uk");
       revk_settings_store (j, NULL, REVK_SETTINGS_PASSOVERRIDE);
    }
 
@@ -3396,7 +3396,7 @@ app_main ()
          }
 #ifdef ELA
          if (ble_sensor_enabled ())
-         {                      // Automatic external temperature logic - only really useful if autor/autot set, or Faikin remote
+         {                      // Automatic external temperature logic - only really useful if autor/autot set, or Faikout remote
             bleenv_expire (120);
             if (!bletemp || (strcmp (bletemp->name, autob) && strcmp (bletemp->mac, autob)))
             {
@@ -3419,7 +3419,7 @@ app_main ()
                daikin.status_known |= CONTROL_env;      // So we report it
             } else
                daikin.status_known &= ~CONTROL_env;     // So we don't report it
-            if (bletemp && !bletemp->missing && bletemp->faikinset)
+            if (bletemp && !bletemp->missing && bletemp->faikoutset)
             {
                float min = NAN,
                   max = NAN;
@@ -3430,20 +3430,20 @@ app_main ()
                if (isnan (max))
                   max = min;
                if (bletemp->mode == 7)
-               {                // Faikin auto
+               {                // Faikout auto
                   daikin.controlvalid = uptime () + tcontrol;
                   daikin.mintarget = min;
                   daikin.maxtarget = max;
                   daikin.remote = 1;    // Hides local automation settings
-                  if (b.faikinon != bletemp->power)
-                     daikin_set_v (power, b.faikinon = bletemp->power); // Change in power state - only on change so autop can work
+                  if (b.faikouton != bletemp->power)
+                     daikin_set_v (power, b.faikouton = bletemp->power); // Change in power state - only on change so autop can work
                } else
                {                // Simple remote
-                  static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
+                  static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikout
                   if (bletemp->mode && daikin.mode != map[bletemp->mode] && !(daikin.control_changed & CONTROL_mode))
                      daikin_set_v (mode, map[bletemp->mode]);
                   if (daikin.power != bletemp->power && !(daikin.control_changed & CONTROL_power))
-                     daikin_set_v (power, b.faikinon = bletemp->power);
+                     daikin_set_v (power, b.faikouton = bletemp->power);
                   if (!isnan (min) && daikin.temp != (min + max) / 2 && !(daikin.control_changed & CONTROL_temp))
                      daikin_set_t (temp, (min + max) / 2);
                   if (daikin.remote)
@@ -3460,10 +3460,10 @@ app_main ()
                      daikin_set_v (fan, fan - 1);
                }
             }
-            if (bletemp && bletemp->faikinset)
+            if (bletemp && bletemp->faikoutset)
             {
-               static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikin
-               bleenv_faikin (hostname, daikin.home, daikin.temp, daikin.temp, daikin.power, daikin.antifreeze | daikin.slave,
+               static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikout
+               bleenv_faikout (hostname, daikin.home, daikin.temp, daikin.temp, daikin.power, daikin.antifreeze | daikin.slave,
                               map[daikin.mode], daikin.fan + 1);
             }
          }
@@ -3739,7 +3739,7 @@ app_main ()
                         temp[3] = '0' + (daikin.led ? dark ? 8 : 4 : 12);
                      // FIXME: ATX20K2V1B responds NAK to this command, but also doesn't react on D3.
                      // Looks like it supports something else, we don't know what.
-                     // https://github.com/revk/ESP32-Faikin/issues/441
+                     // https://github.com/revk/ESP32-Faikout/issues/441
                      daikin_s21_command ('D', '6', S21_PAYLOAD_LEN, temp);
                   } else if (!s21.F3.bad)
                   {             // F3 or F6 depends on model

@@ -35,9 +35,9 @@ bit	no.flap									// Unit does not have flap mode
 bit	no.antifreeze								// Unit does not have antifreeze mode
 bit	no.hourly	1		.live					// Do not do hourly S21 poll (DH)
 
-bit	no.faikinauto			.live					// Do not show faikin auto controls (unless already set up and no password)
-bit	no.hvacaction	1							// Do not track/report hvac_action for Faikin auto mode in HA
-bit	no.fanauto								// Do not control fan in faikin auto mode
+bit	no.faikoutauto			.live.old="nofaikinauto"		// Do not show Faikout auto controls (unless already set up and no password)
+bit	no.hvacaction	1							// Do not track/report hvac_action for Faikout auto mode in HA
+bit	no.fanauto								// Do not control fan in Faikout auto mode
 bit	no.homepreset								// Do not include a home in HA preset list
 bit	no.icons			.live					// Do not show icons on web UI
 
@@ -55,7 +55,7 @@ bit	cn.mark900			.live					// CN_WIRED. mark using 900uS not 1000uS
 
 enum	fantype				.enums="Default,5 level+auto,3 level,3 level+auto"	.old="fanstep"	// Fan type override
 
-bit	lockmode								// Do not auto switch heat/cool modes in Faikin auto
+bit	lockmode								// Do not auto switch heat/cool modes in Faikout auto
 
 u8	protocol			.hide					// Internal protocol as found, saved when found, can be used with protofix
 bit	protofix			.hide					// Protofix forces no change, use nos21, nox50a, etc instead maybe
@@ -87,23 +87,23 @@ s	auto.b				.live					// BLE sensor ID
 bit	auto.e		1		.live					// Enable auto time and power operations
 u16	auto.0				.live					// HHMM format turn off time
 u16	auto.1				.live					// HHMM format turn on time
-u16	auto.t				.live	.decimal=1			// Faikin auto target temperature
-u8	auto.r				.live	.decimal=1			// Faikin auto margin either side of autot
+u16	auto.t				.live	.decimal=1			// Faikout auto target temperature
+u8	auto.r				.live	.decimal=1			// Faikout auto margin either side of autot
 bit	auto.p				.live					// Enable auto power on/off (regardless of times)
 u8	auto.fmax	5		.live	.old="fmaxauto"			// Max fan setting when starting heat/cool way off from target
 u8	auto.ptemp	0.5		.live	.decimal=1	.old="autop10"	// Auto power on/off by temperature deviation by this amount
 bit	auto.lcontrol	0		.live					// Auto toggle on/off LED based on current HVAC action
 
-s	auto.topic								// Topic to follow for reference temperature for Faikin auto
+s	auto.topic								// Topic to follow for reference temperature for Faikout auto
 s	auto.payload								// JSON field in payload of above topic for reference temp
 
-bit	thermostat			.live					// Faikin auto simple thermostat mode (heat to max, cool to min)
+bit	thermostat			.live					// Faikout auto simple thermostat mode (heat to max, cool to min)
 
 
 u8	t.min		16		.live					// Min temp setting of system
-u8	t.coolmin	16		.live					// Min temp setting for Faikin auto when cooling
+u8	t.coolmin	16		.live					// Min temp setting for Faikout auto when cooling
 u8	t.max		32		.live					// Max temp setting of system
-u8	t.heatmax	32		.live					// Max temp setting for Faikin auto when heating
+u8	t.heatmax	32		.live					// Max temp setting for Faikout auto when heating
 u32	t.predicts	30							// Temp prediction sample time
 u32	t.predictt	120							// Temp prediction total time factor
 u32	t.sample	900							// Sample period for making adjustments

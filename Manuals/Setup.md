@@ -1,6 +1,6 @@
-# Faikin - set-up
+# Faikout - set-up
 
-The *Faikin* is a small circuit board that can replace the common Daikin air-con control WiFi modules.
+The *Faikout* is a small circuit board that can replace the common Daikin air-con control WiFi modules.
 
 - Local web control over WiFi, no cloud/account needed, no Internet needed
 - MQTT control and reporting
@@ -43,7 +43,7 @@ Note that the loopback is useful for testing, a simple link from Tx to Rx will s
 
 Once installed, the LED should light up and blink.
 
-Look for a WiFi Access Point called Daikin (or Faikin), e.g.
+Look for a WiFi Access Point called Daikin (or Faikout), e.g.
 
 ![WiFiAP](WiFi1.png)
 
@@ -91,7 +91,7 @@ If you've forgotten your login credentials or, for some reason, you are denied a
 
 - A USB to serial converter (such as this one: ![Amazon Link](https://amzn.eu/d/5VDxz50) or ![Tasmotizer-PCB](https://github.com/revk/Tasmotizer-PCB)).
 - Some Dupont wires.
-- Download the correct firmware binaries for your device (PICO, S1, or S3) from this ![link](https://github.com/revk/ESP32-Faikin/tree/main/ESP/release).
+- Download the correct firmware binaries for your device (PICO, S1, or S3) from this ![link](https://github.com/revk/ESP32-Faikout/tree/main/ESP/release).
 - Note that newer boards may need a TC2030 lead for USB instead
 
 ### Connection
@@ -109,12 +109,12 @@ esptool.py --chip esp32s3 erase_flash
 Run the following command in the shell (for S3 chip):
 
 ```
-esptool.py -p /dev/cu.usbserial-A50285BI write_flash 0x0 Faikin-S3-MINI-N4-R2-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S3-MINI-N4-R2.bin
+esptool.py -p /dev/cu.usbserial-A50285BI write_flash 0x0 Faikout-S3-MINI-N4-R2-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikout-S3-MINI-N4-R2.bin
 ```
 
 or (for S1 chip)
 
 ```
-esptool.py -p /dev/ttyUSB0 write_flash 0x1000 Faikin-S1-PICO-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikin-S1-PICO.bin
+esptool.py -p /dev/ttyUSB0 write_flash 0x1000 Faikout-S1-PICO-bootloader.bin 0x8000 partition-table.bin 0xd000 ota_data_initial.bin 0x10000 Faikout-S1-PICO.bin
 ```
 

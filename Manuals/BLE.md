@@ -28,11 +28,11 @@ The instructions are [here](https://github.com/pvvx/ATC_MiThermometer#flashing-o
 
 You can reconnect (it changes its name to start `ATC_...`) but then you have loads of options.
 
-The default `custom format` advertisement is understood. The device will appear with its MAC address as its name. If you use Home Assistant, BTHome and BTHome2 advertisement are also understood by Faikin and will be recognised automatically in HA so it may be worth sending BTHome/BTHome2 config while you have the Telink paired.
+The default `custom format` advertisement is understood. The device will appear with its MAC address as its name. If you use Home Assistant, BTHome and BTHome2 advertisement are also understood by Faikout and will be recognised automatically in HA so it may be worth sending BTHome/BTHome2 config while you have the Telink paired.
 
 ## GoveeLife
 
-<img src='https://github.com/revk/ESP32-Faikin/assets/996983/53e41957-9ab7-4d24-b80d-202e1d772534)' align=right width=25%>
+<img src='https://github.com/revk/ESP32-Faikout/assets/996983/53e41957-9ab7-4d24-b80d-202e1d772534)' align=right width=25%>
 
 There is support for one of the [GoveeLife sensors](https://www.amazon.co.uk/gp/product/B0CDX6SNJ3/).
 
