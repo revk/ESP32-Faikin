@@ -1,7 +1,7 @@
-// Generated case design for Faikin/Faikin.kicad_pcb
+// Generated case design for Faikout/Faikout.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-11-06 14:41:23
-// title:	FAIKIN
+// Generated 2025-11-12 08:10:31
+// title:	FAIKOUT
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
 //
@@ -30,7 +30,7 @@ datey=0.000000;
 datet=0.500000;
 dateh=3.000000;
 datea=0;
-date="2025-11-06";
+date="2025-11-12";
 datef="OCRB";
 logox=-5.000000;
 logoy=0.000000;
@@ -828,4 +828,4 @@ module logocode()
 		cylinder(d1=logot,d2=0,h=logot,$fn=6);
 	}
 }
-difference(){top();logocode();}
+translate([0,0,casebottom+casetop+pcbthickness+0.1])rotate([180,0,0])difference(){top();logocode();}difference(){bottom();datecode();}
