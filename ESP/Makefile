@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := Faikin
+PROJECT_NAME := Faikout
 SUFFIX := $(shell components/ESP32-RevK/buildsuffix)
 
 ifeq ($(wildcard /bin/csh),)
@@ -100,7 +100,7 @@ update:
 
 # Program the FTDI
 ftdi: ftdizap/ftdizap
-	./ftdizap/ftdizap --serial="RevK" --description="Faikin" --cbus2-mode=17 --self-powered=1
+	./ftdizap/ftdizap --serial="RevK" --description="Faikout" --cbus2-mode=17 --self-powered=1
 
 ifeq ($(shell uname),Darwin)
 INCLUDES=-I/usr/local/include/
