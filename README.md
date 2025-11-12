@@ -1,8 +1,12 @@
-# ESP32-Faikin
+### Name change
+
+Yes, it seems Daikin don't like Faikin, and I don't have the time or money to argue.
+
+# ESP32-Faikout
 
 Everyone knows Daikin make some of the best air conditioners out there, mechanically speaking. Sadly their WiFi control modules are not so good, especially the latest models which are all cloud based, require an internet connection to even work, and are slow.
 
-[<img src="https://github.com/user-attachments/assets/338f32f4-08dc-4355-88a8-cc47ec79a074" width=30% alt="Faikin">](https://www.youtube.com/watch?v=2QziOhK4P70 "Faikin")
+[<img src="https://github.com/user-attachments/assets/338f32f4-08dc-4355-88a8-cc47ec79a074" width=30% alt="Faikout">](https://www.youtube.com/watch?v=2QziOhK4P70 "Faikout")
 <img src="https://github.com/user-attachments/assets/81cdd6ae-362e-4a48-8efd-c60beae9d125" width=30% align="right" Alt="Optional cabel">
 <img src="https://github.com/user-attachments/assets/0dbb6cf9-0fd9-482d-a2ed-75dde9e37b82" width=30% align="right" Alt="Optional case">
 
@@ -10,7 +14,7 @@ This code/module provides local control via web interface, MQTT, and HomeAssista
 
 <img src=https://github.com/user-attachments/assets/110f49e2-de9f-41c9-82de-0c65e32430b9 width=33% align=right>
 
-* There is also a new [Faikin Remote Control](https://remote.revk.uk/) available, BLE linked to the Faikin, with environmental sensors, available on Tindie now.
+* There is also a new [Faikout Remote Control](https://remote.revk.uk/) available, BLE linked to the Faikout, with environmental sensors, available on Tindie now.
 
 PCB designs are included, and also available to buy on [Tindie](https://www.tindie.com/stores/revk/), and on [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ). There are other people making and selling, e.g. on [eBay Australia](https://www.ebay.com.au/itm/186860658654).
 
@@ -22,13 +26,13 @@ This is an open source project, but bear in mind you cannot sell boards bearing 
 
 ## Further manuals / links
 
-- [Work in progress / release notes](https://github.com/revk/ESP32-Faikin/wiki/Work-in-progress)
-- [Wiring](https://github.com/revk/ESP32-Faikin/wiki/Wiring)
+- [Work in progress / release notes](https://github.com/revk/ESP32-Faikout/wiki/Work-in-progress)
+- [Wiring](https://github.com/revk/ESP32-Faikout/wiki/Wiring)
 - [Setup](Manuals/Setup.md) Manual
 - [Controls](Manuals/Controls.md) Manual
 - [Advanced](Manuals/Advanced.md) Manual
 - [ESP8266 port](https://github.com/Sonic-Amiga/ESP8266-Faikin) of this code
-- [list of supported air-con](https://github.com/revk/ESP32-Faikin/wiki/List-of-confirmed-working-air-con-units) WiKi (please update as needed)
+- [list of supported air-con](https://github.com/revk/ESP32-Faikout/wiki/List-of-confirmed-working-air-con-units) WiKi (please update as needed)
 - [DoC](Manuals/DoC.md) and Vulnerability disclosure policy
 - [S21](Manuals/S21.md) reverse engineered details of `S21` protocol
 
