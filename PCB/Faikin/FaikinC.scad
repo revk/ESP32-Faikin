@@ -1,6 +1,6 @@
 // Generated case design for Faikin/Faikin.kicad_pcb
 // By https://github.com/revk/PCBCase
-// Generated 2025-11-06 14:41:23
+// Generated 2025-11-12 07:45:27
 // title:	FAIKIN
 // rev:	1
 // company:	Adrian Kennard, Andrews & Arnold Ltd
@@ -30,7 +30,7 @@ datey=0.000000;
 datet=0.500000;
 dateh=3.000000;
 datea=0;
-date="2025-11-06";
+date="2025-11-11";
 datef="OCRB";
 logox=-5.000000;
 logoy=0.000000;
