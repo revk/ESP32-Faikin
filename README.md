@@ -42,15 +42,15 @@ For support, see issues and discussions.
 
 The boards from [Tindie](https://www.tindie.com/stores/revk/), [eBay](https://www.ebay.com.au/itm/186860658654), and [Amazon UK](https://www.amazon.co.uk/dp/B0C2ZYXNYQ) works with Daikin modules via an `S21` connector, or `X50A` and `X35A` connectors, or similar. The design is updated from time to time so may not look exactly like this.
 
-<img src=PCB/Faikin/Faikin.png width=49%><img src=PCB/Faikin/Faikin-bottom.png width=49%>
+<img src=PCB/Faikout/Faikout.png width=49%><img src=PCB/Faikout/Faikout-bottom.png width=49%>
 
 The case design matches the PCB (check dates match). Designed for resin printing.
 
-<img src=PCB/Faikin/FaikinB.png width=32%><img src=PCB/Faikin/FaikinT.png width=32%><img src=PCB/Faikin/FaikinC.png width=32%>
+<img src=PCB/Faikout/FaikoutB.png width=32%><img src=PCB/Faikout/FaikoutT.png width=32%><img src=PCB/Faikout/FaikoutC.png width=32%>
 
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
-<img src=PCB/Faikin/Faikin-panel.png width=49%><img src=PCB/Faikin/Faikin-alt-bottom.png width=49%>
+<img src=PCB/Faikout/Faikout-panel.png width=49%><img src=PCB/Faikout/Faikout-alt-bottom.png width=49%>
 
 ## Why I made this
 
