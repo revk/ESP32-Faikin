@@ -165,7 +165,7 @@ struct
    uint8_t dumping:1;
    uint8_t hourly:1;            // Hourly stuff
    uint8_t protocol_set:1;
-   uint8_t faikouton:1;          // Last faikout power state
+   uint8_t faikouton:1;         // Last faikout power state
    uint8_t startup:1;           // In a startup phase (i.e. full comms not yet confirmed)
 } b = { 0 };
 
@@ -341,7 +341,7 @@ enum
 const char *const hvac_action[] = { "off", "preheating", "heating", "cooling", "drying", "fan", "idle", "defrosting" };
 
 const char *
-daikin_set_value (const char *name, uint8_t * ptr, uint64_t flag, uint8_t value)
+daikin_set_value (const char *name, uint8_t *ptr, uint64_t flag, uint8_t value)
 {                               // Setting a value (uint8_t)
    if (*ptr == value)
       return NULL;              // No change
@@ -371,7 +371,7 @@ daikin_set_int (const char *name, int *ptr, uint64_t flag, int value)
 }
 
 const char *
-daikin_set_enum (const char *name, uint8_t * ptr, uint64_t flag, char *value, const char *values)
+daikin_set_enum (const char *name, uint8_t *ptr, uint64_t flag, char *value, const char *values)
 {                               // Setting a value (uint8_t) based on string which is expected to be single character from values set
    if (!value || !*value)
       return "No value";
@@ -402,7 +402,7 @@ daikin_set_temp (const char *name, float *ptr, uint64_t flag, float value)
 }
 
 void
-set_uint8 (const char *name, uint8_t * ptr, uint64_t flag, uint8_t val)
+set_uint8 (const char *name, uint8_t *ptr, uint64_t flag, uint8_t val)
 {                               // Updating status
    xSemaphoreTake (daikin.mutex, portMAX_DELAY);
    if (!(daikin.status_known & flag))
@@ -508,7 +508,7 @@ enum
 };
 
 static int
-check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * payload)
+check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t *payload)
 {
    if (len >= required)
       return 1;
@@ -524,7 +524,7 @@ check_length (uint8_t cmd, uint8_t cmd2, int len, int required, const uint8_t * 
 }
 
 static void
-comm_timeout (uint8_t * buf, int rxlen)
+comm_timeout (uint8_t *buf, int rxlen)
 {
    daikin.talking = 0;
    b.loopback = 0;
@@ -536,7 +536,7 @@ comm_timeout (uint8_t * buf, int rxlen)
 }
 
 static void
-comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
+comm_badcrc (uint8_t c, const uint8_t *buf, int rxlen)
 {
    jo_t j = jo_comms_alloc ();
    jo_stringf (j, "badsum", "%02X", c);
@@ -546,7 +546,7 @@ comm_badcrc (uint8_t c, const uint8_t * buf, int rxlen)
 
 // Decode S21 response payload
 int
-daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t * payload)
+daikin_s21_response (uint8_t cmd, uint8_t cmd2, int len, uint8_t *payload)
 {
    if (len >= 1 && s21debug)
    {
@@ -736,7 +736,7 @@ protocol_found (void)
 }
 
 void
-cn_wired_report_fan_speed (const uint8_t * packet)
+cn_wired_report_fan_speed (const uint8_t *packet)
 {
    int8_t new_fan = cnw_decode_fan (packet);
 
@@ -750,7 +750,7 @@ cn_wired_report_fan_speed (const uint8_t * packet)
 // Parse an incoming CN_WIRED packet
 // These packets always have a fixed length of CNW_PKT_LEN
 void
-daikin_cn_wired_incoming_packet (const uint8_t * payload)
+daikin_cn_wired_incoming_packet (const uint8_t *payload)
 {
    static int cnw_retries = 0;
    int8_t new_mode;
@@ -902,7 +902,7 @@ daikin_cn_wired_send_modes (void)
 }
 
 void
-daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
+daikin_x50a_response (uint8_t cmd, int len, uint8_t *payload)
 {                               // Process response
    if (debug && len)
    {
@@ -990,7 +990,7 @@ daikin_x50a_response (uint8_t cmd, int len, uint8_t * payload)
 #define READ_TIMEOUT (500 / portTICK_PERIOD_MS)
 
 void
-daikin_as_response (int len, uint8_t * res)
+daikin_as_response (int len, uint8_t *res)
 {
    report_uint8 (online, 1);
    switch (*res)
@@ -1011,7 +1011,7 @@ daikin_as_response (int len, uint8_t * res)
 }
 
 int
-daikin_as_command (int len, uint8_t * buf)
+daikin_as_command (int len, uint8_t *buf)
 {
    uint8_t cs = 0;
    for (int i = 0; i < len; i++)
@@ -1072,7 +1072,7 @@ daikin_as_poll (char reg)
 }
 
 static int
-is_valid_s21_response (const uint8_t * buf, int rxlen, uint8_t cmd, uint8_t cmd2)
+is_valid_s21_response (const uint8_t *buf, int rxlen, uint8_t cmd, uint8_t cmd2)
 {
    return rxlen >= S21_MIN_PKT_LEN && buf[S21_STX_OFFSET] == STX && buf[rxlen - 1] == ETX &&
       buf[S21_CMD0_OFFSET] == cmd && buf[S21_CMD1_OFFSET] == cmd2;
@@ -1299,7 +1299,7 @@ daikin_s21_command (uint8_t cmd, uint8_t cmd2, int payload_len, char *payload)
 }
 
 void
-daikin_x50a_command (uint8_t cmd, int txlen, uint8_t * payload)
+daikin_x50a_command (uint8_t cmd, int txlen, uint8_t *payload)
 {                               // Send a command and get response
    if (debug && txlen)
    {
@@ -1751,7 +1751,7 @@ daikin_status (void)
 // --------------------------------------------------------------------------------
 // Web
 static void
-web_head (httpd_req_t * req, const char *title)
+web_head (httpd_req_t *req, const char *title)
 {
    revk_web_head (req, title);
    revk_web_send (req, "<style>"        //
@@ -1766,7 +1766,7 @@ web_head (httpd_req_t * req, const char *title)
 }
 
 static esp_err_t
-web_icon (httpd_req_t * req)
+web_icon (httpd_req_t *req)
 {                               // serve image -  maybe make more generic file serve
    extern const char istart[] asm ("_binary_apple_touch_icon_png_start");
    extern const char iend[] asm ("_binary_apple_touch_icon_png_end");
@@ -1776,7 +1776,7 @@ web_icon (httpd_req_t * req)
 }
 
 static esp_err_t
-web_favicon (httpd_req_t * req)
+web_favicon (httpd_req_t *req)
 {                               // serve image -  maybe make more generic file serve
    extern const char fistart[] asm ("_binary_favicon_ico_start");
    extern const char fiend[] asm ("_binary_favicon_ico_end");
@@ -1786,7 +1786,7 @@ web_favicon (httpd_req_t * req)
 }
 
 static void
-settings_autob (httpd_req_t * req)
+settings_autob (httpd_req_t *req)
 {
    revk_web_send (req, "<tr><td>BLE</td><td colspan=6>" //
                   "<select name=autob onchange=\"w('autob',this.options[this.selectedIndex].value);\">");
@@ -1816,7 +1816,7 @@ settings_autob (httpd_req_t * req)
 }
 
 static esp_err_t
-web_control (httpd_req_t * req)
+web_control (httpd_req_t *req)
 {
    web_head (req, hostname == revk_id ? revk_app : hostname);
    revk_web_send (req, "<div id=top class=off><form name=F><table id=live>");
@@ -1958,7 +1958,7 @@ web_control (httpd_req_t * req)
       revk_web_send (req, "<tr><td colspan=6>%s</td></tr>", note);
    }
    if (nofaikoutauto && (*password || !autor))
-      addnote ("Faikout auto controls are hidden.");     // Hide works if password set, or if not actually set up for auto, otherwise show
+      addnote ("Faikout auto controls are hidden.");    // Hide works if password set, or if not actually set up for auto, otherwise show
    else if (!daikin.remote && (autor || !nofaikoutauto))
    {
       void addtime (const char *tag, const char *field)
@@ -2066,7 +2066,7 @@ web_control (httpd_req_t * req)
 }
 
 static esp_err_t
-web_root (httpd_req_t * req)
+web_root (httpd_req_t *req)
 {
    if ((!webcontrol || revk_link_down ()) && websettings)
       return revk_web_settings (req);   // Direct to web set up
@@ -2094,7 +2094,7 @@ web_root (httpd_req_t * req)
 // Our own JSON-based control interface starts here
 
 static esp_err_t
-web_status (httpd_req_t * req)
+web_status (httpd_req_t *req)
 {                               // Web socket status report
    int fd = httpd_req_to_sockfd (req);
    void wsend (jo_t * jp)
@@ -2165,7 +2165,7 @@ legacy_ok (void)
 }
 
 static char *
-legacy_stringify (jo_t * jp)
+legacy_stringify (jo_t *jp)
 {
    char *buf = NULL;
 
@@ -2206,7 +2206,7 @@ legacy_stringify (jo_t * jp)
 }
 
 static esp_err_t
-legacy_send (httpd_req_t * req, jo_t * jp)
+legacy_send (httpd_req_t *req, jo_t *jp)
 {
    char *buf;
 
@@ -2233,7 +2233,7 @@ legacy_adv (jo_t j)
 }
 
 static esp_err_t
-legacy_simple_response (httpd_req_t * req, const char *err)
+legacy_simple_response (httpd_req_t *req, const char *err)
 {
    jo_t j = jo_object_alloc ();
    if (err && *err)
@@ -2250,7 +2250,7 @@ legacy_simple_response (httpd_req_t * req, const char *err)
 }
 
 static esp_err_t
-legacy_web_set_holiday (httpd_req_t * req)
+legacy_web_set_holiday (httpd_req_t *req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2265,7 +2265,7 @@ legacy_web_set_holiday (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_set_demand_control (httpd_req_t * req)
+legacy_web_set_demand_control (httpd_req_t *req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2339,14 +2339,14 @@ legacy_get_basic_info (void)
 }
 
 static esp_err_t
-legacy_web_get_basic_info (httpd_req_t * req)
+legacy_web_get_basic_info (httpd_req_t *req)
 {
    jo_t j = legacy_get_basic_info ();
    return legacy_send (req, &j);
 }
 
 static esp_err_t
-legacy_web_get_model_info (httpd_req_t * req)
+legacy_web_get_model_info (httpd_req_t *req)
 {
    int en_fdir = 0;
    int s_fdir = 0;
@@ -2380,7 +2380,7 @@ legacy_web_get_model_info (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_get_control_info (httpd_req_t * req)
+legacy_web_get_control_info (httpd_req_t *req)
 {
    static float dt[8] = { 20, 20, 20, 20, 20, 20, 20, 20 };     // Used for some of the status
    static char dfr[8] = { 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A' };
@@ -2435,7 +2435,7 @@ legacy_web_get_control_info (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_set_control_info (httpd_req_t * req)
+legacy_web_set_control_info (httpd_req_t *req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -2512,7 +2512,7 @@ legacy_web_set_control_info (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_get_sensor_info (httpd_req_t * req)
+legacy_web_get_sensor_info (httpd_req_t *req)
 {
    jo_t j = legacy_ok ();
    if (daikin.status_known & CONTROL_home)
@@ -2533,7 +2533,7 @@ legacy_web_get_sensor_info (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_register_terminal (httpd_req_t * req)
+legacy_web_register_terminal (httpd_req_t *req)
 {
    // This is called with "?key=<security_key>" parameter if any other URL
    // responds with 403. It's supposed that we remember our client and enable access.
@@ -2544,7 +2544,7 @@ legacy_web_register_terminal (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_get_year_power (httpd_req_t * req)
+legacy_web_get_year_power (httpd_req_t *req)
 {
    jo_t j = legacy_ok ();
    jo_stringf (j, "curr_year_heat", "%u/0/0/0/0/0/0/0/0/0/0/0", daikin.Wh / 100);       // Bodge, does not resent each year yet
@@ -2555,7 +2555,7 @@ legacy_web_get_year_power (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_get_week_power (httpd_req_t * req)
+legacy_web_get_week_power (httpd_req_t *req)
 {
    // ret=OK,s_dayw=2,week_heat=0/0/0/0/0/0/0/0/0/0/0/0/0/0,week_cool=0/0/0/0/0/0/0/0/0/0/0/0/0/0
    // Have no idea how to implement it, perhaps the original module keeps some internal statistics.
@@ -2566,7 +2566,7 @@ legacy_web_get_week_power (httpd_req_t * req)
 }
 
 static esp_err_t
-legacy_web_set_special_mode (httpd_req_t * req)
+legacy_web_set_special_mode (httpd_req_t *req)
 {
    const char *err = NULL;
    jo_t j = revk_web_query (req);
@@ -3152,7 +3152,7 @@ uart_setup (void)
 }
 
 static void
-register_uri (const httpd_uri_t * uri_struct)
+register_uri (const httpd_uri_t *uri_struct)
 {
    esp_err_t res = httpd_register_uri_handler (webserver, uri_struct);
    if (res != ESP_OK)
@@ -3162,7 +3162,7 @@ register_uri (const httpd_uri_t * uri_struct)
 }
 
 static void
-register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
+register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t *r))
 {
    httpd_uri_t uri_struct = {
       .uri = uri,
@@ -3173,7 +3173,7 @@ register_get_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 }
 
 static void
-register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
+register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t *r))
 {
    httpd_uri_t uri_struct = {
       .uri = uri,
@@ -3185,7 +3185,7 @@ register_ws_uri (const char *uri, esp_err_t (*handler) (httpd_req_t * r))
 }
 
 void
-revk_web_extra (httpd_req_t * req, int page)
+revk_web_extra (httpd_req_t *req, int page)
 {
    revk_web_setting (req, "Fahrenheit", "fahrenheit");
    revk_web_setting (req, "Text rather than icons", "noicons");
@@ -3227,7 +3227,16 @@ app_main ()
 #include "acextras.m"
    revk_boot (&mqtt_client_callback);
    revk_start ();
-   if (!strcmp (otahost, "ota.revk.uk")||!strcmp (otahost, "ota.faikin.uk"))
+   // Normalising settings
+#ifdef  CONFIG_IDF_TARGET_ESP32S3
+   if (!factorygpio.set)
+   {
+      jo_t j = jo_object_alloc ();
+      jo_string (j, "factorygpio", "-21");
+      revk_settings_store (j, NULL, REVK_SETTINGS_PASSOVERRIDE);
+   }
+#endif
+   if (!strcmp (otahost, "ota.revk.uk") || !strcmp (otahost, "ota.faikin.uk"))
    {
       jo_t j = jo_object_alloc ();
       jo_string (j, "otahost", "ota.faikout.uk");
@@ -3436,7 +3445,7 @@ app_main ()
                   daikin.maxtarget = max;
                   daikin.remote = 1;    // Hides local automation settings
                   if (b.faikouton != bletemp->power)
-                     daikin_set_v (power, b.faikouton = bletemp->power); // Change in power state - only on change so autop can work
+                     daikin_set_v (power, b.faikouton = bletemp->power);        // Change in power state - only on change so autop can work
                } else
                {                // Simple remote
                   static const uint8_t map[] = { 0, 3, 0, 7, 2, 1, 0, 0 };      // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikout
@@ -3464,7 +3473,7 @@ app_main ()
             {
                static const uint8_t map[] = { 2, 5, 4, 1, 0, 0, 0, 3 }; // FHCA456D Unspecified,Auto,Fan,Dry,Cool,Heat,Reserved,Faikout
                bleenv_faikout (hostname, daikin.home, daikin.temp, daikin.temp, daikin.power, daikin.antifreeze | daikin.slave,
-                              map[daikin.mode], daikin.fan + 1);
+                               map[daikin.mode], daikin.fan + 1);
             }
          }
 #endif
