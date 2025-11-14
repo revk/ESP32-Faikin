@@ -113,7 +113,7 @@ Some more advances settings which you are unlikely to need to ever change.
 Regular status messages are sent.
 
 - `state/` topic indicate current state, and are reported periodically and on some state changes.
-- `Faikout/` topic are sent, typically every minute, and intended for the `faikinlog` command to store in a database. 
+- `Faikout/` topic are sent, typically every minute, and intended for the `faikoutlog` command to store in a database. 
 - `*MAC*/` topic are sent for HomeAssistant if enabled, and are reported periodically and on some state changes.
 
 The setting `livestatus` causes the `state/` topic on any change.
@@ -131,7 +131,7 @@ The setting `livestatus` causes the `state/` topic on any change.
 |`liquid`|Liquid coolant feed temperature, if known|
 |`control`|Boolean, if we are under external/automatic control|
 
-The `faikinglog` reports the last periods for values. For each value, if it is the same for the whole period it is reported as is. If not, then for numeric is reported as an array of *min*, *ave*, *max*. For an enumerated type it is the current value. For a Boolean, it is a value `0.0` to `1.0` indicating how much it was `true` in the period.
+The `faikoutlog` reports the last periods for values. For each value, if it is the same for the whole period it is reported as is. If not, then for numeric is reported as an array of *min*, *ave*, *max*. For an enumerated type it is the current value. For a Boolean, it is a value `0.0` to `1.0` indicating how much it was `true` in the period.
 
 The `fixstatus` setting forces the format as if the value had changed during the period, i.e. min/ave/max array or 0.0-1.0 for Boolean.
 

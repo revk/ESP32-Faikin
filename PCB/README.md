@@ -2,19 +2,19 @@
 
 The design is in [KiCad](https://www.kicad.org) and has production files for JLCPCB. The boards are available on [Amazon](https://www.amazon.co.uk/dp/B0C2ZYXNYQ).
 
-The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these are usually kept up to date as an `.stl` file in the `Faikin` directory. The `Makefile` simply runs this tool.
+The `PCBCase` directory is a tool for making 3D cases from the PCBs files, these are usually kept up to date as an `.stl` file in the `Faikout` directory. The `Makefile` simply runs this tool.
 
 ## Trademark
 
 This is an open source project, but bear in mind you cannot sell boards bearing the Andrews & Arnold Ltd name, the A&A logo, the registered trademark AJK logo, or the GS1 allocated EANs assigned to Andrews & Arnold Ltd.
 
-<img src=Faikin/Faikin.png width=49%><img src=Faikin/Faikin-bottom.png width=49%>
+<img src=Faikout/Faikout.png width=49%><img src=Faikout/Faikout-bottom.png width=49%>
 
 ## Panel
 
 Supplied in a 70x70 panel as an assembled PCB with snap off parts down to two sizes. 45x36mm or 40x16mm.
 
-<img src=Faikin/Faikin-panel.png width=49%><img src=Faikin/Faikin-alt-bottom.png width=49%>
+<img src=Faikout/Faikout-panel.png width=49%><img src=Faikout/Faikout-alt-bottom.png width=49%>
 
 The panel includes slots and v-cuts to allow the unwanted parts of the panel to be snapped off. On the thicker (1.6mm) boards this can be a tad un-nerving, but just bend along the v-cut to snap the board on the cut line. I make the boards at 1.2mm thickness to make this easier.
 
@@ -56,7 +56,7 @@ The two round pads in the A&A logo can be shorted three times in a row to factor
 
 There are also test pins which allow connection for USB, and for diagnostics during production. A TC2030 connector is used for production programming.
 
-![Bottom](Faikin/Faikin-bottom.png)
+![Bottom](Faikout/Faikout-bottom.png)
 
 ## Programming
 

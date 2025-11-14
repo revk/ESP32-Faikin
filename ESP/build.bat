@@ -18,7 +18,7 @@ IF NOT DEFINED POSIX_ENV_PATH (
 
 set "PATH=%PATH%;%POSIX_ENV_PATH%"
 
-set PROJECT_NAME=Faikin
+set PROJECT_NAME=Faikout
 for /f %%i in ('csh components/ESP32-RevK/buildsuffix') do set SUFFIX=%%i
 
 echo Building: %PROJECT_NAME%%SUFFIX%.bin

@@ -1,13 +1,13 @@
 [Unit]
-Description=Faikin log
+Description=Faikout log
 After=mysql.service
 
 [Service]
 Type=simple
 User=adrian
 Group=adrian
-WorkingDirectory=/projects/Faikin
-ExecStart=/projects/Faikin/faikinlog --mqtt-hostname=mqtt
+WorkingDirectory=/projects/Faikout
+ExecStart=/projects/Faikout/faikoutlog --mqtt-hostname=mqtt
 Restart=always
 RestartSec=30
 

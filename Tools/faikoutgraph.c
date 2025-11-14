@@ -21,7 +21,7 @@ main (int argc, const char *argv[])
    const char *sqlusername = NULL;
    const char *sqlpassword = NULL;
    const char *sqlconffile = NULL;
-   const char *sqltable = "faikin";
+   const char *sqltable = "faikout";
    const char *sqlweather = "weather";
    const char *weathertag = NULL;
    const char *tag = NULL;
