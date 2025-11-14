@@ -120,7 +120,7 @@ main (int argc, const char *argv[])
             if (!res)
                sql_safe_query_free (&sql,
                                     sql_printf
-                                    ("CREATE TABLE `%#S` (`tag` varchar(20) not null,`utc` datetime not null,primary key (`tag`,`utc`))",
+                                    ("CREATE TABLE `%#S` (`tag` varchar(20) not null,`utc` datetime not null,key(`tag`),key(`utc`),primary key (`tag`,`utc`))",
                                      sqltable));
             // Leaving res as NULL is fine as sql_coln will return -1 for that...
          }
