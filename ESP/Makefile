@@ -23,17 +23,17 @@ beta:
 	-git commit -a
 	@make set
 	cp $(PROJECT_NAME)*.bin release/beta
-	rsync -az release/beta/$(PROJECT_NAME)* ota.faikout.uk:/var/www/ota/beta/
 	git commit -a -m Beta
 	git push
+	rsync -az release/beta/$(PROJECT_NAME)* ota.faikout.uk:/var/www/ota/beta/
 
 issue:	
 	-git pull
 	-git commit -a
 	cp -f release/beta/$(PROJECT_NAME)*.bin release
-	rsync -az release/$(PROJECT_NAME)* ota.faikout.uk:/var/www/ota/
 	git commit -a -m Release
 	git push
+	rsync -az release/$(PROJECT_NAME)* ota.faikout.uk:/var/www/ota/
 
 main/settings.h:     components/ESP32-RevK/revk_settings main/settings.def components/ESP32-RevK/settings.def
 	components/ESP32-RevK/revk_settings $^
