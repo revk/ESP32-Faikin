@@ -3423,11 +3423,24 @@ app_main ()
             {                   // Use temp
                float env = bletemp->temp / 100.0;
                if (daikin.env != env)
+               {
                   daikin.status_changed = 1;
-               daikin.env = env;
+                  daikin.env = env;
+               }
                daikin.status_known |= CONTROL_env;      // So we report it
             } else
                daikin.status_known &= ~CONTROL_env;     // So we don't report it
+            if (bletemp && !bletemp->missing && bletemp->humset)
+            {                   // Use temp
+               float hum = bletemp->hum / 100.0;
+               if (daikin.hum != hum)
+               {
+                  daikin.status_changed = 1;
+                  daikin.hum = hum;
+               }
+               daikin.status_known |= CONTROL_hum;      // So we report it
+            } else
+               daikin.status_known &= ~CONTROL_hum;     // So we don't report it
             if (bletemp && !bletemp->missing && bletemp->faikoutset)
             {
                float min = NAN,
